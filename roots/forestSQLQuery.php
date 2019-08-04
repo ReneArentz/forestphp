@@ -1,0 +1,884 @@
+<?php
+/* +--------------------------------+ */
+/* |				    | */
+/* | forestPHP V0.1.0 (0x1 0000A)   | */
+/* |				    | */
+/* +--------------------------------+ */
+
+/*
+ * + Description +
+ * class collection for generating one SQL-Query in an object-oriented way
+ * this helps for object-oriented access on database-tables
+ * for more information please read the documentation
+ *
+ * + Version Log +
+ * Version	Developer	Date		Comment
+ * 0.1.0 alpha	renatus		2019-08-04	first build
+ */
+
+class forestSQLQuery {
+	use forestData;
+	
+	/* Fields */
+	
+	const SELECT = 'select';
+	const INSERT = 'insert';
+	const UPDATE = 'update';
+	const DELETE = 'delete';
+	const TRUNCATE = 'truncate';
+	
+	private $BaseGateway;
+	private $SqlType;
+	private $Table;
+	private $Query;
+	
+	/* Properties */
+	
+	/* Methods */
+	
+	public function __construct(string $p_s_baseGateway, string $p_s_type, string $p_s_table) {
+		/* take over construct parameters */
+		$this->BaseGateway = new forestString($p_s_baseGateway, false);
+		$this->SqlType = new forestString($p_s_type, false);
+		$this->Table = new forestString($p_s_table, false);
+		
+		/* check base gateway parameter */
+        switch ($this->BaseGateway->value) {
+			case forestBase::MariaSQL:
+				break;
+			default:
+				throw new forestException('Invalid BaseGateway[%0]', array($this->BaseGateway->value));
+			break;
+		}
+		
+		/* create query object */
+		switch ($this->SqlType->value) {
+			case self::SELECT:
+				$this->Query = new forestObject(new forestSQLSelect($this), false);
+			break;
+			case self::INSERT:
+				$this->Query = new forestObject(new forestSQLInsert($this), false);
+			break;
+			case self::UPDATE:
+				$this->Query = new forestObject(new forestSQLUpdate($this), false);
+			break;
+			case self::DELETE:
+				$this->Query = new forestObject(new forestSQLDelete($this), false);
+			break;
+			case self::TRUNCATE:
+				$this->Query = new forestObject(new forestSQLTruncate($this), false);
+			break;
+			default:
+				throw new forestException('Invalid SqlType[%0]', array($this->SqlType->value));
+			break;
+		}
+	}
+	
+	function __toString() {
+		return '' . $this->Query->value;
+	}
+}
+
+abstract class forestSQLQueryAbstract {
+	use forestData;
+	
+	/* Fields */
+	
+	protected $Operators;
+	protected $FilterOperators;
+	protected $JoinTypes;
+	protected $SqlAggregations;
+	
+	protected $BaseGateway;
+	protected $SqlType;
+	protected $AmountJoins;
+	protected $Table;
+	
+	/* Properties */
+		
+	/* Methods */
+	
+	public function __construct(forestSQLQuery $p_o_sqlQuery) {
+		$this->BaseGateway = new forestString($p_o_sqlQuery->BaseGateway, false);
+		$this->SqlType = new forestString($p_o_sqlQuery->SqlType, false);
+		$this->AmountJoins = new forestInt;
+		$this->Table = new forestString($p_o_sqlQuery->Table);
+		
+		$this->Operators = new forestArray(array('=', '<', '<=', '>', '>=', '<>', 'LIKE', 'NOT LIKE', 'IN', 'NOT IN', 'IS', 'IS NOT'), false);
+		$this->FilterOperators = new forestArray(array('AND', 'OR', 'XOR'), false);
+		$this->JoinTypes = new forestArray(array('INNER JOIN', 'NATURAL JOIN', 'CROSS JOIN', 'OUTER JOIN', 'LEFT OUTER JOIN', 'RIGHT OUTER JOIN', 'FULL OUTER JOIN'), false);
+		$this->SqlAggregations = new forestArray(array('AVG', 'COUNT', 'MAX', 'MIN', 'SUM'), false);
+	}
+	
+	/* important parsing function, pretending SQL-Injection */
+	public function ParseValue($p_s_value) {
+		$o_glob = forestGlobals::init();
+		
+		if (is_null($p_s_value)) {
+			$p_s_value = '';
+		}
+		
+		if (is_a($p_s_value, 'DateTime')) {
+			$p_s_value = $p_s_value->format('Y-m-d H:i:s');
+		}
+		
+		if (is_string($p_s_value)) {
+			if (strlen($p_s_value) == 0) {
+				$p_s_value = 'NULL';
+			}
+			
+			if ($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway == forestBase::MariaSQL) {
+				$p_s_value = str_replace('\\', '\\\\', $p_s_value);
+			}
+			
+			/* date conversion for sql query [dd.MM.yyyy] / [dd.MM.yyyy hh:mm:ss] */
+			switch ($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway) {
+				case forestBase::MariaSQL:
+					if (preg_match('/^ ((0[1-9])|(1[0-9])|2[0-9]|(3[0-1])) \. ((0[1-9])|(1[0-2])) \. (\d){4} $/x', $p_s_value)) {
+						$s_foo = explode('.', $p_s_value);
+						$p_s_value = $s_foo[2] . '-' . $s_foo[1] . '-' . $s_foo[0];
+					} else if (preg_match('/^ ((0[1-9])|(1[0-9])|2[0-9]|(3[0-1])) \. ((0[1-9])|(1[0-2])) \. (\d){4} \s (0[0-9]|1[0-9]|2[0-3]) : ([0-5][0-9]) : ([0-5][0-9]) $/x', $p_s_value)) {
+						$s_foo  = explode(' ', $p_s_value);
+						$s_foo2 = explode('.', $s_foo[0]);
+						$p_s_value = $s_foo2[2] . '-' . $s_foo2[1] . '-' . $s_foo2[0] . ' ' . $s_foo[1];
+					}
+				break;
+				default:
+					throw new forestException('BaseGateway[%0] not implemented', array($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway));
+				break;
+			}
+		}
+		
+		if ((!is_int($p_s_value)) && (!is_float($p_s_value)) && ($p_s_value != 'NULL')) {
+			$p_s_value = addslashes($p_s_value);
+			
+			/*  when magic_quotes are on, all ' (single-quote), " (double quote), \ (backslash) and NULL's are escaped with a backslash automatically. */
+			if (get_magic_quotes_gpc()) {
+				/* un-quotes a quoted string */
+				$p_s_value = stripslashes($p_s_value);
+			}
+			
+			/* surround value with single quotes */
+			$p_s_value = "'" . $p_s_value . "'";
+		}
+		
+		return $p_s_value;
+	}
+}
+
+class forestSQLSelect extends forestSQLQueryAbstract {
+	use forestData;
+
+	/* Fields */
+	
+	private $Distinct;
+	private $Columns;
+	private $Joins;
+	private $Where;
+	private $GroupBy;
+	private $Having;
+	private $OrderBy;
+	private $Limit;
+	
+	/* Properties */
+	
+	/* Methods */
+	
+	public function __construct(forestSQLQuery $p_o_sqlQuery) {
+		parent::__construct($p_o_sqlQuery);
+		
+		$this->Distinct = new forestBool;
+		$this->Columns = new forestObject(new forestObjectList('forestSQLColumn'), false);
+		$this->Joins = new forestObject(new forestObjectList('forestSQLJoin'), false);
+		$this->Where = new forestObject(new forestObjectList('forestSQLWhere'), false);
+		$this->GroupBy = new forestObject(new forestObjectList('forestSQLColumn'), false);
+		$this->Having = new forestObject(new forestObjectList('forestSQLWhere'), false);
+		$this->OrderBy = new forestObject(new forestSQLOrderBy($p_o_sqlQuery), false);
+		$this->Limit = new forestObject(new forestSQLLimit($p_o_sqlQuery), false);
+	}
+	
+	function __toString() {
+		$s_foo = '';
+		
+		if ($this->Columns->value->Count() == 0) {
+			throw new forestException('Object list is empty', null, true);
+		}
+		
+		$s_foo = 'SELECT ';
+		
+		if ($this->Distinct->value) {
+			$s_foo .= ' DISTINCT ';
+		}
+		
+		$s_lastKey = $this->Columns->value->LastKey();
+		
+		foreach ($this->Columns->value as $s_key => $o_column) {
+			if ($s_key == $s_lastKey) {
+				$s_foo .= $o_column;
+			} else {
+				$s_foo .= $o_column . ', ';
+			}
+		}
+		
+		switch ($this->BaseGateway->value) {
+			case forestBase::MariaSQL:
+				$s_foo .= ' FROM ' . '`' . $this->Table->value . '`';
+			break;
+			default:
+				throw new forestException('BaseGateway[%0] not implemented', array($this->BaseGateway->value));
+			break;
+		}
+		
+		if ($this->Joins->value->Count() > 0) {
+			foreach ($this->Joins->value as $o_join) {
+				$s_foo .= ' ' . $o_join;
+			}
+		}
+		
+		if ($this->Where->value->Count() > 0) {
+			$s_foo .= ' WHERE ';
+		
+			foreach ($this->Where->value as $o_where) {
+				$s_foo .= $o_where;
+			}
+		}
+		
+		if ($this->GroupBy->value->Count() > 0) {
+			$s_foo .= ' GROUP BY ';
+			$s_lastKey = $this->GroupBy->value->LastKey();
+			
+			foreach ($this->GroupBy->value as $s_key => $o_groupBy) {
+				if ($s_key == $s_lastKey) {
+					$s_foo .= $o_groupBy;
+				} else {
+					$s_foo .= $o_groupBy . ', ';
+				}
+			}
+		}
+		
+		if ($this->Having->value->Count() > 0) {
+			$s_foo .= ' HAVING ';
+		
+			foreach ($this->Having->value as $o_having) {
+				$s_foo .= $o_having;
+			}
+		}
+		
+		if ($this->OrderBy->value->Columns->Count() > 0) {
+			$s_foo .= $this->OrderBy->value;
+		}
+		
+		if ( $this->Limit->value->Interval != 0) {
+			$s_foo .= $this->Limit->value;
+		}
+		
+		return $s_foo;
+	}
+}
+
+class forestSQLInsert extends forestSQLQueryAbstract {
+	use forestData;
+
+	/* Fields */
+	
+	private $ColumnValues;
+	
+	/* Properties */
+	
+	/* Methods */
+	
+	public function __construct(forestSQLQuery $p_o_sqlQuery) {
+		parent::__construct($p_o_sqlQuery);
+		
+		$this->ColumnValues = new forestObject(new forestObjectList('forestSQLColumnValue'), false);
+	}
+	
+	function __toString() {
+		$s_foo = '';
+		
+		if ($this->ColumnValues->value->Count() == 0) {
+			throw new forestException('Object list is empty', null, true);
+		}
+		
+		$s_lastKey = $this->ColumnValues->value->LastKey();
+		
+		$s_foo1 = '';
+		$s_foo2 = '';
+		
+		switch ($this->BaseGateway->value) {
+			case forestBase::MariaSQL:
+				$s_foo = 'INSERT INTO ' . '`' . $this->Table->value . '`' . ' (';
+				
+				foreach ($this->ColumnValues->value as $s_key => $o_columnValue) {
+					if (!issetStr($o_columnValue->Table->value)) {
+						$s_foo1 .=  '`' . $o_columnValue->Column . '`';
+					} else {
+						$s_foo1 .=  '`' . $o_columnValue->Table->value . '`' . '.' . '`' . $o_columnValue->Column . '`';
+					}
+					
+					$s_foo2 .= $o_columnValue->Value->scalar;
+						
+					if ($s_key != $s_lastKey) {
+						$s_foo1 .= ', ';
+						$s_foo2 .= ', ';
+					}
+				}
+			break;
+			default:
+				throw new forestException('BaseGateway[%0] not implemented', array($this->BaseGateway->value));
+			break;
+		}
+		
+		$s_foo .= $s_foo1;
+		$s_foo .= ') VALUES (';
+		$s_foo .= $s_foo2;
+		$s_foo .= ')';
+		
+		return $s_foo;
+	}
+}
+
+class forestSQLUpdate extends forestSQLQueryAbstract {
+	use forestData;
+
+	/* Fields */
+	
+	private $ColumnValues;
+	private $Where;
+	
+	/* Properties */
+	
+	/* Methods */
+	
+	public function __construct(forestSQLQuery $p_o_sqlQuery) {
+		parent::__construct($p_o_sqlQuery);
+		
+		$this->ColumnValues = new forestObject(new forestObjectList('forestSQLColumnValue'), false);
+		$this->Where = new forestObject(new forestObjectList('forestSQLWhere'), false);
+	}
+	
+	function __toString() {
+		$s_foo = '';
+		
+		if ($this->ColumnValues->value->Count() == 0) {
+			throw new forestException('Object list is empty', null, true);
+		}
+		
+		if ($this->Where->value->Count() == 0) {
+			throw new forestException('Object list is empty', null, true);
+		}
+		
+		$s_lastKey = $this->ColumnValues->value->LastKey();
+		
+		switch ($this->BaseGateway->value) {
+			case forestBase::MariaSQL:
+				$s_foo = 'UPDATE ' . '`' . $this->Table->value . '`' . ' SET ';
+				
+				foreach ($this->ColumnValues->value as $s_key => $o_columnValue) {
+					if (!issetStr($o_columnValue->Table->value)) {
+						$s_foo .=  '`' . $o_columnValue->Column . '`' . ' = ' . $o_columnValue->Value->scalar;
+					} else {
+						$s_foo .=  '`' . $o_columnValue->Table->value . '`' . '.' . '`' . $o_columnValue->Column . '`' . ' = ' . $o_columnValue->Value->scalar;
+					}
+				
+					if ($s_key != $s_lastKey) {
+						$s_foo .= ', ';
+					}
+				}
+			break;
+			default:
+				throw new forestException('BaseGateway[%0] not implemented', array($this->BaseGateway->value));
+			break;
+		}
+		
+		$s_foo .= ' WHERE ';
+			
+		foreach ($this->Where->value as $o_where) {
+			$s_foo .= $o_where;
+		}
+			
+		return $s_foo;
+	}
+}
+
+class forestSQLDelete extends forestSQLQueryAbstract {
+	use forestData;
+
+	/* Fields */
+	
+	private $Where;
+	
+	/* Properties */
+	
+	/* Methods */
+	
+	public function __construct(forestSQLQuery $p_o_sqlQuery) {
+		parent::__construct($p_o_sqlQuery);
+		
+		$this->Where = new forestObject(new forestObjectList('forestSQLWhere'), false);
+	}
+	
+	function __toString() {
+		$s_foo = '';
+		
+		switch ($this->BaseGateway->value) {
+			case forestBase::MariaSQL:
+				$s_foo = 'DELETE FROM ' . '`' . $this->Table->value . '`';
+			break;
+			default:
+				throw new forestException('BaseGateway[%0] not implemented', array($this->BaseGateway->value));
+			break;
+		}
+		
+		if ($this->Where->value->Count() > 0) {
+			$s_foo .= ' WHERE ';
+		
+			foreach ($this->Where->value as $o_where) {
+				$s_foo .= $o_where;
+			}
+		}
+		
+		return $s_foo;
+	}
+}
+
+class forestSQLTruncate extends forestSQLQueryAbstract {
+	use forestData;
+
+	/* Fields */
+	
+	/* Properties */
+	
+	/* Methods */
+	
+	public function __construct(forestSQLQuery $p_o_sqlQuery) {
+		parent::__construct($p_o_sqlQuery);
+	}
+	
+	function __toString() {
+		$s_foo = '';
+		
+		switch ($this->BaseGateway->value) {
+			case forestBase::MariaSQL:
+				$s_foo = 'TRUNCATE TABLE ' . '`' . $this->Table->value . '`';
+			break;
+			default:
+				throw new forestException('BaseGateway[%0] not implemented', array($this->BaseGateway->value));
+			break;
+		}
+		
+		return $s_foo;
+	}
+}
+
+class forestSQLColumn extends forestSQLQueryAbstract {
+	use forestData;
+
+	/* Fields */
+	
+	private $Column;
+	private $Name;
+	private $SqlAggregation;
+	
+	/* Properties */
+	
+	/* Methods */
+	
+	public function __construct(forestSQLQuery $p_o_sqlQuery) {
+		parent::__construct($p_o_sqlQuery);
+		
+		$this->Column = new forestString;
+		$this->Name = new forestString;
+		$this->SqlAggregation = new forestList($this->SqlAggregations->value);
+	}
+	
+	function __toString() {
+		$s_foo = '';
+		
+		switch ($this->BaseGateway->value) {
+			case forestBase::MariaSQL:
+				switch ($this->SqlType->value) {
+					case forestSQLQuery::SELECT:
+						if ($this->Column->value == '*') {
+							$s_foo = '*';
+							
+							if (issetStr($this->SqlAggregation->value)) {
+								$s_foo = $this->SqlAggregation->value . '(' . $s_foo . ')';
+							}
+							
+							if (issetStr($this->Name->value)) {
+								$s_foo = $s_foo . ' AS' . ' ' . $this->Name->value;
+							}
+						} else {
+							if (issetStr($this->Table->value)) {
+								$s_foo = '`' . $this->Table->value . '`' . '.' . '`' . $this->Column->value . '`';
+							} else {
+								$s_foo = '`' . $this->Column->value . '`';
+							}
+							
+							if (issetStr($this->SqlAggregation->value)) {
+								$s_foo = $this->SqlAggregation->value . '(' . $s_foo . ')';
+							}
+							
+							if (issetStr($this->Name->value)) {
+								$s_foo = $s_foo . ' AS' . ' ' . $this->Name->value;
+							}
+						}
+					break;
+					case forestSQLQuery::INSERT:
+						throw new forestException('SqlType[%0] not implemented', array($this->SqlType->value));
+					break;
+					case forestSQLQuery::UPDATE:
+					case forestSQLQuery::DELETE:
+						if (issetStr($this->Table->value)) {
+							$s_foo = '`' . $this->Table->value . '`' . '.' . '`' . $this->Column->value . '`';
+						} else {
+							$s_foo = '`' . $this->Column->value . '`';
+						}
+					break;
+					default:
+						throw new forestException('SqlType[%0] not implemented', array($this->SqlType->value));
+					break;
+				}
+			break;
+			default:
+				throw new forestException('BaseGateway[%0] not implemented', array($this->BaseGateway->value));
+			break;
+		}
+		
+		return $s_foo;
+	}
+}
+
+class forestSQLJoin extends forestSQLQueryAbstract {
+	use forestData;
+
+	/* Fields */
+	
+	private $JoinType;
+	private $Relations;
+	
+	/* Properties */
+	
+	/* Methods */
+	
+	public function __construct(forestSQLQuery $p_o_sqlQuery) {
+		parent::__construct($p_o_sqlQuery);
+		
+		$this->JoinType = new forestList($this->JoinTypes->value);
+		$this->Relations = new forestObject(new forestObjectList('forestSQLRelation'), false);
+	}
+	
+	function __toString() {
+		$s_foo = '';
+		
+		if ($this->Relations->value->Count() == 0) {
+			throw new forestException('Object list is empty', null, true);
+		}
+		
+		switch ($this->BaseGateway->value) {
+			case forestBase::MariaSQL:
+				switch ($this->SqlType->value) {
+					case forestSQLQuery::SELECT:
+						$s_foo = $this->JoinType->value . ' ' . '`' . $this->Table->value . '`';
+					break;
+					case forestSQLQuery::INSERT:
+					case forestSQLQuery::UPDATE:
+					case forestSQLQuery::DELETE:
+						throw new forestException('SqlType[%0] not implemented', array($this->SqlType->value));
+					break;
+					default:
+						throw new forestException('SqlType[%0] not implemented', array($this->SqlType->value));
+					break;
+				}
+			break;
+			default:
+				throw new forestException('BaseGateway[%0] not implemented', array($this->BaseGateway->value));
+			break;
+		}
+		
+		$s_foo .= ' ON ';
+						
+		foreach ($this->Relations->value as $o_relation) {
+			$s_foo .= $o_relation;
+		}
+		
+		return $s_foo;
+	}
+}
+
+class forestSQLRelation extends forestSQLQueryAbstract {
+	use forestData;
+
+	/* Fields */
+	
+	private $ColumnLeft;
+	private $ColumnRight;
+	private $Operator;
+	private $FilterOperator;
+	private $BracketStart;
+	private $BracketEnd;
+	
+	/* Properties */
+	
+	/* Methods */
+	
+	public function __construct(forestSQLQuery $p_o_sqlQuery) {
+		parent::__construct($p_o_sqlQuery);
+		
+		$this->ColumnLeft = new forestObject('forestSQLColumn');
+		$this->ColumnRight = new forestObject('forestSQLColumn');
+		$this->Operator = new forestList($this->Operators->value);
+		$this->FilterOperator = new forestList($this->FilterOperators->value);
+		$this->BracketStart = new forestBool;
+		$this->BracketEnd = new forestBool;
+	}
+	
+	function __toString() {
+		$s_foo = '';
+		
+		switch ($this->BaseGateway->value) {
+			case forestBase::MariaSQL:
+				switch ($this->SqlType->value) {
+					case forestSQLQuery::SELECT:
+						if (issetStr($this->FilterOperator->value)) {
+							$s_foo = ' ' . $this->FilterOperator->value . ' ';
+						}
+						
+						if ($this->BracketStart->value) {
+							$s_foo .= '(';
+						}
+						
+						$s_foo .= $this->ColumnLeft->value . ' ' . $this->Operator->value . ' ' . $this->ColumnRight->value;
+						
+						if ($this->BracketEnd->value) {
+							$s_foo .= ')';
+						}
+					break;
+					case forestSQLQuery::INSERT:
+					case forestSQLQuery::UPDATE:
+					case forestSQLQuery::DELETE:
+						throw new forestException('SqlType[%0] not implemented', array($this->SqlType->value));
+					break;
+					default:
+						throw new forestException('SqlType[%0] not implemented', array($this->SqlType->value));
+					break;
+				}
+			break;
+			default:
+				throw new forestException('BaseGateway[%0] not implemented', array($this->BaseGateway->value));
+			break;
+		}
+		
+		return $s_foo;
+	}
+}
+
+class forestSQLWhere extends forestSQLQueryAbstract {
+	use forestData;
+
+	/* Fields */
+	
+	private $Column;
+	private $Value;
+	private $Operator;
+	private $FilterOperator;
+	private $BracketStart;
+	private $BracketEnd;
+	
+	/* Properties */
+	
+	/* Methods */
+	
+	public function __construct(forestSQLQuery $p_o_sqlQuery) {
+		parent::__construct($p_o_sqlQuery);
+		
+		$this->Column = new forestObject('forestSQLColumn');
+		$this->Value = new forestObject('stdClass');
+		$this->Operator = new forestList($this->Operators->value);
+		$this->FilterOperator = new forestList($this->FilterOperators->value);
+		$this->BracketStart = new forestBool;
+		$this->BracketEnd = new forestBool;
+	}
+	
+	function __toString() {
+		$s_foo = '';
+		
+		switch ($this->BaseGateway->value) {
+			case forestBase::MariaSQL:
+				switch ($this->SqlType->value) {
+					case forestSQLQuery::SELECT:
+					case forestSQLQuery::UPDATE:
+					case forestSQLQuery::DELETE:
+						if (issetStr($this->FilterOperator->value)) {
+							$s_foo = ' ' . $this->FilterOperator->value . ' ';
+						}
+						
+						if ($this->BracketStart->value) {
+							$s_foo .= '(';
+						}
+						
+						$s_foo .= $this->Column->value . ' ' . $this->Operator->value . ' ' . $this->Value->value->scalar;
+						
+						if ($this->BracketEnd->value) {
+							$s_foo .= ')';
+						}
+					break;
+					case forestSQLQuery::INSERT:
+						throw new forestException('SqlType[%0] not implemented', array($this->SqlType->value));
+					break;
+					default:
+						throw new forestException('SqlType[%0] not implemented', array($this->SqlType->value));
+					break;
+				}
+			break;
+			default:
+				throw new forestException('BaseGateway[%0] not implemented', array($this->BaseGateway->value));
+			break;
+		}
+		
+		return $s_foo;
+	}
+}
+
+class forestSQLOrderBy extends forestSQLQueryAbstract {
+	use forestData;
+
+	/* Fields */
+	
+	private $Columns;
+	private $Directions;
+	
+	/* Properties */
+	
+	public function AddColumn(forestSQLColumn $p_o_value, $p_b_direction = true) {
+		$this->Columns->value->Add($p_o_value);
+		$this->Directions->value[] = $p_b_direction;
+	}
+	
+	/* Methods */
+	
+	public function __construct(forestSQLQuery $p_o_sqlQuery) {
+		parent::__construct($p_o_sqlQuery);
+		
+		$this->Columns = new forestObject(new forestObjectList('forestSQLColumn'), false);
+		$this->Directions = new forestArray;
+		
+	}
+	
+	function __toString() {
+		$s_foo = '';
+		
+		switch ($this->BaseGateway->value) {
+			case forestBase::MariaSQL:
+				switch ($this->SqlType->value) {
+					case forestSQLQuery::SELECT:
+						if ($this->Columns->value->Count() == 0) {
+							throw new forestException('Object list is empty', null, true);
+						}
+						
+						$s_foo = ' ORDER BY ';
+						
+						$s_lastKey = $this->Columns->value->LastKey();
+						$i = -1;
+						
+						foreach ($this->Columns->Value as $s_key => $o_column) {
+							$s_foo .= $o_column;
+								
+							if ($this->Directions->value[++$i]) {
+								$s_foo .= ' ASC';
+							} else {
+								$s_foo .= ' DESC';
+							}
+							
+							if ($s_key != $s_lastKey) {
+								$s_foo .= ', ';
+							}
+						}
+					break;
+					case forestSQLQuery::INSERT:
+					case forestSQLQuery::UPDATE:
+					case forestSQLQuery::DELETE:
+						throw new forestException('SqlType[%0] not implemented', array($this->SqlType->value));
+					break;
+					default:
+						throw new forestException('SqlType[%0] not implemented', array($this->SqlType->value));
+					break;
+				}
+			break;
+			default:
+				throw new forestException('BaseGateway[%0] not implemented', array($this->BaseGateway->value));
+			break;
+		}
+		
+		return $s_foo;
+	}
+}	
+
+class forestSQLLimit extends forestSQLQueryAbstract {
+	use forestData;
+
+	/* Fields */
+	
+	private $Start;
+	private $Interval;
+	
+	/* Properties */
+	
+	/* Methods */
+	
+	public function __construct(forestSQLQuery $p_o_sqlQuery) {
+		parent::__construct($p_o_sqlQuery);
+		
+		$this->Start = new forestInt;
+		$this->Interval = new forestInt;
+	}
+	
+	function __toString() {
+		$s_foo = '';
+		
+		switch ($this->BaseGateway->value) {
+			case forestBase::MariaSQL:
+				switch ($this->SqlType->value) {
+					case forestSQLQuery::SELECT:
+						$s_foo = ' LIMIT ' . $this->Start->value . ', ' . $this->Interval->value;
+					break;
+					case forestSQLQuery::INSERT:
+					case forestSQLQuery::UPDATE:
+					case forestSQLQuery::DELETE:
+						throw new forestException('SqlType[%0] not implemented', array($this->SqlType->value));
+					break;
+					default:
+						throw new forestException('SqlType[%0] not implemented', array($this->SqlType->value));
+					break;
+				}
+			break;
+			default:
+				throw new forestException('BaseGateway[%0] not implemented', array($this->BaseGateway->value));
+			break;
+		}
+		
+		return $s_foo;
+	}
+}
+
+class forestSQLColumnValue extends forestSQLQueryAbstract {
+	use forestData;
+
+	/* Fields */
+	
+	private $Column;
+	private $Value;
+	
+	/* Properties */
+	
+	/* Methods */
+	
+	public function __construct(forestSQLQuery $p_o_sqlQuery) {
+		parent::__construct($p_o_sqlQuery);
+		
+		$this->Column = new forestString;
+		$this->Value = new forestObject('stdClass');
+	}
+}
+?>
