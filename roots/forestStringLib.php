@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.0 (0x1 0001A)   | */
+/* | forestPHP V0.1.1 (0x1 0001A)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -11,7 +11,8 @@
  *
  * + Version Log +
  * Version	Developer	Date		Comment
- * 0.1.0 alpha	renatus		2019-08-04	first build	
+ * 0.1.0 alpha	renatus		2019-08-04	first build
+ * 0.1.0 alpha	renatus		2019-08-04	added conversion for forestDateTime	
  */
 
 class forestStringLib {
@@ -302,6 +303,146 @@ class forestStringLib {
 		//echo '</pre>';
 		
 		return $filter;
+	}
+	
+	/* converts date/time/datetime-sql-string into forestDateTime object */
+	public static function TextToDate($p_s_value) {
+		$o_glob = forestGlobals::init();
+		$s_format = null;
+		$i_year = 0;
+		$i_month = 0;
+		$i_day = 0;
+		$i_hour = 0;
+		$i_minute = 0;
+		$i_second = 0;
+		$i_pos = strpos($p_s_value, ' ');
+		$i_posT = strpos($p_s_value, 'T');
+		
+		if (empty($p_s_value)) {
+			return 'NULL';
+		}
+		
+		/* date and time */
+		if ($i_pos !== false) {
+			$s_format = $o_glob->Trunk->DateTimeFormat;
+			$a_temp = explode(' ', $p_s_value);
+			
+			/* handle date-part later */
+			$p_s_value = $a_temp[0];
+			
+			$a_temp2 = explode(':',$a_temp[1]);
+			
+			if (count($a_temp2) != 3) {
+				if (count($a_temp2) != 2) {
+					throw new forestException('Invalid time value [HH:MM(:SS)].');
+				} else {
+					$i_hour = $a_temp2[0];
+					$i_minute = $a_temp2[1];
+					$i_second = '00';
+				}
+			} else {
+				$i_hour = $a_temp2[0];
+				$i_minute = $a_temp2[1];
+				$i_second = $a_temp2[2];
+			}
+		}
+		
+		/* date and time */
+		if ($i_posT !== false) {
+			$s_format = $o_glob->Trunk->DateTimeFormat;
+			$a_temp = explode('T', $p_s_value);
+			
+			/* handle date-part later */
+			$p_s_value = $a_temp[0];
+			
+			$a_temp2 = explode(':',$a_temp[1]);
+			
+			if (count($a_temp2) != 3) {
+				if (count($a_temp2) != 2) {
+					throw new forestException('Invalid time value [HH:MM(:SS)].');
+				} else {
+					$i_hour = $a_temp2[0];
+					$i_minute = $a_temp2[1];
+					$i_second = '00';
+				}
+			} else {
+				$i_hour = $a_temp2[0];
+				$i_minute = $a_temp2[1];
+				$i_second = $a_temp2[2];
+			}
+		}
+		
+		$i_pos = strpos($p_s_value,'-');
+		$i_pos2 = strpos($p_s_value,'.');
+		$i_pos3 = strpos($p_s_value,':');
+		
+		/* special time format from mssql with additional zeroes .0000 */
+		if (($i_pos2 !== false) && ($i_pos3 !== false)) {
+			$a_temp = explode('.', $p_s_value);
+			$p_s_value = $a_temp[0];
+			$i_pos2 = false;
+		}
+		
+		if ($i_pos !== false) {
+			/* date YYYY-MM-DD */
+			if (is_null($s_format)) {
+				$s_format = $o_glob->Trunk->DateFormat;
+			}
+			
+			$a_temp = explode('-', $p_s_value);
+			
+			if (count($a_temp) != 3) {
+				if (count($a_temp) != 2) {
+					throw new forestException('Invalid date value [YYYY-MM-DD].');
+				} else {
+					$i_year = $a_temp[0];
+					$i_month = $a_temp[1];
+					$i_day = '01';
+				}
+			} else {
+				$i_year = $a_temp[0];
+				$i_month = $a_temp[1];
+				$i_day = $a_temp[2];
+			}
+		} else if ($i_pos2 !== false) {
+			/* date DD.MM.YYYY */
+			if (is_null($s_format)) {
+				$s_format = $o_glob->Trunk->DateFormat;
+			}
+			
+			$a_temp = explode('.', $p_s_value);
+			
+			if (count($a_temp) != 3) {
+				throw new forestException('Invalid date value [DD.MM.YYYY].');
+			}
+
+			$i_year = $a_temp[2];
+			$i_month = $a_temp[1];
+			$i_day = $a_temp[0];
+		} else if ($i_pos3 !== false) {
+			/* time */
+			if (is_null($s_format)) {
+				$s_format = $o_glob->Trunk->TimeFormat;
+			}
+			
+			$a_temp = explode(':', $p_s_value);
+			
+			if (count($a_temp) != 3) {
+				if (count($a_temp) != 2) {
+					throw new forestException('Invalid time value [HH:MM(:SS)].');
+				} else {
+					$i_hour = $a_temp[0];
+					$i_minute = $a_temp[1];
+					$i_second = '00';
+				}
+			} else {
+				$i_hour = $a_temp[0];
+				$i_minute = $a_temp[1];
+				$i_second = $a_temp[2];
+			}
+		}
+		
+		return new forestDateTime($s_format, $i_year, $i_month, $i_day, $i_hour, $i_minute, $i_second);
 	}
 	
 	/*converts hex-value into integer */

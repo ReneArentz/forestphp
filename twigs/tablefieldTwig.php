@@ -1,0 +1,49 @@
+<?php
+class tablefieldTwig extends forestTwig {
+	use forestData;
+	
+	/* Fields */
+	
+	private $Id;
+	private $UUID;
+	private $TableUUID;
+	private $FieldName;
+	private $FormElementUUID;
+	private $SqlTypeUUID;
+	private $ForestDataUUID;
+	private $TabId;
+	private $JSONEncodedSettings;
+	private $FooterElement;
+	private $SubRecordField;
+	private $Order;
+	
+	/* Properties */
+	
+	/* Methods */
+	
+	protected function init() {
+		$this->Id = new forestNumericString(1);
+		$this->UUID = new forestString;
+		$this->TableUUID = new forestString;
+		$this->FieldName = new forestString;
+		$this->FormElementUUID = new forestString;
+		$this->SqlTypeUUID = new forestString;
+		$this->ForestDataUUID = new forestString;
+		$this->TabId = new forestString;
+		$this->JSONEncodedSettings = new forestString;
+		$this->FooterElement = new forestBool;
+		$this->SubRecordField = new forestString;
+		$this->Order = new forestInt;
+		
+		/* forestTwig system fields */
+		$this->fphp_Table->value = 'sys_fphp_tablefield';
+		$this->fphp_Primary->value = array('Id');
+		$this->fphp_Unique->value = array('UUID', 'TableUUID;FieldName');
+		$this->fphp_SortOrder->value->Add(true, 'TableUUID');
+		$this->fphp_SortOrder->value->Add(true, 'Order');
+		$this->fphp_Interval->value = 50;
+		$this->fphp_View->value = array('FieldName', 'FormElementUUID', 'SqlTypeUUID', 'ForestDataUUID', 'TabId', 'JSONEncodedSettings', 'FooterElement', 'SubRecordField', 'Order');
+		$this->fphp_FillMapping(get_object_vars($this));
+	}
+}
+?>

@@ -1,5 +1,5 @@
 <?php
-class indexBranch extends forestBranch {
+class useradminBranch extends forestBranch {
 	use forestData;
 	
 	/* Fields */

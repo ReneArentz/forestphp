@@ -24,6 +24,9 @@ forestPHP framework will be released under the **GPLv3 license** and the **MIT l
 
 ## Releases
 
+### 0.1.1 (alpha)
+New features: Trunk Settings, Dynamic Landing page, DateTime + DateInterval handling, forestForm + Elements, Navigation bar, Dynamic Tablefields. *08/2019*
+
 ### 0.1.0 (alpha)
 After 12 years of planning, conception and development as a hobby project in leisure time. First release of the forestPHP Framework 0.1.0 (alpha). Provision of foundation files + support MariaDB / MySQL. *08/2019*
 

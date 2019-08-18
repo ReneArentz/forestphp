@@ -1,6 +1,6 @@
 /* +--------------------------------+ */
 /* |                                | */
-/* | forestPHP V0.1.0               | */
+/* | forestPHP V0.1.1               | */
 /* |                                | */
 /* +--------------------------------+ */
 
@@ -11,4 +11,240 @@
  * + Version Log +
  * Version	Developer	Date		Comment
  * 0.1.0 alpha	renatus		2019-08-04	first build
+ * 0.1.1 alpha	renatus		2019-08-14	added styles for modal, navigation, form and landing page
  */
+
+/* ********************************** */
+/* ********* MODAL SETTINGS ********* */
+/* ********************************** */
+@media (min-width: 767px) {
+	.modal-xl {
+		width: 90%;
+		max-width: 1200px;
+	}
+}
+
+.modal-header, .modal-header > .close {
+	padding: 10px 20px;
+	background-color: #5cb85c;
+	color:white !important;
+	text-align: center;
+	font-size: 24px;
+}
+
+.modal-header > .close {
+	font-size: 30px;
+}
+
+.modal-body {
+	padding: 40px 50px;
+}
+
+.modal-footer {
+	background-color: #f9f9f9;
+}
+
+.tab-content {
+	margin-top: 10px;
+}
+
+.tab-required {
+	margin-top: 10px;
+	display: none;
+}
+
+/* ********************************** */
+/* *********** NAVIGATION *********** */
+/* ********************************** */
+.dropdown-submenu {
+	position: relative;
+}
+
+.dropdown-submenu .dropdown-menu {
+	top: 0;
+	left: 100%;
+	margin-top: -1px;
+}
+
+.nav > li > a, .dropdown-menu > li > a {
+	display: inline-flex;
+}
+
+.dropdown-menu > li > a {
+	padding: 3px 8px;
+}
+
+.fphp_nav_icon {
+	margin-right: 5px;
+}
+
+@media screen and (min-width: 768px) {
+	.dropdown, .dropdown-submenu {
+		display: inline-flex !important;
+	}
+}
+
+.navbar-fixed-top {
+	margin-bottom: 10px !important;
+}
+
+.navbar-fixed-bottom {
+	margin-top: 10px !important;
+}
+
+/* ********************************** */
+/* ********** LANDING PAGE ********** */
+/* ********************************** */
+.fphp_tiles > li {
+	list-style: none;
+}
+
+.fphp_tile {
+	width: 32%;
+	height: 150px;
+	text-align: center;
+	margin:1px;
+	display: inline-block;
+	background-color: #555;
+	float:left;
+	line-height: 125px;
+	font-size: 26px;
+	padding: 12px;
+	color: white;
+	text-decoration: none;
+}
+
+.fphp_tile:hover {
+	background-color: #4CAF50;
+	color: white;
+	text-decoration: none;
+}
+
+@media screen and (max-width: 767px) {
+	.fphp_tiles {
+		position: relative;
+		left: -25px;
+	}
+	
+	.fphp_tile {
+		float: none;
+		display: block;
+		width: 100%;
+		text-align: left; /* if you want the text to be left-aligned on small screens */
+	}
+}
+
+/* ********************************** */
+/* ********* forestPHP-Form ********* */
+/* ********************************** */
+input[type="datetime-local"],
+input[type="date"],
+input[type="month"],
+input[type="time"],
+input[type="week"],
+input[type="number"],
+input[type="file"]
+{
+	height: auto;
+}
+
+.form-inline > .form-group {
+	margin-left: 5px;
+}
+
+.form-inline input[type="checkbox"], .form-inline input[type="radio"] {
+	margin-right: 5px;
+}
+
+/* ********************************** */
+/* **** forestPHP-Radio/Checkbox **** */
+/* ********************************** */
+/* the container */
+.checkbox-container, .radio-container {
+  padding-left: 15px;
+  padding-bottom: 5px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.checkbox-inline.checkbox-container, .radio-inline.radio-container {
+	padding-left: 30px;
+}
+
+/* hide the browsers default checkbox */
+.checkbox-container input, .radio-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+/* create a custom checkbox */
+.checkbox-checkmark {
+  position: absolute;
+  top: 5px;
+  left: 0;
+  height: 25px;
+  width: 25px;
+  background-color: #eee;
+}
+
+/* create a custom radio button */
+.radio-checkmark {
+  position: absolute;
+  top: 5px;
+  left: 0;
+  height: 25px;
+  width: 25px;
+  background-color: #eee;
+  border-radius: 50%;
+}
+
+/* on mouse-over, add a grey background color */
+.checkbox-container:hover input ~ .checkbox-checkmark, .radio-container:hover input ~ .radio-checkmark {
+  background-color: #ccc;
+}
+
+/* when the checkbox is checked, add a blue background */
+.checkbox-container input:checked ~ .checkbox-checkmark, .radio-container input:checked ~ .radio-checkmark {
+  background-color: #2196F3;
+}
+
+/* create the checkmark/indicator (hidden when not checked) */
+.checkbox-checkmark:after, .radio-checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+/* show the checkmark when checked */
+.checkbox-container input:checked ~ .checkbox-checkmark:after, .radio-container input:checked ~ .radio-checkmark:after {
+  display: block;
+}
+
+/* style the checkmark/indicator */
+.checkbox-container .checkbox-checkmark:after {
+  left: 9px;
+  top: 3px;
+  width: 8px;
+  height: 15px;
+  border: solid white;
+  border-width: 0 4px 4px 0;
+  -webkit-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  transform: rotate(45deg);
+}
+
+/* style the indicator (dot/circle) */
+.radio-container .radio-checkmark:after {
+  top: 7px;
+  left: 7px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: white;
+}

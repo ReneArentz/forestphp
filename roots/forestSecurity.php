@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.0 (0x1 00006)   | */
+/* | forestPHP V0.1.1 (0x1 00006)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -13,6 +13,7 @@
  * + Version Log +
  * Version	Developer	Date		Comment
  * 0.1.0 alpha	renatus		2019-08-04	first build
+ * 0.1.1 alpha	renatus		2019-08-08	add session and forestDateTime functionality
  */
 
 class forestSecurity {
@@ -52,6 +53,9 @@ class forestSecurity {
 		
 		if ($p_b_debug) { echo '<hr /><pre>SECURITY DEBUG START<br /><br />'; }
 		
+		/* delete expired session records */
+		$this->DeleteExpiredSessions($p_b_debug);
+		
 		if ($this->SessionData->value->Exists('session_uuid')) {
 			$this->SessionUUID->value = $this->SessionData->value->{'session_uuid'};
 		}
@@ -67,7 +71,7 @@ class forestSecurity {
 					if ($p_b_debug) { echo '#05__Active session found, update Timestamp<br />'; }
 					
 					/* active guest session found, update timestamp */
-					$o_sessionTwig->Timestamp = new DateTime();
+					$o_sessionTwig->Timestamp = new forestDateTime($o_glob->Trunk->DateTimeSqlFormat);
 					
 					if ($o_sessionTwig->UpdateRecord() == -1) {
 						throw new forestException($o_glob->Temp->{'UniqueIssue'});
@@ -94,7 +98,7 @@ class forestSecurity {
 		if ($this->InitAccess->value) {
 			/* create new session entry, set session information and guest flague */
 			$o_sessionTwig = new sessionTwig();
-			$o_sessionTwig->Timestamp = new DateTime();
+			$o_sessionTwig->Timestamp = new forestDateTime($o_glob->Trunk->DateTimeSqlFormat);
 			
 			if (!$o_glob->FastProcessing) {
 				if ($o_sessionTwig->InsertRecord() == -1) {
@@ -159,6 +163,42 @@ class forestSecurity {
 		unset($this->SessionData->value);
 		unset($this->SessionId->value);
 		@session_destroy();
+	}
+	
+	/* delete expired session records */
+	public function DeleteExpiredSessions($p_b_debug = false) {
+		$o_glob = forestGlobals::init();
+		
+		/* calculate expired time */
+		$o_DI = new forestDateInterval($o_glob->Trunk->SessionIntervalGuest);
+		$o_now = new forestDateTime($o_glob->Trunk->DateTimeSqlFormat);
+		
+		$o_now->SubDateInterval($o_DI->y, $o_DI->m, $o_DI->d, $o_DI->h, $o_DI->i, $o_DI->s);
+		
+		/* create select query to delete expired sessions */
+		$o_querySelect = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::SELECT, 'sys_fphp_session');
+			$o_uuid = new forestSQLColumn($o_querySelect);
+				$o_uuid->Column = 'UUID';
+			
+			$o_timestamp = new forestSQLColumn($o_querySelect);
+				$o_timestamp->Column = 'Timestamp';
+			
+			$o_querySelect->Query->Columns->Add($o_uuid);
+			$o_querySelect->Query->Columns->Add($o_timestamp);
+			
+			$o_whereTimestamp = new forestSQLWhere($o_querySelect);
+				$o_whereTimestamp->Column = $o_timestamp;
+				$o_whereTimestamp->Value = $o_whereTimestamp->ParseValue($o_now->ToString());
+				$o_whereTimestamp->Operator = '<';
+				
+			$o_querySelect->Query->Where->Add($o_whereTimestamp);
+		
+		$o_result = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect);
+		
+		foreach($o_result->Twigs as $o_session) {
+			/* delete session record */
+			$o_session->DeleteRecord();
+		}
 	}
 	
 	/* generates uuid with php-function uniqid and '-'-delimiter */

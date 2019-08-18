@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.0 (0x1 00014)   | */
+/* | forestPHP V0.1.1 (0x1 00014)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -14,7 +14,8 @@
  *
  * + Version Log +
  * Version	Developer	Date		Comment
- * 0.1.0 alpha	renatus		2019-08-04	first build	
+ * 0.1.0 alpha	renatus		2019-08-04	first build
+ * 0.1.1 alpha	renatus		2019-08-07	added view property and landing page function
  */
 
 abstract class forestBranch {
@@ -30,6 +31,7 @@ abstract class forestBranch {
 	protected $Filter;
 	protected $StandardView;
 	protected $KeepFilter;
+	protected $OriginalView;
 	
 	/* Properties */
 	
@@ -53,7 +55,13 @@ abstract class forestBranch {
 	
 		$o_glob = forestGlobals::init();
 		
+		$this->OriginalView = $this->StandardView;
+		$o_glob->OriginalView = $this->OriginalView;
+		
 		if (!$o_glob->FastProcessing) {
+			/* init navigation object */
+			$o_glob->Navigation->InitNavigation();
+			
 			$i_lastBranchId = 0;
 			$i_lastActionId = 0;
 			
@@ -148,6 +156,15 @@ abstract class forestBranch {
 			
 			$this->NextAction->value = true;
 		}
+	}
+	
+	/* generates landing page */
+	protected function GenerateLandingPage() {
+		$o_glob = forestGlobals::init();
+		$s_landingPageNavigation = $o_glob->Navigation->RenderLandingPage();
+		
+		/* use template to render landing page */
+		$o_glob->Templates->Add(new forestTemplates(forestTemplates::LANDINGPAGE, array($s_landingPageNavigation)), $o_glob->URL->Branch . 'LandingPage');
 	}
 }
 ?>

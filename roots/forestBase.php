@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.0 (0x1 00009)   | */
+/* | forestPHP V0.1.1 (0x1 00009)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -14,6 +14,7 @@
  * + Version Log +
  * Version	Developer	Date		Comment
  * 0.1.0 alpha	renatus		2019-08-04	first build
+ * 0.1.1 alpha	renatus		2019-08-07	added date conversion and trunk settings
  */
 
 class forestBase {
@@ -321,12 +322,30 @@ class forestBase {
 		} else if ($s_type == 'real') {
 			$p_s_value = floatval($p_s_value);
 		} else if ($s_type == 'date') {
-			$p_s_value = DateTime::createFromFormat('Y-m-d H:i:s', $p_s_value);
+			$p_s_value = forestStringLib::TextToDate($p_s_value);
 		} else if ($s_type == 'string') {
 			$p_s_value = strval($p_s_value);
 			
+			/* additionally utf8 en/decoding */
+			if (!is_null($o_glob->Trunk)) {
+				if ($o_glob->Trunk->OutContentUTF8Decode) {
+					$p_s_value = utf8_decode($p_s_value);
+				} else if ($o_glob->Trunk->OutContentUTF8Encode) {
+					$p_s_value = utf8_encode($p_s_value);
+				}
+			}
+			
 			$p_s_value = htmlspecialchars($p_s_value, ( ENT_QUOTES | ENT_HTML5 ));
 		} else {
+			/* additionally utf8 en/decoding */
+			if (!is_null($o_glob->Trunk)) {
+				if ($o_glob->Trunk->OutContentUTF8Decode) {
+					$p_s_value = utf8_decode($p_s_value);
+				} else if ($o_glob->Trunk->OutContentUTF8Encode) {
+					$p_s_value = utf8_encode($p_s_value);
+				}
+			}
+			
 			$p_s_value = htmlspecialchars($p_s_value, ( ENT_QUOTES | ENT_HTML5 ));
 		}
 	}

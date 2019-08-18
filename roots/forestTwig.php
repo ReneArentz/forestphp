@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.0 (0x1 0000C)   | */
+/* | forestPHP V0.1.1 (0x1 0000C)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -14,6 +14,7 @@
  * + Version Log +
  * Version	Developer	Date		Comment
  * 0.1.0 alpha	renatus		2019-08-04	first build
+ * 0.1.1 alpha	renatus		2019-08-10	added tablefield caching
  */
 
 abstract class forestTwig {
@@ -97,6 +98,14 @@ abstract class forestTwig {
 			}
 		}
 		
+		if (array_key_exists($this->fphp_Table->value, $o_glob->Tables)) {
+			$this->fphp_TableUUID->value = $o_glob->Tables[$this->fphp_Table->value];
+		}
+		
+		if (!$o_glob->FastProcessing) {
+			$this->CacheTableFieldsProperties();
+		}
+		
 		foreach ($this->fphp_SortOrder->value as $s_sortOrder_field => $b_sortOrder_direction) {
 			if ( (!in_array($s_sortOrder_field, $this->fphp_Mapping->value)) && (!$o_glob->FastProcessing) ) {
 				if (!$o_glob->TablefieldsDictionary->Exists($this->fphp_Table->value . '_' . $s_sortOrder_field)) {
@@ -173,6 +182,277 @@ abstract class forestTwig {
 	}
 	
 	abstract protected function init();
+	
+	/* cache table fields properties entries in dictionary in forestGlobals */
+	private function CacheTableFieldsProperties() {
+		$o_glob = forestGlobals::Init();
+		
+		if (in_array($this->fphp_TableUUID->value, $o_glob->TablesWithTablefieldsCached)) {
+			return;
+		} else {
+			/*foreach ($o_glob->Tables as $key => $table) {
+				if ($this->fphp_TableUUID->value == $table) {
+					d2c($key);
+					d2c((in_array($this->fphp_TableUUID->value, $o_glob->TablesWithTablefields)));
+				}
+			}*/
+			
+			$a_foo = $o_glob->TablesWithTablefieldsCached;
+			$a_foo[] = $this->fphp_TableUUID->value;
+			$o_glob->TablesWithTablefieldsCached = $a_foo;
+		}
+		
+		if (in_array($this->fphp_TableUUID->value, $o_glob->TablesWithTablefields)) {
+			/* look for tablefields of current twig */
+			$o_tablefieldTwig = new tablefieldTwig;
+			$a_sqlAdditionalFilter = array(array('column' => 'TableUUID', 'value' => $this->fphp_TableUUID->value, 'operator' => '=', 'filterOperator' => 'AND'));
+			$o_glob->BackupTemp();
+			$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+			$o_tablefields = $o_tablefieldTwig->GetAllRecords(true);
+			$o_glob->Temp->Del('SQLAdditionalFilter');
+			$o_glob->RestoreTemp();
+			
+			if ($o_tablefields->Twigs->Count() > 0) {
+				foreach ($o_tablefields->Twigs as $o_tablefield) {
+					/* add tablefield information to global dictionary */
+					if (!$o_glob->TablefieldsDictionary->Exists($this->fphp_Table->value . '_' . $o_tablefield->FieldName)) {
+						$o_result = forestTwig::QueryFieldProperties($this->fphp_TableUUID->value, $o_tablefield->FieldName);
+						
+						if ($o_result != null) {
+							/*echo '<pre>';
+							print_r($o_result);
+							echo '</pre>';*/
+							
+							$o_tableFieldProperties = new forestTableFieldProperties(
+								$o_result['TableFieldUUID'],
+								$this->fphp_TableUUID->value,
+								$o_result['FieldName'],
+								$o_result['TableFieldTabId'],
+								$o_result['TableFieldJSONEncodedSettings'],
+								$o_result['TableFieldFooterElement'],
+								$o_result['TableFieldSubRecordField'],
+								$o_result['TableFieldOrder'],
+								$o_result['FormElementUUID'],
+								$o_result['FormElementName'],
+								$o_result['FormElementJSONEncodedSettings'],
+								$o_result['SqlTypeUUID'],
+								$o_result['SqlTypeName'],
+								$o_result['ForestDataUUID'],
+								$o_result['ForestDataName']
+							);
+							
+							$o_glob->TablefieldsDictionary->Add($o_tableFieldProperties, $this->fphp_Table->value . '_' . $o_tablefield->FieldName);
+						}
+					}
+				}
+			}
+			
+			/* iterate mapping for fields which may not be in table fields table */
+			foreach ($this->fphp_Mapping->value as $s_field) {
+				if ( ($s_field != 'Id') && ($s_field != 'UUID') ) {
+					/* add tablefield information to global dictionary */
+					if (!$o_glob->TablefieldsDictionary->Exists($this->fphp_Table->value . '_' . $s_field)) {
+						$o_result = $this->QueryFieldProperties($this->fphp_TableUUID->value, $s_field);
+						
+						if ($o_result != null) {
+							/*echo '<pre>';
+							print_r($o_result);
+							echo '</pre>';*/
+							
+							$o_tableFieldProperties = new forestTableFieldProperties(
+								$o_result['TableFieldUUID'],
+								$this->fphp_TableUUID->value,
+								$o_result['FieldName'],
+								$o_result['TableFieldTabId'],
+								$o_result['TableFieldJSONEncodedSettings'],
+								$o_result['TableFieldFooterElement'],
+								$o_result['TableFieldSubRecordField'],
+								$o_result['TableFieldOrder'],
+								$o_result['FormElementUUID'],
+								$o_result['FormElementName'],
+								$o_result['FormElementJSONEncodedSettings'],
+								$o_result['SqlTypeUUID'],
+								$o_result['SqlTypeName'],
+								$o_result['ForestDataUUID'],
+								$o_result['ForestDataName']
+							);
+							
+							$o_glob->TablefieldsDictionary->Add($o_tableFieldProperties, $this->fphp_Table->value . '_' . $s_field);
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	/* execute sql query to get field properties */
+	public static function QueryFieldProperties($p_s_tableUUID, $p_s_field) {
+		$o_glob = forestGlobals::Init();
+		
+		$o_querySelect = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::SELECT, 'sys_fphp_tablefield');
+				
+			$column_A = new forestSQLColumn($o_querySelect);
+				$column_A->Column = 'FieldName';
+			
+			$column_B = new forestSQLColumn($o_querySelect);
+				$column_B->Column = 'UUID';
+				$column_B->Name = 'TableFieldUUID';
+			
+			$column_C = new forestSQLColumn($o_querySelect);
+				$column_C->Column = 'TabId';
+				$column_C->Name = 'TableFieldTabId';
+				
+			$column_D = new forestSQLColumn($o_querySelect);
+				$column_D->Column = 'JSONEncodedSettings';
+				$column_D->Name = 'TableFieldJSONEncodedSettings';
+			
+			$column_E = new forestSQLColumn($o_querySelect);
+				$column_E->Column = 'FooterElement';
+				$column_E->Name = 'TableFieldFooterElement';
+			
+			$column_T = new forestSQLColumn($o_querySelect);
+				$column_T->Column = 'SubRecordField';
+				$column_T->Name = 'TableFieldSubRecordField';
+				
+			$column_U = new forestSQLColumn($o_querySelect);
+				$column_U->Column = 'SubRecordField';
+				$column_U->Name = 'TableFieldOrder';
+			
+			$column_F = new forestSQLColumn($o_querySelect);
+				$column_F->Column = 'FormElementUUID';
+				$column_F->Name = 'FormElementUUID';
+			
+			$column_G = new forestSQLColumn($o_querySelect);
+				$column_G->Table = 'sys_fphp_formelement';
+				$column_G->Column = 'Name';
+				$column_G->Name = 'FormElementName';
+			
+			$column_H = new forestSQLColumn($o_querySelect);
+				$column_H->Table = 'sys_fphp_formelement';
+				$column_H->Column = 'JSONEncodedSettings';
+				$column_H->Name = 'FormElementJSONEncodedSettings';
+				
+			$column_I = new forestSQLColumn($o_querySelect);
+				$column_I->Column = 'SqlTypeUUID';
+				$column_I->Name = 'SqlTypeUUID';
+			
+			$column_J = new forestSQLColumn($o_querySelect);
+				$column_J->Table = 'sys_fphp_sqltype';
+				$column_J->Column = 'Name';
+				$column_J->Name = 'SqlTypeName';
+			
+			$column_K = new forestSQLColumn($o_querySelect);
+				$column_K->Column = 'ForestDataUUID';
+				$column_K->Name = 'ForestDataUUID';
+			
+			$column_L = new forestSQLColumn($o_querySelect);
+				$column_L->Table = 'sys_fphp_forestdata';
+				$column_L->Column = 'Name';
+				$column_L->Name = 'ForestDataName';
+			
+		$o_querySelect->Query->Columns->Add($column_A);
+		$o_querySelect->Query->Columns->Add($column_B);
+		$o_querySelect->Query->Columns->Add($column_C);
+		$o_querySelect->Query->Columns->Add($column_D);
+		$o_querySelect->Query->Columns->Add($column_E);
+		$o_querySelect->Query->Columns->Add($column_T);
+		$o_querySelect->Query->Columns->Add($column_U);
+		$o_querySelect->Query->Columns->Add($column_F);
+		$o_querySelect->Query->Columns->Add($column_G);
+		$o_querySelect->Query->Columns->Add($column_H);
+		$o_querySelect->Query->Columns->Add($column_I);
+		$o_querySelect->Query->Columns->Add($column_J);
+		$o_querySelect->Query->Columns->Add($column_K);
+		$o_querySelect->Query->Columns->Add($column_L);
+		/* join with form element table */
+		$join_A = new forestSQLJoin($o_querySelect);
+		$join_A->JoinType = 'INNER JOIN';
+		$join_A->Table = 'sys_fphp_formelement';
+			
+			$relation_A = new forestSQLRelation($o_querySelect);
+			
+				$column_M = new forestSQLColumn($o_querySelect);
+					$column_M->Column = 'FormElementUUID';
+				
+				$column_N = new forestSQLColumn($o_querySelect);
+					$column_N->Table = $join_A->Table;
+					$column_N->Column = 'UUID';
+			
+			$relation_A->ColumnLeft = $column_M;
+			$relation_A->ColumnRight = $column_N;
+			$relation_A->Operator = '=';
+		
+		$join_A->Relations->Add($relation_A);
+		/* left join with sqltype table */
+		$join_B = new forestSQLJoin($o_querySelect);
+		$join_B->JoinType = 'LEFT OUTER JOIN';
+		$join_B->Table = 'sys_fphp_sqltype';
+		
+			$relation_B = new forestSQLRelation($o_querySelect);
+			
+			$column_O = new forestSQLColumn($o_querySelect);
+				$column_O->Column = 'SqlTypeUUID';
+				
+			$column_P = new forestSQLColumn($o_querySelect);
+				$column_P->Table = $join_B->Table;
+				$column_P->Column = 'UUID';
+			
+			$relation_B->ColumnLeft = $column_O;
+			$relation_B->ColumnRight = $column_P;
+			$relation_B->Operator = '=';
+		
+		$join_B->Relations->Add($relation_B);
+		/* left join with forestdata table */
+		$join_C = new forestSQLJoin($o_querySelect);
+		$join_C->JoinType = 'LEFT OUTER JOIN';
+		$join_C->Table = 'sys_fphp_forestdata';
+		
+			$relation_C = new forestSQLRelation($o_querySelect);
+			
+			$column_Q = new forestSQLColumn($o_querySelect);
+				$column_Q->Column = 'ForestDataUUID';
+			
+			$column_R = new forestSQLColumn($o_querySelect);
+				$column_R->Table = $join_C->Table;
+				$column_R->Column = 'UUID';
+			
+			$relation_C->ColumnLeft = $column_Q;
+			$relation_C->ColumnRight = $column_R;
+			$relation_C->Operator = '=';
+		
+		$join_C->Relations->Add($relation_C);
+		
+		$o_querySelect->Query->Joins->Add($join_A);
+		$o_querySelect->Query->Joins->Add($join_B);
+		$o_querySelect->Query->Joins->Add($join_C);
+		
+		$column_S = new forestSQLColumn($o_querySelect);
+			$column_S->Column = 'TableUUID';
+		
+		/* filter by table-uuid and field-name */
+		$where_A = new forestSQLWhere($o_querySelect);
+			$where_A->Column = $column_S;
+			$where_A->Value = $where_A->ParseValue($p_s_tableUUID);
+			$where_A->Operator = '=';
+			
+		$where_B = new forestSQLWhere($o_querySelect);
+			$where_B->Column = $column_A;
+			$where_B->Value = $where_A->ParseValue($p_s_field);
+			$where_B->Operator = '=';
+			$where_B->FilterOperator = 'AND';
+		
+		$o_querySelect->Query->Where->Add($where_A);
+		$o_querySelect->Query->Where->Add($where_B);
+		
+		$o_result = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect, false, false);
+		
+		/* we only expect and accept one record as result; any other result is invalid */
+		if (count($o_result) != 1) {
+			return null;
+		}
+		
+		return $o_result[0];
+	}
 	
 	/* fill Mapping array from forestTwig instance */
 	protected function fphp_FillMapping(array $p_a_object_vars) {
@@ -972,6 +1252,47 @@ abstract class forestTwig {
 		
 		/* generate new uuid */
 		$s_uuid = $o_glob->Security->GenUUID();
+		
+		/* we can deactivate checking for unique uuid, because it can be kind of long depending how many records exists in the table */
+		if ($o_glob->Trunk->CheckUniqueUUID) {
+			if (!in_array('UUID', $this->fphp_Mapping->value)) {
+				throw new forestException('Field UUID does not exists in twig object');
+			}
+		
+			do {
+				/* create select query for counting records with generated uuid to see if a record already exists with that uuid */
+				$o_querySelect = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::SELECT, $this->fphp_Table->value);
+					$o_column = new forestSQLColumn($o_querySelect);
+						$o_column->Column = 'UUID';
+						$o_column->Name = 'UUID';
+						$o_column->SqlAggregation = 'COUNT';
+					
+					$o_querySelect->Query->Columns->Add($o_column);
+					
+					$o_column = new forestSQLColumn($o_querySelect);
+						$o_column->Column = 'UUID';
+				
+					$o_where = new forestSQLWhere($o_querySelect);
+						$o_where->Column = $o_column;
+						$o_where->Value = $s_uuid;
+						$o_where->Operator = '=';
+					
+				$o_querySelect->Query->Where->Add($o_where);
+				
+				$o_result = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect, false, false);
+				
+				$i_amount_records = 0;
+		
+				/* query if index 'UUID' is available, because of postgresql case-sensitive */
+				if (array_key_exists('UUID', $o_result[0])) {
+					$i_amount_records = intval($o_result[0]['UUID']);
+				} else {
+					$i_amount_records = intval($o_result[0]['uuid']);
+				}
+				
+				/* if amount = 0 we can use the generated uuid */
+			} while ($i_amount_records != 0);
+		}
 		
 		return $s_uuid;
 	}

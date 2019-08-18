@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.0 (0x1 0001C)   | */
+/* | forestPHP V0.1.1 (0x1 0001C)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -12,6 +12,7 @@
  * + Version Log +
  * Version	Developer	Date		Comment
  * 0.1.0 alpha	renatus		2019-08-04	first build
+ * 0.1.1 alpha	renatus		2019-08-15	added navigation
  */
 ?>
 <!DOCTYPE html>
@@ -35,6 +36,12 @@
 	
 </head>
 <body>
+<?php
+if ($o_glob->URL->ShowNavigation) {
+	$o_glob->Navigation->RenderNavigation();
+}
+?>
+
 <div class="container-fluid">
 
 	<?php if (!is_null($o_glob->URL->BranchTitle)) : ?>

@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.0 (0x1 0000A)   | */
+/* | forestPHP V0.1.1 (0x1 0000A)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -14,6 +14,7 @@
  * + Version Log +
  * Version	Developer	Date		Comment
  * 0.1.0 alpha	renatus		2019-08-04	first build
+ * 0.1.1 alpha	renatus		2019-08-10	added trunk and forestDateTime functionality
  */
 
 class forestSQLQuery {
@@ -118,8 +119,8 @@ abstract class forestSQLQueryAbstract {
 			$p_s_value = '';
 		}
 		
-		if (is_a($p_s_value, 'DateTime')) {
-			$p_s_value = $p_s_value->format('Y-m-d H:i:s');
+		if (is_a($p_s_value, 'forestDateTime')) {
+			$p_s_value = $p_s_value->ToString();
 		}
 		
 		if (is_string($p_s_value)) {
@@ -158,8 +159,19 @@ abstract class forestSQLQueryAbstract {
 				$p_s_value = stripslashes($p_s_value);
 			}
 			
-			/* surround value with single quotes */
-			$p_s_value = "'" . $p_s_value . "'";
+			/* additionally utf8 en/decoding + surround value with single quotes */
+			if (!is_null($o_glob->Trunk)) {
+				if ($o_glob->Trunk->IncContentUTF8Decode) {
+					$p_s_value = "'" . utf8_decode($p_s_value) . "'";
+				} else if ($o_glob->Trunk->IncContentUTF8Encode) {
+					$p_s_value = "'" . utf8_encode($p_s_value) . "'";
+				} else {
+					$p_s_value = "'" . $p_s_value . "'";
+				}
+			} else {
+				/* surround value with single quotes */
+				$p_s_value = "'" . $p_s_value . "'";
+			}
 		}
 		
 		return $p_s_value;

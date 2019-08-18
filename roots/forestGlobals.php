@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.0 (0x1 00004)   | */
+/* | forestPHP V0.1.1 (0x1 00004)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -13,6 +13,7 @@
  * + Version Log +
  * Version	Developer	Date		Comment
  * 0.1.0 alpha	renatus		2019-08-04	first build
+ * 0.1.1 alpha	renatus		2019-08-07	added trunk, templates, form and tables functionality
  */
 
 class forestGlobals {
@@ -29,11 +30,25 @@ class forestGlobals {
 	private $ActiveBase;
 	private $IsPost;
 	private $FastProcessing;
+	private $Trunk;
 	private $Temp;
 	private $BackupTemp;
+	private $SystemMessages;
 	private $TwigLists;
+	private $Templates;
+	private $ActionForm;
+	private $PostModalForm;
 	private $Leaf;
+	private $Navigation;
 	private $BranchTree;
+	private $Translations;
+	private $Tables;
+	private $TablesInformation;
+	private $TablesWithTablefields;
+	private $TablesWithTablefieldsCached;
+	private $TablefieldsDictionary;
+	private $OriginalView;
+	private $TabIndex;
 	
 	/* Properties */
 	
@@ -49,11 +64,25 @@ class forestGlobals {
 		$this->ActiveBase = new forestString;
 		$this->IsPost = new forestBool(false);
 		$this->FastProcessing = new forestBool(false);
+		$this->Trunk = new forestObject('trunkTwig');
 		$this->Temp = new forestObject(new forestObjectList('stdClass'), false);
 		$this->BackupTemp = null;
+		$this->SystemMessages = new forestObject(new forestObjectList('forestException'), false);
 		$this->TwigLists = new forestObject(new forestObjectList('forestTwigList'), false);
+		$this->Templates = new forestObject(new forestObjectList('forestTemplates'), false);
+		$this->ActionForm = new forestObject('forestForm');
+		$this->PostModalForm = new forestObject('forestForm');
 		$this->Leaf = new forestString;
+		$this->Navigation = new forestObject(new forestNavigation, false);
 		$this->BranchTree = new forestArray;
+		$this->Translations = new forestArray;
+		$this->Tables = new forestArray;
+		$this->TablesInformation = new forestArray;
+		$this->TablesWithTablefields = new forestArray;
+		$this->TablesWithTablefieldsCached = new forestArray;
+		$this->TablefieldsDictionary = new forestObject(new forestObjectList('forestTableFieldProperties'), false);
+		$this->OriginalView = new forestString;
+		$this->TabIndex = new forestInt(100);
 	}
 	
 	/* method to create singleton object */
@@ -78,6 +107,10 @@ class forestGlobals {
 	
 	public function RestoreTemp() {
 		$this->Temp->value = $this->BackupTemp;
+	}
+	
+	public function GetTabIndex() {
+		return $this->TabIndex->value++;
 	}
 	
 	/* build a tree of the branch-structure which is often used by functions and navigation processes */
@@ -184,6 +217,130 @@ class forestGlobals {
 		echo 'VirtualActionId: '; var_dump($this->URL->value->VirtualActionId);
 		echo 'VirtualParameters:'; print_r($this->URL->value->VirtualParameters);
 		echo '</pre>';*/
+	}
+	
+	/* load all translations from database */
+	public function ListTranslations() {
+		$o_translationTwig = new translationTwig;
+		
+		/* read all translations records */
+		$a_sqlAdditionalFilter = array(array('column' => 'LanguageCode', 'value' => $this->Trunk->value->LanguageCode, 'operator' => '=', 'filterOperator' => 'AND'));
+		$this->Temp->value->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+		$o_result = $o_translationTwig->GetAllRecords(true);
+		$this->Temp->value->Del('SQLAdditionalFilter');
+		
+		/* put translation records into global 3 dimensional array */
+		if ($o_result->Twigs->Count() > 0) {
+			foreach ($o_result->Twigs as $o_translation) {
+				$this->Translations->value[$o_translation->BranchId][$o_translation->Name] = $o_translation->Value;
+			}
+		}
+		
+		$this->URL->value->BranchTitle = $this->GetTranslation($this->BranchTree->value['Id'][$this->URL->value->BranchId]['Title'], 1);
+		
+		/*echo '<pre>';
+		print_r($this->Translations->value);
+		echo '</pre>';*/
+	}
+	
+	/* get a translation by name */
+	public function GetTranslation($p_s_name, $p_i_branch_id = null) {
+		if (is_null($p_s_name)) {
+			throw new forestException('Please use name parameter for GetTranslation function.');
+		}
+		
+		/* if not branch id is set, use standard url branch id */
+		if (!is_null($p_i_branch_id)) {
+			$i_branch_id = intval($p_i_branch_id);
+		} else {
+			$i_branch_id = $this->URL->value->BranchId;
+		}
+		
+		/* check if translation can be found */
+		if (array_key_exists($i_branch_id, $this->Translations->value)) {
+			if (array_key_exists($p_s_name, $this->Translations->value[$i_branch_id])) {
+				return $this->Translations->value[$i_branch_id][$p_s_name];
+			}
+		}
+		
+		/* check for root translation */
+		if (array_key_exists(0, $this->Translations->value)) {
+			if (array_key_exists($p_s_name, $this->Translations->value[0])) {
+				return $this->Translations->value[0][$p_s_name];
+			}
+		}
+		
+		/* check for general translation */
+		if (array_key_exists(1, $this->Translations->value)) {
+			if (array_key_exists($p_s_name, $this->Translations->value[1])) {
+				return $this->Translations->value[1][$p_s_name];
+			}
+		}
+		
+		return 'NO_CAPTION';
+	}
+	
+	/* load all table records from database */
+	public function ListTables() {
+		$o_tableTwig = new tableTwig;
+		
+		/* query all table records */
+		$o_result = $o_tableTwig->GetAllRecords(true);
+		
+		/* put table records into array */
+		if ($o_result->Twigs->Count() > 0) {
+			foreach ($o_result->Twigs as $o_table) {
+				$this->Tables->value[$o_table->Name] = $o_table->UUID;
+				$this->TablesInformation->value[$o_table->UUID]['Name'] = $o_table->Name;
+				$this->TablesInformation->value[$o_table->UUID]['Unique'] = $o_table->Unique;
+				$this->TablesInformation->value[$o_table->UUID]['SortOrder'] = $o_table->SortOrder;
+				$this->TablesInformation->value[$o_table->UUID]['Interval'] = $o_table->Interval;
+				$this->TablesInformation->value[$o_table->UUID]['View'] = $o_table->View;
+			}
+		}
+		
+		/*echo '<pre>';
+		print_r($this->Tables->value);
+		echo '</pre>';*/
+		
+		/*echo '<pre>';
+		print_r($this->TablesInformation->value);
+		echo '</pre>';*/
+		
+		/* query tables with table fields by using distinct on table-uuid column */
+		$o_querySelect = new forestSQLQuery($this->Base->value->{$this->ActiveBase->value}->BaseGateway, forestSQLQuery::SELECT, 'sys_fphp_tablefield');
+		$o_querySelect->Query->Distinct = true;
+		
+			$column_A = new forestSQLColumn($o_querySelect);
+				$column_A->Column = 'TableUUID';
+		
+		$o_querySelect->Query->Columns->Add($column_A);
+		
+		$o_result = $this->Base->value->{$this->ActiveBase->value}->FetchQuery($o_querySelect, false, false);
+		
+		/* put table uuid into array */
+		if (count($o_result) > 0) {
+			for ($i = 0; $i < count($o_result); $i++) {
+				$this->TablesWithTablefields->value[$i] = $o_result[$i]['TableUUID'];
+			}
+		}
+		
+		/*echo '<pre>';
+		print_r($this->TablesWithTablefields->value);
+		echo '</pre>';*/
+	}
+	
+	/* fast access to a tablefield entry in global dictionary by tablefield uuid */
+	public function GetTablefieldsDictionaryByUUID($p_s_uuid) {
+		$o_return = null;
+		
+		foreach ($this->TablefieldsDictionary->value as $o_tablefield) {
+			if ($o_tablefield->UUID == $p_s_uuid) {
+				$o_return = $o_tablefield;
+			}
+		}
+		
+		return $o_return;
 	}
 }
 ?>
