@@ -1,6 +1,6 @@
 /* +--------------------------------+ */
 /* |                                | */
-/* | forestPHP V0.1.1               | */
+/* | forestPHP V0.1.2               | */
 /* |                                | */
 /* +--------------------------------+ */
 
@@ -12,6 +12,7 @@
  * Version	Developer	Date		Comment
  * 0.1.0 alpha	renatus		2019-08-04	first build
  * 0.1.1 alpha	renatus		2019-08-14	added styles for modal, navigation, form and landing page
+ * 0.1.2 alpha	renatus		2019-08-25	added styles for btn-groups and list view
  */
 
 /* ********************************** */
@@ -134,6 +135,76 @@
 	}
 }
 
+
+/* ********************************** */
+/* ******* BTN GROUP ACTIONS ******** */
+/* ********************************** */
+/* adding this css decleration will fix any issues with table cells wrapping button groups. */
+.btn-group {
+	display: flex;
+}
+
+.btn-group {
+	margin-bottom: 5px;
+}
+
+/* DROPDOWNBOX ITEMS AFTER EACH OTHER IF SOME CLASS IS DEFINED...AND IF NOT MOBILE VIEW... */
+@media (min-width: 768px) {
+	.dropdown-menu .dropdown-fphp-collapse {
+		display: inline;
+		left: inherit;
+		top: inherit;
+		position: relative;
+		margin: inherit;
+		padding: inherit;
+		border: inherit;
+		font-size: inherit;
+		font-weight: inherit;
+		color: inherit;
+		background-color: inherit;
+		-webkit-box-shadow: inherit;
+		box-shadow: inherit;
+	}
+
+		.dropdown-menu .dropdown-fphp-collapse > li {
+			display: block;
+			float: left;
+		}
+
+			.dropdown-menu .dropdown-fphp-collapse > li > a {
+				/* bnt */
+				display: inline-block;
+				padding: 6px 12px;
+				margin-bottom: 0;
+				font-size: 14px;
+				font-weight: normal;
+				line-height: 1.42857143;
+				text-align: center;
+				white-space: nowrap;
+				vertical-align: middle;
+				cursor: pointer;
+				-webkit-user-select: none;
+				-moz-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
+				background-image: none;
+				border: 1px solid transparent;
+				border-radius: 4px;
+				/* btn default */
+				color: #333;
+				background-color: #fff;
+				border-color: #ccc;
+			}
+
+	.btn-group .dropdown-toggle {
+		display: none;
+	}
+
+	.btn-group.open .dropdown-toggle {
+		display: none;
+	}
+}
+
 /* ********************************** */
 /* ********* forestPHP-Form ********* */
 /* ********************************** */
@@ -154,6 +225,62 @@ input[type="file"]
 
 .form-inline input[type="checkbox"], .form-inline input[type="radio"] {
 	margin-right: 5px;
+}
+
+/* ********************************** */
+/* ******* forestPHP-ListView ******* */
+/* ********************************** */
+.ui-selectable > .ui-selected {
+	background-color: rgba(0, 0, 0, 0.075);
+}
+
+.row-eq-height {
+	display: -webkit-box;
+	display: -webkit-flex;
+	display: -ms-flexbox;
+	display: flex;
+}
+
+.row-eq-height-vertical-center {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+.row-eq-height-vertical-bottom {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+}
+
+.tag {
+	font-size: 14px;
+	padding: .3em .4em .4em;
+	margin: 0 .1em;
+}
+
+.tag a {
+	color: #bbb;
+	cursor: pointer;
+	opacity: 0.6;
+}
+
+.tag a:hover {
+	opacity: 1.0
+}
+
+.tag .remove {
+	vertical-align: bottom;
+	top: 0;
+}
+
+.tag a {
+	margin: 0 0 0 .3em;
+}
+
+.tag a .glyphicon-white {
+	color: #fff;
+	margin-bottom: 2px;
 }
 
 /* ********************************** */

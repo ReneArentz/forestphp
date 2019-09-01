@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.1 (0x1 0000C)   | */
+/* | forestPHP V0.1.2 (0x1 0000C)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -15,6 +15,7 @@
  * Version	Developer	Date		Comment
  * 0.1.0 alpha	renatus		2019-08-04	first build
  * 0.1.1 alpha	renatus		2019-08-10	added tablefield caching
+ * 0.1.2 alpha	renatus		2019-08-27	added sort and limit
  */
 
 abstract class forestTwig {
@@ -818,6 +819,11 @@ abstract class forestTwig {
 			$i_amount_records = intval($o_result[0]['amountrecords']);
 		}
 		
+		/* set global limit amount */
+		if ($p_b_updateLimitAmount) {
+			$o_glob->Limit->Amount = $i_amount_records;
+		}
+		
 		return $i_amount_records;
 	}
 	
@@ -1029,7 +1035,20 @@ abstract class forestTwig {
 		/* implement filter which is saved in session parameter array */
 		$this->ImplementFilter($o_querySelect, $p_b_unlimited);
 		
-		if ($o_glob->Temp->Exists('SQLAdditionalSorts')) {
+		/* use sort information of session parameter array */
+		if (($o_glob->Sorts->Count() > 0) && (!$p_b_unlimited)) {
+			foreach($o_glob->Sorts as $o_sort) {
+				/* skip sort fields which are not in the mapping array of twig object */
+				if (!in_array($o_sort->Column, $this->fphp_Mapping->value)) {
+					continue;
+				}
+				
+				$o_column = new forestSQLColumn($o_querySelect);
+					$o_column->Column = $o_sort->Column;
+				
+				$o_querySelect->Query->OrderBy->AddColumn($o_column, $o_sort->Direction);
+			}
+		} else if ($o_glob->Temp->Exists('SQLAdditionalSorts')) {
 			/* use sort information of global temp array */
 			foreach($o_glob->Temp->{'SQLAdditionalSorts'} as $s_sortColumn => $b_sortDirection) {
 				/* skip sort fields which are not in the mapping array of twig object */
@@ -1057,6 +1076,26 @@ abstract class forestTwig {
 			}
 		}
 		
+		/* set global limit values */
+		$o_glob->Limit->Start = 0;
+		$o_glob->Limit->Interval = $this->fphp_Interval->value;
+		
+		/* add limit values to the query if unlimited parameter is not set as true */
+		if (!$p_b_unlimited) {
+			if ($o_glob->Limit->Page > 1) {
+				$i_pages = intval(ceil(intval($o_glob->Limit->Amount) / intval($o_glob->Limit->Interval)));
+				
+				if ($o_glob->Limit->Page >= $i_pages) {
+					$o_glob->Limit->Page = $i_pages;
+				}
+				
+				$o_glob->Limit->Start = ($o_glob->Limit->Page - 1) * $o_glob->Limit->Interval;
+			}
+			
+			$o_querySelect->Query->Limit->Start = $o_glob->Limit->Start;
+			$o_querySelect->Query->Limit->Interval = $o_glob->Limit->Interval;
+		}
+
 		return $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect);
 	}
 	

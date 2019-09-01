@@ -9,16 +9,69 @@ class sessionBranch extends forestBranch {
 	/* Methods */
 	
 	protected function initBranch() {
+		$this->Filter->value = true;
+		$this->StandardView = forestBranch::LIST;
+		$this->KeepFilter->value = false;
 		
+		$this->Twig = new sessionTwig();
 	}
 	
 	protected function init() {
 		$o_glob = forestGlobals::init();
 		
-		$o_session = new sessionTwig;
-		$o_session->GetFirstRecord();
-		
-		$o_glob->PostModalForm = new forestForm($o_session, true, true);
+		if ($this->StandardView == forestBranch::DETAIL) {
+			$this->GenerateView();
+		} else if ($this->StandardView == forestBranch::LIST) {
+			$this->GenerateListView();
+		}
 	}
+	
+		protected function beforeViewAction() {
+			/* $this->Twig holds current record */
+		}
+	
+	protected function viewAction() {
+		$this->ViewRecord();
+	}
+	
+		protected function afterViewAction() {
+			/* $this->Twig holds current record */
+		}
+	
+		protected function beforeNewAction() {
+			/* $this->Twig holds current record */
+		}
+	
+	protected function newAction() {
+		$this->NewRecord();
+	}
+	
+		protected function afterNewAction() {
+			/* $this->Twig holds current record */
+		}
+		
+		protected function beforeEditAction() {
+			/* $this->Twig holds current record */
+		}
+			
+	protected function editAction() {
+		$this->EditRecord();
+	}
+	
+		protected function afterEditAction() {
+			/* $this->Twig holds current record */
+		}
+		
+		protected function beforeDeleteAction() {
+			/* $this->Twig holds current record */
+		}
+		
+	protected function deleteAction() {
+		$this->DeleteRecord();
+	}
+	
+		protected function afterDeleteAction() {
+			/* $this->Twig holds current record */
+		}
 }
 ?>

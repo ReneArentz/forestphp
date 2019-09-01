@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.1 (0x1 00001)   | */
+/* | forestPHP V0.1.2 (0x1 00001)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -13,6 +13,7 @@
  * Version	Developer	Date		Comment
  * 0.1.0 alpha	renatus		2019-08-04	first build
  * 0.1.1 alpha	renatus		2019-08-09	added trunk, form and systemmessages functionality
+ * 0.1.2 alpha	renatus		2019-08-23	added list and view rendering
  */
 
 class forestPHP {
@@ -212,6 +213,10 @@ class forestPHP {
 							/* render standard template if it is set, LandingPage, ListView or BranchView */
 							if ($o_glob->Templates->Exists($o_glob->URL->Branch . 'LandingPage')) {
 								echo $o_glob->Templates->{$o_glob->URL->Branch . 'LandingPage'};
+							} else if ($o_glob->Templates->Exists($o_glob->URL->Branch . 'ListView')) {
+								echo $o_glob->Templates->{$o_glob->URL->Branch . 'ListView'};
+							} else if ($o_glob->Templates->Exists($o_glob->URL->Branch . 'View')) {
+								echo $o_glob->Templates->{$o_glob->URL->Branch . 'View'};
 							}
 						}
 						

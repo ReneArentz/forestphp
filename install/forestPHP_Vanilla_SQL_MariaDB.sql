@@ -15,10 +15,14 @@ CREATE TABLE `sys_fphp_action` (
   `Name` varchar(32) DEFAULT NULL,
   PRIMARY KEY (`Id`),
   UNIQUE KEY `UNIQUE1` (`BranchId`,`Name`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
 
 INSERT INTO `sys_fphp_action` (`Id`, `BranchId`, `Name`) VALUES
-(1,	0,	'init');
+(5,	0,	'delete'),
+(4,	0,	'edit'),
+(1,	0,	'init'),
+(3,	0,	'new'),
+(2,	0,	'view');
 
 DROP TABLE IF EXISTS `sys_fphp_branch`;
 CREATE TABLE `sys_fphp_branch` (
@@ -521,4 +525,4 @@ CREATE TABLE `sys_fphp_trunk` (
 INSERT INTO `sys_fphp_trunk` (`Id`, `UUID`, `LanguageCode`, `SessionIntervalGuest`, `DateTimeSqlFormat`, `DateTimeFormat`, `DateFormat`, `TimeFormat`, `CheckUniqueUUID`, `IncContentUTF8Decode`, `IncContentUTF8Encode`, `OutContentUTF8Decode`, `OutContentUTF8Encode`, `NavbarAdditionalClass`, `NavbarAlign`, `NavbarBrandTitle`, `NavbarMaxLevel`) VALUES
 (1,	'29fcb1b8-6cdc-11e9-b874-1062e50d1fcb',	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'P2D',	'Y-m-d H:i:s',	'd.m.Y H:i:s',	'd.m.Y',	'H:i:s',	CONV('0', 2, 10) + 0,	CONV('1', 2, 10) + 0,	CONV('0', 2, 10) + 0,	CONV('0', 2, 10) + 0,	CONV('1', 2, 10) + 0,	'navbar-inverse',	'navbar-fixed-top',	'forestPHP Framework',	10);
 
--- 2019-07-11 07:29:49
+-- 2019-07-11 09:08:10

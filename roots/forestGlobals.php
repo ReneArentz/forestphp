@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.1 (0x1 00004)   | */
+/* | forestPHP V0.1.2 (0x1 00004)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -14,6 +14,7 @@
  * Version	Developer	Date		Comment
  * 0.1.0 alpha	renatus		2019-08-04	first build
  * 0.1.1 alpha	renatus		2019-08-07	added trunk, templates, form and tables functionality
+ * 0.1.2 alpha	renatus		2019-08-07	added sort, filter and limit functionality
  */
 
 class forestGlobals {
@@ -36,7 +37,13 @@ class forestGlobals {
 	private $SystemMessages;
 	private $TwigLists;
 	private $Templates;
+	private $Sorts;
+	private $BackupSorts;
+	private $Limit;
+	private $BackupLimit;
+	private $AddHiddenColumns;
 	private $ActionForm;
+	private $FilterForm;
 	private $PostModalForm;
 	private $Leaf;
 	private $Navigation;
@@ -44,6 +51,7 @@ class forestGlobals {
 	private $Translations;
 	private $Tables;
 	private $TablesInformation;
+	private $HeadTwig;
 	private $TablesWithTablefields;
 	private $TablesWithTablefieldsCached;
 	private $TablefieldsDictionary;
@@ -70,7 +78,13 @@ class forestGlobals {
 		$this->SystemMessages = new forestObject(new forestObjectList('forestException'), false);
 		$this->TwigLists = new forestObject(new forestObjectList('forestTwigList'), false);
 		$this->Templates = new forestObject(new forestObjectList('forestTemplates'), false);
+		$this->Sorts = new forestObject(new forestObjectList('forestSort'), false);
+		$this->BackupSorts = null;
+		$this->Limit = new forestObject(new forestLimit, false);
+		$this->BackupLimit = null;
+		$this->AddHiddenColumns = new forestObject(new forestObjectList('stdClass'), false);
 		$this->ActionForm = new forestObject('forestForm');
+		$this->FilterForm = new forestObject('forestForm');
 		$this->PostModalForm = new forestObject('forestForm');
 		$this->Leaf = new forestString;
 		$this->Navigation = new forestObject(new forestNavigation, false);
@@ -78,6 +92,7 @@ class forestGlobals {
 		$this->Translations = new forestArray;
 		$this->Tables = new forestArray;
 		$this->TablesInformation = new forestArray;
+		$this->HeadTwig = new forestObject('forestTwig');
 		$this->TablesWithTablefields = new forestArray;
 		$this->TablesWithTablefieldsCached = new forestArray;
 		$this->TablefieldsDictionary = new forestObject(new forestObjectList('forestTableFieldProperties'), false);
@@ -98,6 +113,35 @@ class forestGlobals {
 	function __clone() {
 		/* cloning forestGlobals is not allowed */
         throw new forestException('Cannot clone forestGlobals');
+	}
+	
+	public function GetSort($p_s_key) {
+		/* get single sort element by key */
+		if ($this->Sorts->value->Exists($p_s_key)) {
+			return $this->Sorts->value->{$p_s_key};
+		} else {
+			$foo = new forestSort($p_s_key, false);
+			$foo->Temp = true;
+			return $foo;
+		}
+	}
+	
+	public function BackupSorts() {
+		$this->BackupSorts = $this->Sorts->value;
+		$this->Sorts = new forestObject(new forestObjectList('forestSort'), false);
+	}
+	
+	public function RestoreSorts() {
+		$this->Sorts->value = $this->BackupSorts;
+	}
+	
+	public function BackupLimit() {
+		$this->BackupLimit = $this->Limit->value;
+		$this->Limit = new forestObject(new forestLimit, false);
+	}
+	
+	public function RestoreLimit() {
+		$this->Limit->value = $this->BackupLimit;
 	}
 	
 	public function BackupTemp() {

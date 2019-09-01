@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.1 (0x1 00005)   | */
+/* | forestPHP V0.1.2 (0x1 00005)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -13,6 +13,7 @@
  * + Version Log +
  * Version	Developer	Date		Comment
  * 0.1.0 alpha	renatus		2019-08-04	first build
+ * 0.1.2 alpha	renatus		2019-08-26	added parameter identification for sort and limit
  */
 
 class forestURL {
@@ -213,6 +214,18 @@ class forestURL {
 					
 					/* decode url-encoded strings like %20 etc. */
 					$this->Parameters->value[$s_key] = rawurldecode($s_value);
+					
+					/* exception paramater-format to recognize sort-fields */
+					if ($s_key[0] == '_') {
+						$o_glob->Sorts->Add(new forestSort(substr($s_key, 1), ( ($s_value == 'true') ? true : false ) ), substr($s_key, 1));
+					}
+					
+					/* exception paramater-format for paging */
+					if ($s_key == 'page') {
+						if (is_numeric($s_value)) {
+							$o_glob->Limit->Page = intval($s_value);
+						}
+					}
 					
 					/* exception parameter-format for adding hidden columns */
 					if ( ($s_key[0] == '-') && ($s_value == '-add') ) {
