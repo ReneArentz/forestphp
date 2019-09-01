@@ -24,6 +24,9 @@ forestPHP framework will be released under the **GPLv3 license** and the **MIT l
 
 ## Releases
 
+### 0.1.2 (alpha)
+New features: CRUD Actions, View + List-View, Sorting, Paging, Filtering of records. *09/2019*
+
 ### 0.1.1 (alpha)
 New features: Trunk Settings, Dynamic Landing page, DateTime + DateInterval handling, forestForm + Elements, Navigation bar, Dynamic Tablefields. *08/2019*
 
