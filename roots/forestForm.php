@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.2 (0x1 00015)   | */
+/* | forestPHP V0.1.3 (0x1 00015)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -14,6 +14,7 @@
  * + Version Log +
  * Version	Developer	Date		Comment
  * 0.1.1 alpha	renatus		2019-08-09	added to framework
+ * 0.1.3 alpha	renatus		2019-09-06	added formkey and validationrules
  */
 
 class forestForm {
@@ -281,6 +282,61 @@ class forestForm {
 							$this->FormElements->value->Add($o_formElement);
 						}
 					}
+					
+					/* if we have not read only mode */
+					if (!$this->FormObject->value->ReadonlyAll) {
+						/* get validation rules of tablefield and iterate them */
+						$o_querySelect = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::SELECT, 'sys_fphp_tablefield_validationrule');
+						
+						$column_A = new forestSQLColumn($o_querySelect);
+							$column_A->Column = '*';
+						
+						$o_querySelect->Query->Columns->Add($column_A);
+						
+						$join_A = new forestSQLJoin($o_querySelect);
+							$join_A->JoinType = 'INNER JOIN';
+							$join_A->Table = 'sys_fphp_validationrule';
+
+						$relation_A = new forestSQLRelation($o_querySelect);
+						
+						$column_B = new forestSQLColumn($o_querySelect);
+							$column_B->Column = 'ValidationruleUUID';
+							
+						$column_C = new forestSQLColumn($o_querySelect);
+							$column_C->Column = 'UUID';
+							$column_C->Table = $join_A->Table;
+						
+						$relation_A->ColumnLeft = $column_B;
+						$relation_A->ColumnRight = $column_C;
+						$relation_A->Operator = '=';
+						
+						$join_A->Relations->Add($relation_A);
+							
+						$o_querySelect->Query->Joins->Add($join_A);
+						
+						$column_D = new forestSQLColumn($o_querySelect);
+							$column_D->Column = 'TablefieldUUID';
+						
+						$where_A = new forestSQLWhere($o_querySelect);
+							$where_A->Column = $column_D;
+							$where_A->Value = $where_A->ParseValue($o_tableField->UUID);
+							$where_A->Operator = '=';
+						
+						$o_querySelect->Query->Where->Add($where_A);
+						
+						$o_result = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect, false, false);
+						
+						foreach ($o_result as $o_row) {
+							/* render validation rules */
+							$this->FormObject->value->ValRequiredMessage = $o_glob->GetTranslation('ValRequiredMessage', 1);
+							
+							$s_param01 = ( ((empty($o_row['ValidationRuleParam01'])) || ($o_row['ValidationRuleParam01'] == 'NULL')) ? null : $o_row['ValidationRuleParam01'] );
+							$s_param02 = ( ((empty($o_row['ValidationRuleParam02'])) || ($o_row['ValidationRuleParam02'] == 'NULL')) ? null : $o_row['ValidationRuleParam02'] );
+							$s_autoRequired = ( (($o_row['ValidationRuleRequired'] == 1)) ? 'true' : 'false' );
+							
+							$this->FormObject->value->ValRules->Add(new forestFormValidationRule($p_o_twig->fphp_Table . '_' . $o_tableField->FieldName, $o_row['Name'], $s_param01, $s_param02, $s_autoRequired));
+						}
+					}
 				}
 			}
 			
@@ -317,6 +373,9 @@ class forestForm {
 					}
 				}
 			}
+			
+			/* add form key as hash as hidden field in form footer */
+			$this->AddFormKey();
 			
 			/* add form tabs if we have any */
 			foreach ($a_tabsInfo as $o_tab) {
@@ -658,6 +717,9 @@ class forestForm {
 			}
 		}
 		
+		/* render validation rules */
+		$this->PrintValRules($s_foo);
+		
 		return forestStringLib::closeHTMLTags($s_foo);
 	}
 	
@@ -719,6 +781,9 @@ class forestForm {
 			$o_button->ButtonText = htmlspecialchars_decode($o_button->ButtonText);
 			$this->FormFooterElements->value->Add($o_button);
 		}
+		
+		/* add form key as hash as hidden field in form footer */
+		$this->AddFormKey();
 		
 		/* automatic display of modal form */
 		$this->Automatic->value = true;
@@ -788,10 +853,26 @@ class forestForm {
 		$o_button->ButtonText = htmlspecialchars_decode($o_button->ButtonText);
 		$this->FormFooterElements->value->Add($o_button);
 		
+		/* add form key as hash as hidden field in form footer */
+		$this->AddFormKey();
+		
 		/* automatic display of modal form */
 		$this->Automatic->value = true;
 	}
 	
+	public function AddFormKey() {
+		$o_glob = forestGlobals::init();
+		
+		/* add form key as hash as hidden field in form footer */
+		if ( ($o_glob->Trunk->FormKey) && ($o_glob->Security->SessionData->Exists('formkey')) ) {
+			$o_hidden = new forestFormElement(forestFormElement::HIDDEN);
+			$o_hidden->Id = 'sys_fphp_formkeyHash';
+			$o_hidden->Value = password_hash($o_glob->Security->SessionData->{'formkey'}, PASSWORD_DEFAULT);
+			
+			$this->FormFooterElements->value->Add($o_hidden);
+		}
+	}
+
 	public function GetFormElementByFormId($p_s_formId) {
 		$o_return = null;
 		
@@ -1003,6 +1084,48 @@ class forestForm {
 			}
 			
 			$p_s_foo .= strval($o_formElement);
+		}
+	}
+	
+	private function PrintValRules(&$p_s_foo) {
+		$i_valRules = $this->FormObject->value->ValRules->Count();
+		
+		if ($i_valRules > 0) {
+			/* render standard required message */
+			$p_s_foo .= '<div class="fphp_data_validator">
+				{
+					"s_formId" : "#' . $this->FormObject->value->Id . '",
+					"s_requiredDefaultMessage" : "' . $this->FormObject->value->ValRequiredMessage . '",
+					"a_rules" : [' . "\n";
+			
+			$i = 0;
+			
+			/* render each rule */
+			foreach ($this->FormObject->value->ValRules as $o_validationRule){
+				if (! ( ($o_validationRule->RuleParam01 == 'true') || ($o_validationRule->RuleParam01 == 'false') || (is_numeric($o_validationRule->RuleParam01)) ) ) {
+					$o_validationRule->RuleParam01 = '"' . $o_validationRule->RuleParam01 . '"';
+				}
+				
+				if (! ( ($o_validationRule->RuleParam02 == 'true') || ($o_validationRule->RuleParam02 == 'false') || (is_numeric($o_validationRule->RuleParam02)) ) ) {
+					$o_validationRule->RuleParam02 = '"' . $o_validationRule->RuleParam02 . '"';
+				}
+				
+				if (! ( ($o_validationRule->AutoRequired == 'true') || ($o_validationRule->AutoRequired == 'false') || (is_numeric($o_validationRule->AutoRequired)) ) ) {
+					$o_validationRule->AutoRequired = '"' . $o_validationRule->AutoRequired . '"';
+				}
+				
+				$p_s_foo .= '{ "s_formElementId" : "#' . $o_validationRule->FormElementId . '", "s_rule" : "' . $o_validationRule->Rule . '", "s_ruleParam01" : ' . $o_validationRule->RuleParam01 . ', "s_ruleParam02" : ' . $o_validationRule->RuleParam02 . ', "s_ruleAutoRequired" : ' . $o_validationRule->AutoRequired . ' }';
+				
+				if ($i < ($i_valRules - 1)) {
+					$p_s_foo .= ',' . "\n";
+				}
+				
+				$i++;
+			}
+			
+			$p_s_foo .= '		]
+				}
+			</div>' . "\n";
 		}
 	}
 }

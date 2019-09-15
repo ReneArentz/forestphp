@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.2 (0x1 00016)   | */
+/* | forestPHP V0.1.3 (0x1 00016)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -13,7 +13,8 @@
  *
  * + Version Log +
  * Version	Developer	Date		Comment
- * 0.1.1 alpha	renatus		2019-08-12	added to framework		
+ * 0.1.1 alpha	renatus		2019-08-12	added to framework
+ * 0.1.3 alpha	renatus		2019-09-06	added validationrules
  */
 
 class forestFormElement {
@@ -375,6 +376,46 @@ abstract class forestFormInputAttributes extends forestFormGeneralAttributes {
 	}
 }
 
+class forestFormValidationRule {
+	use forestData;
+	
+	/* Fields */
+	
+	private $FormElementId;
+	private $Rule;
+	private $RuleParam01;
+	private $RuleParam02;
+	private $AutoRequired;
+	
+	/* Properties */
+	
+	/* Methods */
+	
+	public function __construct($p_s_formElementId, $p_s_rule, $p_s_ruleParam01, $p_s_ruleParam02 = null, $p_s_autoRequired = 'true') {
+		$this->FormElementId = new forestString;
+		$this->Rule = new forestString;
+		$this->RuleParam01 = new forestString;
+		$this->RuleParam02 = new forestString;
+		$this->AutoRequired = new forestString;
+		
+		$this->FormElementId->value = $p_s_formElementId;
+		$this->Rule->value = $p_s_rule;
+		$this->RuleParam01->value = $p_s_ruleParam01;
+		
+		if ($p_s_ruleParam02 == null) {
+			$this->RuleParam02->value = '';
+		} else {
+			$this->RuleParam02->value = $p_s_ruleParam02;
+		}
+		
+		if ($p_s_autoRequired == 'true') {
+			$this->AutoRequired->value = 'true';
+		} else {
+			$this->AutoRequired->value = 'false';
+		}
+	}
+}
+
 class forestFormObject extends forestFormGeneralAttributes {
 	use forestData;
 	
@@ -393,6 +434,9 @@ class forestFormObject extends forestFormGeneralAttributes {
 	private $CheckboxClass;
 	private $RequiredAll;
 	private $ReadonlyAll;
+	
+	private $ValRequiredMessage;
+	private $ValRules;
 	
 	/* Properties */
 	
@@ -419,6 +463,9 @@ class forestFormObject extends forestFormGeneralAttributes {
 		$this->CheckboxClass = new forestString;
 		$this->RequiredAll = new forestBool;
 		$this->ReadonlyAll = new forestBool;
+		
+		$this->ValRequiredMessage = new forestString;
+		$this->ValRules = new forestObject(new forestObjectList('forestFormValidationRule'), false);
 	}
 	
 	public function getObjectVars() {

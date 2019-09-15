@@ -6,7 +6,7 @@ $laufzeit = $end - $start;
 ?>
 </div>
 <div>
-&copy; 2019 by forestPHP.de Version 0.1.2 (alpha)
+&copy; 2019 by forestPHP.de Version 0.1.3 (alpha)
 </div>
 
 <?php

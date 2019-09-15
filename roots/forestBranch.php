@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.2 (0x1 00014)   | */
+/* | forestPHP V0.1.3 (0x1 00014)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -17,6 +17,7 @@
  * 0.1.0 alpha	renatus		2019-08-04	first build
  * 0.1.1 alpha	renatus		2019-08-07	added view property and landing page function
  * 0.1.2 alpha	renatus		2019-08-23	added list view and view functionalities + CRUD actions
+ * 0.1.3 alpha	renatus		2019-09-05	added formkey and validationrules
  */
 
 abstract class forestBranch {
@@ -243,6 +244,117 @@ abstract class forestBranch {
 		$o_glob->FilterForm->FormElements->Add($o_filterDeleteColumn);
 		$o_glob->FilterForm->FormElements->Add($o_button);
 	}
+	
+	/* handle form key functionality */
+	protected function HandleFormKey($p_s_formId = 'NULL', $p_b_postChain = false) {
+		$o_glob = forestGlobals::init();
+		
+		if ($o_glob->Trunk->FormKey) {
+			/* delete old invalid form keys */
+			$o_DIFormKey = new forestDateInterval($o_glob->Trunk->FormKeyInterval);
+			$o_nowFormKey = new forestDateTime($o_glob->Trunk->DateTimeSqlFormat);
+			$o_nowFormKey->SubDateInterval($o_DIFormKey->y, $o_DIFormKey->m, $o_DIFormKey->d, $o_DIFormKey->h, $o_DIFormKey->i, $o_DIFormKey->s);
+			
+			$o_querySelect = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::SELECT, 'sys_fphp_formkey');
+					
+				$o_column_A = new forestSQLColumn($o_querySelect);
+					$o_column_A->Column = 'UUID';
+				
+				$o_column_B = new forestSQLColumn($o_querySelect);
+					$o_column_B->Column = 'Timestamp';
+				
+			$o_querySelect->Query->Columns->Add($o_column_A);
+			$o_querySelect->Query->Columns->Add($o_column_B);
+				
+				$o_where_A = new forestSQLWhere($o_querySelect);
+					$o_where_A->Column = $o_column_B;
+					$o_where_A->Value = $o_where_A->ParseValue($o_nowFormKey->ToString());
+					$o_where_A->Operator = '<=';
+					
+			$o_querySelect->Query->Where->Add($o_where_A);
+			
+			$o_formKeys = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect);
+			
+			if ($o_formKeys->Twigs->Count() > 0) {
+				foreach ($o_formKeys->Twigs as $o_formKey) {
+					$o_formKey->DeleteRecord();
+				}
+			}
+		
+			if ( ($o_glob->IsPost) && (!$p_b_postChain) ) {
+				/* check if form key is valid */
+				$o_formkeyTwig = new formkeyTwig;
+				$s_formkey = 'NULL';
+				
+				if ($o_glob->Security->SessionData->Exists('formkey')) {
+					$s_formkey = $o_glob->Security->SessionData->{'formkey'};
+				}
+				
+				/* if we cannot find form key record or transmitted hash does not match */
+				if ( (!$o_formkeyTwig->GetRecordPrimary(
+						array(
+							$s_formkey,
+							$o_glob->Security->SessionUUID,
+							$o_glob->URL->BranchId,
+							$o_glob->URL->ActionId,
+							$p_s_formId
+						),
+						array(
+							'UUID',
+							'SessionUUID',
+							'BranchId',
+							'ActionId',
+							'FormId'
+						)
+					)
+				) || (!password_verify($s_formkey, $_POST['sys_fphp_formkeyHash'])) ) {
+					throw new forestException(0x10001429);
+				} else {
+					if (issetStr($o_glob->Trunk->FormKeyMinimumInterval)) {
+						$o_DIFormKeyMinimumInterval = new forestDateInterval($o_glob->Trunk->FormKeyMinimumInterval);
+						$o_formkeyTwig->Timestamp->AddDateInterval($o_DIFormKeyMinimumInterval->y, $o_DIFormKeyMinimumInterval->m, $o_DIFormKeyMinimumInterval->d, $o_DIFormKeyMinimumInterval->h, $o_DIFormKeyMinimumInterval->i, $o_DIFormKeyMinimumInterval->s);
+						$o_now = new forestDateTime($o_glob->Trunk->DateTimeSqlFormat);
+						
+						/* if minimum time for a form has not expired */
+						if ($o_now < $o_formkeyTwig->Timestamp) {
+							throw new forestException(0x10001429);
+						}
+					}
+					
+					/* after validating the form key, it is obsolete and can be deleted */
+					$o_formkeyTwig->DeleteRecord();
+				}
+			} else {
+				/* init form key */
+				
+				/* delete current form key if form has been reloaded only without post */
+				$o_formkeyTwig = new formkeyTwig;
+				$s_formkey = 'NULL';
+				
+				if ($o_glob->Security->SessionData->Exists('formkey')) {
+					$s_formkey = $o_glob->Security->SessionData->{'formkey'};
+				}
+				
+				if ($o_formkeyTwig->GetRecord(array($s_formkey))) {
+					$o_formkeyTwig->DeleteRecord();
+				}
+				
+				/* create new form key */
+				$o_formkeyTwig = new formkeyTwig;
+				$o_formkeyTwig->SessionUUID = $o_glob->Security->SessionUUID;
+				$o_formkeyTwig->Timestamp = new forestDateTime($o_glob->Trunk->DateTimeSqlFormat);
+				$o_formkeyTwig->BranchId = $o_glob->URL->BranchId;
+				$o_formkeyTwig->ActionId = $o_glob->URL->ActionId;
+				$o_formkeyTwig->FormId = $p_s_formId;
+				
+				$o_formkeyTwig->InsertRecord();
+				
+				/* insert new form key into session */
+				$o_glob->Security->SessionData->Add($o_formkeyTwig->UUID, 'formkey');
+			}
+		}
+	}
+		
 	
 	/* generates landing page */
 	protected function GenerateLandingPage() {
@@ -899,6 +1011,8 @@ abstract class forestBranch {
 	protected function NewRecord() {
 		$o_glob = forestGlobals::init();
 		
+		$this->HandleFormKey($o_glob->URL->Branch . $o_glob->URL->Action . 'Form');
+		
 		if (!$o_glob->IsPost) {
 			/* add new record */
 			$o_glob->PostModalForm = new forestForm($this->Twig, true);
@@ -948,6 +1062,8 @@ abstract class forestBranch {
 		$o_glob->Temp->Add( get($o_glob->URL->Parameters, 'editKey'), 'editKey' );
 		
 		if ($o_glob->IsPost) {
+			$this->HandleFormKey($o_glob->URL->Branch . $o_glob->URL->Action . 'Form');
+			
 			/* check posted data for edit record */
 			
 			/* query record */
@@ -980,6 +1096,8 @@ abstract class forestBranch {
 		
 		/* if we have choosen multiple records for edit in general list view */
 		if ( ($o_glob->Temp->Exists('editKey')) && ($o_glob->Temp->{'editKey'} != null) ) {
+			$this->HandleFormKey($o_glob->URL->Branch . $o_glob->URL->Action . 'Form', true);
+			
 			/* get record keys */
 			$a_editKeys = explode('~', $o_glob->Temp->{'editKey'});
 			
@@ -1157,6 +1275,135 @@ abstract class forestBranch {
 							}
 						}
 					}
+					
+					$a_validationRules = array();
+					$this->GetValidationRules($o_glob->TablefieldsDictionary->{$s_tableFieldIdentifier}->UUID, $a_validationRules);
+					
+					/* check posted data with configurued validation rules */
+					if (count($a_validationRules) > 0) {
+						foreach ($a_validationRules as $o_validationRule) {
+							if ( ($o_validationRule['Name'] == 'required') || ($o_validationRule['ValidationRuleRequired'] == 1) ) {
+								/* d2c('!issetStr -> ' . (!issetStr($this->Twig->{$s_column}))); */
+								/* d2c('=== 0 -> ' . ($this->Twig->{$s_column} === 0)); */
+								/* d2c('=== floatval(0) -> ' . ($this->Twig->{$s_column} === floatval(0))); */
+								/* d2c('=== false -> ' . ($this->Twig->{$s_column} === false)); */
+								/* d2c('array count <= 0 -> ' . ((is_array($this->Twig->{$s_column})) && (count($this->Twig->{$s_column}) == 0))); */
+								if ( (!issetStr($this->Twig->{$s_column})) ^ ($this->Twig->{$s_column} === 0) ^ ($this->Twig->{$s_column} === floatval(0)) ^ ($this->Twig->{$s_column} === false) ^ ((is_array($this->Twig->{$s_column})) && (count($this->Twig->{$s_column}) == 0)) ) {
+									throw new forestException(0x10001408, array($s_column));
+								}
+							} else if ($o_validationRule['Name'] == 'minlength') {
+								if ( (issetStr($this->Twig->{$s_column})) && (strlen($this->Twig->{$s_column}) < intval($o_validationRule['ValidationRuleParam01'])) ) {
+									throw new forestException(0x10001409, array($s_column, intval($o_validationRule['ValidationRuleParam01'])));
+								}
+							} else if ($o_validationRule['Name'] == 'maxlength') {
+								if ( (issetStr($this->Twig->{$s_column})) && (strlen($this->Twig->{$s_column}) > intval($o_validationRule['ValidationRuleParam01'])) ) {
+									throw new forestException(0x1000140A, array($s_column, intval($o_validationRule['ValidationRuleParam01'])));
+								}
+							} else if ($o_validationRule['Name'] == 'min') {
+								if ($this->Twig->{$s_column} < intval($o_validationRule['ValidationRuleParam01'])) {
+									throw new forestException(0x1000140B, array($s_column, intval($o_validationRule['ValidationRuleParam01'])));
+								}
+							} else if ($o_validationRule['Name'] == 'max') {
+								if ($this->Twig->{$s_column} > intval($o_validationRule['ValidationRuleParam01'])) {
+									throw new forestException(0x1000140C, array($s_column, intval($o_validationRule['ValidationRuleParam01'])));
+								}
+							} else if ($o_validationRule['Name'] == 'email') {
+								if ( (issetStr($this->Twig->{$s_column})) && (!preg_match("/^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/", $this->Twig->{$s_column})) ) {
+									throw new forestException(0x1000140D, array($s_column));
+								}
+							} else if ($o_validationRule['Name'] == 'url') {
+								if ( (issetStr($this->Twig->{$s_column})) && (!preg_match("_^(https?|ftp)://(\S+(:\S*)?@)?(([1-9]|[1-9]\d|1\d\d|2[0-1]\d|22[0-3])(\.([0-9]|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])){2}(\.([1-9]|[1-9]\d|1\d\d|2[0-4]\d|25[0-4]))|(([a-z\x{00a1}-\x{ffff}0-9]+-?)*[a-z\x{00a1}-\x{ffff}0-9]+)(\.([a-z\x{00a1}-\x{ffff}0-9]+-?)*[a-z\x{00a1}-\x{ffff}0-9]+)*(\.([a-z\x{00a1}-\x{ffff}]{2,})))(:\d{2,5})?(/[^\s]*)?\$_iuS", $this->Twig->{$s_column})) ) {
+									throw new forestException(0x1000140E, array($s_column));
+								}
+							} else if ($o_validationRule['Name'] == 'digits') {
+								if ( (issetStr($this->Twig->{$s_column})) && (!preg_match("/^\d+$/", $_POST[$this->Twig->fphp_Table . '_' . $s_column])) ) {
+									throw new forestException(0x1000140F, array($s_column));
+								}
+							} else if ($o_validationRule['Name'] == 'equalTo') {
+								$s_field = str_replace('#' . $this->Twig->fphp_Table . '_', '', strval($o_validationRule['ValidationRuleParam01']));
+								
+								if ( (issetStr($this->Twig->{$s_column})) && ($this->Twig->{$s_column} != $this->Twig->{$s_field}) ) {
+									throw new forestException(0x10001410, array($s_column, $s_field));
+								}
+							} else if ($o_validationRule['Name'] == 'fphp_dateISO') {
+								if ( (issetStr($_POST[$this->Twig->fphp_Table . '_' . $s_column])) && (!preg_match("/^(\d){4}-((0[1-9])|(1[0-2]))-((0[1-9])|(1[0-9])|(2[0-9])|(3[0-1]))$/", $_POST[$this->Twig->fphp_Table . '_' . $s_column])) ) {
+									throw new forestException(0x10001411, array($s_column));
+								}
+							} else if ($o_validationRule['Name'] == 'dateISO') {
+								if ( (issetStr($_POST[$this->Twig->fphp_Table . '_' . $s_column])) && (!preg_match("/^\d{4}[\/\-](0?[1-9]|1[012])[\/\-](0?[1-9]|[12][0-9]|3[01])$/", $_POST[$this->Twig->fphp_Table . '_' . $s_column])) ) {
+									throw new forestException(0x10001411, array($s_column));
+								}
+							} else if ($o_validationRule['Name'] == 'fphp_dateDMYpoint') {
+								if ( (issetStr($_POST[$this->Twig->fphp_Table . '_' . $s_column])) && (!preg_match("/^((0[1-9])|(1[0-9])|(2[0-9])|(3[0-1]))\.((0[1-9])|(1[0-2]))\.(\d){4}$/", $_POST[$this->Twig->fphp_Table . '_' . $s_column])) ) {
+									throw new forestException(0x10001412, array($s_column));
+								}
+							} else if ($o_validationRule['Name'] == 'fphp_dateDMYslash') {
+								if ( (issetStr($_POST[$this->Twig->fphp_Table . '_' . $s_column])) && (!preg_match("/^((0[1-9])|(1[0-9])|(2[0-9])|(3[0-1]))\/((0[1-9])|(1[0-2]))\/(\d){4}$/", $_POST[$this->Twig->fphp_Table . '_' . $s_column])) ) {
+									throw new forestException(0x10001413, array($s_column));
+								}
+							} else if ($o_validationRule['Name'] == 'fphp_dateMDYslash') {
+								if ( (issetStr($_POST[$this->Twig->fphp_Table . '_' . $s_column])) && (!preg_match("/^((0[1-9])|(1[0-2]))\/((0[1-9])|(1[0-9])|(2[0-9])|(3[0-1]))\/(\d){4}$/", $_POST[$this->Twig->fphp_Table . '_' . $s_column])) ) {
+									throw new forestException(0x10001414, array($s_column));
+								}
+							} else if ($o_validationRule['Name'] == 'fphp_time') {
+								if ( (issetStr($_POST[$this->Twig->fphp_Table . '_' . $s_column])) && (!preg_match("/^(0[0-9]|1[0-9]|2[0-3]):([0-5][0-9])(:([0-5][0-9])){0,1}$/", $_POST[$this->Twig->fphp_Table . '_' . $s_column])) ) {
+									throw new forestException(0x10001415, array($s_column));
+								}
+							} else if ($o_validationRule['Name'] == 'fphp_datetime') {
+								if ( (issetStr($_POST[$this->Twig->fphp_Table . '_' . $s_column])) && (!preg_match("/^((0[1-9])|(1[0-9])|(2[0-9])|(3[0-1]))\.((0[1-9])|(1[0-2]))\.(\d){4}\s(0[0-9]|1[0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$/", $_POST[$this->Twig->fphp_Table . '_' . $s_column])) ) {
+									throw new forestException(0x10001416, array($s_column));
+								}
+							} else if ($o_validationRule['Name'] == 'fphp_datetimeISO') {
+								if ( (issetStr($_POST[$this->Twig->fphp_Table . '_' . $s_column])) && (!preg_match("/^(\d){4}-((0[1-9])|(1[0-2]))-((0[1-9])|(1[0-9])|(2[0-9])|(3[0-1]))(\s|T)(0[0-9]|1[0-9]|2[0-3]):([0-5][0-9])(:([0-5][0-9])){0,1}$/", $_POST[$this->Twig->fphp_Table . '_' . $s_column])) ) {
+									throw new forestException(0x10001417, array($s_column));
+								}
+							} else if ($o_validationRule['Name'] == 'fphp_dateinterval') {
+								if ( (issetStr($this->Twig->{$s_column})) && ((!preg_match("/^(P(((\d)+Y(\d)+M((\d)+(W|D))?)|((\d)+(Y|M)(\d)+(W|D))|((\d)+(Y|M|W|D)))T(((\d)+H(\d)+M(\d)+S)|((\d)+H(\d)+(M|S))|((\d)+M(\d)+S)|((\d)+(H|M|S))))$/", $this->Twig->{$s_column}))
+								&& (!preg_match("/^(PT(((\d)+H(\d)+M(\d)+S)|((\d)+H(\d)+(M|S))|((\d)+M(\d)+S)|((\d)+(H|M|S))))$/", $this->Twig->{$s_column}))
+								&& (!preg_match("/^(P(((\d)+Y(\d)+M((\d)+(W|D))?)|((\d)+(Y|M)(\d)+(W|D))|((\d)+(Y|M|W|D))))$/", $this->Twig->{$s_column}))) )
+								{
+									throw new forestException(0x10001418, array($s_column));
+								}
+							} else if ($o_validationRule['Name'] == 'fphp_password') {
+								if ( (issetStr(strval($_POST[$this->Twig->fphp_Table . '_' . $s_column]))) && (!((preg_match("/^[A-Za-z0-9\d=!\-@._*?#§$%&'~:;,]*$/", strval($_POST[$this->Twig->fphp_Table . '_' . $s_column])))
+								&& (preg_match("/[=!\-@._*?#§$%&'~:;,]/", strval($_POST[$this->Twig->fphp_Table . '_' . $s_column])))
+								&& (preg_match("/[a-z]/", strval($_POST[$this->Twig->fphp_Table . '_' . $s_column])))
+								&& (preg_match("/[A-Z]/", strval($_POST[$this->Twig->fphp_Table . '_' . $s_column])))
+								&& (preg_match("/\d/", strval($_POST[$this->Twig->fphp_Table . '_' . $s_column]))))) )
+								{
+									throw new forestException(0x10001419, array($s_column));
+								}
+							} else if ($o_validationRule['Name'] == 'fphp_username') {
+								if ( (issetStr($this->Twig->{$s_column})) && (!preg_match("/^[a-zA-Z0-9_\-]*$/", $this->Twig->{$s_column})) ) {
+									throw new forestException(0x1000141A, array($s_column));
+								}
+							} else if ($o_validationRule['Name'] == 'fphp_onlyletters') {
+								if ( (issetStr($this->Twig->{$s_column})) && (!preg_match("/^[a-zA-Z]*$/", $this->Twig->{$s_column})) ) {
+									throw new forestException(0x1000143F, array($s_column));
+								}
+							} else if ($o_validationRule['Name'] == 'number') {
+								if ( (issetStr($_POST[$this->Twig->fphp_Table . '_' . $s_column])) && (!preg_match("/^(?:-?\d+|-?\d{1,3}(?:,\d{3})+)?(?:\.\d+)?$/", $_POST[$this->Twig->fphp_Table . '_' . $s_column])) ) {
+									throw new forestException(0x1000141B, array($s_column));
+								}
+							} else if ($o_validationRule['Name'] == 'range') {
+								if ( ($this->Twig->{$s_column} < intval($o_validationRule['ValidationRuleParam01'])) || ($this->Twig->{$s_column} > intval($o_validationRule['ValidationRuleParam02'])) ) {
+									throw new forestException(0x1000141C, array($s_column, intval($o_validationRule['ValidationRuleParam01']), intval($o_validationRule['ValidationRuleParam02'])));
+								}
+							} else if ($o_validationRule['Name'] == 'rangelength') {
+								if ( (issetStr($this->Twig->{$s_column})) && ( (strlen($this->Twig->{$s_column}) < intval($o_validationRule['ValidationRuleParam01'])) || (strlen($this->Twig->{$s_column}) > intval($o_validationRule['ValidationRuleParam02'])) ) ) {
+									throw new forestException(0x1000141D, array($s_column, intval($o_validationRule['ValidationRuleParam01']), intval($o_validationRule['ValidationRuleParam02'])));
+								}
+							} else if ($o_validationRule['Name'] == 'fphp_month') {
+								if ( (issetStr($_POST[$this->Twig->fphp_Table . '_' . $s_column])) && (!preg_match("/^(\d){4}-((0[1-9])|(1[0-2]))$/", $_POST[$this->Twig->fphp_Table . '_' . $s_column])) ) {
+									throw new forestException(0x1000141E, array($s_column));
+								}
+							} else if ($o_validationRule['Name'] == 'fphp_week') {
+								if ( (issetStr($_POST[$this->Twig->fphp_Table . '_' . $s_column])) && (!preg_match("/^(\d){4}-W((0[1-9])|([1-4][0-9])|(5[0-3]))$/", $_POST[$this->Twig->fphp_Table . '_' . $s_column])) ) {
+									throw new forestException(0x1000141F, array($s_column));
+								}
+							}
+						}
+					}
 				} else {
 					/* columns which are not in post data, e.g. bool unchecked checkboxes */
 					if ($s_forestData == 'forestBool') {
@@ -1169,11 +1416,61 @@ abstract class forestBranch {
 		}
 	}
 	
+	/* get validation rules of form element */
+	protected function GetValidationRules($p_s_tableFieldUUID, &$p_a_validationRules) {
+		$o_glob = forestGlobals::init();
+		
+		$o_querySelect = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::SELECT, 'sys_fphp_tablefield_validationrule');
+		
+		$column_A = new forestSQLColumn($o_querySelect);
+			$column_A->Column = '*';
+		
+		$o_querySelect->Query->Columns->Add($column_A);
+		
+		$join_A = new forestSQLJoin($o_querySelect);
+			$join_A->JoinType = 'INNER JOIN';
+			$join_A->Table = 'sys_fphp_validationrule';
+
+		$relation_A = new forestSQLRelation($o_querySelect);
+		
+		$column_B = new forestSQLColumn($o_querySelect);
+			$column_B->Column = 'validationruleUUID';
+			
+		$column_C = new forestSQLColumn($o_querySelect);
+			$column_C->Column = 'UUID';
+			$column_C->Table = $join_A->Table;
+		
+		$relation_A->ColumnLeft = $column_B;
+		$relation_A->ColumnRight = $column_C;
+		$relation_A->Operator = '=';
+		
+		$join_A->Relations->Add($relation_A);
+			
+		$o_querySelect->Query->Joins->Add($join_A);
+		
+		$column_D = new forestSQLColumn($o_querySelect);
+			$column_D->Column = 'tablefieldUUID';
+		
+		$where_A = new forestSQLWhere($o_querySelect);
+			$where_A->Column = $column_D;
+			$where_A->Value = $where_A->ParseValue($p_s_tableFieldUUID);
+			$where_A->Operator = '=';
+		
+		$o_querySelect->Query->Where->Add($where_A);
+		
+		$o_result = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect, false, false);
+		
+		foreach ($o_result as $o_row) {
+			$p_a_validationRules[] = $o_row;
+		}
+	}
+	
 	
 	/* handle delete record action */
 	protected function DeleteRecord() {
 		$o_glob = forestGlobals::init();
 		
+		$this->HandleFormKey($o_glob->URL->Branch . $o_glob->URL->Action . 'Form');
 		$o_glob->Temp->Add( get($o_glob->URL->Parameters, 'deleteKey'), 'deleteKey' );
 		
 		if (!$o_glob->IsPost) {
