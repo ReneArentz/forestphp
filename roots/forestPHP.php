@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.3 (0x1 00001)   | */
+/* | forestPHP V0.1.4 (0x1 00001)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -14,6 +14,7 @@
  * 0.1.0 alpha	renatus		2019-08-04	first build
  * 0.1.1 alpha	renatus		2019-08-09	added trunk, form and systemmessages functionality
  * 0.1.2 alpha	renatus		2019-08-23	added list and view rendering
+ * 0.1.4 alpha	renatus		2019-09-26	added fphp_upload and fphp_upload_delete to fast-processing actions
  */
 
 class forestPHP {
@@ -49,7 +50,7 @@ class forestPHP {
 				}
 				
 				/* these actions are using fast processing, which means minimum execution of fphp system functions */
-				if (false) {
+				if (($o_glob->URL->Action == 'fphp_upload') || ($o_glob->URL->Action == 'fphp_upload_delete') ) {
 					$o_glob->FastProcessing = true;
 				}
 				

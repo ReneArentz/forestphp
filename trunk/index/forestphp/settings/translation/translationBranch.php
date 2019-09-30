@@ -66,12 +66,28 @@ class translationBranch extends forestBranch {
 			/* $this->Twig holds current record */
 		}
 		
+				protected function beforeDeleteFileAction() {
+					/* $this->Twig holds current file record */
+				}
+		
 	protected function deleteAction() {
 		$this->DeleteRecord();
 	}
-	
+				
+				protected function afterDeleteFileAction() {
+					/* $this->Twig holds current file record */
+				}
+				
 		protected function afterDeleteAction() {
 			/* $this->Twig holds current record */
+		}
+		
+		protected function beforeReplaceFileAction() {
+			/* $this->Twig holds current file record */
+		}
+		
+		protected function afterReplaceFileAction() {
+			/* $this->Twig holds current file record */
 		}
 }
 ?>

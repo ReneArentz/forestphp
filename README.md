@@ -24,6 +24,9 @@ forestPHP framework will be released under the **GPLv3 license** and the **MIT l
 
 ## Releases
 
+### 0.1.4 (alpha)
+New features: Detail modal view, Richtext element, Dropzone element, File Upload Handling, File Replacement. *09/2019*
+
 ### 0.1.3 (alpha)
 New features: jQuery Validate Implementation, form-key, Language, Translation, System Messages. *09/2019*
 

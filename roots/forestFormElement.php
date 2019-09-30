@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.3 (0x1 00016)   | */
+/* | forestPHP V0.1.4 (0x1 00016)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -15,6 +15,7 @@
  * Version	Developer	Date		Comment
  * 0.1.1 alpha	renatus		2019-08-12	added to framework
  * 0.1.3 alpha	renatus		2019-09-06	added validationrules
+ * 0.1.4 alpha	renatus		2019-09-23	added file, dropzone and richtext
  */
 
 class forestFormElement {
@@ -28,6 +29,7 @@ class forestFormElement {
 	const HIDDEN = 'hidden';
 	const PASSWORD = 'password';
 	const LIST = 'list';
+	const FILE = 'file';
 	const RADIO = 'radio';
 	const CHECKBOX = 'checkbox';
 	const COLOR = 'color';
@@ -45,6 +47,8 @@ class forestFormElement {
 	
 	const TEXTAREA = 'textarea';
 	const SELECT = 'select';
+	const RICHTEXT = 'richtext';
+	const DROPZONE = 'dropzone';
 	const DESCRIPTION = 'description';
 	const BUTTON = 'button';
 	const FIELDSET = 'fieldset';
@@ -89,6 +93,10 @@ class forestFormElement {
 			case self::LIST:
 				$this->Type->value = self::LIST;
 				$this->FormElement->value = new forestFormElementList();
+			break;
+			case self::FILE:
+				$this->Type->value = self::FILE;
+				$this->FormElement->value = new forestFormElementFile();
 			break;
 			case self::RADIO:
 				$this->Type->value = self::RADIO;
@@ -155,7 +163,14 @@ class forestFormElement {
 				$this->Type->value = self::SELECT;
 				$this->FormElement->value = new forestFormElementSelect();
 			break;
-			
+			case self::RICHTEXT:
+				$this->Type->value = self::RICHTEXT;
+				$this->FormElement->value = new forestFormElementRichtext();
+			break;
+			case self::DROPZONE:
+				$this->Type->value = self::DROPZONE;
+				$this->FormElement->value = new forestFormElementDropzone();
+			break;
 			case self::DESCRIPTION:
 				$this->Type->value = self::DESCRIPTION;
 				$this->FormElement->value = new forestFormElementDescription();
@@ -945,6 +960,106 @@ class forestFormElementPassword extends forestFormInputAttributes {
 		
 		if ($this->Readonly->value) {
 			$s_foo .= ' readonly';
+		}
+		
+		if ($this->Disabled->value) {
+			$s_foo .= ' disabled';
+		}
+		
+		$s_foo .= '>' . "\n";
+		
+		if (issetStr($this->Description->value)) {
+			$s_foo .= '<div';
+			
+			if (issetStr($this->DescriptionClass->value)) {
+				$s_foo .= ' class="' . $this->DescriptionClass->value . '"';
+			}
+			
+			$s_foo .= '><small>' . $this->Description->value . '</small></div>' . "\n";
+		}
+		
+		return forestStringLib::closeHTMLTags($s_foo);
+	}
+}
+
+class forestFormElementFile extends forestFormInputAttributes {
+	use forestData;
+	
+	/* Fields */
+	
+	/* Properties */
+	
+	/* Methods */
+	
+	public function __construct() {
+		parent::__construct();
+	}
+	
+	public function getObjectVars() {
+		return get_object_vars($this);
+	}
+	
+	public function __toString() {
+		$o_glob = forestGlobals::init();
+		
+		if (!issetStr($this->Name->value)) {
+			$this->Name->value = $this->Id->value;
+		}
+		
+		$s_foo = parent::__toString();
+		
+		$s_foo .= '<input type="file" id="' . $this->Id->value . '" name="' . $this->Name->value . '" class="' . $this->Class->value . '"';
+		
+		if (issetStr($this->Style->value)) {
+			$s_foo .= ' style="' . $this->Style->value . '"';
+		}
+		
+		if (issetStr($this->Accept->value)) {
+			$s_foo .= ' accept="' . $this->Accept->value . '"';
+		}
+		
+		if (issetStr($this->Capture->value)) {
+			$s_foo .= ' capture="' . $this->Capture->value . '"';
+		}
+		
+		if (issetStr($this->ValMessage->value)) {
+			$s_foo .= ' data-valmessage="' . $this->ValMessage->value . '"';
+		}
+		
+		
+		if (issetStr($this->Form->value)) {
+			$s_foo .= ' form="' . $this->Form->value . '"';
+		}
+		
+		if (issetStr($this->FormAction->value)) {
+			$s_foo .= ' formaction="' . $this->FormAction->value . '"';
+		}
+		
+		if (issetStr($this->FormEnctype->value)) {
+			$s_foo .= ' formenctype="' . $this->FormEnctype->value . '"';
+		}
+		
+		if (issetStr($this->FormMethod->value)) {
+			$s_foo .= ' formmethod="' . $this->FormMethod->value . '"';
+		}
+		
+		if ($this->FormNoValidate->value) {
+			$s_foo .= ' formnovalidate="formnovalidate"';
+		}
+		
+		if (issetStr($this->FormTarget->value)) {
+			$s_foo .= ' formtarget="' . $this->FormTarget->value . '"';
+		}
+		
+		
+		$s_foo .= ' tabindex="' . $o_glob->GetTabIndex() . '"';
+		
+		if ($this->AutoFocus->value) {
+			$s_foo .= ' autofocus';
+		}
+		
+		if ($this->Required->value) {
+			$s_foo .= ' required';
 		}
 		
 		if ($this->Disabled->value) {
@@ -2906,6 +3021,242 @@ class forestFormElementSelect extends forestFormGeneralAttributes {
 			
 			$s_foo .= '><small>' . $this->Description->value . '</small></div>' . "\n";
 		}
+		
+		return forestStringLib::closeHTMLTags($s_foo);
+	}
+}
+
+class forestFormElementDropzone extends forestFormGeneralAttributes {
+	use forestData;
+	
+	/* Fields */
+	
+	private $ContainerId;
+	private $PostDataId;
+	private $PostDataName;
+	private $InputFileId;
+	private $InputFileName;
+	private $ClickId;
+	private $IconClass;
+	private $Text;
+	private $ListContainerId;
+	private $ListId;
+	private $FormId;
+	private $UploadStatusId;
+	private $UploadDeleteId;
+	private $DeletePostFieldName;
+	private $UploadPostFieldNameFile;
+	private $UploadPostFieldNameFilename;
+	private $URIFileUploader;
+	private $URIFileDeleter;
+	private $PromptTitle;
+	private $PromptFileName;
+	private $RandomIdLength;
+	
+	/* Properties */
+	
+	/* Methods */
+	
+	public function __construct() {
+		parent::__construct();
+		
+		$this->ContainerId = new forestString;
+		$this->PostDataId = new forestString;
+		$this->PostDataName = new forestString;
+		$this->InputFileId = new forestString;
+		$this->InputFileName = new forestString;
+		$this->ClickId = new forestString;
+		$this->IconClass = new forestString;
+		$this->Text = new forestString;
+		$this->ListContainerId = new forestString;
+		$this->ListId = new forestString;
+		$this->FormId = new forestString;
+		$this->UploadStatusId = new forestString;
+		$this->UploadDeleteId = new forestString;
+		$this->DeletePostFieldName = new forestString;
+		$this->UploadPostFieldNameFile = new forestString;
+		$this->UploadPostFieldNameFilename = new forestString;
+		$this->URIFileUploader = new forestString;
+		$this->URIFileDeleter = new forestString;
+		$this->PromptTitle = new forestString;
+		$this->PromptFileName = new forestString;
+		$this->RandomIdLength = new forestInt;
+	}
+	
+	public function getObjectVars() {
+		return get_object_vars($this);
+	}
+	
+	public function __toString() {
+		$o_glob = forestGlobals::init();
+		
+		$s_foo = parent::__toString();
+		
+		// check if values are set
+		
+		$s_foo .= '<div id="fphp_dropzone">
+			{
+				"dropzoneContainerId" : "' . $this->ContainerId->value . '",
+				"dropzonePostDataId" : "' . $this->PostDataId->value . '",
+				"dropzonePostDataName" : "' . $this->PostDataName->value . '",
+				"dropzoneInputFileId" : "' . $this->InputFileId->value . '",
+				"dropzoneInputFileName" : "' . $this->InputFileName->value . '",
+				"dropzoneClickId" : "' . $this->ClickId->value . '",
+				"dropzoneId" : "' . $this->Id->value . '",
+				"dropzoneIconClass" : "' . $this->IconClass->value . '",
+				"dropzoneText" : "' . $this->Text->value . '",
+				"dropzoneListContainerId" : "' . $this->ListContainerId->value . '",
+				"dropzoneListId" : "' . $this->ListId->value . '",
+				
+				"s_dropzoneFormId" : "form#' . $this->FormId->value . '",
+				"s_dropzonePostDataId" : "input#' . $this->PostDataId->value . '",
+				"s_dropzoneInputFileId" : "input#' . $this->InputFileId->value . '",
+				"s_dropzoneAId" : "a#' . $this->ClickId->value . '",
+				"s_dropzoneId" : "div#' . $this->Id->value . '",
+				
+				"s_dropzoneListId" : "ul#' . $this->ListId->value . '",
+				"s_uploadStatusId" : "span#' . $this->UploadStatusId->value . '_",
+				"s_uploadStatusIdValue" : "' . $this->UploadStatusId->value . '_",
+				"s_uploadDeleteId" : "span#' . $this->UploadDeleteId->value . '_",
+				"s_uploadDeleteIdValue" : "' . $this->UploadDeleteId->value . '_",
+				
+				"s_deletePostFieldName" : "' . $this->DeletePostFieldName->value . '",
+				"s_uploadPostFieldNameFile" : "' . $this->UploadPostFieldNameFile->value . '",
+				"s_uploadPostFieldNameFileName" : "' . $this->UploadPostFieldNameFilename->value . '",
+				
+				"s_uriFileUploader" : "' . $this->URIFileUploader->value . '",
+				"s_uriFileDeleter" : "' . $this->URIFileDeleter->value . '",
+				
+				"s_promptTitle" : "' . $this->PromptTitle->value . '",
+				"s_promptFileName" : "' . $this->PromptFileName->value . '",
+				
+				"i_randomIdLength" : ' . $this->RandomIdLength->value . '
+			}
+		</div>';
+		
+		return forestStringLib::closeHTMLTags($s_foo);
+	}
+}
+
+class forestFormElementRichtext extends forestFormGeneralAttributes {
+	use forestData;
+	
+	/* Fields */
+	
+	private $HiddenId;
+	private $ToolbarId;
+	private $DataCommand;
+	private $HighlightToolbarBtnClass;
+	private $CreateLink;
+	private $CreateLinkQuestion;
+	private $CreateLinkValue;
+	private $DropImage;
+	private $AskImageSize;
+	private $ImagesWidth;
+	private $ImagesHeight;
+	private $ImageWidthQuestion;
+	private $ImageHeightQuestion;
+	private $UndoAndRedo;
+	
+	/* Properties */
+	
+	/* Methods */
+	
+	public function __construct() {
+		parent::__construct();
+		
+		$this->HiddenId = new forestString;
+		$this->ToolbarId = new forestString;
+		$this->DataCommand = new forestString;
+		$this->HighlightToolbarBtnClass = new forestString;
+		$this->CreateLink = new forestBool;
+		$this->CreateLinkQuestion = new forestString;
+		$this->CreateLinkValue = new forestString;
+		$this->DropImage = new forestBool;
+		$this->AskImageSize = new forestBool;
+		$this->ImagesWidth = new forestInt;
+		$this->ImagesHeight = new forestInt;
+		$this->ImageWidthQuestion = new forestString;
+		$this->ImageHeightQuestion = new forestString;
+		$this->UndoAndRedo = new forestBool;
+	}
+	
+	public function getObjectVars() {
+		return get_object_vars($this);
+	}
+	
+	public function __toString() {
+		$o_glob = forestGlobals::init();
+		
+		$s_foo = parent::__toString();
+		
+		// check if values are set
+		
+		$s_foo .= '<div id="fphp_richtext">
+			{
+				"s_id" : "' . $this->Id->value . ( ($this->Disabled->value) ? '_disabled' : '') . '",
+				"s_hiddenId" : "' . $this->HiddenId->value . ( ($this->Disabled->value) ? '_disabled' : '') . '",
+				"s_toolbarId" : "' . $this->ToolbarId->value . ( ($this->Disabled->value) ? '_disabled' : '') . '",
+				"s_toolbarSelector" : "[data-toolbarId=' . $this->ToolbarId->Value . ( ($this->Disabled->value) ? '_disabled' : '') . ']",
+				"s_dataCommand" : "' . $this->DataCommand->Value . '",
+				"s_highlightToolbarBtn" : "' . $this->HighlightToolbarBtnClass->Value . '",
+				"b_createLink" : ' . ( ($this->CreateLink->Value) ? 'true' : 'false' ) . ',
+				"s_createLinkQuestion" : "' . $this->CreateLinkQuestion->Value . '",
+				"s_createLinkValue" : "' . $this->CreateLinkValue->Value . '",
+				"b_dropImage" : ' . ( ($this->DropImage->Value) ? 'true' : 'false' ) . ',
+				"b_askImageSize" : ' . ( ($this->AskImageSize->Value) ? 'true' : 'false' ) . ',
+				"i_imagesWidth" : ' . $this->ImagesWidth->Value . ',
+				"i_imagesHeight" : ' . $this->ImagesHeight->Value . ',
+				"s_imageWidthQuestion" : "' . $this->ImageWidthQuestion->Value . '",
+				"s_imageHeightQuestion" : "' . $this->ImageHeightQuestion->Value . '",
+				"b_undoAndredo" : ' . ( ($this->UndoAndRedo->Value) ? 'true' : 'false' ) . ',
+				
+				"s_bTitle" : "' . $o_glob->GetTranslation('richtextBold', 1) . '",
+				"s_bButton" : "&lt;span style=\"font-weight: bold;\"&gt;B&lt;/span&gt;",
+				"s_iTitle" : "' . $o_glob->GetTranslation('richtextItalic', 1) . '",
+				"s_iButton" : "&lt;span style=\"font-style: italic; font-weight: bold;\"&gt;I&lt;/span&gt;",
+				"s_uTitle" : "' . $o_glob->GetTranslation('richtextUnderline', 1) . '",
+				"s_uButton" : "&lt;span style=\"text-decoration: underline; font-weight: bold;\"&gt;U&lt;/span&gt;",
+				"s_sTitle" : "' . $o_glob->GetTranslation('richtextLinethrough', 1) . '",
+				"s_sButton" : "&lt;span style=\"text-decoration: line-through; font-weight: bold;\"&gt;S&lt;/span&gt;",
+				"s_incFontTitle" : "' . $o_glob->GetTranslation('richtextIncreaseFontsize', 1) . '",
+				"s_incFontButton" : "&lt;span class=\"glyphicon glyphicon-text-size\"&gt;&lt;/span&gt;&lt;span style=\"font-size:0.75em;\" class=\"glyphicon glyphicon-triangle-top\"&gt;&lt;/span&gt;",
+				"s_decFontTitle" : "' . $o_glob->GetTranslation('richtextDecreaseFontsize', 1) . '",
+				"s_decFontButton" : "&lt;span class=\"glyphicon glyphicon-text-size\"&gt;&lt;/span&gt;&lt;span style=\"font-size:0.75em;\" class=\"glyphicon glyphicon-triangle-bottom\"&gt;&lt;/span&gt;",
+				"s_foreColorTitle" : "' . $o_glob->GetTranslation('richtextFontColor', 1) . '",
+				"s_foreColorButton" : "&lt;span class=\"glyphicon glyphicon-text-color\"&gt;&lt;/span&gt;",
+				"s_backColorTitle" : "' . $o_glob->GetTranslation('richtextHiliteColor', 1) . '",
+				"s_backColorButton" : "&lt;span class=\"glyphicon glyphicon-text-background\"&gt;&lt;/span&gt;",
+				"s_ulTitle" : "' . $o_glob->GetTranslation('richtextUnorderedList', 1) . '",
+				"s_ulButton" : "&lt;span class=\"glyphicon glyphicon-list\"&gt;&lt;/span&gt;",
+				"s_olTitle" : "' . $o_glob->GetTranslation('richtextOrderedList', 1) . '",
+				"s_olButton" : "&lt;span class=\"glyphicon glyphicon-list-alt\"&gt;&lt;/span&gt;",
+				"s_outTitle" : "' . $o_glob->GetTranslation('richtextIndent', 1) . '",
+				"s_outButton" : "&lt;span class=\"glyphicon glyphicon-indent-right\"&gt;&lt;/span&gt;",
+				"s_inTitle" : "' . $o_glob->GetTranslation('richtextOutdent', 1) . '",
+				"s_inButton" : "&lt;span class=\"glyphicon glyphicon-indent-left\"&gt;&lt;/span&gt;",
+				"s_leftTitle" : "' . $o_glob->GetTranslation('richtextJustifyLeft', 1) . '",
+				"s_leftButton" : "&lt;span class=\"glyphicon glyphicon-align-left\"&gt;",
+				"s_centerTitle" : "' . $o_glob->GetTranslation('richtextJustifyCenter', 1) . '",
+				"s_centerButton" : "&lt;span class=\"glyphicon glyphicon-align-center\"&gt;",
+				"s_rightTitle" : "' . $o_glob->GetTranslation('richtextJustifyRight', 1) . '",
+				"s_rightButton" : "&lt;span class=\"glyphicon glyphicon-align-right\"&gt;",
+				"s_fullTitle" : "' . $o_glob->GetTranslation('richtextJustifyFull', 1) . '",
+				"s_fullButton" : "&lt;span class=\"glyphicon glyphicon-align-justify\"&gt;",
+				"s_linkTitle" : "' . $o_glob->GetTranslation('richtextHyperlink', 1) . '",
+				"s_linkButton" : "&lt;span class=\"glyphicon glyphicon-link\"&gt;",
+				"s_unlinkTitle" : "' . $o_glob->GetTranslation('richtextRemoveHyperlink', 1) . '",
+				"s_unlinkButton" : "&lt;span class=\"glyphicon glyphicon-scissors\"&gt;&lt;/span&gt;",
+				"s_undoTitle" : "' . $o_glob->GetTranslation('richtextUndo', 1) . '",
+				"s_undoButton" : "&lt;span style=\"transform: rotateY(180deg);\" class=\"glyphicon glyphicon-repeat\"&gt;",
+				"s_redoTitle" : "' . $o_glob->GetTranslation('richtextRedo', 1) . '",
+				"s_redoButton" : "&lt;span class=\"glyphicon glyphicon-repeat\"&gt;&lt;/span&gt;",
+				"s_removeTitle" : "' . $o_glob->GetTranslation('richtextDeleteFormat', 1) . '",
+				"s_removeButton" : "&lt;span class=\"glyphicon glyphicon-erase\"&gt;&lt;/span&gt;",
+				"s_value" : "' . ( (issetStr($this->Value->value)) ? $this->Value->value : '' ) . '",
+				"b_disabled" : ' . ( ($this->Disabled->value) ? 'true' : 'false' ) . '
+			}
+		</div>';
 		
 		return forestStringLib::closeHTMLTags($s_foo);
 	}

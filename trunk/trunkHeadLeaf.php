@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.3 (0x1 0001C)   | */
+/* | forestPHP V0.1.4 (0x1 0001C)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -14,6 +14,7 @@
  * 0.1.0 alpha	renatus		2019-08-04	first build
  * 0.1.1 alpha	renatus		2019-08-15	added navigation
  * 0.1.3 alpha	renatus		2019-08-15	added fphp_data_validator
+ * 0.1.4 alpha	renatus		2019-09-28	added fphp_upload and fphp_richtext
  */
 ?>
 <!DOCTYPE html>
@@ -34,6 +35,8 @@
 	<script src="./src/bootstrap.min.js"></script>
 	
 	<script src="./src/forestPHP.js"></script>
+	<script src="./src/fphp_upload.js"></script>
+	<script src="./src/fphp_richtext.js"></script>
 	<script src="./src/fphp_data_validator.js"></script>
 	
 </head>

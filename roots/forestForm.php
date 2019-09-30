@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.3 (0x1 00015)   | */
+/* | forestPHP V0.1.4 (0x1 00015)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -15,6 +15,7 @@
  * Version	Developer	Date		Comment
  * 0.1.1 alpha	renatus		2019-08-09	added to framework
  * 0.1.3 alpha	renatus		2019-09-06	added formkey and validationrules
+ * 0.1.4 alpha	renatus		2019-09-23	added dropzone and richtext
  */
 
 class forestForm {
@@ -184,8 +185,8 @@ class forestForm {
 						continue;
 					}
 					
-					/* skip element if it is of type PASSWORD */
-					if ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == forestformElement::PASSWORD) {
+					/* skip element if it is of type FILE PASSWORD DROPZONE */
+					if ( ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == forestformElement::FILE) || ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == forestformElement::PASSWORD) || ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == forestformElement::DROPZONE) ) {
 						continue;
 					}
 				}
@@ -221,6 +222,13 @@ class forestForm {
 						if ( (property_exists($o_formElement->getFormElement(), 'Placeholder')) && (issetStr($o_formElement->Placeholder)) ) { 
 							$o_formElement->Placeholder = '';
 						}
+					}
+					
+					/* set form id, uploader and deleter for dropzone element */
+					if ($o_formElement->getType() == forestformElement::DROPZONE) {
+						$o_formElement->FormId = $this->FormObject->value->Id;
+						$o_formElement->URIFileUploader = forestLink::Link($o_glob->URL->Branch, 'fphp_upload');
+						$o_formElement->URIFileDeleter = forestLink::Link($o_glob->URL->Branch, 'fphp_upload_delete');
 					}
 					
 					/* adopt standard value of json encoded settings */
@@ -659,6 +667,11 @@ class forestForm {
 	}
 
 	public function __toString() {
+		/* check if we have elements of type FILE or DROPZONE */
+		if ($this->CheckUploadElementConfigured()) {
+			$this->FormObject->value->Enctype = 'multipart/form-data';
+		}
+		
 		$s_foo = '';
 		
 		/* render modal */
@@ -965,6 +978,28 @@ class forestForm {
 		return $b_return;
 	}
 	
+	private function CheckUploadElementConfigured() {
+		if ($this->FormTabConfiguration->value->Tab) {
+			if ($this->FormTabs->value->Count() > 0) {
+				foreach ($this->FormTabs->value as $o_tabElement) {
+					foreach ($o_tabElement->FormElements as $o_formElement) {
+						if ( ($o_formElement->getType() == forestFormElement::FILE) || ($o_formElement->getType() == forestFormElement::DROPZONE) ) {
+							return true;
+						}
+					}
+				}
+			}
+		}
+		
+		foreach ($this->FormElements->value as $o_formElement) {
+			if ( ($o_formElement->getType() == forestFormElement::FILE) || ($o_formElement->getType() == forestFormElement::DROPZONE) ) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
 	private function PrintTabElements($p_ol_tabElements, &$p_s_foo) {
 		$b_first = true;
 		$p_s_foo .= '<ul class="' . $this->FormTabConfiguration->value->TabMenuClass . '">' . "\n";
@@ -1055,12 +1090,12 @@ class forestForm {
 			
 			/* set readonly flag for all form elements */
 			if ($this->FormObject->value->ReadonlyAll) {
-				if ( ($o_formElement->getType() != forestFormElement::SELECT) && ($o_formElement->getType() != forestFormElement::COLOR) && ($o_formElement->getType() != forestFormElement::DESCRIPTION) ) {
+				if ( ($o_formElement->getType() != forestFormElement::SELECT) && ($o_formElement->getType() != forestFormElement::COLOR) && ($o_formElement->getType() != forestFormElement::DROPZONE) && ($o_formElement->getType() != forestFormElement::RICHTEXT) && ($o_formElement->getType() != forestFormElement::DESCRIPTION) ) {
 					$o_formElement->Readonly = true;
 				}
 				
 				/* other elements do not have readonly flag, instead we are using disabled flag */
-				if ( ($o_formElement->getType() == forestFormElement::RADIO) || ($o_formElement->getType() == forestFormElement::CHECKBOX) || ($o_formElement->getType() == forestFormElement::SELECT) || ($o_formElement->getType() == forestFormElement::COLOR) || ( ($o_formElement->getType() == forestFormElement::BUTTON) && (!$o_formElement->NoFormGroup) ) ) {
+				if ( ($o_formElement->getType() == forestFormElement::RICHTEXT) || ($o_formElement->getType() == forestFormElement::RADIO) || ($o_formElement->getType() == forestFormElement::CHECKBOX) || ($o_formElement->getType() == forestFormElement::SELECT) || ($o_formElement->getType() == forestFormElement::COLOR) || ( ($o_formElement->getType() == forestFormElement::BUTTON) && (!$o_formElement->NoFormGroup) ) ) {
 					$o_formElement->Disabled = true;
 				}
 			}
@@ -1238,12 +1273,12 @@ class forestFormTab {
 			
 			/* set readonly flag for all form elements */
 			if ($this->TempFormObject->value->ReadonlyAll) {
-				if ( ($o_formElement->getType() != forestFormElement::SELECT) && ($o_formElement->getType() != forestFormElement::COLOR) && ($o_formElement->getType() != forestFormElement::DESCRIPTION) ) {
+				if ( ($o_formElement->getType() != forestFormElement::SELECT) && ($o_formElement->getType() != forestFormElement::COLOR) && ($o_formElement->getType() != forestFormElement::DROPZONE) && ($o_formElement->getType() != forestFormElement::RICHTEXT) && ($o_formElement->getType() != forestFormElement::DESCRIPTION) ) {
 					$o_formElement->Readonly = true;
 				}
 				
 				/* other elements do not have readonly flag, instead we are using disabled flag */
-				if ( ($o_formElement->getType() == forestFormElement::RADIO) || ($o_formElement->getType() == forestFormElement::CHECKBOX) || ($o_formElement->getType() == forestFormElement::SELECT) || ($o_formElement->getType() == forestFormElement::COLOR) || ( ($o_formElement->getType() == forestFormElement::BUTTON)  && (!$o_formElement->NoFormGroup) ) ) {
+				if ( ($o_formElement->getType() == forestFormElement::RICHTEXT) || ($o_formElement->getType() == forestFormElement::RADIO) || ($o_formElement->getType() == forestFormElement::CHECKBOX) || ($o_formElement->getType() == forestFormElement::SELECT) || ($o_formElement->getType() == forestFormElement::COLOR) || ( ($o_formElement->getType() == forestFormElement::BUTTON)  && (!$o_formElement->NoFormGroup) ) ) {
 					$o_formElement->Disabled = true;
 				}
 			}
