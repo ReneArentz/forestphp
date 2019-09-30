@@ -24,6 +24,7 @@ class trunkTwig extends forestTwig {
 	private $IncContentUTF8Encode;
 	private $OutContentUTF8Decode;
 	private $OutContentUTF8Encode;
+	private $TempFilesLifetime;
 	
 	/* Properties */
 	
@@ -50,6 +51,7 @@ class trunkTwig extends forestTwig {
 		$this->IncContentUTF8Encode = new forestBool;
 		$this->OutContentUTF8Decode = new forestBool;
 		$this->OutContentUTF8Encode = new forestBool;
+		$this->TempFilesLifetime = new forestString;
 		
 		/* forestTwig system fields */
 		$this->fphp_Table->value = 'sys_fphp_trunk';
@@ -57,7 +59,7 @@ class trunkTwig extends forestTwig {
 		$this->fphp_Unique->value = array('UUID');
 		$this->fphp_SortOrder->value->Add(true, 'Id');
 		$this->fphp_Interval->value = 1;
-		$this->fphp_View->value = array('LanguageCode','DateTimeSqlFormat','DateTimeFormat','DateFormat','TimeFormat','CheckUniqueUUID','SessionIntervalGuest','FormKey','FormKeyInterval','FormKeyMinimumInterval','NavbarAdditionalClass','NavbarAlign','NavbarBrandTitle','NavbarMaxLevel','IncContentUTF8Decode','IncContentUTF8Encode','OutContentUTF8Decode','OutContentUTF8Encode');
+		$this->fphp_View->value = array('LanguageCode','DateTimeSqlFormat','DateTimeFormat','DateFormat','TimeFormat','CheckUniqueUUID','SessionIntervalGuest','FormKey','FormKeyInterval','FormKeyMinimumInterval','NavbarAdditionalClass','NavbarAlign','NavbarBrandTitle','NavbarMaxLevel','IncContentUTF8Decode','IncContentUTF8Encode','OutContentUTF8Decode','OutContentUTF8Encode','TempFilesLifetime');
 		$this->fphp_FillMapping(get_object_vars($this));
 	}
 }

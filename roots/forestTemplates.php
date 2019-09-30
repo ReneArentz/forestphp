@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.3 (0x1 0001B)   | */
+/* | forestPHP V0.1.4 (0x1 0001B)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -13,6 +13,7 @@
  * Version	Developer	Date		Comment
  * 0.1.1 alpha	renatus		2019-08-15	added to framework
  * 0.1.2 alpha	renatus		2019-08-25	added listview and view	
+ * 0.1.4 alpha	renatus		2019-09-28	added sublistview	
  */
 
 class forestTemplates {
@@ -29,6 +30,10 @@ class forestTemplates {
 	const VIEW = 'view';
 	const VIEWOPTIONSTOP = 'viewoptionstop';
 	const VIEWOPTIONSDOWN = 'viewoptionsdown';
+	
+	const SUBLISTVIEW = 'sublistview';
+	const SUBLISTVIEWITEM = 'sublistviewitem';
+	const SUBLISTVIEWITEMCONTENT = 'sublistviewitemcontent';
 	
 	private $Type;
 	private $PlaceHolders;
@@ -138,6 +143,39 @@ EOF;
 	</div>
 EOF;
 
+	const SUBLISTVIEWTXT = <<< EOF
+<div class="panel-group" id="accordion">
+	%0
+</div> 
+EOF;
+
+	const SUBLISTVIEWITEMTXT = <<< EOF
+	<div class="panel panel-default">
+		<div class="panel-heading"><a data-toggle="collapse" data-parent="#accordion" href="#%0">
+			<h4 class="panel-title">%1</h4>
+		</a></div>
+		<div id="%0" class="panel-collapse collapse%2"><div class="panel-body">
+			%3
+		</div></div>
+	</div>
+EOF;
+
+	const SUBLISTVIEWITEMCONTENTTXT = <<< EOF
+	%0
+	<div class="table-responsive">
+		<table class="table table-hover table-condensed">
+			<thead>
+				<tr>
+				%1
+				</tr>
+			</thead>
+			<tbody>
+			%2
+			</tbody>
+		</table>
+	</div>
+EOF;
+
 	/* Properties */
 	 
 	public function getType() {
@@ -177,6 +215,16 @@ EOF;
 			break;
 			case self::VIEWOPTIONSDOWN:
 				$this->Type->value = self::VIEWOPTIONSDOWN;
+			break;
+			
+			case self::SUBLISTVIEW:
+				$this->Type->value = self::SUBLISTVIEW;
+			break;
+			case self::SUBLISTVIEWITEM:
+				$this->Type->value = self::SUBLISTVIEWITEM;
+			break;
+			case self::SUBLISTVIEWITEMCONTENT:
+				$this->Type->value = self::SUBLISTVIEWITEMCONTENT;
 			break;
 			
 			default:

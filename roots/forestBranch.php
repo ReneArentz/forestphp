@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.3 (0x1 00014)   | */
+/* | forestPHP V0.1.4 (0x1 00014)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -18,6 +18,8 @@
  * 0.1.1 alpha	renatus		2019-08-07	added view property and landing page function
  * 0.1.2 alpha	renatus		2019-08-23	added list view and view functionalities + CRUD actions
  * 0.1.3 alpha	renatus		2019-09-05	added formkey and validationrules
+ * 0.1.4 alpha	renatus		2019-09-20	added file upload and cleanup functionality
+ * 0.1.4 alpha	renatus		2019-09-23	added dropzone and richtext functionality
  */
 
 abstract class forestBranch {
@@ -146,6 +148,11 @@ abstract class forestBranch {
 				}
 			}
 		} while ($this->NextAction->value);
+		
+		if (!$o_glob->FastProcessing) {
+			/* clean up routine for temporary files */
+			$this->CleanUpTempFiles();
+		}
 	}
 	
 	/* individual branch-classes are calling this method to set next action */
@@ -243,6 +250,76 @@ abstract class forestBranch {
 		$o_glob->FilterForm->FormElements->Add($o_filterInputColumn);
 		$o_glob->FilterForm->FormElements->Add($o_filterDeleteColumn);
 		$o_glob->FilterForm->FormElements->Add($o_button);
+	}
+	
+	/* clean up temp files and file records */
+	protected function CleanUpTempFiles() {
+		$o_glob = forestGlobals::init();
+		
+		/* delete old files in temp_files folder */
+		$a_files = scandir('./temp_files/');
+		
+		/*echo '<pre>';
+		print_r($a_files);
+		echo '</pre>';*/
+		
+		foreach ($a_files as $o_file) {
+			if ( ($o_file == '.') || ($o_file == '..') ) {
+				continue;
+			}
+			
+			$o_fileStat = stat('./temp_files/' . $o_file);
+			
+			if ($o_fileStat) {
+				/* calculate last modification datetime of file */
+				$o_fileDT = forestDateTime::UnixTimestampToDateTime($o_fileStat['mtime']);
+				
+				$o_DIDeleteFile = new forestDateInterval($o_glob->Trunk->TempFilesLifetime);
+				$o_nowDT = new forestDateTime;
+				$o_nowDT->subDateInterval($o_DIDeleteFile->y, $o_DIDeleteFile->m, $o_DIDeleteFile->d, $o_DIDeleteFile->h, $o_DIDeleteFile->i, $o_DIDeleteFile->s);
+				
+				if ($o_fileDT->DateTime < $o_nowDT->DateTime) {
+					/* delete file */
+					if (!@unlink('./temp_files/' . $o_file)) {
+						throw new forestException(0x10001422, array('./temp_files/' . $o_file));
+					}
+				}
+			}
+		}
+		
+		/* delete old file records, where files do not exist anymore */
+		$o_filesTwig = new filesTwig; 
+		
+		$o_files = $o_filesTwig->GetAllRecords(true);
+		
+		foreach ($o_files->Twigs as $o_file) {
+			$s_folder = substr(pathinfo($o_file->Name, PATHINFO_FILENAME), 6, 2);
+				
+			$o_glob->SetVirtualTarget($o_file->BranchId);
+		
+			/* generate path */
+			$s_path = '';
+			
+			if (count($o_glob->URL->VirtualBranches) > 0) {
+				foreach($o_glob->URL->VirtualBranches as $s_value) {
+					$s_path .= $s_value . '/';
+				}
+			} else {
+				$s_path .= $o_glob->URL->VirtualBranch . '/';
+			}
+			
+			$s_path = './trunk/' . $s_path . 'fphp_files/' . $s_folder . '/';
+			
+			if (!file_exists($s_path . $o_file->Name)) {
+				/* delete file record */
+				$i_return = $o_file->DeleteRecord();
+				
+				/* evaluate the result */
+				if ($i_return <= 0) {
+					throw new forestException(0x10001423);
+				}
+			}
+		}
 	}
 	
 	/* handle form key functionality */
@@ -416,6 +493,20 @@ abstract class forestBranch {
 		
 		$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'Delete" class="btn btn-default a-button-delete-record disabled" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
 		
+		/* view link */
+		$a_parameters = $o_glob->URL->Parameters;
+		unset($a_parameters['newKey']);
+		unset($a_parameters['viewKey']);
+		unset($a_parameters['editKey']);
+		unset($a_parameters['deleteKey']);
+		unset($a_parameters['editSubKey']);
+		unset($a_parameters['deleteSubKey']);
+		unset($a_parameters['deleteFileKey']);
+		unset($a_parameters['subConstraintKey']);
+		$a_parameters['viewKey'] = 'insertviewkey';
+		
+		$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'view', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'View" class="btn btn-default a-button-view-record disabled" title="' . $o_glob->GetTranslation('btnViewText', 1) . '"><span class="glyphicon glyphicon-zoom-in"></span></a>' . "\n";
+		
 		/* details link */
 		$a_parameters = $o_glob->URL->Parameters;
 		unset($a_parameters['viewKey']);
@@ -442,7 +533,7 @@ abstract class forestBranch {
 				$s_forestData = $o_glob->TablefieldsDictionary->{$this->Twig->fphp_Table . '_' . $s_columnHead}->ForestDataName;
 			}
 			
-			if ( ($s_formElement == forestFormElement::FORM) || ($s_formElement == forestFormElement::PASSWORD) ) {
+			if ( ($s_formElement == forestFormElement::FORM) || ($s_formElement == forestFormElement::PASSWORD) ||($s_formElement == forestFormElement::RICHTEXT) || ($s_formElement == forestFormElement::DROPZONE) ) {
 				continue;
 			}
 			
@@ -468,7 +559,7 @@ abstract class forestBranch {
 						$s_forestData = $o_glob->TablefieldsDictionary->{$this->Twig->fphp_Table . '_' . $s_column}->ForestDataName;
 					}
 					
-					if ( ($s_formElement == forestFormElement::FORM) || ($s_formElement == forestFormElement::PASSWORD) ) {
+					if ( ($s_formElement == forestFormElement::FORM) || ($s_formElement == forestFormElement::PASSWORD) ||($s_formElement == forestFormElement::RICHTEXT) || ($s_formElement == forestFormElement::DROPZONE) ) {
 						continue;
 					}
 					
@@ -556,6 +647,16 @@ abstract class forestBranch {
 			if (issetStr($p_o_record->{$p_s_column})) {
 				$p_s_value = '<span style="padding:3px 10px; background-color: ' . $p_o_record->{$p_s_column} . ';"></span>';
 			}
+		} else if ( ($p_s_formElement == forestFormElement::RICHTEXT) /*&& (is_a($p_o_record, 'subrecordsTwig'))*/ ) {
+			/* render richtext value, only for sub records */
+			if (issetStr($p_o_record->{$p_s_column})) {
+				$p_s_value = $p_o_record->{$p_s_column};
+				$p_s_value = str_replace('&amp;', '&', $p_s_value);
+				$p_s_value = str_replace('&gt;', '>', $p_s_value);
+				$p_s_value = str_replace('&lt;', '<', $p_s_value);
+				$p_s_value = str_replace('&aquota;', '"', $p_s_value);
+				$p_s_value = htmlspecialchars_decode($p_s_value, ( ENT_QUOTES | ENT_HTML5 ));
+			}
 		} else if ($p_s_formElement == forestFormElement::RADIO) {
 			/* render radio value by evaluating json settings */
 			$o_tempFormElement = new forestFormElement($p_s_formElement);
@@ -567,6 +668,32 @@ abstract class forestBranch {
 				foreach ($o_tempFormElement->Options as $s_option_label => $s_option_value) {
 					if ($p_o_record->{$p_s_column} == intval($s_option_value)) {
 						$p_s_value = (($b_isAssoc) ? $s_option_label : $s_option_value);
+					}
+				}
+			}
+		} else if ($p_s_formElement == forestFormElement::FILE) {
+			/* render file value */
+			$o_filesTwig = new filesTwig;
+			
+			if ($o_filesTwig->GetRecord(array($p_o_record->{$p_s_column}))) {
+				$s_folder = substr(pathinfo($o_filesTwig->Name, PATHINFO_FILENAME), 6, 2);
+				
+				$s_path = '';
+
+				if (count($o_glob->URL->Branches) > 0) {
+					foreach($o_glob->URL->Branches as $s_branch) {
+						$s_path .= $s_branch . '/';
+					}
+				}
+				
+				$s_path .= $o_glob->URL->Branch . '/';
+				
+				$s_path = './trunk/' . $s_path . 'fphp_files/' . $s_folder . '/';
+				
+				if (is_dir($s_path)) {
+					if (file_exists($s_path . $o_filesTwig->Name)) {
+						/* render file as downloadable link element */
+						$p_s_value = '<a href="' . $s_path . $o_filesTwig->Name . '" target="_blank" title="' . $o_filesTwig->DisplayName . '" download="' . $o_filesTwig->DisplayName . '"><span class="glyphicon glyphicon-download-alt"></span></a>';
 					}
 				}
 			}
@@ -782,7 +909,7 @@ abstract class forestBranch {
 				$s_forestData = $o_glob->TablefieldsDictionary->{$this->Twig->fphp_Table . '_' . $s_column}->ForestDataName;
 				
 				/* skip other tablefields which have no use in a list view */
-				if ( ($s_formElement == forestFormElement::FORM) || ($s_formElement == forestFormElement::PASSWORD) ) {
+				if ( ($s_formElement == forestFormElement::FORM) || ($s_formElement == forestFormElement::PASSWORD) ||($s_formElement == forestFormElement::RICHTEXT) || ($s_formElement == forestFormElement::DROPZONE) ) {
 					continue;
 				}
 				
@@ -965,6 +1092,9 @@ abstract class forestBranch {
 			
 			/* adjust title */
 			$s_title = $o_glob->URL->BranchTitle . ' ' . $o_glob->GetTranslation('BranchTitleRecord', 1);
+			
+			/* render sub records */
+			$s_subRecords = $this->ListSubRecords($o_records->Twigs->{0});
 		} else {
 			$o_options = '<div class="btn-group">' . "\n";
 			
@@ -994,15 +1124,154 @@ abstract class forestBranch {
 		$o_glob->Templates->Add(new forestTemplates(forestTemplates::VIEW, array($o_viewOptionsTop, $s_title, '', strval($s_form), $s_subRecords, $o_viewOptionsDown)), $o_glob->URL->Branch . 'View');
 	}
 	
+	/* handle sub records display in detail view */
+	protected function ListSubRecords(forestTwig $p_o_twig, $p_b_readonly = false) {
+		$o_glob = forestGlobals::init();
+		
+		$s_subFormItems = '';
+		$b_firstSubElement = false;
+		
+		/* check if table of twig parameter is valid table and has tablefields */
+		if (array_key_exists($p_o_twig->fphp_Table, $o_glob->Tables)) {
+			$s_tableUUID = $o_glob->Tables[$p_o_twig->fphp_Table];
+			$s_tableName = array_search($s_tableUUID, $o_glob->Tables);
+			
+			if (in_array($s_tableUUID, $o_glob->TablesWithTablefields)) {
+				/* look for files of head record */
+				$o_filesTwig = new filesTwig;
+				
+				$a_sqlAdditionalFilter = array(array('column' => 'ForeignUUID', 'value' => $p_o_twig->UUID, 'operator' => '=', 'filterOperator' => 'AND'));
+				$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+				$o_files = $o_filesTwig->GetAllRecords(true);
+				$o_glob->Temp->Del('SQLAdditionalFilter');
+				
+				if ($o_files->Twigs->Count() > 0) {
+					$s_subTableHead = '';
+					$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortFile', 1) . '</th>' . "\n";
+					$s_subTableHead .= '<th>' . $o_glob->GetTranslation('formSubOptions', 1) . '</th>' . "\n";
+					
+					$s_subTableRows = '';
+		
+					foreach ($o_files->Twigs as $o_file) {
+						$s_subTableRows .= '<tr>' . "\n";
+							
+						$s_subTableRows .=  '<td>' . $o_file->DisplayName . '</td>' . "\n";
+						
+						$s_options = '<span class="btn-group">' . "\n";
+						
+						$s_value = '';
+						$s_folder = substr(pathinfo($o_file->Name, PATHINFO_FILENAME), 6, 2);
+						$s_path = '';
+	
+						if (count($o_glob->URL->Branches) > 0) {
+							foreach($o_glob->URL->Branches as $s_branch) {
+								$s_path .= $s_branch . '/';
+							}
+						}
+						
+						$s_path .= $o_glob->URL->Branch . '/';
+						
+						$s_path = './trunk/' . $s_path . 'fphp_files/' . $s_folder . '/';
+						
+						if (is_dir($s_path)) {
+							if (file_exists($s_path . $o_file->Name)) {
+								$s_value = '<a href="' . $s_path . $o_file->Name . '" target="_blank" class="btn btn-default" title="' . $o_file->DisplayName . '" download="' . $o_file->DisplayName . '"><span class="glyphicon glyphicon-download"></span></a>' . "\n";
+							}
+						}
+						
+						$s_options .=  $s_value;
+						
+						if (!$p_b_readonly) {
+							$a_parameters = $o_glob->URL->Parameters;
+							unset($a_parameters['newKey']);
+							unset($a_parameters['viewKey']);
+							unset($a_parameters['viewSubKey']);
+							unset($a_parameters['editKey']);
+							unset($a_parameters['editFileKey']);
+							unset($a_parameters['deleteKey']);
+							unset($a_parameters['editSubKey']);
+							unset($a_parameters['deleteSubKey']);
+							unset($a_parameters['deleteFileKey']);
+							unset($a_parameters['subConstraintKey']);
+							$a_parameters['editFileKey'] = $o_file->UUID;
+							$a_parameters['subConstraintKey'] = $p_o_twig->fphp_TableUUID;
+							
+							$s_options .=  '<a href="' . forestLink::Link($o_glob->URL->Branch, 'replaceFile', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnUploadText', 1) . '"><span class="glyphicon glyphicon-upload"></span></a>' . "\n";
+							
+							$a_parameters = $o_glob->URL->Parameters;
+							unset($a_parameters['newKey']);
+							unset($a_parameters['viewKey']);
+							unset($a_parameters['editKey']);
+							unset($a_parameters['editSubKey']);
+							unset($a_parameters['deleteKey']);
+							unset($a_parameters['deleteSubKey']);
+							$a_parameters['deleteFileKey'] = $o_file->UUID;
+							
+							$s_options .=  '<a href="' . forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
+						}
+
+						
+						$s_options .= '</span>' . "\n";
+						$s_subTableRows .=  '<td>' . $s_options . '</td>' . "\n";
+						$s_subTableRows .=  '</tr>' . "\n";
+					}
+					
+					$s_firstElement = '';
+					
+					if ($b_firstSubElement == false) {
+						$s_firstElement = ' in';
+						$b_firstSubElement = true;
+					}
+					
+					$s_subFormItemContent = new forestTemplates(forestTemplates::SUBLISTVIEWITEMCONTENT, array('', $s_subTableHead, $s_subTableRows));
+					$s_subFormItems .= new forestTemplates(forestTemplates::SUBLISTVIEWITEM, array('subfiles', $o_glob->GetTranslation('Files', 1) . ' (' . $o_files->Twigs->Count() . ')', $s_firstElement, $s_subFormItemContent));
+				}
+			}
+		}
+		
+		/* use template to render sub constraints and files of a record */
+		return new forestTemplates(forestTemplates::SUBLISTVIEW, array($s_subFormItems));
+	}
+	
 	
 	/* handle view record action */
 	protected function ViewRecord() {
 		$o_glob = forestGlobals::init();
 		
-		if ($this->StandardView == forestBranch::DETAIL) {
-			$this->GenerateListView();
-		} else if ($this->StandardView == forestBranch::LIST) {
-			$this->GenerateView();
+		$o_glob->Temp->Add( get($o_glob->URL->Parameters, 'viewKey'), 'viewKey' );
+		
+		if ( ($o_glob->Temp->Exists('viewKey')) && ($o_glob->Temp->{'viewKey'} != null) ) {
+			/* query twig record if we have view key in url parameters */
+			if (! ($this->Twig->GetRecord(array($o_glob->Temp->{'viewKey'}))) ) {
+				throw new forestException(0x10001401, array($this->Twig->fphp_Table));
+			} else {
+				if (method_exists($this, 'beforeViewAction')) {
+					$this->beforeViewAction();
+				}
+				
+				/* create modal read only form */
+				$o_glob->PostModalForm = new forestForm($this->Twig, true, true);
+				
+				/* add sub constraints and files for modal form */
+				$o_glob->PostModalForm->FormModalSubForm = strval($this->ListSubRecords($this->Twig, true));
+				
+				if (method_exists($this, 'afterViewAction')) {
+					$this->afterViewAction();
+				}
+				
+				if ($o_glob->Security->SessionData->Exists('last_filter')) {
+					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
+				}
+				
+				$this->StandardView = forestBranch::LIST; /* because it only makes sense if we stay in list view, when we open modal read only form for record */
+				$this->SetNextAction('init');
+			}
+		} else {
+			if ($this->StandardView == forestBranch::DETAIL) {
+				$this->GenerateListView();
+			} else if ($this->StandardView == forestBranch::LIST) {
+				$this->GenerateView();
+			}
 		}
 	}
 	
@@ -1034,13 +1303,18 @@ abstract class forestBranch {
 			
 			/* evaluate result */
 			if ($i_result == -1) {
+				$this->UndoFilesEntries();
 				throw new forestException(0x10001403, array($o_glob->Temp->{'UniqueIssue'}));
 			} else if ($i_result == 0) {
+				$this->UndoFilesEntries();
 				throw new forestException(0x10001402);
 			} else if ($i_result == 1) {
 				$o_glob->SystemMessages->Add(new forestException(0x10001404));
 				
 			}
+			
+			/* handle uploads */
+			$this->TransferFILES_Twig();
 		}
 		
 		if (isset($this->KeepFilter)) {
@@ -1064,6 +1338,7 @@ abstract class forestBranch {
 		if ($o_glob->IsPost) {
 			$this->HandleFormKey($o_glob->URL->Branch . $o_glob->URL->Action . 'Form');
 			
+			
 			/* check posted data for edit record */
 			
 			/* query record */
@@ -1086,12 +1361,16 @@ abstract class forestBranch {
 			
 			/* evaluate result */
 			if ($i_result == -1) {
+				$this->UndoFilesEntries();
 				throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
 			} else if ($i_result == 0) {
 				$o_glob->SystemMessages->Add(new forestException(0x10001406));
 			} else if ($i_result == 1) {
 				$o_glob->SystemMessages->Add(new forestException(0x10001407));
 			}
+			
+			/* handle file uploads */
+			$this->TransferFILES_Twig();
 		}
 		
 		/* if we have choosen multiple records for edit in general list view */
@@ -1404,12 +1683,331 @@ abstract class forestBranch {
 							}
 						}
 					}
+				} else if (array_key_exists($this->Twig->fphp_Table . '_' . $s_column, $_FILES)) {
+					/* handle file uploads */
+					if ( (!empty($_FILES[$this->Twig->fphp_Table . '_' . $s_column]['name'])) && (!empty($_FILES[$this->Twig->fphp_Table . '_' . $s_column]['tmp_name'])) && (intval($_FILES[$this->Twig->fphp_Table . '_' . $s_column]['size']) != 0) ) {
+						$s_fileName = $_FILES[$this->Twig->fphp_Table . '_' . $s_column]['name'];
+						$s_newFilename = strtoupper(substr($o_glob->Security->GenRandomHash(), 0, 8));
+						$s_extension = pathinfo($s_fileName, PATHINFO_EXTENSION);
+						
+						$o_filesTwig = new filesTwig;
+						$o_filesTwig->BranchId = $o_glob->URL->BranchId;
+						$o_filesTwig->ForeignUUID = $o_glob->Security->GenUUID();
+						$o_filesTwig->Name = $s_newFilename . '.' . $s_extension;
+						$o_filesTwig->DisplayName = $s_fileName;
+						
+						$i_result = $o_filesTwig->InsertRecord();
+			
+						if ($i_result == -1) {
+							throw new forestException(0x10001403, array($o_glob->Temp->{'UniqueIssue'}));
+						} else if ($i_result == 0) {
+							throw new forestException(0x10001402);
+						} else if ($i_result == 1) {
+							$o_glob->Temp->Add($o_filesTwig->UUID, $s_column . '_uploadFilesTwigUUID');
+							$o_glob->Temp->Add($this->Twig->{$s_column}, $s_column . '_oldFilesTwigUUID');
+							$this->Twig->{$s_column} = $o_filesTwig->UUID;
+						}
+					}
 				} else {
 					/* columns which are not in post data, e.g. bool unchecked checkboxes */
 					if ($s_forestData == 'forestBool') {
 						$this->Twig->{$s_column} = false;
 					} else if ($s_forestData == 'forestInt') {
 						$this->Twig->{$s_column} = 0;
+					}
+				}
+			}
+		}
+		
+		if (array_key_exists('fphp_dropzonePostData', $_POST)) {
+			/* handle dropzone file uploads */
+			if (!empty($_POST['fphp_dropzonePostData'])) {
+				$a_files = explode('/', $_POST['fphp_dropzonePostData']);
+				$i = 0;
+				
+				foreach ($a_files as $s_file) {
+					$s_fileName = $s_file;
+					$s_newFilename = strtoupper(substr($o_glob->Security->GenRandomHash(), 0, 8));
+					$s_extension = pathinfo($s_fileName, PATHINFO_EXTENSION);
+					
+					$o_filesTwig = new filesTwig;
+					$o_filesTwig->BranchId = $o_glob->URL->BranchId;
+					$o_filesTwig->ForeignUUID = $o_glob->Security->GenUUID();
+					$o_filesTwig->Name = $s_newFilename . '.' . $s_extension;
+					$o_filesTwig->DisplayName = $s_fileName;
+					
+					$i_result = $o_filesTwig->InsertRecord();
+		
+					if ($i_result == -1) {
+						throw new forestException(0x10001403, array($o_glob->Temp->{'UniqueIssue'}));
+					} else if ($i_result == 0) {
+						throw new forestException(0x10001402);
+					} else if ($i_result == 1) {
+						$o_glob->Temp->Add($o_filesTwig->UUID, 'fphp_dropzonePostData_' . $i);
+						$i++;
+					}
+				}
+				
+				$o_glob->Temp->Add(count($a_files), 'fphp_dropzonePostDataAmount');
+			}
+		}
+	}
+	
+	/* handle FILES data */
+	protected function TransferFILES_Twig() {
+		$o_glob = forestGlobals::init();
+		$b_upload_done = false;
+		
+		foreach ($this->Twig->fphp_Mapping as $s_column) {
+			if ( ($s_column != 'Id') && ($s_column != 'UUID') ) {
+				if (array_key_exists($this->Twig->fphp_Table . '_' . $s_column, $_FILES)) {
+					if ( (!empty($_FILES[$this->Twig->fphp_Table . '_' . $s_column]['name'])) && (!empty($_FILES[$this->Twig->fphp_Table . '_' . $s_column]['tmp_name'])) && (intval($_FILES[$this->Twig->fphp_Table . '_' . $s_column]['size']) != 0) ) {
+						$o_filesTwig = new filesTwig;
+						
+						if ($o_glob->Temp->Exists($s_column . '_uploadFilesTwigUUID')) {
+							if ($o_filesTwig->GetRecord(array($o_glob->Temp->{$s_column . '_uploadFilesTwigUUID'}))) {
+								$o_oldFilesTwig = new filesTwig;
+								
+								/* delete old file */
+								if ($o_glob->Temp->Exists($s_column . '_oldFilesTwigUUID')) {
+									if ($o_oldFilesTwig->GetRecord(array($o_glob->Temp->{$s_column . '_oldFilesTwigUUID'}))) {
+										$s_folder = substr(pathinfo($o_oldFilesTwig->Name, PATHINFO_FILENAME), 6, 2);
+										
+										$s_path = '';
+					
+										if (count($o_glob->URL->Branches) > 0) {
+											foreach($o_glob->URL->Branches as $s_value) {
+												$s_path .= $s_value . '/';
+											}
+										}
+										
+										$s_path .= $o_glob->URL->Branch . '/';
+										
+										$s_path = './trunk/' . $s_path . 'fphp_files/' . $s_folder . '/';
+										
+										if (is_dir($s_path)) {
+											if (file_exists($s_path . $o_oldFilesTwig->Name)) {
+												if (!(@unlink($s_path . $o_oldFilesTwig->Name))) {
+													throw new forestException(0x10001422, array($s_path . $o_oldFilesTwig->Name));
+												}
+											}
+										}
+										
+										/* delete old file record */
+										$i_return = $o_oldFilesTwig->DeleteRecord();
+										
+										/* evaluate result */
+										if ($i_return <= 0) {
+											throw new forestException(0x10001423);
+										}
+									}
+								}
+								
+								/* check file structure */
+								forestFile::CreateFileFolderStructure($o_glob->URL->BranchId);
+								$s_folder = substr(pathinfo($o_filesTwig->Name, PATHINFO_FILENAME), 6, 2);
+								
+								$s_path = '';
+			
+								if (count($o_glob->URL->Branches) > 0) {
+									foreach($o_glob->URL->Branches as $s_value) {
+										$s_path .= $s_value . '/';
+									}
+								}
+								
+								$s_path .= $o_glob->URL->Branch . '/';
+								
+								$s_path = './trunk/' . $s_path . 'fphp_files/' . $s_folder . '/';
+								
+								if (!is_dir($s_path)) { /* target path does not exists */
+									/* delete file record */
+									$i_return = $o_filesTwig->DeleteRecord();
+									
+									/* evaluate result */
+									if ($i_return <= 0) {
+										throw new forestException(0x10001423);
+									}
+									
+									/* clear file value */
+									$this->Twig->{$s_column} = 'NULL';
+									/* update record */
+									$i_result = $this->Twig->UpdateRecord();
+									
+									/* evaluate result */
+									if ($i_result == -1) {
+										throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+									}
+									
+									throw new forestException(0x10001424, array($s_path));
+								}
+								
+								/* move file to target folder with new name */
+								if (!(@move_uploaded_file($_FILES[$this->Twig->fphp_Table . '_' . $s_column]['tmp_name'], $s_path . $o_filesTwig->Name))) {
+									/* delete file record */
+									$i_return = $o_filesTwig->DeleteRecord();
+									
+									/* evalute result */
+									if ($i_return <= 0) {
+										throw new forestException(0x10001423);
+									}
+									
+									/* clear file value */
+									$this->Twig->{$s_column} = 'NULL';
+									/* update record */
+									$i_result = $this->Twig->UpdateRecord();
+									
+									/* evaluate result */
+									if ($i_result == -1) {
+										throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+									}
+									
+									throw new forestException(0x10001425, array($o_filesTwig->DisplayName));
+								}
+								
+								/* append new file to current record */
+								$o_filesTwig->ForeignUUID = $this->Twig->UUID;
+								
+								/* update current file record */
+								$i_result = $o_filesTwig->UpdateRecord();
+								
+								/* evaluate result */
+								if ($i_result == -1) {
+									throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+								}
+								
+								$b_upload_done = true;
+								
+								$o_glob->Temp->Del($s_column . '_uploadFilesTwigUUID');
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		if (array_key_exists('fphp_dropzonePostData', $_POST)) {
+			if (!empty($_POST['fphp_dropzonePostData'])) {
+				if ($o_glob->Temp->Exists('fphp_dropzonePostDataAmount')) {
+					$o_filesTwig = new filesTwig;
+					
+					/* iterate each file in post files data */
+					for ($i = 0; $i < intval($o_glob->Temp->{'fphp_dropzonePostDataAmount'}); $i++) {
+						if ($o_glob->Temp->Exists('fphp_dropzonePostData_' . $i)) {
+							/* get file record which has been already inserted */
+							if ($o_filesTwig->GetRecord(array($o_glob->Temp->{'fphp_dropzonePostData_' . $i}))) {
+								/* create file folder structure if not created */
+								forestFile::CreateFileFolderStructure($o_glob->URL->BranchId);
+								$s_folder = substr(pathinfo($o_filesTwig->Name, PATHINFO_FILENAME), 6, 2);
+								
+								$s_path = '';
+			
+								if (count($o_glob->URL->Branches) > 0) {
+									foreach($o_glob->URL->Branches as $s_value) {
+										$s_path .= $s_value . '/';
+									}
+								}
+								
+								$s_path .= $o_glob->URL->Branch . '/';
+								
+								$s_path = './trunk/' . $s_path . 'fphp_files/' . $s_folder . '/';
+								
+								if (!is_dir($s_path)) {
+									/* delete file record */
+									$i_return = $o_filesTwig->DeleteRecord();
+									
+									/* evalute result */
+									if ($i_return <= 0) {
+										throw new forestException(0x10001423);
+									}
+									
+									throw new forestException(0x10001424, array($s_path));
+								}
+								
+								if (!(@rename('./temp_files/' . $o_filesTwig->DisplayName, $s_path . $o_filesTwig->Name))) {
+									/* delete file record */
+									$i_return = $o_filesTwig->DeleteRecord();
+									
+									/* evalute result */
+									if ($i_return <= 0) {
+										throw new forestException(0x10001423);
+									}
+									
+									throw new forestException(0x10001425, array($o_filesTwig->DisplayName));
+								}
+								
+								/* append new file to current record */
+								$o_filesTwig->ForeignUUID = $this->Twig->UUID;
+								/* change filename by deleting the random part */
+								$o_filesTwig->DisplayName = substr($o_filesTwig->DisplayName, 7);
+								
+								/* update file record */
+								$i_result = $o_filesTwig->UpdateRecord();
+			
+								/* evalute result */
+								if ($i_result == -1) {
+									throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+								}
+								
+								$b_upload_done = true;
+								
+								$o_glob->Temp->Del('fphp_dropzonePostData_' . $i);
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		/* render system message if at least one upload has been done */
+		if ($b_upload_done) {
+			$o_glob->SystemMessages->Add(new forestException(0x10001426));
+		}
+	}
+	
+	/* undo created file records if there are any exceptions for new records or editing records */
+	protected function UndoFilesEntries() {
+		$o_glob = forestGlobals::init();
+		
+		foreach ($this->Twig->fphp_Mapping as $s_column) {
+			if ( ($s_column != 'Id') && ($s_column != 'UUID') ) {
+				if (array_key_exists($this->Twig->fphp_Table . '_' . $s_column, $_FILES)) {
+					if ( (!empty($_FILES[$this->Twig->fphp_Table . '_' . $s_column]['name'])) && (!empty($_FILES[$this->Twig->fphp_Table . '_' . $s_column]['tmp_name'])) && (intval($_FILES[$this->Twig->fphp_Table . '_' . $s_column]['size']) != 0) ) {
+						$o_filesTwig = new filesTwig;
+						
+						if ($o_glob->Temp->Exists($s_column . '_uploadFilesTwigUUID')) {
+							if ($o_filesTwig->GetRecord(array($o_glob->Temp->{$s_column . '_uploadFilesTwigUUID'}))) {
+								/* delete file record */
+								$i_return = $o_filesTwig->DeleteRecord();
+								
+								/* evaluate result */
+								if ($i_return <= 0) {
+									throw new forestException(0x10001423);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		if (array_key_exists('fphp_dropzonePostData', $_POST)) {
+			if (!empty($_POST['fphp_dropzonePostData'])) {
+				if ($o_glob->Temp->Exists('fphp_dropzonePostDataAmount')) {
+					$o_filesTwig = new filesTwig;
+					
+					/* iterate all files which has been uploaded by dropzone */
+					for ($i = 0; $i < intval($o_glob->Temp->{'fphp_dropzonePostDataAmount'}); $i++) {
+						if ($o_glob->Temp->Exists('fphp_dropzonePostData_' . $i)) {
+							if ($o_filesTwig->GetRecord(array($o_glob->Temp->{'fphp_dropzonePostData_' . $i}))) {
+								/* delete file record */
+								$i_return = $o_filesTwig->DeleteRecord();
+								
+								/* evaluate result */
+								if ($i_return <= 0) {
+									throw new forestException(0x10001423);
+								}
+							}
+						}
 					}
 				}
 			}
@@ -1465,6 +2063,163 @@ abstract class forestBranch {
 		}
 	}
 	
+	/* handle replace file record action */
+	protected function replaceFileAction() {
+		$o_glob = forestGlobals::init();
+		$o_glob->HeadTwig = $this->Twig;
+		$this->Twig = new filesTwig;
+		
+		$o_glob->Temp->Add( get($o_glob->URL->Parameters, 'editFileKey'), 'editFileKey' );
+		
+		$this->HandleFormKey($o_glob->URL->Branch . $o_glob->URL->Action . 'Form');
+		
+		if ($o_glob->IsPost) {
+			if (array_key_exists('sys_fphp_editFileKey', $_POST)) {
+				/* query sub record */
+				if (! ($this->Twig->GetRecord(array($_POST['sys_fphp_editFileKey']))) ) {
+					throw new forestException(0x10001401, array($this->Twig->fphp_Table));
+				}
+				
+				if (method_exists($this, 'beforeReplaceFileAction')) {
+					$this->beforeReplaceFileAction();
+				}
+				
+				/* delete old file */
+				$s_folder = substr(pathinfo($this->Twig->Name, PATHINFO_FILENAME), 6, 2);
+				
+				$s_path = '';
+
+				if (count($o_glob->URL->Branches) > 0) {
+					foreach($o_glob->URL->Branches as $s_value) {
+						$s_path .= $s_value . '/';
+					}
+				}
+				
+				$s_path .= $o_glob->URL->Branch . '/';
+				
+				$s_path = './trunk/' . $s_path . 'fphp_files/' . $s_folder . '/';
+				
+				if (is_dir($s_path)) {
+					if (file_exists($s_path . $this->Twig->Name)) {
+						if (!(@unlink($s_path . $this->Twig->Name))) {
+							throw new forestException(0x10001422, array($s_path . $this->Twig->Name));
+						}
+					}
+				}
+				
+				/* generate new filename, and get display name */
+				$s_fileName = $_FILES['sys_fphp_files_NewFile']['name'];
+				$s_newFilename = strtoupper(substr($o_glob->Security->GenRandomHash(), 0, 8));
+				$s_extension = pathinfo($s_fileName, PATHINFO_EXTENSION);
+				$s_newFilename .= '.' . $s_extension;
+				
+				/* check file structure */
+				forestFile::CreateFileFolderStructure($o_glob->URL->BranchId);
+				$s_folder = substr(pathinfo($s_newFilename, PATHINFO_FILENAME), 6, 2);
+				
+				$s_path = '';
+
+				if (count($o_glob->URL->Branches) > 0) {
+					foreach($o_glob->URL->Branches as $s_value) {
+						$s_path .= $s_value . '/';
+					}
+				}
+				
+				$s_path .= $o_glob->URL->Branch . '/';
+				
+				$s_path = './trunk/' . $s_path . 'fphp_files/' . $s_folder . '/';
+				
+				if (!is_dir($s_path)) { /* target path does not exists */
+					$i_return = $this->Twig->DeleteRecord();
+					
+					if ($i_return <= 0) {
+						throw new forestException(0x10001423);
+					}
+					
+					throw new forestException(0x10001424, array($s_path));
+				}
+				
+				/* upload file to target folder with new name */
+				if (!(@move_uploaded_file($_FILES['sys_fphp_files_NewFile']['tmp_name'], $s_path . $s_newFilename))) {
+					$i_return = $this->Twig->DeleteRecord();
+					
+					if ($i_return <= 0) {
+						throw new forestException(0x10001423);
+					}
+					
+					throw new forestException(0x10001425, array($s_fileName));
+				}
+				
+				/* change record data */
+				$this->Twig->Name = $s_newFilename;
+				$this->Twig->DisplayName = $s_fileName;
+				
+				/* edit file recrod */
+				$i_result = $this->Twig->UpdateRecord();
+				
+				/* evaluate result */
+				if ($i_result == -1) {
+					throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+				} else if ($i_result == 1) {
+					if (method_exists($this, 'afterReplaceFileAction')) {
+						$this->afterReplaceFileAction();
+					}
+					
+					$o_glob->SystemMessages->Add(new forestException(0x1000143C));
+				}
+			}
+		} else {
+			if ( ($o_glob->Temp->Exists('editFileKey')) && ($o_glob->Temp->{'editFileKey'} != null) ) {
+				/* query file record */
+				if (! ($this->Twig->GetRecord(array($o_glob->Temp->{'editFileKey'}))) ) {
+					throw new forestException(0x10001401, array($this->Twig->fphp_Table));
+				}
+				
+				/* create modal form for file record */
+				$o_glob->PostModalForm = new forestForm($this->Twig);
+				$s_title = $o_glob->GetTranslation('ReplaceFile', 1);
+				$o_glob->PostModalForm->CreateModalForm($this->Twig, $s_title);
+				
+				/* create TEXT element to show old file name */
+				$o_text = new forestFormElement(forestFormElement::TEXT);
+				$o_text->Label = $o_glob->GetTranslation('formOldFileLabel', 1);
+				$o_text->Id = 'sys_fphp_files_OldFile';
+				$o_text->Value = $this->Twig->DisplayName;
+				$o_text->Readonly = true;
+				$o_glob->PostModalForm->FormElements->Add($o_text);
+				
+				/* create FILE element to select a new file for replacement */
+				$o_file = new forestFormElement(forestFormElement::FILE);
+				$o_file->Label = $o_glob->GetTranslation('formNewFileLabel', 1);
+				$o_file->Id = 'sys_fphp_files_NewFile';
+				$o_file->ValMessage = $o_glob->GetTranslation('formNewFileValMessage', 1);
+				$o_file->Required = true;
+				$o_glob->PostModalForm->FormElements->Add($o_file);
+				
+				/* add validation rule for manual created FILE form element */
+				$o_glob->PostModalForm->FormObject->ValRules->Add(new forestFormValidationRule('sys_fphp_files_NewFile', 'required', 'true'));
+				
+				/* create hidden element to store file UUID */
+				$o_hidden = new forestFormElement(forestFormElement::HIDDEN);
+				$o_hidden->Id = 'sys_fphp_editFileKey';
+				$o_hidden->Value = $o_glob->Temp->{'editFileKey'};
+				$o_glob->PostModalForm->FormElements->Add($o_hidden);
+			}
+		}
+		
+		if (isset($this->KeepFilter)) {
+			if ($this->KeepFilter->value) {
+				if ($o_glob->Security->SessionData->Exists('last_filter')) {
+					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
+				}
+			}
+		}
+		
+		$this->Twig = $o_glob->HeadTwig;
+		$this->StandardView = forestBranch::DETAIL; /* because it only makes sense if we stay in detail view, when we open modal read only form for sub record */
+		$this->SetNextAction('init');
+	}
+	
 	
 	/* handle delete record action */
 	protected function DeleteRecord() {
@@ -1472,6 +2227,7 @@ abstract class forestBranch {
 		
 		$this->HandleFormKey($o_glob->URL->Branch . $o_glob->URL->Action . 'Form');
 		$o_glob->Temp->Add( get($o_glob->URL->Parameters, 'deleteKey'), 'deleteKey' );
+		$o_glob->Temp->Add( get($o_glob->URL->Parameters, 'deleteFileKey'), 'deleteFileKey' );
 		
 		if (!$o_glob->IsPost) {
 			/* delete record form */
@@ -1492,6 +2248,24 @@ abstract class forestBranch {
 				$o_hidden->Id = 'sys_fphp_deleteKey';
 				$o_hidden->Value = $o_glob->Temp->{'deleteKey'};
 				$o_glob->PostModalForm->FormElements->Add($o_hidden);
+			}
+			
+			/* delete file form */
+			else if ( ($o_glob->Temp->Exists('deleteFileKey')) && ($o_glob->Temp->{'deleteFileKey'} != null) ) {
+				$o_filesTwig = new filesTwig;
+				
+				/* create modal confirmation form for deleting record */
+				$o_glob->PostModalForm = new forestForm($o_filesTwig);
+				$s_title = $o_glob->GetTranslation('DeleteModalTitle', 1);
+				$s_description = '<b>' . $o_glob->GetTranslation('DeleteModalDescriptionFile', 1) . '</b>';
+				$o_glob->PostModalForm->CreateDeleteModalForm($o_filesTwig, $s_title, $s_description);
+				
+				$o_hidden = new forestFormElement(forestFormElement::HIDDEN);
+				$o_hidden->Id = 'sys_fphp_deleteFileKey';
+				$o_hidden->Value = $o_glob->Temp->{'deleteFileKey'};
+				$o_glob->PostModalForm->FormElements->Add($o_hidden);
+				
+				$this->StandardView = forestBranch::DETAIL; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
 			}
 		} else {
 			/* delete record */
@@ -1526,6 +2300,30 @@ abstract class forestBranch {
 					$o_glob->SystemMessages->Add(new forestException(0x10001428));
 				}
 			}
+			
+			/* delete file */
+			else if (array_key_exists('sys_fphp_deleteFileKey', $_POST)) {
+				$o_filesTwig = new filesTwig;
+				
+				if (! ($o_filesTwig->GetRecord(array($_POST['sys_fphp_deleteFileKey']))) ) {
+					throw new forestException(0x10001401, array($o_filesTwig->fphp_Table));
+				}
+				
+				if (method_exists($this, 'beforeDeleteFileAction')) {
+					$this->beforeDeleteFileAction();
+				}
+				
+				/* delete file record */
+				$this->executeDeleteFileRecord($o_filesTwig, true, true);
+				
+				if (method_exists($this, 'afterDeleteFileAction')) {
+					$this->afterDeleteFileAction();
+				}
+				
+				$o_glob->SystemMessages->Add(new forestException(0x10001427));
+				
+				$this->StandardView = forestBranch::DETAIL; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
+			}
 		}
 		
 		if (isset($this->KeepFilter)) {
@@ -1548,6 +2346,19 @@ abstract class forestBranch {
 	protected function executeDeleteRecord(forestTwig $p_o_record) {
 		$o_glob = forestGlobals::init();
 		
+		/* delete files of record */
+		$o_filesTwig = new filesTwig; 
+		
+		$a_sqlAdditionalFilter = array(array('column' => 'ForeignUUID', 'value' => $p_o_record->UUID, 'operator' => '=', 'filterOperator' => 'AND'));
+		$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+		$o_files = $o_filesTwig->GetAllRecords(true);
+		$o_glob->Temp->Del('SQLAdditionalFilter');
+		
+		foreach ($o_files->Twigs as $o_file) {
+			/* delete file record */
+			$this->executeDeleteFileRecord($o_file, true, true);
+		}
+		
 		/* delete record */
 		$i_return = $p_o_record->DeleteRecord();
 		
@@ -1555,6 +2366,106 @@ abstract class forestBranch {
 		if ($i_return <= 0) {
 			throw new forestException(0x10001423);
 		}
+	}
+	
+	/* re-usable delete file record function with history files option */
+	protected function executeDeleteFileRecord(filesTwig $p_o_file, $p_b_deleteRecord = true, $p_b_deleteHistoryFiles = false) {
+		$o_glob = forestGlobals::init();
+		
+		/* delete file */
+		$s_folder = substr(pathinfo($p_o_file->Name, PATHINFO_FILENAME), 6, 2);
+		
+		$s_path = '';
+
+		if (count($o_glob->URL->Branches) > 0) {
+			foreach($o_glob->URL->Branches as $s_value) {
+				$s_path .= $s_value . '/';
+			}
+		}
+		
+		$s_path .= $o_glob->URL->Branch . '/';
+		
+		$s_path = './trunk/' . $s_path . 'fphp_files/' . $s_folder . '/';
+		
+		if (is_dir($s_path)) {
+			if (file_exists($s_path . $p_o_file->Name)) {
+				if (!(@unlink($s_path . $p_o_file->Name))) {
+					throw new forestException(0x10001422, array($s_path . $p_o_file->Name));
+				}
+			}
+		}
+		
+		if ($p_b_deleteRecord) {
+			/* delete file record */
+			$i_return = $p_o_file->DeleteRecord();
+				
+			/* evaluate the result */
+			if ($i_return <= 0) {
+				throw new forestException(0x10001423);
+			}
+		}
+	}
+	
+	
+	/* handle upload actions from dropzone */
+	protected function fphp_uploadAction() {
+		ob_clean();
+		
+		if (empty($_FILES) && empty($_POST) && isset($_SERVER['REQUEST_METHOD']) && strtolower($_SERVER['REQUEST_METHOD']) == 'post') {
+			echo 'ERR-4';
+		} else {
+			if (isset($_FILES['fphp_fileBlob'])) {
+				if ($_FILES['fphp_fileBlob']['size'] == 0) {
+					echo 'ERR-2';
+				} else if ($_FILES['fphp_fileBlob']['size'] > 0) {
+					$s_name = $_FILES['fphp_fileBlob']['name'];
+					$s_extension = '.jpg';
+					
+					if (strpos($_FILES['fphp_fileBlob']['name'], '.') !== false) {
+						$s_extension = explode('.', $_FILES['fphp_fileBlob']['name'])[1];
+					}
+					
+					if (!empty($_POST)) {
+						if (strpos($_POST['fphp_fileName'], '.') === false) {
+							$s_name = $_POST['fphp_fileName'] . '.' . $s_extension;
+						} else {
+							$s_name = $_POST['fphp_fileName'];
+						}
+					}
+					
+					if (@move_uploaded_file($_FILES['fphp_fileBlob']['tmp_name'], './temp_files/' . $s_name)) {
+						echo 'INF-1';
+					} else {
+						echo 'ERR-1';
+					}
+				}
+			} else {
+				echo 'ERR-3';
+			}
+		}
+		
+		exit;
+	}
+	
+	/* handle upload delete actions from dropzone */
+	protected function fphp_upload_deleteAction() {
+		ob_clean();
+		
+		if (empty($_POST) && isset($_SERVER['REQUEST_METHOD']) && strtolower($_SERVER['REQUEST_METHOD']) == 'post') {
+			echo 'ERR-3';
+		} else {
+			if (isset($_POST['fphp_fileName'])) {
+				if (@unlink('./temp_files/' . $_POST['fphp_fileName'])) {
+					echo 'INF-1';
+				} else {
+					echo 'ERR-1';
+				}
+			} else {
+				echo 'ERR-2';
+			}
+		}
+		
+		exit;
 	}
 }
 ?>

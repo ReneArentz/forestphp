@@ -1,6 +1,6 @@
 /* +--------------------------------+ */
 /* |                                | */
-/* | forestPHP V0.1.3               | */
+/* | forestPHP V0.1.4               | */
 /* |                                | */
 /* +--------------------------------+ */
 
@@ -13,6 +13,7 @@
  * 0.1.0 alpha	renatus		2019-08-04	first build
  * 0.1.1 alpha	renatus		2019-08-14	added styles for modal, navigation, form and landing page
  * 0.1.2 alpha	renatus		2019-08-25	added styles for btn-groups and list view
+ * 0.1.4 alpha	renatus		2019-09-19	added styles for dropzone and richtext
  */
 
 /* ********************************** */
@@ -281,6 +282,50 @@ input[type="file"]
 .tag a .glyphicon-white {
 	color: #fff;
 	margin-bottom: 2px;
+}
+
+/* ********************************** */
+/* ******* forestPHP-Dropzone ******* */
+/* ********************************** */
+#dropzoneContainer {
+	min-width: 100px;
+}
+
+#dropzone, [id$="_Dropzone"] {
+	padding: 15px;
+	text-align: center;
+	cursor: pointer;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+}
+
+.dropzoneIcon {
+	font-size: 2.4em;
+}
+
+#dropzoneListContainer {
+	padding: 5px;
+}
+
+#dropzoneList {
+	
+}
+
+/* ********************************** */
+/* ******* forestPHP-Richtext ******* */
+/* ********************************** */
+div[id^="fphp_richtext-editor"], div[id*="DivRichtext"] {
+	max-height: 250px;
+	height: 250px;
+	background-color: white;
+	
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	
+	padding: 5px;
+	
+	overflow: scroll;
+	outline: none;
 }
 
 /* ********************************** */
