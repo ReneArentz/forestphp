@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.4 (0x1 00015)   | */
+/* | forestPHP V0.1.5 (0x1 00015)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -16,6 +16,8 @@
  * 0.1.1 alpha	renatus		2019-08-09	added to framework
  * 0.1.3 alpha	renatus		2019-09-06	added formkey and validationrules
  * 0.1.4 alpha	renatus		2019-09-23	added dropzone and richtext
+ * 0.1.5 alpha	renatus		2019-10-04	added forestLookup
+ * 0.1.5 alpha	renatus		2019-10-05	added forestCombination and Captcha
  */
 
 class forestForm {
@@ -168,10 +170,10 @@ class forestForm {
 				$s_forestdataName = '';
 				
 				/* query forestdata name, if UUID is set */
-				if (issetStr($o_tableField->ForestDataUUID)) {
+				if (issetStr($o_tableField->ForestDataUUID->PrimaryValue)) {
 					$o_forestDataTwig = new forestdataTwig;
 					
-					if (! ($o_forestDataTwig->GetRecord(array($o_tableField->ForestDataUUID))) ) {
+					if (! ($o_forestDataTwig->GetRecord(array($o_tableField->ForestDataUUID->PrimaryValue))) ) {
 						throw new forestException(0x10001401, array($o_forestDataTwig->fphp_Table));
 					}
 					
@@ -180,13 +182,20 @@ class forestForm {
 				
 				/* check read only mode */
 				if ($this->FormObject->value->ReadonlyAll) {
-					/* skip element if we have no table field information in global dictionary */
-					if (!$o_glob->TablefieldsDictionary->Exists($p_o_twig->fphp_Table . '_' . $o_tableField->FieldName)) {
+					/* skip element if we have no table field information in global dictionary, except forestCombination */
+					if ( (!$o_glob->TablefieldsDictionary->Exists($p_o_twig->fphp_Table . '_' . $o_tableField->FieldName)) && ($s_forestdataName != 'forestCombination') ) {
 						continue;
 					}
 					
-					/* skip element if it is of type FILE PASSWORD DROPZONE */
-					if ( ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == forestformElement::FILE) || ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == forestformElement::PASSWORD) || ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == forestformElement::DROPZONE) ) {
+					if ($s_forestdataName != 'forestCombination') {
+						/* skip element if it is of type FILE PASSWORD DROPZONE, except forestCombination */
+						if ( ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == forestformElement::FILE) || ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == forestformElement::PASSWORD) || ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == forestformElement::DROPZONE) ) {
+							continue;
+						}
+					}
+				} else {
+					/* if not read only, skip forestCombination fields */
+					if ($s_forestdataName == 'forestCombination') {
 						continue;
 					}
 				}
@@ -195,7 +204,7 @@ class forestForm {
 				
 				/* look for settings of tablefield, if not found look for standard with formelementuuid */
 				if (!issetStr($o_tableField->JSONEncodedSettings)) {
-					if (!($o_formelementTwig->GetRecord(array($o_tableField->FormElementUUID)))) {
+					if (!($o_formelementTwig->GetRecord(array($o_tableField->FormElementUUID->PrimaryValue)))) {
 						continue;
 					} else {
 						if (!issetStr($o_formelementTwig->JSONEncodedSettings)) {
@@ -209,7 +218,7 @@ class forestForm {
 				}
 				
 				/* create formelement object */
-				if (!($o_formelementTwig->GetRecord(array($o_tableField->FormElementUUID)))) {
+				if (!($o_formelementTwig->GetRecord(array($o_tableField->FormElementUUID->PrimaryValue)))) {
 					continue;
 				} else {
 					$o_formElement = new forestFormElement($o_formelementTwig->Name);
@@ -229,6 +238,15 @@ class forestForm {
 						$o_formElement->FormId = $this->FormObject->value->Id;
 						$o_formElement->URIFileUploader = forestLink::Link($o_glob->URL->Branch, 'fphp_upload');
 						$o_formElement->URIFileDeleter = forestLink::Link($o_glob->URL->Branch, 'fphp_upload_delete');
+					}
+					
+					if (property_exists($p_o_twig, $o_tableField->FieldName)) {
+						/* create options array for lookup field */
+						if (is_object($p_o_twig->{$o_tableField->FieldName})) {
+							if (is_a($p_o_twig->{$o_tableField->FieldName}, 'forestLookupData')) {
+								$o_formElement->Options = $p_o_twig->{$o_tableField->FieldName}->CreateOptionsArray();
+							}
+						}
 					}
 					
 					/* adopt standard value of json encoded settings */
@@ -255,6 +273,8 @@ class forestForm {
 							} else {
 								$s_value = $p_o_twig->{$o_tableField->FieldName}->ToString();
 							}
+						} else if (is_a($p_o_twig->{$o_tableField->FieldName}, 'forestLookupData')) {
+							$s_value = $p_o_twig->{$o_tableField->FieldName}->PrimaryValue;
 						} else {
 							$s_value = strval($p_o_twig->{$o_tableField->FieldName});
 							
@@ -266,6 +286,23 @@ class forestForm {
 									if ($a_settings['DateIntervalFormat']) {
 										$s_value = strval(new forestDateInterval($s_value));
 									}
+								}
+							}
+						}
+					}
+					
+					/* get value for forestCombination field */
+					if ( (!$p_o_twig->IsEmpty()) && ($s_forestdataName == 'forestCombination') ) {
+						$s_JSONEncodedSettings = str_replace('&quot;', '"', $s_formElementJSONSettings);
+						$a_settings = json_decode($s_JSONEncodedSettings, true);
+						
+						if (array_key_exists('forestCombination', $a_settings)) {
+							$s_value = $p_o_twig->CalculateCombination($a_settings['forestCombination']);
+							
+							/* check if we want to render value as date interval value */
+							if ( (array_key_exists('DateIntervalFormat', $a_settings)) && ($this->FormObject->value->ReadonlyAll) ) {
+								if ($a_settings['DateIntervalFormat']) {
+									$s_value = strval(new forestDateInterval($s_value));
 								}
 							}
 						}
@@ -345,6 +382,27 @@ class forestForm {
 							$this->FormObject->value->ValRules->Add(new forestFormValidationRule($p_o_twig->fphp_Table . '_' . $o_tableField->FieldName, $o_row['Name'], $s_param01, $s_param02, $s_autoRequired));
 						}
 					}
+				}
+			}
+			
+			/* if we are using a captcha element and we have not read only mode */
+			if ( ($this->FormObject->value->UseCaptcha) && (!$this->FormObject->value->ReadonlyAll) ) {
+				/* query captcha form element */
+				if (!($o_formelementTwig->GetRecordPrimary(array(forestFormElement::CAPTCHA), array('Name')))) {
+					throw new forestException(0x10001401, array($o_formelementTwig->fphp_Table));
+				}
+				
+				/* create captcha form element and adjust settings */
+				$o_formElement = new forestFormElement(forestFormElement::CAPTCHA);
+				$o_formElement->loadJSON($o_formelementTwig->JSONEncodedSettings);
+				$o_formElement->Id = $p_o_twig->fphp_Table . '_Captcha';
+				$this->FormObject->value->ValRules->Add(new forestFormValidationRule($p_o_twig->fphp_Table . '_Captcha', 'required', 'true', 'NULL', 'false'));
+				
+				/* usually it will be added to the last tab or to form element object list */
+				if ($o_lastTab != null) {
+					$o_lastTab->FormElements->Add($o_formElement);
+				} else {
+					$this->FormElements->value->Add($o_formElement);
 				}
 			}
 			
@@ -1090,12 +1148,12 @@ class forestForm {
 			
 			/* set readonly flag for all form elements */
 			if ($this->FormObject->value->ReadonlyAll) {
-				if ( ($o_formElement->getType() != forestFormElement::SELECT) && ($o_formElement->getType() != forestFormElement::COLOR) && ($o_formElement->getType() != forestFormElement::DROPZONE) && ($o_formElement->getType() != forestFormElement::RICHTEXT) && ($o_formElement->getType() != forestFormElement::DESCRIPTION) ) {
+				if ( ($o_formElement->getType() != forestFormElement::SELECT) && ($o_formElement->getType() != forestFormElement::LOOKUP) && ($o_formElement->getType() != forestFormElement::COLOR) && ($o_formElement->getType() != forestFormElement::DROPZONE) && ($o_formElement->getType() != forestFormElement::RICHTEXT) && ($o_formElement->getType() != forestFormElement::DESCRIPTION) ) {
 					$o_formElement->Readonly = true;
 				}
 				
 				/* other elements do not have readonly flag, instead we are using disabled flag */
-				if ( ($o_formElement->getType() == forestFormElement::RICHTEXT) || ($o_formElement->getType() == forestFormElement::RADIO) || ($o_formElement->getType() == forestFormElement::CHECKBOX) || ($o_formElement->getType() == forestFormElement::SELECT) || ($o_formElement->getType() == forestFormElement::COLOR) || ( ($o_formElement->getType() == forestFormElement::BUTTON) && (!$o_formElement->NoFormGroup) ) ) {
+				if ( ($o_formElement->getType() == forestFormElement::RICHTEXT) || ($o_formElement->getType() == forestFormElement::RADIO) || ($o_formElement->getType() == forestFormElement::CHECKBOX) || ($o_formElement->getType() == forestFormElement::SELECT) || ($o_formElement->getType() == forestFormElement::LOOKUP) || ($o_formElement->getType() == forestFormElement::COLOR) || ( ($o_formElement->getType() == forestFormElement::BUTTON) && (!$o_formElement->NoFormGroup) ) ) {
 					$o_formElement->Disabled = true;
 				}
 			}
@@ -1273,12 +1331,12 @@ class forestFormTab {
 			
 			/* set readonly flag for all form elements */
 			if ($this->TempFormObject->value->ReadonlyAll) {
-				if ( ($o_formElement->getType() != forestFormElement::SELECT) && ($o_formElement->getType() != forestFormElement::COLOR) && ($o_formElement->getType() != forestFormElement::DROPZONE) && ($o_formElement->getType() != forestFormElement::RICHTEXT) && ($o_formElement->getType() != forestFormElement::DESCRIPTION) ) {
+				if ( ($o_formElement->getType() != forestFormElement::SELECT) && ($o_formElement->getType() != forestFormElement::LOOKUP) && ($o_formElement->getType() != forestFormElement::COLOR) && ($o_formElement->getType() != forestFormElement::DROPZONE) && ($o_formElement->getType() != forestFormElement::RICHTEXT) && ($o_formElement->getType() != forestFormElement::DESCRIPTION) ) {
 					$o_formElement->Readonly = true;
 				}
 				
 				/* other elements do not have readonly flag, instead we are using disabled flag */
-				if ( ($o_formElement->getType() == forestFormElement::RICHTEXT) || ($o_formElement->getType() == forestFormElement::RADIO) || ($o_formElement->getType() == forestFormElement::CHECKBOX) || ($o_formElement->getType() == forestFormElement::SELECT) || ($o_formElement->getType() == forestFormElement::COLOR) || ( ($o_formElement->getType() == forestFormElement::BUTTON)  && (!$o_formElement->NoFormGroup) ) ) {
+				if ( ($o_formElement->getType() == forestFormElement::RICHTEXT) || ($o_formElement->getType() == forestFormElement::RADIO) || ($o_formElement->getType() == forestFormElement::CHECKBOX) || ($o_formElement->getType() == forestFormElement::SELECT) || ($o_formElement->getType() == forestFormElement::LOOKUP) || ($o_formElement->getType() == forestFormElement::COLOR) || ( ($o_formElement->getType() == forestFormElement::BUTTON)  && (!$o_formElement->NoFormGroup) ) ) {
 					$o_formElement->Disabled = true;
 				}
 			}

@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.4 (0x1 00016)   | */
+/* | forestPHP V0.1.5 (0x1 00016)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -16,6 +16,7 @@
  * 0.1.1 alpha	renatus		2019-08-12	added to framework
  * 0.1.3 alpha	renatus		2019-09-06	added validationrules
  * 0.1.4 alpha	renatus		2019-09-23	added file, dropzone and richtext
+ * 0.1.5 alpha	renatus		2019-10-04	added forestLookup and Captcha
  */
 
 class forestFormElement {
@@ -47,10 +48,12 @@ class forestFormElement {
 	
 	const TEXTAREA = 'textarea';
 	const SELECT = 'select';
+	const LOOKUP = 'lookup';
 	const RICHTEXT = 'richtext';
 	const DROPZONE = 'dropzone';
 	const DESCRIPTION = 'description';
 	const BUTTON = 'button';
+	const CAPTCHA = 'captcha';
 	const FIELDSET = 'fieldset';
 	
 	private $Type;
@@ -163,6 +166,10 @@ class forestFormElement {
 				$this->Type->value = self::SELECT;
 				$this->FormElement->value = new forestFormElementSelect();
 			break;
+			case self::LOOKUP:
+				$this->Type->value = self::LOOKUP;
+				$this->FormElement->value = new forestFormElementSelect();
+			break;
 			case self::RICHTEXT:
 				$this->Type->value = self::RICHTEXT;
 				$this->FormElement->value = new forestFormElementRichtext();
@@ -178,6 +185,10 @@ class forestFormElement {
 			case self::BUTTON:
 				$this->Type->value = self::BUTTON;
 				$this->FormElement->value = new forestFormElementButton();
+			break;
+			case self::CAPTCHA:
+				$this->Type->value = self::CAPTCHA;
+				$this->FormElement->value = new forestFormElementCaptcha();
 			break;
 			case self::FIELDSET:
 				$this->Type->value = self::FIELDSET;
@@ -453,6 +464,8 @@ class forestFormObject extends forestFormGeneralAttributes {
 	private $ValRequiredMessage;
 	private $ValRules;
 	
+	private $UseCaptcha;
+	
 	/* Properties */
 	
 	/* Methods */
@@ -481,6 +494,8 @@ class forestFormObject extends forestFormGeneralAttributes {
 		
 		$this->ValRequiredMessage = new forestString;
 		$this->ValRules = new forestObject(new forestObjectList('forestFormValidationRule'), false);
+		
+		$this->UseCaptcha = new forestBool;
 	}
 	
 	public function getObjectVars() {
@@ -3443,6 +3458,132 @@ class forestFormElementButton extends forestFormInputAttributes {
 			
 			$s_foo .= '><small>' . $this->Description->value . '</small></div>' . "\n";
 		}
+		
+		return forestStringLib::closeHTMLTags($s_foo);
+	}
+}
+
+class forestFormElementCaptcha extends forestFormInputAttributes {
+	use forestData;
+	
+	/* Fields */
+	
+	/* Properties */
+	
+	/* Methods */
+	
+	public function __construct() {
+		parent::__construct();
+	}
+	
+	public function getObjectVars() {
+		return get_object_vars($this);
+	}
+		
+	public function __toString() {
+		$o_glob = forestGlobals::init();
+		
+		if (!issetStr($this->Name->value)) {
+			$this->Name->value = $this->Id->value;
+		}
+		
+		$s_foo = parent::__toString();
+		
+		
+		$s_foo .= '<input type="text" id="' . $this->Id->value . '" name="' . $this->Name->value . '" class="' . $this->Class->value . '"';
+		
+		if (issetStr($this->Style->value)) {
+			$s_foo .= ' style="' . $this->Style->value . '"';
+		}
+		
+		if (issetStr($this->Placeholder->value)) {
+			$s_foo .= ' placeholder="' . $this->Placeholder->value . '"';
+		}
+		
+		$s_foo .= ' value=""';
+		
+		if (!($this->AutoComplete->value)) {
+			$s_foo .= ' autocomplete="off"';
+		}
+		
+		if (issetStr($this->Dirname->value)) {
+			$s_foo .= ' dirname="' . $this->Dirname->value . '"';
+		}
+		
+		if (issetStr($this->ValMessage->value)) {
+			$s_foo .= ' data-valmessage="' . $this->ValMessage->value . '"';
+		}
+		
+		
+		if (issetStr($this->Form->value)) {
+			$s_foo .= ' form="' . $this->Form->value . '"';
+		}
+		
+		if (issetStr($this->FormAction->value)) {
+			$s_foo .= ' formaction="' . $this->FormAction->value . '"';
+		}
+		
+		if (issetStr($this->FormEnctype->value)) {
+			$s_foo .= ' formenctype="' . $this->FormEnctype->value . '"';
+		}
+		
+		if (issetStr($this->FormMethod->value)) {
+			$s_foo .= ' formmethod="' . $this->FormMethod->value . '"';
+		}
+		
+		if ($this->FormNoValidate->value) {
+			$s_foo .= ' formnovalidate="formnovalidate"';
+		}
+		
+		if (issetStr($this->FormTarget->value)) {
+			$s_foo .= ' formtarget="' . $this->FormTarget->value . '"';
+		}
+		
+		
+		$s_foo .= ' tabindex="' . $o_glob->GetTabIndex() . '"';
+		
+		if ($this->AutoFocus->value) {
+			$s_foo .= ' autofocus';
+		}
+		
+		if ($this->Required->value) {
+			$s_foo .= ' required';
+		}
+		
+		if ($this->Readonly->value) {
+			$s_foo .= ' readonly';
+		}
+		
+		if ($this->Disabled->value) {
+			$s_foo .= ' disabled';
+		}
+		
+		$s_foo .= '>' . "\n";
+		
+		if (issetStr($this->Description->value)) {
+			$s_foo .= '<div';
+			
+			if (issetStr($this->DescriptionClass->value)) {
+				$s_foo .= ' class="' . $this->DescriptionClass->value . '"';
+			}
+			
+			$s_foo .= '><small>' . $this->Description->value . '</small></div>' . "\n";
+		}
+		
+		$o_glob->Security->SessionData->Add($this->Size->value, 'fphp_captcha_length');
+		$s_captcha = '';
+		
+		for ($i = 0; $i < $this->Size->value; $i++) {
+			$s_captcha .= $o_glob->Security->GenerateCaptchaCharacter();
+		}
+		
+		$o_glob->Security->SessionData->Add($s_captcha, 'fphp_captcha');
+		
+		$s_foo .= '<input type="hidden" id="' . $this->Id->value . '_Hidden" name="' . $this->Name->value . '_Hidden" value="' . password_hash($s_captcha, PASSWORD_DEFAULT) . '">' . "\n";
+		
+		$s_foo .= '<br>' . "\n";
+		
+		$s_foo .= '<img src="' . forestLink::Link($o_glob->URL->Branch, 'fphp_captcha') . '" alt="fphp_captcha could not be rendered" style="margin: 0px 5px 5px 0px;">' . "\n";
 		
 		return forestStringLib::closeHTMLTags($s_foo);
 	}

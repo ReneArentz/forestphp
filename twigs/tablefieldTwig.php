@@ -24,11 +24,11 @@ class tablefieldTwig extends forestTwig {
 	protected function init() {
 		$this->Id = new forestNumericString(1);
 		$this->UUID = new forestString;
-		$this->TableUUID = new forestString;
+		$this->TableUUID = new forestLookup(new forestLookupData('sys_fphp_table', array('UUID'), array('Name')));
 		$this->FieldName = new forestString;
-		$this->FormElementUUID = new forestString;
-		$this->SqlTypeUUID = new forestString;
-		$this->ForestDataUUID = new forestString;
+		$this->FormElementUUID = new forestLookup(new forestLookupData('sys_fphp_formelement', array('UUID'), array('Name')));
+		$this->SqlTypeUUID = new forestLookup(new forestLookupData('sys_fphp_sqltype', array('UUID'), array('Name')));
+		$this->ForestDataUUID = new forestLookup(new forestLookupData('sys_fphp_forestdata', array('UUID'), array('Name')));
 		$this->TabId = new forestString;
 		$this->JSONEncodedSettings = new forestString;
 		$this->FooterElement = new forestBool;

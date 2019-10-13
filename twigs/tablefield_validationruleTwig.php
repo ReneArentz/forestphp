@@ -20,7 +20,7 @@ class tablefield_validationruleTwig extends forestTwig {
 		$this->Id = new forestNumericString(1);
 		$this->UUID = new forestString;
 		$this->TablefieldUUID = new forestString;
-		$this->ValidationruleUUID = new forestString;
+		$this->ValidationruleUUID = new forestLookup(new forestLookupData('sys_fphp_validationrule', array('UUID'), array('Name')));
 		$this->ValidationRuleParam01 = new forestString;
 		$this->ValidationRuleParam02 = new forestString;
 		$this->ValidationRuleRequired = new forestBool;

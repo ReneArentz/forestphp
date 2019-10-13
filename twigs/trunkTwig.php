@@ -33,7 +33,7 @@ class trunkTwig extends forestTwig {
 	protected function init() {
 		$this->Id = new forestNumericString(1);
 		$this->UUID = new forestString;
-		$this->LanguageCode = new forestString;
+		$this->LanguageCode = new forestLookup(new forestLookupData('sys_fphp_language', array('UUID'), array('Language'), array(), ' - '));
 		$this->DateTimeSqlFormat = new forestString;
 		$this->DateTimeFormat = new forestString;
 		$this->DateFormat = new forestString;

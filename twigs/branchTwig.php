@@ -28,7 +28,7 @@ class branchTwig extends forestTwig {
 		$this->Navigation = new forestBool;
 		$this->NavigationOrder = new forestInt(1);
 		$this->Filename = new forestString;
-		$this->Table = new forestString;
+		$this->Table = new forestLookup(new forestLookupData('sys_fphp_table', array('UUID'), array('Name')));
 		$this->StandardView = new forestInt;
 		$this->Filter = new forestBool;
 		$this->KeepFilter = new forestBool;

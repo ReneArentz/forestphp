@@ -12,6 +12,7 @@
  * + Version Log +
  * Version	Developer	Date		Comment
  * 0.1.0 alpha	renatus		2019-08-04	first build
+ * 0.1.5 alpha	renatus		2019-10-04	added forestLookup and forestCombination
  */
 
 trait forestData {
@@ -404,5 +405,60 @@ class forestObject {
 		$this->_b_read = $p_b_read;
 		$this->_b_write = $p_b_write;
 	}
+}
+
+/* lookup data container */
+class forestLookup {
+	public $_b_read = false;
+	public $_b_write = false;
+	private $_s_class = 'forestLookupData';
+	private $_o_value = null;
+	
+	public function __set($p_s_name, $p_o_value) {
+		/* check if parameter is a string or numeric */
+		if ( (is_string($p_o_value)) || (is_numeric($p_o_value)) ) {
+			$this->_o_value->PrimaryValue = $p_o_value;
+		} else {
+			if (is_a($p_o_value, $this->_s_class)) {
+				$this->_o_value->PrimaryValue = $p_o_value->PrimaryValue;
+			} else {
+				throw new forestException('Parameter is not a string or is not numeric and is not of type forestLookup');
+			}
+		}
+	}
+
+	public function &__get($p_s_name) {
+		return $this->_o_value;
+	}
+
+	public function __unset($p_s_name) {
+		
+	}
+	
+	public function __construct(forestLookupData $p_o_object, $p_b_write = true, $p_b_read = true) {
+		if (is_a($p_o_object, $this->_s_class)) {
+			$this->_o_value = $p_o_object;
+		}
+		
+		$this->_b_read = $p_b_read;
+		$this->_b_write = $p_b_write;
+	}
+	
+	/*public function SetLookupData(forestLookupData $p_o_object) {
+		if ($this->$p_s_name->_b_write) {
+			if (is_a($p_o_object, $this->_s_class)) {
+				$this->_o_value = $p_o_object;
+			} else {
+				throw new forestException('Parameter is not a ' . $this->_s_class);
+			}
+		} else {
+			throw new forestException('No write access to property [forestLookup]');
+		}
+	}*/
+}
+
+/* combination data container, same as forestString */
+class forestCombination extends forestString {
+	
 }
 ?>

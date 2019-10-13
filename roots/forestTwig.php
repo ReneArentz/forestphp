@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.4 (0x1 0000C)   | */
+/* | forestPHP V0.1.5 (0x1 0000C)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -16,6 +16,10 @@
  * 0.1.0 alpha	renatus		2019-08-04	first build
  * 0.1.1 alpha	renatus		2019-08-10	added tablefield caching
  * 0.1.2 alpha	renatus		2019-08-27	added sort and limit
+ * 0.1.5 alpha	renatus		2019-10-04	added sub-records
+ * 0.1.5 alpha	renatus		2019-10-06	added sub-constraint
+ * 0.1.5 alpha	renatus		2019-10-08	added caching
+ * 0.1.5 alpha	renatus		2019-10-09	added forestLooukp and forestCombination
  */
 
 abstract class forestTwig {
@@ -34,6 +38,7 @@ abstract class forestTwig {
 	protected $fphp_Interval;
 	protected $fphp_View;
 	private $fphp_RecordImage;
+	private $fphp_SubRecords;
 	
 	/* Properties */
 	
@@ -51,6 +56,7 @@ abstract class forestTwig {
 		$this->fphp_Interval = new forestInt;
 		$this->fphp_View = new forestArray;
 		$this->fphp_RecordImage = new forestObject(new forestObjectList('stdClass'), false, false);
+		$this->fphp_SubRecords = new forestObject(new forestObjectList('forestTwigList'), false, false);
 		
 		$o_glob = forestGlobals::Init();
 		
@@ -243,6 +249,59 @@ abstract class forestTwig {
 							);
 							
 							$o_glob->TablefieldsDictionary->Add($o_tableFieldProperties, $this->fphp_Table->value . '_' . $o_tablefield->FieldName);
+						}
+					}
+				}
+			}
+			
+			/* get tablefields of subconstraints */
+			if (array_key_exists($this->fphp_TableUUID->value, $o_glob->SubConstraintsDictionary)) {
+				foreach ($o_glob->SubConstraintsDictionary[$this->fphp_TableUUID->value] as $o_subconstraint) {
+					if (in_array($o_subconstraint->UUID, $o_glob->TablesWithTablefields)) {
+						/* look for tablefields of subconstraint */
+						$o_tablefieldTwig = new tablefieldTwig;
+						$a_sqlAdditionalFilter = array(array('column' => 'TableUUID', 'value' => $o_subconstraint->UUID, 'operator' => '=', 'filterOperator' => 'AND'));
+						$o_glob->BackupTemp();
+						$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+						$o_tablefields = $o_tablefieldTwig->GetAllRecords(true);
+						$o_glob->Temp->Del('SQLAdditionalFilter');
+						$o_glob->RestoreTemp();
+						
+						if ($o_tablefields->Twigs->Count() > 0) {
+							$s_joinTable = array_search($o_subconstraint->SubTableUUID->PrimaryValue, $o_glob->Tables);
+							
+							foreach ($o_tablefields->Twigs as $o_tablefield) {
+								/* add tablefield information to global dictionary */
+								if (!$o_glob->TablefieldsDictionary->Exists($this->fphp_Table->value . '_' . $s_joinTable . '_' . $o_tablefield->FieldName)) {
+									$o_result = forestTwig::QueryFieldProperties($o_subconstraint->UUID, $o_tablefield->FieldName);
+									
+									if ($o_result != null) {
+										/*echo '<pre>';
+										print_r($o_result);
+										echo '</pre>';*/
+										
+										$o_tableFieldProperties = new forestTableFieldProperties(
+											$o_result['TableFieldUUID'],
+											$o_subconstraint->UUID,
+											$o_result['FieldName'],
+											$o_result['TableFieldTabId'],
+											$o_result['TableFieldJSONEncodedSettings'],
+											$o_result['TableFieldFooterElement'],
+											$o_result['TableFieldSubRecordField'],
+											$o_result['TableFieldOrder'],
+											$o_result['FormElementUUID'],
+											$o_result['FormElementName'],
+											$o_result['FormElementJSONEncodedSettings'],
+											$o_result['SqlTypeUUID'],
+											$o_result['SqlTypeName'],
+											$o_result['ForestDataUUID'],
+											$o_result['ForestDataName']
+										);
+										
+										$o_glob->TablefieldsDictionary->Add($o_tableFieldProperties, $this->fphp_Table->value . '_' . $s_joinTable . '_' . $o_tablefield->FieldName);
+									}
+								}
+							}
 						}
 					}
 				}
@@ -455,6 +514,91 @@ abstract class forestTwig {
 		return $o_result[0];
 	}
 	
+	/* query sub records of a sub constraint */
+	public function QuerySubRecords(subconstraintTwig $p_o_subconstraint, $p_b_overwrite = false) {
+		$o_glob = forestGlobals::init();
+		
+		if (!$p_b_overwrite) {
+			/* look for subrecord twig list with sub constraint uuid and return it */
+			if ($this->fphp_SubRecords->value->Exists($p_o_subconstraint->UUID)) {
+				return $this->fphp_SubRecords->value->{$p_o_subconstraint->UUID};
+			}
+		}
+		
+		/* get all subrecords, based on twig uuid - inner join with joinuuid on subtable */
+		$o_subrecordsTwig = new subrecordsTwig;
+		$s_joinTable = array_search($p_o_subconstraint->SubTableUUID->PrimaryValue, $o_glob->Tables);
+		$a_sqlAdditionalFilter = array(array('column' => 'HeadUUID', 'value' => $this->UUID, 'operator' => '=', 'filterOperator' => 'AND'));
+		$o_glob->BackupTemp();
+		$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+		
+		$o_querySelect = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::SELECT, $o_subrecordsTwig->fphp_Table->value);
+		
+		/* add join with sub constraint table */
+		$join_A = new forestSQLJoin($o_querySelect);
+		$join_A->JoinType = 'INNER JOIN';
+		$join_A->Table = $s_joinTable;
+			
+			$relation_A = new forestSQLRelation($o_querySelect);
+			
+				$column_A = new forestSQLColumn($o_querySelect);
+					$column_A->Column = 'JoinUUID';
+				
+				$column_B = new forestSQLColumn($o_querySelect);
+					$column_B->Table = $join_A->Table;
+					$column_B->Column = 'UUID';
+			
+			$relation_A->ColumnLeft = $column_A;
+			$relation_A->ColumnRight = $column_B;
+			$relation_A->Operator = '=';
+		
+		$join_A->Relations->Add($relation_A);
+		
+		$o_glob->Temp->Add($join_A, 'SQLAdditionalJoin');
+		
+		$s_tempTable = $s_joinTable;
+		forestStringLib::RemoveTablePrefix($s_tempTable);
+		$s_foo = $s_tempTable . 'Twig';
+		$o_tempTwig = new $s_foo;
+		$a_additionalColumns = array();
+		
+		/* add all subrecords table columns */
+		foreach($o_subrecordsTwig->fphp_Mapping->value as $s_column) {
+			$column = new forestSQLColumn($o_querySelect);
+				$column->Column = $s_column;
+			
+			$a_additionalColumns[] = $column;
+		}
+		
+		/* add columns of sub constraint table */
+		foreach($o_tempTwig->fphp_Mapping->value as $s_column) {
+			if ( ($s_column != 'Id') && ($s_column != 'UUID') ) {
+				$o_querySelect = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::SELECT, $o_tempTwig->fphp_Table->value);
+				
+				$column = new forestSQLColumn($o_querySelect);
+					$column->Column = $s_column;
+					$column->Name = $s_tempTable . '$' . $s_column;
+				
+				$a_additionalColumns[] = $column;
+			}
+		}
+		
+		$o_glob->Temp->Add($a_additionalColumns, 'SQLGetAllAdditionalColumns');
+		
+		/* execute query */
+		$o_subRecords = $o_subrecordsTwig->GetAllRecords(true);
+		
+		$o_glob->Temp->Del('SQLGetAllAdditionalColumns');
+		$o_glob->Temp->Del('SQLAdditionalJoin');
+		$o_glob->Temp->Del('SQLAdditionalFilter');
+		$o_glob->RestoreTemp();
+		
+		/* save result into sub records field of twig class */
+		$this->fphp_SubRecords->value->Add($o_subRecords, $p_o_subconstraint->UUID);
+		
+		return $o_subRecords;
+	}
+	
 	/* fill Mapping array from forestTwig instance */
 	protected function fphp_FillMapping(array $p_a_object_vars) {
 		foreach ($p_a_object_vars as $s_key => $s_value) {
@@ -487,8 +631,20 @@ abstract class forestTwig {
 			if (!empty($a_settings)) {
 				if (array_key_exists('Id', $a_settings)) {
 					if ($a_settings['Id'] == $this->fphp_Table->value . '_' . $p_s_name) {
-						$o_value = $this->{$o_tableFieldProperties->FieldName};
-						break;
+						/* check if field is of type forestCombination */
+						if ($o_tableFieldProperties->ForestDataName == 'forestCombination') {
+							/* if it is of type forestCombination, we load stored settings to calculate value for that field */
+							if (array_key_exists('forestCombination', $a_settings)) {
+								$o_value = $this->CalculateCombination($a_settings['forestCombination']);
+								break;
+							}
+						} else if (issetStr($o_tableFieldProperties->SubRecordField)) {
+							$o_value = $this->{$o_tableFieldProperties->SubRecordField};
+							break;
+						} else {
+							$o_value = $this->{$o_tableFieldProperties->FieldName};
+							break;
+						}
 					}
 				}
 			}
@@ -544,6 +700,235 @@ abstract class forestTwig {
 			}
 		}
 	}
+	
+	/* calculate forestCombination field */
+	public function CalculateCombination($p_s_forestCombination) {
+		$o_glob = forestGlobals::init();
+		$o_result = '';
+		
+		/* get logical operators like '+','-','*','/' and '.' */
+		preg_match_all('(\+|\-|\*|\/|\.)', $p_s_forestCombination, $a_outputOperators, PREG_PATTERN_ORDER);
+		$a_operators = $a_outputOperators[0];
+		
+		/* get values */
+		$a_values = preg_split('(\+|\-|\*|\/|\.)', $p_s_forestCombination);
+
+		/* we always need amount of operators + 1 of amount of values, instead invalid combination result */
+		if (!((count($a_operators) + 1) != count($a_values))) {
+			$i_amount = count($a_values);
+			$a_combinations = array();
+
+			/* merge operators and values in one array */
+			for ($i = 0; $i < $i_amount; $i++) {
+				if ($i < $i_amount - 1) { 
+					array_push($a_combinations,$a_values[$i],$a_operators[$i]);
+				} else {
+					array_push($a_combinations,$a_values[$i]);
+				}
+			}
+			
+			$s_operation = null;
+			
+			foreach ($a_combinations as $s_combination) {
+				if (in_array($s_combination, array('+', '-', '*', '/', '.'))) {
+					/* save operator in varialbe */
+					$s_operation = $s_combination;
+				} else {
+					/* save value in varialbe */
+					$o_field = null;
+					$b_countCommand = false;
+					
+					if (forestStringLib::StartsWith($s_combination, 'CNT(')) {
+						$b_countCommand = true;
+					}
+					
+					if ( (forestStringLib::StartsWith($s_combination, 'SUM(')) || ($b_countCommand) ) { /* $s_combination starts with SUM( or CNT( */
+						$s_combination = substr($s_combination, 4, -1);
+						
+						/* forestCombination SUM field must start with table declaration, separated with $ from table field */
+						if (strpos($s_combination, '$') === false) {
+							$s_combination .= '$';
+						}
+						
+						$a_combinationElements = explode('$', $s_combination);
+						$s_joinTable = $a_combinationElements[0];
+						$s_combination = $a_combinationElements[1];
+						
+						if (!array_key_exists($s_joinTable, $o_glob->Tables)) {
+							return '[wrong_combination_parameter]';
+						}
+						
+						/* get table uuid of join talbe */
+						$s_joinTableUUID = $o_glob->Tables[$s_joinTable];
+						
+						if (array_key_exists($this->fphp_TableUUID->value, $o_glob->SubConstraintsDictionary)) {
+							foreach ($o_glob->SubConstraintsDictionary[$this->fphp_TableUUID->value] as $o_subconstraint) {
+								/* look for sub constraint which matches table in forestCombination */
+								if ($o_subconstraint->SubTableUUID->PrimaryValue == $s_joinTableUUID) {
+									/* query all sub records of found sub constraint */
+									$o_subRecords = $this->QuerySubRecords($o_subconstraint);
+									
+									if ($b_countCommand) {
+										return strval($o_subRecords->Twigs->Count());
+									}
+									
+									$o_subrecordsTwig = new subrecordsTwig;
+									$b_found = false;
+									$s_forestCombination = null;
+									
+									/* get sub record field of forestCombination table field */
+									foreach ($o_glob->TablefieldsDictionary as $s_key => $o_tableFieldDictionaryObject) {
+										if ($o_tableFieldDictionaryObject->FieldName == $s_combination) {
+											if ($o_tableFieldDictionaryObject->ForestDataName == 'forestCombination') {
+												/* save table field dictionary key if forestCombination table field is another forestCombination */
+												$b_found = true;
+												$s_forestCombination = $s_key;
+											} else if (!in_array($o_tableFieldDictionaryObject->SubRecordField, $o_subrecordsTwig->fphp_Mapping->value)) {
+												return '[wrong_combination_parameter]';
+											} else {
+												/* save sub record field of forestCombination table field */
+												$b_found = true;
+												$s_combination = $o_tableFieldDictionaryObject->SubRecordField;
+											}
+										}
+									}
+									
+									if (!$b_found) {
+										return '[wrong_combination_parameter]';
+									}
+									
+									if ($o_subRecords->Twigs->Count() > 0) {
+										$o_value = 0;
+										
+										/* sum up all field values of queried sub records into $o_value */
+										foreach ($o_subRecords->Twigs as $o_subRecord) {
+											if ($s_forestCombination != null) {
+												/* if we found another forestCombination as table field, we need to calculate it's value as well */
+												$s_JSONEncodedSettings = str_replace('&quot;', '"', $o_glob->TablefieldsDictionary->{$s_forestCombination}->JSONEncodedSettings);
+												$a_settings = json_decode($s_JSONEncodedSettings, true);
+												
+												if (!empty($a_settings)) {
+													if (array_key_exists('forestCombination', $a_settings)) {
+														$o_value += $o_subRecord->CalculateCombination($a_settings['forestCombination']);
+													}
+												}
+											} else {
+												$o_value += $o_subRecord->{$s_combination};
+											}
+										}
+										
+										return strval($o_value);
+									} else {
+										return strval(0);
+									}
+								}
+							}
+							
+							return strval(0);
+						} else {
+							return '[wrong_combination_parameter]';
+						}
+					}
+					
+					if (strpos($s_combination, '$') !== false) { /* $s_combination contains $ */
+						/* this notation is used within sub records, if we are combine it with a field value of sub constaint join record */
+						$a_combinationElements = explode('$', $s_combination);
+						$s_joinTable = $a_combinationElements[0];
+						$s_combination = $a_combinationElements[1];
+						
+						/* get join table of sub constraint to get field value of join record */
+						if (!in_array('JoinUUID', $this->fphp_Mapping->value)) {
+							return '[wrong_combination_parameter]';
+						} else {
+							/* create join table twig object */
+							forestStringLib::RemoveTablePrefix($s_joinTable);
+							$s_foo = $s_joinTable . 'Twig';
+							$o_tempTwig = new $s_foo;
+							
+							if (!in_array($s_combination, $o_tempTwig->fphp_Mapping->value)) {
+								return '[wrong_combination_parameter]';
+							} else {
+								if (! ($o_tempTwig->GetRecord(array($this->{'JoinUUID'}))) ) {
+									return '[wrong_combination_parameter]';
+								} else {
+									/* get field value */
+									$o_field = $o_tempTwig->{$s_combination};
+								}
+							}
+						}
+					} else if ( (forestStringLib::StartsWith($s_combination, '#')) && (forestStringLib::EndsWith($s_combination, '#')) ) { /* check if constant value is part of forestCombination */
+						/* it is possible to use constant values within forestCombination syntax */
+						$s_combination = substr($s_combination, 1, -1);
+						
+						if ( (forestStringLib::StartsWith($s_combination, 'int(')) || (forestStringLib::StartsWith($s_combination, 'INT(')) ) {
+							/* constant value with integer conversion */
+							$s_combination = substr($s_combination, 4, -1);
+							$s_combination = str_replace(',', '.', $s_combination);
+							$o_field = intval($s_combination);
+						} else if ( (forestStringLib::StartsWith($s_combination, 'dbl(')) || (forestStringLib::StartsWith($s_combination, 'DBL(')) ) {
+							/* constant value with float conversion */
+							$s_combination = substr($s_combination, 4, -1);
+							$s_combination = str_replace(',', '.', $s_combination);
+							$o_field = floatval($s_combination);
+						} else {
+							/* set constant as normal field value within forestCombination */
+							$o_field = $s_combination;
+						}
+					} else if (!in_array($s_combination, $this->fphp_Mapping->value)) {
+						/* check if field exists in tablefield dictionary */
+						$b_found = false;
+						
+						foreach ($o_glob->TablefieldsDictionary as $o_tableFieldDictionaryObject) {
+							if ($o_tableFieldDictionaryObject->FieldName == $s_combination) {
+								if (!in_array($o_tableFieldDictionaryObject->SubRecordField, $this->fphp_Mapping->value)) {
+									return '[wrong_combination_parameter]';
+								} else {
+									$b_found = true;
+									
+									/* get field value by sub record field property */
+									$o_field = $this->{$o_tableFieldDictionaryObject->SubRecordField};
+								}
+							}
+						}
+						
+						if (!$b_found) {
+							return '[wrong_combination_parameter]';
+						}
+					}
+					
+					if ($o_field == null) {
+						/* just another field of the same queried record in this twig object */
+						$o_field = $this->{$s_combination};
+					}
+					
+					/* do calculation operation or simple concat values */
+					switch ($s_operation) {
+						case '+':
+							$o_result += $o_field;
+						break;
+						case '-':
+							$o_result -= $o_field;
+						break;
+						case '*':
+							$o_result *= $o_field;
+						break;
+						case '/':
+							$o_result /= $o_field;
+						break;
+						case '.':
+							$o_result .= $o_field;
+						break;
+						default:
+							$o_result = $o_field;
+						break;
+					}
+				}
+			}
+		}
+		
+		return strval($o_result);
+	}
+	
 	
 	/* get record with values of primary key */
 	public function GetRecord(array $p_a_primaryValues) {

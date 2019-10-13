@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.4 (0x1 00004)   | */
+/* | forestPHP V0.1.5 (0x1 00004)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -15,6 +15,7 @@
  * 0.1.0 alpha	renatus		2019-08-04	first build
  * 0.1.1 alpha	renatus		2019-08-07	added trunk, templates, form and tables functionality
  * 0.1.2 alpha	renatus		2019-08-07	added sort, filter and limit functionality
+ * 0.1.5 alpha	renatus		2019-10-10	added lookup and sub-constraint dictionary
  */
 
 class forestGlobals {
@@ -55,6 +56,8 @@ class forestGlobals {
 	private $TablesWithTablefields;
 	private $TablesWithTablefieldsCached;
 	private $TablefieldsDictionary;
+	private $SubConstraintsDictionary;
+	private $LookupResultsDictionary;
 	private $OriginalView;
 	private $TabIndex;
 	
@@ -96,6 +99,8 @@ class forestGlobals {
 		$this->TablesWithTablefields = new forestArray;
 		$this->TablesWithTablefieldsCached = new forestArray;
 		$this->TablefieldsDictionary = new forestObject(new forestObjectList('forestTableFieldProperties'), false);
+		$this->SubConstraintsDictionary = new forestArray;
+		$this->LookupResultsDictionary = new forestObject(new forestObjectList('stdClass'), false);
 		$this->OriginalView = new forestString;
 		$this->TabIndex = new forestInt(100);
 	}
@@ -340,6 +345,7 @@ class forestGlobals {
 				$this->TablesInformation->value[$o_table->UUID]['SortOrder'] = $o_table->SortOrder;
 				$this->TablesInformation->value[$o_table->UUID]['Interval'] = $o_table->Interval;
 				$this->TablesInformation->value[$o_table->UUID]['View'] = $o_table->View;
+				$this->TablesInformation->value[$o_table->UUID]['SortColumn'] = $o_table->SortColumn;
 			}
 		}
 		
@@ -371,6 +377,21 @@ class forestGlobals {
 		
 		/*echo '<pre>';
 		print_r($this->TablesWithTablefields->value);
+		echo '</pre>';*/
+		
+		/* query all sub-constraints */
+		$o_subconstraintTwig = new subconstraintTwig;
+		$o_subconstraints = $o_subconstraintTwig->GetAllRecords(true);
+		
+		/* put sub constraint records into array, key uuid */
+		if ($o_subconstraints->Twigs->Count() > 0) {
+			foreach ($o_subconstraints->Twigs as $o_subconstraint) {
+				$this->SubConstraintsDictionary->value[$o_subconstraint->TableUUID][] = $o_subconstraint;
+			}
+		}
+		
+		/*echo '<pre>';
+		print_r($this->SubConstraintsDictionary->value);
 		echo '</pre>';*/
 	}
 	

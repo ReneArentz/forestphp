@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.4 (0x1 0000A)   | */
+/* | forestPHP V0.1.5 (0x1 0000A)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -15,6 +15,7 @@
  * Version	Developer	Date		Comment
  * 0.1.0 alpha	renatus		2019-08-04	first build
  * 0.1.1 alpha	renatus		2019-08-10	added trunk and forestDateTime functionality
+ * 0.1.5 alpha	renatus		2019-10-10	added forestLookup functionality
  */
 
 class forestSQLQuery {
@@ -121,6 +122,10 @@ abstract class forestSQLQueryAbstract {
 		
 		if (is_a($p_s_value, 'forestDateTime')) {
 			$p_s_value = $p_s_value->ToString();
+		}
+		
+		if (is_a($p_s_value, 'forestLookupData')) {
+			$p_s_value = $p_s_value->PrimaryValue;
 		}
 		
 		if (is_string($p_s_value)) {

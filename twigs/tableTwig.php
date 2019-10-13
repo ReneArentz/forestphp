@@ -11,6 +11,7 @@ class tableTwig extends forestTwig {
 	private $SortOrder;
 	private $Interval;
 	private $View;
+	private $SortColumn;
 	
 	/* Properties */
 	
@@ -20,10 +21,11 @@ class tableTwig extends forestTwig {
 		$this->Id = new forestNumericString(1);
 		$this->UUID = new forestString;
 		$this->Name = new forestString;
-		$this->Unique = new forestString;
-		$this->SortOrder = new forestString;
+		$this->Unique = new forestLookup(new forestLookupData('sys_fphp_tablefield', array('UUID'), array('FieldName'), array('TableUUID' => 'foo')));
+		$this->SortOrder = new forestLookup(new forestLookupData('sys_fphp_tablefield', array('UUID'), array('FieldName'), array('TableUUID' => 'foo')));
 		$this->Interval = new forestInt;
-		$this->View = new forestString;
+		$this->View = new forestLookup(new forestLookupData('sys_fphp_tablefield', array('UUID'), array('FieldName'), array('TableUUID' => 'foo')));
+		$this->SortColumn = new forestLookup(new forestLookupData('sys_fphp_tablefield', array('UUID'), array('FieldName'), array('TableUUID' => 'foo')));
 		
 		/* forestTwig system fields */
 		$this->fphp_Table->value = 'sys_fphp_table';

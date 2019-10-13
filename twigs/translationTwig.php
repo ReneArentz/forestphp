@@ -19,7 +19,7 @@ class translationTwig extends forestTwig {
 		$this->Id = new forestNumericString(1);
 		$this->UUID = new forestString;
 		$this->BranchId = new forestInt;
-		$this->LanguageCode = new forestString;
+		$this->LanguageCode = new forestLookup(new forestLookupData('sys_fphp_language', array('UUID'), array('Language'), array(), ' - '));
 		$this->Name = new forestString;
 		$this->Value = new forestString;
 		

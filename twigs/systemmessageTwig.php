@@ -19,7 +19,7 @@ class systemmessageTwig extends forestTwig {
 		$this->Id = new forestNumericString(1);
 		$this->UUID = new forestString;
 		$this->IdInternal = new forestInt;
-		$this->LanguageCode = new forestString;
+		$this->LanguageCode = new forestLookup(new forestLookupData('sys_fphp_language', array('UUID'), array('Language'), array(), ' - '));
 		$this->Message = new forestString;
 		$this->Type = new forestString;
 		

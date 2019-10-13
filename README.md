@@ -24,6 +24,9 @@ forestPHP framework will be released under the **GPLv3 license** and the **MIT l
 
 ## Releases
 
+### 0.1.5 (alpha)
+New features: Sub Constraints + Sub Records, Implementation of forestCombination, Implementation of forestLookup, MoveUp + MoveDown actions of records, Thumbnail view for form file elements, Captcha element. *10/2019*
+
 ### 0.1.4 (alpha)
 New features: Detail modal view, Richtext element, Dropzone element, File Upload Handling, File Replacement. *09/2019*
 

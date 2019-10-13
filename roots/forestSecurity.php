@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.4 (0x1 00006)   | */
+/* | forestPHP V0.1.5 (0x1 00006)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -14,6 +14,7 @@
  * Version	Developer	Date		Comment
  * 0.1.0 alpha	renatus		2019-08-04	first build
  * 0.1.1 alpha	renatus		2019-08-08	add session and forestDateTime functionality
+ * 0.1.5 alpha	renatus		2019-10-08	added GenerateCaptchaCharacter function
  */
 
 class forestSecurity {
@@ -251,6 +252,18 @@ class forestSecurity {
 			$p_s_value = hash('sha512', $p_s_salt . $p_s_value);
 			$p_s_value = md5($p_s_value . $p_s_salt);
 		}
+	}
+	
+	/* generates random character for captcha image */
+	public function GenerateCaptchaCharacter($p_i_strength = 10) {
+		$s_permittedChars = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz';
+		$s_foo = '';
+		
+		for($i = 0; $i < $p_i_strength; $i++) {
+			$s_foo = $s_permittedChars[mt_rand(0, strlen($s_permittedChars) - 1)];
+		}
+		
+		return $s_foo;
 	}
 }
 ?>
