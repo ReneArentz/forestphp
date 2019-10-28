@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.5 (0x1 00014)   | */
+/* | forestPHP V0.2.0 (0x1 00014)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -24,9 +24,10 @@
  * 0.1.5 alpha	renatus		2019-10-04	added moveUp and moveDown functionality
  * 0.1.5 alpha	renatus		2019-10-05	added Captcha and thumbnail functionality
  * 0.1.5 alpha	renatus		2019-10-08	added forestLookup and forestCombination functionality
+ * 0.2.0 beta	renatus		2019-10-25	added forestRootBranch inheritance and activated RootMenu rendering
  */
 
-abstract class forestBranch {
+abstract class forestBranch extends forestRootBranch {
 	use forestData;
 
 	/* Fields */
@@ -69,6 +70,9 @@ abstract class forestBranch {
 		if (!$o_glob->FastProcessing) {
 			/* init navigation object */
 			$o_glob->Navigation->InitNavigation();
+			
+			/* init root menu and store it to global variable */
+			$o_glob->RootMenu = $this->RenderRootMenu();
 			
 			$i_lastBranchId = 0;
 			$i_lastActionId = 0;

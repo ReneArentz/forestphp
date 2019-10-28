@@ -19,19 +19,32 @@ CREATE TABLE `sys_fphp_action` (
 
 INSERT INTO `sys_fphp_action` (`Id`, `BranchId`, `Name`) VALUES
 (5,	0,	'delete'),
+(47,	0,	'deleteAction'),
+(14,	0,	'deleteBranch'),
+(19,	0,	'deleteTwig'),
 (4,	0,	'edit'),
+(46,	0,	'editAction'),
+(13,	0,	'editBranch'),
+(17,	0,	'editTwig'),
 (10,	0,	'fphp_captcha'),
 (11,	0,	'fphp_imageThumbnail'),
 (8,	0,	'fphp_upload'),
 (9,	0,	'fphp_upload_delete'),
 (1,	0,	'init'),
 (7,	0,	'moveDown'),
+(44,	0,	'moveDownBranch'),
 (6,	0,	'moveUp'),
+(43,	0,	'moveUpBranch'),
 (3,	0,	'new'),
+(45,	0,	'newAction'),
+(12,	0,	'newBranch'),
+(15,	0,	'newTwig'),
 (49,	0,	'replaceFile'),
-(106,	0,	'restoreFile'),
+(56,	0,	'rootMenu'),
 (2,	0,	'view'),
-(48,	0,	'viewFiles');
+(20,	0,	'viewBranch'),
+(48,	0,	'viewFiles'),
+(16,	0,	'viewTwig');
 
 DROP TABLE IF EXISTS `sys_fphp_branch`;
 CREATE TABLE `sys_fphp_branch` (
@@ -54,7 +67,7 @@ INSERT INTO `sys_fphp_branch` (`Id`, `Name`, `ParentBranch`, `Title`, `Navigatio
 (1,	'index',	NULL,	'Home',	1,	1,	NULL,	NULL,	NULL,	NULL,	NULL),
 (19,	'translation',	31,	'Translation',	1,	3,	NULL,	'0afd586d-4721-11e9-8210-1062e50d1fcb',	1,	CONV('1', 2, 10) + 0,	CONV('0', 2, 10) + 0),
 (20,	'language',	31,	'Language',	1,	1,	NULL,	'0af8f35c-4721-11e9-8210-1062e50d1fcb',	1,	CONV('1', 2, 10) + 0,	CONV('0', 2, 10) + 0),
-(29,	'forestphp',	1,	'forestPHP',	1,	15,	NULL,	NULL,	1,	CONV('0', 2, 10) + 0,	CONV('0', 2, 10) + 0),
+(29,	'forestphp',	1,	'forestPHP',	1,	1,	NULL,	NULL,	1,	CONV('0', 2, 10) + 0,	CONV('0', 2, 10) + 0),
 (31,	'settings',	29,	'Settings',	1,	2,	NULL,	NULL,	1,	CONV('0', 2, 10) + 0,	CONV('0', 2, 10) + 0),
 (32,	'useradmin',	29,	'User Administration',	1,	3,	NULL,	NULL,	1,	CONV('0', 2, 10) + 0,	CONV('0', 2, 10) + 0),
 (37,	'trunk',	31,	'Trunk',	1,	2,	NULL,	'0afdb7e6-4721-11e9-8210-1062e50d1fcb',	10,	CONV('0', 2, 10) + 0,	CONV('0', 2, 10) + 0),
@@ -470,9 +483,17 @@ INSERT INTO `sys_fphp_systemmessage` (`Id`, `UUID`, `IdInternal`, `LanguageCode`
 (43,	'bf35c3bf-7312-11e9-be59-1062e50d1fcb',	268440615,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'Ein Datensatz wurde erfolgreich gelöscht.',	'info'),
 (44,	'bf35c3f7-7312-11e9-be59-1062e50d1fcb',	268440616,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'Die Datensätze wurden erfolgreich gelöscht.',	'info'),
 (45,	'bf35c42f-7312-11e9-be59-1062e50d1fcb',	268440617,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'Das gesendete Formular ist ungültig. Bitte starten Sie das Formular neu und versuchen Sie es erneut.',	'warning'),
+(46,	'bf35c598-7312-11e9-be59-1062e50d1fcb',	268440618,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'Die Reihenfolge der Datensätze ist von der Spalte[%0] abhängig. Die Spalte[%0] hat jedoch noch kein Unique-Constraint. Es wird empfohlen für diese Spalte ein Unique-Constraint zu erstellen.',	'info'),
 (47,	'bf35c60e-7312-11e9-be59-1062e50d1fcb',	268440619,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'Der Datensatz wurde erfolgreich nach oben verschoben.',	'info'),
 (48,	'bf35c662-7312-11e9-be59-1062e50d1fcb',	268440620,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'Der Datensatz wurde erfolgreich nach unten verschoben.',	'info'),
-(51,	'bf35c753-7312-11e9-be59-1062e50d1fcb',	268443394,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'Cannot decode json data for field[JSONEncodedSettings]. Please check json data settings for correct syntax.[%0]',	'warning');
+(49,	'bf35c69c-7312-11e9-be59-1062e50d1fcb',	268443392,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'Dieser Branch hat Unterelemente. Bitte löschen Sie zuerst alle Unterelemente bevor Sie diesen Branch löschen wollen.',	'warning'),
+(50,	'bf35c6f0-7312-11e9-be59-1062e50d1fcb',	268443393,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'Dieser Branch ist mit einem Twig verbunden. Bitte löschen Sie zuerst die Twig-Tabelle bevor Sie diesen Branch löschen wollen.',	'warning'),
+(51,	'bf35c753-7312-11e9-be59-1062e50d1fcb',	268443394,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'Cannot decode json data for field[JSONEncodedSettings]. Please check json data settings for correct syntax.[%0]',	'warning'),
+(52,	'bf35c78d-7312-11e9-be59-1062e50d1fcb',	268443395,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'Der Tabellen-Name muss den gleichen Wert wie der Branch-Name aufweisen.',	'warning'),
+(53,	'bf35c7c7-7312-11e9-be59-1062e50d1fcb',	268443396,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'Der Twig wurde erfolgreich erstellt.',	'info'),
+(54,	'bf35c7ff-7312-11e9-be59-1062e50d1fcb',	268443397,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'Die Startseite darf keinen Twig besitzen.',	'warning'),
+(67,	'c2837c14-9b3a-e219-31f1-10b3076495f4',	268443409,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'Der Branch[%0] hat keine Actions zur Auswahl. Bitte erstellen Sie eine Berechtigung mit einem anderen Branch.',	'warning'),
+(89,	'591707a3-30cb-a6f5-f1db-79cc1a0536c5',	268443414,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'fphp-System-Tabellen dürfen nicht angepasst werden.',	'warning');
 
 DROP TABLE IF EXISTS `sys_fphp_table`;
 CREATE TABLE `sys_fphp_table` (
@@ -532,12 +553,28 @@ CREATE TABLE `sys_fphp_tablefield` (
 ) ENGINE=InnoDB AUTO_INCREMENT=291 DEFAULT CHARSET=latin1;
 
 INSERT INTO `sys_fphp_tablefield` (`Id`, `UUID`, `TableUUID`, `FieldName`, `FormElementUUID`, `SqlTypeUUID`, `ForestDataUUID`, `TabId`, `JSONEncodedSettings`, `FooterElement`, `SubRecordField`, `Order`) VALUES
+(83,	'0b700f8e-6806-11e9-b8be-1062e50d1fcb',	'0af64123-4721-11e9-8210-1062e50d1fcb',	'Name',	'ac1c4d63-4717-11e9-8210-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'1098ab89-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formNameLabel#\",\r\n	\"Id\" : \"sys_fphp_branch_Name\",\r\n	\"ValMessage\" : \"#000.formNameValMessage#\",\r\n	\"Placeholder\" : \"#000.formNamePlaceholder#\"\r\n}',	NULL,	NULL,	1),
+(84,	'1c6b7433-6806-11e9-b8be-1062e50d1fcb',	'0af64123-4721-11e9-8210-1062e50d1fcb',	'Title',	'ac1c4d63-4717-11e9-8210-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'1098ab89-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formTitleLabel#\",\r\n	\"Id\" : \"sys_fphp_branch_Title\",\r\n	\"ValMessage\" : \"#000.formTitleValMessage#\",\r\n	\"Placeholder\" : \"#000.formTitlePlaceholder#\"\r\n}',	NULL,	NULL,	2),
+(85,	'398ef5d5-6806-11e9-b8be-1062e50d1fcb',	'0af64123-4721-11e9-8210-1062e50d1fcb',	'Navigation',	'ac1ed318-4717-11e9-8210-1062e50d1fcb',	'159489e2-4718-11e9-8210-1062e50d1fcb',	'1e7bae52-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formNavigationLabel#\",\r\n	\"Id\" : \"sys_fphp_branch_Navigation\",\r\n	\"ValMessage\" : \"#000.formNavigationValMessage#\",\r\n	\"Options\" : { \"#000.formNavigationOptionLabel00#\" : \"1\" },\r\n	\"Checked\" : \"true\"\r\n}',	NULL,	NULL,	3),
+(87,	'73a9b532-6806-11e9-b8be-1062e50d1fcb',	'0af64123-4721-11e9-8210-1062e50d1fcb',	'Filename',	'ac1c4d63-4717-11e9-8210-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'1098ab89-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formFilenameLabel#\",\r\n	\"Id\" : \"sys_fphp_branch_Filename\",\r\n	\"ValMessage\" : \"#000.formFilenameValMessage#\",\r\n	\"Placeholder\" : \"#000.formFilenamePlaceholder#\"\r\n}',	NULL,	NULL,	4),
+(89,	'15dea0bd-6807-11e9-b8be-1062e50d1fcb',	'0af64123-4721-11e9-8210-1062e50d1fcb',	'StandardView',	'ac1e7f1c-4717-11e9-8210-1062e50d1fcb',	'1592a0e1-4718-11e9-8210-1062e50d1fcb',	'18d92e02-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formStandardViewLabel#\",\r\n	\"Id\" : \"sys_fphp_branch_StandardView\",\r\n	\"ValMessage\" : \"#000.formStandardViewValMessage#\",\r\n	\"Options\" : { \"#000.formStandardViewOptionLabel00#\" : \"01\", \"#000.formStandardViewOptionLabel01#\" : \"10\" }\r\n}',	NULL,	NULL,	5),
+(90,	'5fe7d129-6807-11e9-b8be-1062e50d1fcb',	'0af64123-4721-11e9-8210-1062e50d1fcb',	'Filter',	'ac1ed318-4717-11e9-8210-1062e50d1fcb',	'159489e2-4718-11e9-8210-1062e50d1fcb',	'1e7bae52-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formFilterLabel#\",\r\n	\"Id\" : \"sys_fphp_branch_Filter\",\r\n	\"ValMessage\" : \"#000.formFilterValMessage#\",\r\n	\"Options\" : { \"#000.formFilterOptionLabel00#\" : \"1\" }\r\n}',	NULL,	NULL,	6),
+(91,	'6a97f99f-6807-11e9-b8be-1062e50d1fcb',	'0af64123-4721-11e9-8210-1062e50d1fcb',	'KeepFilter',	'ac1ed318-4717-11e9-8210-1062e50d1fcb',	'159489e2-4718-11e9-8210-1062e50d1fcb',	'1e7bae52-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formKeepFilterLabel#\",\r\n	\"Id\" : \"sys_fphp_branch_KeepFilter\",\r\n	\"ValMessage\" : \"#000.formKeepFilterValMessage#\",\r\n	\"Options\" : { \"#000.formKeepFilterOptionLabel00#\" : \"1\" }\r\n}',	NULL,	NULL,	7),
+(105,	'f87c5440-6b1e-11e9-a36e-1062e50d1fcb',	'0afc33bd-4721-11e9-8210-1062e50d1fcb',	'Interval',	'ac21769b-4717-11e9-8210-1062e50d1fcb',	'1592a0e1-4718-11e9-8210-1062e50d1fcb',	'18d92e02-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formIntervalLabel#\",\r\n	\"Id\" : \"sys_fphp_table_Interval\",\r\n	\"ValMessage\" : \"#000.formIntervalValMessage#\",\r\n	\"Min\" : \"1\",\r\n	\"Max\" : \"1000\"\r\n}',	NULL,	NULL,	6),
+(106,	'25970d68-6b1e-11e9-a36e-1062e50d1fcb',	'0afc33bd-4721-11e9-8210-1062e50d1fcb',	'View',	'3bb71d43-4ca4-11e9-bc30-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'faf27830-4c9a-11e9-bc30-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formViewLabel#\",\r\n	\"Id\" : \"sys_fphp_table_View[]\",\r\n	\"Multiple\" : true,\r\n	\"Required\" : true,\r\n	\"Size\" : 4\r\n}',	NULL,	NULL,	7),
+(107,	'3c8e01de-6b1e-11e9-a36e-1062e50d1fcb',	'0afc33bd-4721-11e9-8210-1062e50d1fcb',	'SortColumn',	'3bb71d43-4ca4-11e9-bc30-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'faf27830-4c9a-11e9-bc30-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formSortColumnLabel#\",\r\n	\"Id\" : \"sys_fphp_table_SortColumn\"\r\n}',	NULL,	NULL,	8),
 (114,	'712644f4-addc-0cf6-c5d1-5bc07e8fc9bd',	'0af8f35c-4721-11e9-8210-1062e50d1fcb',	'Code',	'ac1c4d63-4717-11e9-8210-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'1098ab89-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#formCodeLabel#\",\r\n	\"Id\" : \"sys_fphp_language_Code\",\r\n	\"ValMessage\" : \"#formCodeValMessage#\",\r\n	\"Placeholder\" : \"#formCodePlaceholder#\"\r\n}',	CONV('0', 2, 10) + 0,	NULL,	1),
 (115,	'07440b76-e8b3-6b27-2187-a32895763544',	'0af8f35c-4721-11e9-8210-1062e50d1fcb',	'Language',	'ac1c4d63-4717-11e9-8210-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'1098ab89-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#formLanguageLabel#\",\r\n	\"Id\" : \"sys_fphp_language_Language\",\r\n	\"ValMessage\" : \"#formLanguageValMessage#\",\r\n	\"Placeholder\" : \"#formLanguagePlaceholder#\"\r\n}',	CONV('0', 2, 10) + 0,	NULL,	2),
 (116,	'835410a5-e7a7-2381-a8bd-f20c05502fdd',	'0afd586d-4721-11e9-8210-1062e50d1fcb',	'BranchId',	'ac21769b-4717-11e9-8210-1062e50d1fcb',	'159229d5-4718-11e9-8210-1062e50d1fcb',	'18d92e02-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#formBranchIdLabel#\",\r\n	\"Id\" : \"sys_fphp_translation_BranchId\",\r\n	\"ValMessage\" : \"#formBranchIdValMessage#\",\r\n	\"Min\" : \"0\",\r\n	\"Max\" : \"1000\"\r\n}',	CONV('0', 2, 10) + 0,	NULL,	1),
 (117,	'51074834-d7f3-9e94-23f9-fcd829ea7410',	'0afd586d-4721-11e9-8210-1062e50d1fcb',	'LanguageCode',	'3bb71d43-4ca4-11e9-bc30-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'faf27830-4c9a-11e9-bc30-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#formLanguageCodeLabel#\",\r\n	\"Id\" : \"sys_fphp_translation_LanguageCode\",\r\n	\"forestLookupDataTable\":\"sys_fphp_language\",\r\n	\"forestLookupDataPrimary\":[\"UUID\"],\r\n	\"forestLookupDataLabel\":[\"Language\"],\r\n\"Required\" : true\r\n}',	CONV('0', 2, 10) + 0,	NULL,	2),
 (118,	'11e34a7c-81f4-ca8c-05ec-5e1c678be25b',	'0afd586d-4721-11e9-8210-1062e50d1fcb',	'Name',	'ac1c4d63-4717-11e9-8210-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'1098ab89-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#formNameLabel#\",\r\n	\"Id\" : \"sys_fphp_translation_Name\",\r\n	\"ValMessage\" : \"#formNameValMessage#\",\r\n	\"Placeholder\" : \"#formNamePlaceholder#\"\r\n}',	CONV('0', 2, 10) + 0,	NULL,	3),
 (119,	'ed2e3a42-29a6-7dc9-331b-a6bd57988c66',	'0afd586d-4721-11e9-8210-1062e50d1fcb',	'Value',	'ac1c4d63-4717-11e9-8210-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'1098ab89-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#formValueLabel#\",\r\n	\"Id\" : \"sys_fphp_translation_Value\",\r\n	\"ValMessage\" : \"#formValueValMessage#\",\r\n	\"Placeholder\" : \"#formValuePlaceholder#\"\r\n}',	CONV('0', 2, 10) + 0,	NULL,	4),
+(127,	'406dcda7-6d83-11e9-b1a0-1062e50d1fcb',	'0afc33bd-4721-11e9-8210-1062e50d1fcb',	'Unique',	'3bb71d43-4ca4-11e9-bc30-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'faf27830-4c9a-11e9-bc30-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formUniqueLabel#\",\r\n	\"Id\" : \"sys_fphp_table_Unique[]\",\r\n	\"Multiple\" : true,\r\n	\"Required\" : true,\r\n	\"Size\" : 4\r\n}',	NULL,	NULL,	4),
+(128,	'501aa756-6d83-11e9-b1a0-1062e50d1fcb',	'0afc33bd-4721-11e9-8210-1062e50d1fcb',	'SortOrder',	'3bb71d43-4ca4-11e9-bc30-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'faf27830-4c9a-11e9-bc30-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formSortOrderLabel#\",\r\n	\"Id\" : \"sys_fphp_table_SortOrder\",\r\n	\"Required\" : true\r\n}',	NULL,	NULL,	5),
+(129,	'60c3305a-6e8b-11e9-990d-54bf640e09ee',	'0af6ab5d-4721-11e9-8210-1062e50d1fcb',	'TableUUID',	'ac1c4d63-4717-11e9-8210-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'1098ab89-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formTableUUIDLabel#\",\r\n	\"Id\" : \"sys_fphp_subconstraint_TableUUID\"\r\n}',	NULL,	NULL,	1),
+(130,	'a52dcc87-6e8b-11e9-990d-54bf640e09ee',	'0af6ab5d-4721-11e9-8210-1062e50d1fcb',	'SubTableUUID',	'3bb71d43-4ca4-11e9-bc30-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'faf27830-4c9a-11e9-bc30-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formSubTableUUIDLabel#\",\r\n	\"Id\" : \"sys_fphp_subconstraint_SubTableUUID\",\r\n	\"Required\" : true\r\n}',	NULL,	NULL,	2),
+(131,	'd580ca5f-6e8b-11e9-990d-54bf640e09ee',	'0af6ab5d-4721-11e9-8210-1062e50d1fcb',	'View',	'3bb71d43-4ca4-11e9-bc30-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'faf27830-4c9a-11e9-bc30-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formViewLabel#\",\r\n	\"Id\" : \"sys_fphp_subconstraint_View[]\",\r\n	\"Multiple\" : true,\r\n	\"Size\" : 4\r\n}',	NULL,	NULL,	3),
+(183,	'7913f0a9-7339-11e9-9b90-54bf640e09ee',	'0af64123-4721-11e9-8210-1062e50d1fcb',	'NavigationOrder',	'ac21769b-4717-11e9-8210-1062e50d1fcb',	'1592a0e1-4718-11e9-8210-1062e50d1fcb',	'18d92e02-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formNavigationOrderLabel#\",\r\n	\"Id\" : \"sys_fphp_branch_NavigationOrder\",\r\n	\"ValMessage\" : \"#000.formNavigationOrderValMessage#\",\r\n	\"Min\" : \"1\",\r\n	\"Max\" : \"10000\"\r\n}',	NULL,	NULL,	8),
 (189,	'4975e4e3-7574-11e9-9305-1062e50d1fcb',	'0afdb7e6-4721-11e9-8210-1062e50d1fcb',	'LanguageCode',	'3bb71d43-4ca4-11e9-bc30-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'faf27830-4c9a-11e9-bc30-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#formLanguageCodeLabel#\",\r\n	\"SortHeader\" : \"#sortLanguageCode#\",\r\n	\"Id\" : \"sys_fphp_trunk_LanguageCode\",\r\n	\"forestLookupDataTable\":\"sys_fphp_language\",\r\n	\"forestLookupDataPrimary\":[\"UUID\"],\r\n	\"forestLookupDataLabel\":[\"Language\"],\r\n	\"Required\" : true\r\n}',	CONV('0', 2, 10) + 0,	NULL,	1),
 (195,	'355837a3-7575-11e9-9305-1062e50d1fcb',	'0afdb7e6-4721-11e9-8210-1062e50d1fcb',	'SessionIntervalGuest',	'ac1c4d63-4717-11e9-8210-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'1098ab89-4717-11e9-8210-1062e50d1fcb',	'useradmin',	'{\r\n	\"Label\" : \"#formSessionIntervalGuestLabel#\",\r\n	\"SortHeader\" : \"#sortSessionIntervalGuest#\",\r\n	\"Id\" : \"sys_fphp_trunk_SessionIntervalGuest\",\r\n	\"ValMessage\" : \"#formSessionIntervalGuestValMessage#\",\r\n	\"Placeholder\" : \"#formSessionIntervalGuestPlaceholder#\",\r\n	\"DateIntervalFormat\" : true\r\n}',	CONV('0', 2, 10) + 0,	NULL,	11),
 (196,	'4a2fa8b1-7575-11e9-9305-1062e50d1fcb',	'0afdb7e6-4721-11e9-8210-1062e50d1fcb',	'DateTimeSqlFormat',	'ac1c4d63-4717-11e9-8210-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'1098ab89-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#formDateTimeSqlFormatLabel#\",\r\n	\"SortHeader\" : \"#sortDateTimeSqlFormat#\",\r\n	\"Id\" : \"sys_fphp_trunk_DateTimeSqlFormat\",\r\n	\"ValMessage\" : \"#formDateTimeSqlFormatValMessage#\",\r\n	\"Placeholder\" : \"#formDateTimeSqlFormatPlaceholder#\"\r\n}',	CONV('0', 2, 10) + 0,	NULL,	2),
@@ -562,6 +599,10 @@ INSERT INTO `sys_fphp_tablefield` (`Id`, `UUID`, `TableUUID`, `FieldName`, `Form
 (226,	'2b0db223-7581-11e9-9305-1062e50d1fcb',	'0afbdaa4-4721-11e9-8210-1062e50d1fcb',	'Type',	'ac239d7f-4717-11e9-8210-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'1098ab89-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#formTypeLabel#\",\r\n\"SortHeader\" : \"#sortType#\",\r\n	\"Id\" : \"sys_fphp_systemmessage_Type\",\r\n	\"ValMessage\" : \"#formTypeValMessage#\",\r\n	\"Required\" : true,\r\n	\"Options\" : { \"Error\" : \"error\", \"Warning\" : \"warning\", \"Information\" : \"info\" }\r\n}',	CONV('0', 2, 10) + 0,	NULL,	4),
 (228,	'6a5dcaa7-7592-11e9-980a-54bf640e09ee',	'0afad5e0-4721-11e9-8210-1062e50d1fcb',	'Timestamp',	'ac20a373-4717-11e9-8210-1062e50d1fcb',	'15937c51-4718-11e9-8210-1062e50d1fcb',	'3e0f992f-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#formTimestampLabel#\",\r\n	\"SortHeader\" : \"#sortTimestamp#\",\r\n	\"Id\" : \"sys_fphp_timestamp_Timestamp\",\r\n	\"ValMessage\" : \"#formTimestampValMessage#\"\r\n}',	CONV('0', 2, 10) + 0,	NULL,	2),
 (235,	'09f60fd4-3363-6fd9-e2bc-655aa28f2063',	'0afdb7e6-4721-11e9-8210-1062e50d1fcb',	'FormKeyMinimumInterval',	'ac1c4d63-4717-11e9-8210-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'1098ab89-4717-11e9-8210-1062e50d1fcb',	'formkey',	'{\r\n	\"Label\" : \"#formFormKeyMinimumIntervalLabel#\",\r\n	\"SortHeader\" : \"#sortFormKeyMinimumInterval#\",\r\n	\"Id\" : \"sys_fphp_trunk_FormKeyMinimumInterval\",\r\n	\"ValMessage\" : \"#formFormKeyMinimumIntervalValMessage#\",\r\n	\"Placeholder\" : \"#formFormKeyMinimumIntervalPlaceholder#\",\r\n	\"DateIntervalFormat\" : true\r\n}',	CONV('0', 2, 10) + 0,	NULL,	15),
+(237,	'e665df10-762c-11e9-80e9-1062e50d1fcb',	'0af5dace-4721-11e9-8210-1062e50d1fcb',	'BranchId',	'ac21769b-4717-11e9-8210-1062e50d1fcb',	'1592a0e1-4718-11e9-8210-1062e50d1fcb',	'18d92e02-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formBranchIdLabel#\",\r\n	\"Id\" : \"sys_fphp_action_BranchId\",\r\n	\"ValMessage\" : \"#000.formBranchIdValMessage#\",\r\n	\"Min\" : \"1\"\r\n}',	NULL,	NULL,	1),
+(238,	'080104fe-762d-11e9-80e9-1062e50d1fcb',	'0af5dace-4721-11e9-8210-1062e50d1fcb',	'Name',	'ac1c4d63-4717-11e9-8210-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'1098ab89-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formActionNameLabel#\",\r\n	\"Id\" : \"sys_fphp_action_Name\",\r\n	\"ValMessage\" : \"#000.formActionNameValMessage#\",\r\n	\"Placeholder\" : \"#000.formActionNamePlaceholder#\"\r\n}',	CONV('0', 2, 10) + 0,	NULL,	2),
+(243,	'6939a291-77be-11e9-b285-1062e50d1fcb',	'0af6ab5d-4721-11e9-8210-1062e50d1fcb',	'Order',	'ac21769b-4717-11e9-8210-1062e50d1fcb',	'1592a0e1-4718-11e9-8210-1062e50d1fcb',	'18d92e02-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formOrderLabel#\",\r\n	\"Id\" : \"sys_fphp_subconstraint_Order\",\r\n	\"ValMessage\" : \"#000.formOrderValMessage#\",\r\n	\"Min\" : \"1\"\r\n}',	NULL,	NULL,	4),
+(245,	'ec299ec5-8509-ca7c-a78e-68f8be9cf902',	'518422b1-09a5-2d2e-8b36-acd252c72a7b',	'InfoText',	'ac1c4d63-4717-11e9-8210-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'1098ab89-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#formInfoTextLabel#\",\r\n	\"SortHeader\" : \"#sortInfoText#\",\r\n	\"Id\" : \"fphp_infocolumns_InfoText\",\r\n	\"ValMessage\" : \"#formInfoTextValMessage#\",\r\n	\"Placeholder\" : \"#formInfoTextPlaceholder#\"\r\n}',	CONV('0', 2, 10) + 0,	NULL,	1),
 (290,	'1119141b-6d93-277c-d43b-efc0e6189c68',	'0afdb7e6-4721-11e9-8210-1062e50d1fcb',	'form',	'5d044167-4717-11e9-8210-1062e50d1fcb',	NULL,	NULL,	'general',	'{\"FormTabConfiguration\":{\"Tab\":true,\"TabMenuClass\":\"nav nav-tabs\",\"TabActiveClass\":\"active\",\"TabToggle\":\"tab\",\"TabContentClass\":\"tab-content\",\"TabFooterClass\":\"tab-footer\",\"TabElementClass\":\"tab-pane fade\",\"TabElementActiveClass\":\"tab-pane fade in active\",\"TabsInfo\":[{\"TabId\":\"general\",\"TabTitle\":\"#001.formTabTitle#\"},{\"TabId\":\"useradmin\",\"TabTitle\":\"#formUserTitle#\"},{\"TabId\":\"formkey\",\"TabTitle\":\"#formFormKeyTitle#\"},{\"TabId\":\"navbar\",\"TabTitle\":\"#formNavbarTitle#\"},{\"TabId\":\"other\",\"TabTitle\":\"#formOtherTitle#\"}]},\"FormModalConfiguration\":{\"Modal\":true,\"ModalClass\":\"modal fade\",\"ModalId\":\"fphp_Modal\",\"ModalTitle\":\"forestPHP Modal Form\",\"ModalRole\":\"dialog\",\"ModalDialogClass\":\"modal-dialog modal-xl\",\"ModalDialogContentClass\":\"modal-content\",\"ModalHeaderClass\":\"modal-header\",\"ModalHeaderCloseClass\":\"close\",\"ModalHeaderDismissClass\":\"modal\",\"ModalHeaderCloseContent\":\"×\",\"ModalBodyClass\":\"modal-body\",\"ModalFooterClass\":\"modal-footer\"},\"Class\":\"form-horizontal\",\"FormGroupClass\":\"form-group\",\"LabelClass\":\"col-sm-3 control-label\",\"FormElementClass\":\"col-sm-9\",\"ClassAll\":\"form-control\",\"RadioClass\":\"radio\",\"CheckboxClass\":\"checkbox\",\"UseCaptcha\":false,\"Id\":\"sys_fphp_trunk_form\"}',	CONV('0', 2, 10) + 0,	NULL,	37);
 
 DROP TABLE IF EXISTS `sys_fphp_tablefield_validationrule`;
@@ -578,6 +619,23 @@ CREATE TABLE `sys_fphp_tablefield_validationrule` (
   UNIQUE KEY `tablefieldUUID_validationruleUUID` (`TablefieldUUID`,`ValidationruleUUID`)
 ) ENGINE=InnoDB AUTO_INCREMENT=61 DEFAULT CHARSET=latin1;
 
+INSERT INTO `sys_fphp_tablefield_validationrule` (`Id`, `UUID`, `TablefieldUUID`, `ValidationruleUUID`, `ValidationRuleParam01`, `ValidationRuleParam02`, `ValidationRuleRequired`) VALUES
+(1,	'820cf0a6-6f4e-11e9-b640-54bf640e09ee',	'0b700f8e-6806-11e9-b8be-1062e50d1fcb',	'166ff021-471a-11e9-8210-1062e50d1fcb',	'true',	NULL,	CONV('1', 2, 10) + 0),
+(2,	'821c0f1f-6f4e-11e9-b640-54bf640e09ee',	'15dea0bd-6807-11e9-b8be-1062e50d1fcb',	'166ff021-471a-11e9-8210-1062e50d1fcb',	'true',	'fphpByName',	CONV('1', 2, 10) + 0),
+(3,	'821c0fe2-6f4e-11e9-b640-54bf640e09ee',	'1c6b7433-6806-11e9-b8be-1062e50d1fcb',	'166ff021-471a-11e9-8210-1062e50d1fcb',	'true',	NULL,	CONV('1', 2, 10) + 0),
+(5,	'821c10d3-6f4e-11e9-b640-54bf640e09ee',	'217c0199-6a7c-11e9-8f4f-1062e50d1fcb',	'166ff021-471a-11e9-8210-1062e50d1fcb',	'true',	NULL,	CONV('1', 2, 10) + 0),
+(6,	'821c114a-6f4e-11e9-b640-54bf640e09ee',	'374d04ed-6a7b-11e9-8f4f-1062e50d1fcb',	'166ff021-471a-11e9-8210-1062e50d1fcb',	'true',	NULL,	CONV('1', 2, 10) + 0),
+(24,	'821c19be-6f4e-11e9-b640-54bf640e09ee',	'852c8c4d-6a7b-11e9-8f4f-1062e50d1fcb',	'166ff021-471a-11e9-8210-1062e50d1fcb',	'true',	NULL,	CONV('1', 2, 10) + 0),
+(29,	'821c1faa-6f4e-11e9-b640-54bf640e09ee',	'e68105fc-6a7b-11e9-8f4f-1062e50d1fcb',	'166ff021-471a-11e9-8210-1062e50d1fcb',	'true',	NULL,	CONV('1', 2, 10) + 0),
+(40,	'f40531a1-75c1-11e9-897a-54bf640e09ee',	'f87c5440-6b1e-11e9-a36e-1062e50d1fcb',	'166ff021-471a-11e9-8210-1062e50d1fcb',	'true',	NULL,	NULL),
+(41,	'4bc048c2-946a-6291-c679-043ce5143016',	'51074834-d7f3-9e94-23f9-fcd829ea7410',	'166ff021-471a-11e9-8210-1062e50d1fcb',	'true',	NULL,	CONV('0', 2, 10) + 0),
+(42,	'068918a1-b874-10a9-89e6-8f121fb84652',	'11e34a7c-81f4-ca8c-05ec-5e1c678be25b',	'166ff021-471a-11e9-8210-1062e50d1fcb',	'true',	NULL,	CONV('0', 2, 10) + 0),
+(43,	'cd5d38e1-5c67-cff7-a711-8f422df971cb',	'ed2e3a42-29a6-7dc9-331b-a6bd57988c66',	'166ff021-471a-11e9-8210-1062e50d1fcb',	'true',	NULL,	CONV('0', 2, 10) + 0),
+(44,	'8a7ef77c-75c3-11e9-897a-54bf640e09ee',	'25970d68-6b1e-11e9-a36e-1062e50d1fcb',	'166ff021-471a-11e9-8210-1062e50d1fcb',	'true',	NULL,	NULL),
+(45,	'acff5eca-75c3-11e9-897a-54bf640e09ee',	'406dcda7-6d83-11e9-b1a0-1062e50d1fcb',	'166ff021-471a-11e9-8210-1062e50d1fcb',	'true',	NULL,	NULL),
+(47,	'a8597b9c-75c3-11e9-897a-54bf640e09ee',	'501aa756-6d83-11e9-b1a0-1062e50d1fcb',	'166ff021-471a-11e9-8210-1062e50d1fcb',	'true',	NULL,	NULL),
+(48,	'2b541386-75c4-11e9-897a-54bf640e09ee',	'a52dcc87-6e8b-11e9-990d-54bf640e09ee',	'166ff021-471a-11e9-8210-1062e50d1fcb',	'true',	NULL,	NULL),
+(50,	'658e6f84-762d-11e9-80e9-1062e50d1fcb',	'080104fe-762d-11e9-80e9-1062e50d1fcb',	'93d9e7af-ae78-3a07-0e93-041589e344b5',	'true',	NULL,	CONV('1', 2, 10) + 0);
 
 DROP TABLE IF EXISTS `sys_fphp_translation`;
 CREATE TABLE `sys_fphp_translation` (
@@ -682,8 +740,42 @@ INSERT INTO `sys_fphp_translation` (`Id`, `UUID`, `BranchId`, `LanguageCode`, `N
 (93,	'efbab03e-6cdc-11e9-b874-1062e50d1fcb',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'sortDownload',	'Download'),
 (94,	'efbab078-6cdc-11e9-b874-1062e50d1fcb',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'sortDelete',	'Datei löschen'),
 (95,	'efbab0af-6cdc-11e9-b874-1062e50d1fcb',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'DeleteModalDescriptionFile',	'Wollen Sie die Datei wirklich löschen?'),
+(370,	'efbb6194-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formNameLabel',	'Name:'),
+(371,	'efbb61d4-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formNameValMessage',	'Bitte geben Sie eine Bezeichnung für den fPHP-Branch an. Nur Buchstaben; keine Leerzeichen.'),
+(372,	'efbb621a-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formNamePlaceholder',	'branchName'),
+(373,	'efbb625b-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formTitleLabel',	'Titel:'),
+(374,	'efbb629d-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formTitleValMessage',	'Bitte geben Sie einen Titel zum fPHP-Branch an.'),
+(375,	'efbb62df-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formTitlePlaceholder',	'Branch Titel Seite A'),
+(376,	'efbb6322-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formNavigationLabel',	''),
+(377,	'efbb6366-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formNavigationValMessage',	'Bitte geben Sie an, ob dieser fPHP-Branch in der Navigations-Leiste angezeigt werden soll.'),
+(378,	'efbb63ae-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formNavigationOptionLabel00',	'fPHP-Branch in Navigations-Leiste anzeigen'),
+(381,	'efbb63f0-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formFilenameLabel',	'Dateiname:'),
+(382,	'efbb6432-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formFilenameValMessage',	'Bitte geben Sie einen Dateinamen an.'),
+(383,	'efbb6473-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formFilenamePlaceholder',	'Datei.txt'),
+(384,	'efbb64b5-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formStandardViewLabel',	'Standard-Ansicht:'),
+(385,	'efbb64f9-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formStandardViewValMessage',	'Bitte wählen Sie eine Standard-Ansicht aus.'),
+(386,	'efbb653b-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formStandardViewOptionLabel00',	'Liste'),
+(387,	'efbb657c-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formStandardViewOptionLabel01',	'Formular'),
+(388,	'efbb65d7-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formFilterLabel',	''),
+(389,	'efbb661b-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formFilterValMessage',	'Bitte geben Sie an, ob Sie den Filter benutzen möchten.'),
+(390,	'efbb6660-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formFilterOptionLabel00',	'Filter verwenden'),
+(391,	'efbb66a5-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formKeepFilterLabel',	''),
+(392,	'efbb692c-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formKeepFilterOptionLabel00',	'Filter erhalten'),
+(401,	'efbb6979-6cdc-11e9-b874-1062e50d1fcb',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'rootCreateBranchTitle',	'Branch erstellen'),
+(402,	'efbb69b9-6cdc-11e9-b874-1062e50d1fcb',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'rootEditBranchTitle',	'Branch ändern'),
+(403,	'efbb69fb-6cdc-11e9-b874-1062e50d1fcb',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'rootDeleteBranchTitle',	'Branch löschen'),
+(404,	'efbb6a3e-6cdc-11e9-b874-1062e50d1fcb',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'rootCreateTwigTitle',	'Twig erstellen'),
+(405,	'efbb6a7f-6cdc-11e9-b874-1062e50d1fcb',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'rootViewTwigTitle',	'Twig anzeigen'),
+(407,	'efbb6b03-6cdc-11e9-b874-1062e50d1fcb',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'rootDeleteTwigTitle',	'Twig löschen'),
 (411,	'efbb6b44-6cdc-11e9-b874-1062e50d1fcb',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'btnMoveUpText',	'Nach oben verschieben'),
 (412,	'efbb6b87-6cdc-11e9-b874-1062e50d1fcb',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'btnMoveDownText',	'Nach unten verschieben'),
+(413,	'efbb6bc8-6cdc-11e9-b874-1062e50d1fcb',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'rootEditTwigTitle',	'Twig bearbeiten'),
+(447,	'efbb7350-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formIntervalLabel',	'Intervall:'),
+(448,	'efbb7394-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formIntervalValMessage',	'Bitte geben Sie ein Intervall an[1; 1000].'),
+(449,	'efbb75e3-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formViewLabel',	'View:'),
+(450,	'efbb7629-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formSortColumnLabel',	'Spalte für Reihenfolge:'),
+(451,	'efbb766d-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formPrimarySettingsValMessage',	'Bitte wählen Sie einen Standard-Primärschlüssel aus.'),
+(452,	'efbb76b3-6cdc-11e9-b874-1062e50d1fcb',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formPrimarySettingsLabel',	'Primärschlüssel-Einstellungen:'),
 (469,	'efbb79a9-6cdc-11e9-b874-1062e50d1fcb',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'Translation',	'Translation'),
 (470,	'efbb79ee-6cdc-11e9-b874-1062e50d1fcb',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'Language',	'Language'),
 (471,	'efbb7a30-6cdc-11e9-b874-1062e50d1fcb',	20,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formCodeLabel',	'Code:'),
@@ -708,6 +800,11 @@ INSERT INTO `sys_fphp_translation` (`Id`, `UUID`, `BranchId`, `LanguageCode`, `N
 (490,	'40fc5b15-c4d8-8105-ffb4-918ec786c079',	19,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'sortName',	'Bezeichnung'),
 (491,	'461c8565-def2-c598-852f-4b219208b5c6',	19,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'sortValue',	'Wert'),
 (544,	'08f76cb1-92fb-f4df-9e38-1bcf6825be2f',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'btnBack',	'Zurück'),
+(652,	'e6f837f0-ffc3-a1fd-739a-69f8370bcd4e',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formNavigationOrderLabel',	'Navigationsreihenfolge:'),
+(653,	'eb9aeff8-8348-b643-fdd2-8ffde2b20d7f',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formNavigationOrderValMessage',	'Geben Sie eine Nummer für die Navigationsreihenfolge an.'),
+(654,	'2f76d5ba-f4a9-76b2-7b5b-beb0391abfd2',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'sortNavigationOrder',	'Navigationsreihenfolge'),
+(655,	'90309575-18dc-a832-edbf-8a71ec3e7bb0',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'rootMoveUpBranchTitle',	'Nach oben'),
+(656,	'274d175d-93c6-3bd4-0cee-5e559d5360c4',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'rootMoveDownBranchTitle',	'Nach unten'),
 (657,	'f019b81b-5b09-4082-4fde-909a17086db4',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'forestPHP',	'forestPHP'),
 (659,	'd2a65fae-2bfe-aca9-3a99-83ce487203f9',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'Settings',	'Einstellungen'),
 (660,	'4fa0efdd-1e16-c8da-857a-cae438e215e6',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'User Administration',	'Benutzereinstellungen'),
@@ -806,6 +903,11 @@ INSERT INTO `sys_fphp_translation` (`Id`, `UUID`, `BranchId`, `LanguageCode`, `N
 (852,	'ecea46ea-d4ed-82e2-9736-10700a4be1d5',	37,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'sortFormKeyMinimumInterval',	'Form-Key-Minimum-Intervall'),
 (853,	'211bd416-f188-8f98-b756-2b29e1d03bd1',	37,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formFormKeyMinimumIntervalValMessage',	'Bitte geben Sie einen Wert für das Form-Key-Minimum-Intervall an.'),
 (854,	'23414fd1-e2b5-6b69-4865-0d4a301e7a6e',	37,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formFormKeyMinimumIntervalPlaceholder',	'PT5S'),
+(858,	'ab63f19c-f16b-56dc-7b8b-76071ba9cc96',	37,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'sortHoneypotFields',	'Honeypot-Felder'),
+(860,	'ee3923d3-3508-0d22-f763-03d8876f58fa',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'rootViewBranchTitle',	'Branch anzeigen'),
+(861,	'8906560e-db2c-4498-4ef0-d5395619aa52',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formActionNameLabel',	'Action-Name:'),
+(862,	'15c36c3d-b350-e71b-d934-7a05049434f2',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formActionNameValMessage',	'Bitte geben Sie einen Namen für die Action an.'),
+(863,	'74d990dc-5008-ee82-2abf-3f4c0448e3d2',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formActionNamePlaceholder',	'Action-Name...'),
 (873,	'485b7cee-8449-7ba2-3753-0f69a3b22654',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'btnViewFilesText',	'Dateien anzeigen'),
 (874,	'0161d8df-f5ec-aa8f-6e61-f7a047fca848',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'NoFiles',	'Es konnten keine Dateien gefunden werden.'),
 (875,	'd96d7e28-3a53-1476-03d4-eef7889e221f',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'btnUploadText',	'Datei ersetzen'),
@@ -824,7 +926,8 @@ INSERT INTO `sys_fphp_translation` (`Id`, `UUID`, `BranchId`, `LanguageCode`, `N
 (1089,	'87325a7d-b0ee-5386-a8b3-d963d388017d',	37,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formUserTitle',	'Session'),
 (1090,	'89b14ef9-f006-9e4b-66d8-f7d7ff6d74e3',	37,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formFormKeyTitle',	'Form Key'),
 (1091,	'd92907bf-6c16-c156-4f73-6dc8f3fee175',	37,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formNavbarTitle',	'Navbar'),
-(1092,	'cf5cbd87-9a08-0f86-0777-6fe9229f8810',	37,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formOtherTitle',	'Sonstiges');
+(1092,	'cf5cbd87-9a08-0f86-0777-6fe9229f8810',	37,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formOtherTitle',	'Sonstiges'),
+(1447,	'de50865d-67e9-0ec4-2c14-a204999dc206',	37,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'001.formTabTitle',	'translation_in_progress');
 
 DROP TABLE IF EXISTS `sys_fphp_trunk`;
 CREATE TABLE `sys_fphp_trunk` (
@@ -894,4 +997,4 @@ INSERT INTO `sys_fphp_validationrule` (`Id`, `UUID`, `Name`) VALUES
 (27,	'08fd109a-37a8-b792-2e93-61e301f3b21a',	'any'),
 (28,	'93d9e7af-ae78-3a07-0e93-041589e344b5',	'fphp_onlyletters');
 
--- 2019-07-11 12:53:06
+-- 2019-07-11 13:27:51

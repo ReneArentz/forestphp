@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.5 (0x1 00004)   | */
+/* | forestPHP V0.2.0 (0x1 00004)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -16,6 +16,7 @@
  * 0.1.1 alpha	renatus		2019-08-07	added trunk, templates, form and tables functionality
  * 0.1.2 alpha	renatus		2019-08-07	added sort, filter and limit functionality
  * 0.1.5 alpha	renatus		2019-10-10	added lookup and sub-constraint dictionary
+ * 0.2.0 beta	renatus		2019-10-25	added RootMenu
  */
 
 class forestGlobals {
@@ -48,6 +49,7 @@ class forestGlobals {
 	private $PostModalForm;
 	private $Leaf;
 	private $Navigation;
+	private $RootMenu;
 	private $BranchTree;
 	private $Translations;
 	private $Tables;
@@ -91,6 +93,7 @@ class forestGlobals {
 		$this->PostModalForm = new forestObject('forestForm');
 		$this->Leaf = new forestString;
 		$this->Navigation = new forestObject(new forestNavigation, false);
+		$this->RootMenu = new forestString;
 		$this->BranchTree = new forestArray;
 		$this->Translations = new forestArray;
 		$this->Tables = new forestArray;

@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.1.5 (0x1 00018)   | */
+/* | forestPHP V0.2.0 (0x1 00018)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -12,7 +12,8 @@
  *
  * + Version Log +
  * Version	Developer	Date		Comment
- * 0.1.1 alpha	renatus		2019-08-13	added to framework		
+ * 0.1.1 alpha	renatus		2019-08-13	added to framework
+ * 0.2.0 beta	renatus		2019-10-24	added RootMenu to navigation
  */
 
 class forestNavigation {
@@ -151,7 +152,11 @@ class forestNavigation {
 			$s_navigation .= '<div class="container-fluid">' . "\n";
 				/* render navbar header */
 				$s_navigation .= '<div class="navbar-header">' . "\n";
-					$s_navigation .= '<span><a class="navbar-brand" href="' . $this->NavbarBrandLink->value . '">' . $this->NavbarBrandTitle->value . '</a></span>' . "\n";
+					$s_navigation .= '<span><a class="navbar-brand" href="' . $this->NavbarBrandLink->value . '">' . $this->NavbarBrandTitle->value . '</a>' . "\n";
+					if (issetStr($o_glob->RootMenu)) {
+						$s_navigation .= $o_glob->RootMenu;
+					}
+					$s_navigation .= '</span>';
 					$s_navigation .= '<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#fphp_navbar">' . "\n";
 						$s_navigation .= '<span class="icon-bar"></span>' . "\n";
 						$s_navigation .= '<span class="icon-bar"></span>' . "\n";
