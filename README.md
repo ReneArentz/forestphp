@@ -24,6 +24,9 @@ forestPHP framework will be released under the **GPLv3 license** and the **MIT l
 
 ## Releases
 
+### 0.3.0 (beta)
+New features: Administration of Tablefields, Administration of Sub Constraints + Sub Records, Handling Translations, Unique Keys, Sort Order for tables, Administration of Validation Rules for tablefields. *11/2019*
+
 ### 0.2.0 (beta)
 New features: New features: Root Menu, Implementation SQL DDL, Administration of Branches, Administration of Actions, Administration of Twigs. *10/2019*
 
