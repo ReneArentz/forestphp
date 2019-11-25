@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.3.0 (0x1 00006)   | */
+/* | forestPHP V0.4.0 (0x1 00006)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -15,6 +15,9 @@
  * 0.1.0 alpha	renatus		2019-08-04	first build
  * 0.1.1 alpha	renatus		2019-08-08	add session and forestDateTime functionality
  * 0.1.5 alpha	renatus		2019-10-08	added GenerateCaptchaCharacter function
+ * 0.4.0 beta	renatus		2019-11-11	added enhanced user administration functionalities
+ * 0.4.0 beta	renatus		2019-11-12	distinguish between guest and user
+ * 0.4.0 beta	renatus		2019-11-13	added ListUserPermissions and CheckUserPermission functions
  */
 
 class forestSecurity {
@@ -22,24 +25,35 @@ class forestSecurity {
 	
 	/* Fields */
 	
-	const SessionStatusAccess = 'access';
+	const SessionStatusGuest = 'guest';
+	const SessionStatusUser = 'user';
 	 
-	private $Access;
+	private $UserAccess;
+	private $GuestAccess;
 	private $InitAccess;
+	private $UserUUID;
+	private $User;
+	private $RootUser;
 	private $SessionData;
 	private $SessionId;
 	private $SessionUUID;
+	private $UserPermissions;
 	
 	/* Properties */
 	
 	/* Methods */
 	
 	public function __construct($p_b_debug = false) {
-		$this->Access = new forestBool(null, false);
+		$this->UserAccess = new forestBool(null, false);
+		$this->GuestAccess = new forestBool(null, false);
 		$this->InitAccess = new forestBool(null, false);
+		$this->UserUUID = new forestString(null, false);
+		$this->User = new forestString(null, false);
+		$this->RootUser = new forestBool(false, false);
 		$this->SessionData = new forestObject(new forestObjectList('stdClass'), false);
 		$this->SessionId = new forestString(session_id(), false, false);
 		$this->SessionUUID = new forestString(null, false);
+		$this->UserPermissions = new forestObject('stdClass', false);
 		
 		if ($p_b_debug) { echo '<pre>#01__$_SESSION: '; print_r($_SESSION); echo '</pre>'; }
 		
@@ -63,62 +77,130 @@ class forestSecurity {
 		
 		if ($p_b_debug) { echo '#02__SessionUUID: ' . $this->SessionUUID->value . '<br />'; }
 		
-		if (issetStr($this->SessionUUID->value)) {
-			if ($p_b_debug) { echo '#04__SessionUUID is set: ' . $this->SessionUUID->value . '<br />'; }
+		$b_guest = true;
+		
+		if ($this->SessionData->value->Exists('session_status')) {
+			if ($this->SessionData->value->{'session_status'} == forestSecurity::SessionStatusUser) {
+				$b_guest = false;
+			}
+		}
+		
+		/* if user has guest access we update the session or create a new one */
+		/* otherwise we check if user session still exists */
+		if ($b_guest) {
+			if ($p_b_debug) { echo '#03__Session is guest<br />'; }
+			if (issetStr($this->SessionUUID->value)) {
+				if ($p_b_debug) { echo '#04__SessionUUID is set: ' . $this->SessionUUID->value . '<br />'; }
+				$o_sessionTwig = new sessionTwig();
+				
+				if ($o_sessionTwig->GetRecord(array($this->SessionUUID->value))) {
+					if (!$o_glob->FastProcessing) {
+						if ($p_b_debug) { echo '#05__Active session found, update Timestamp<br />'; }
+						
+						/* active guest session found, update timestamp */
+						$o_sessionTwig->Timestamp = new forestDateTime($o_glob->Trunk->DateTimeSqlFormat);
+						
+						if ($o_sessionTwig->UpdateRecord() == -1) {
+							throw new forestException($o_glob->Temp->{'UniqueIssue'});
+						}
+						
+						if ($p_b_debug) { echo '#06__Active session updated with Timestamp;set GuestAccess true<br />'; }
+					}
+					
+					$this->GuestAccess->value = true;
+				} else {
+					if ($p_b_debug) { echo '#07__No active session found;delete SessionData and InitAccess true<br />'; }
+					
+					/* no guest session found, clear all information and set init flag */
+					$this->SessionData->value->Del('session_uuid');
+					$this->SessionData->value->Del('session_status');
+				
+					$this->InitAccess->value = true;
+				}
+			} else {
+				if ($p_b_debug) { echo '#08__SessionUUID is NOT set;InitAccess true<br />'; }
+				$this->InitAccess->value = true;
+			}
+			
+			if ($this->InitAccess->value) {
+				/* create new session entry, set session information and guest flague */
+				$o_sessionTwig = new sessionTwig();
+				$o_sessionTwig->Timestamp = new forestDateTime($o_glob->Trunk->DateTimeSqlFormat);
+				$o_sessionTwig->UserUUID = $o_glob->Trunk->UUIDGuest;
+				
+				if (!$o_glob->FastProcessing) {
+					if ($o_sessionTwig->InsertRecord() == -1) {
+						throw new forestException($o_glob->Temp->{'UniqueIssue'});
+					}
+				}
+				
+				if ($p_b_debug) { echo '#09__created session record; update SessionData<br />'; }
+				$this->SessionUUID->value = $o_sessionTwig->UUID;
+				
+				$this->SessionData->value->Add($this->SessionUUID->value, 'session_uuid');
+				$this->SessionData->value->Add(forestSecurity::SessionStatusGuest, 'session_status');
+			}
+		} else {
+			if ($p_b_debug) { echo '#16__Session is no guest<br />'; }
 			$o_sessionTwig = new sessionTwig();
 			
-			if ($o_sessionTwig->GetRecord(array($this->SessionUUID->value))) {
+			/* session information says we have a user, checking record */
+			if ( (issetStr($this->SessionUUID->value)) && ($o_sessionTwig->GetRecord(array($this->SessionUUID->value))) ) {
 				if (!$o_glob->FastProcessing) {
-					if ($p_b_debug) { echo '#05__Active session found, update Timestamp<br />'; }
+					if ($p_b_debug) { echo '#17__Active session found, update Timestamp and UserUUID[' . (($o_glob->Temp->Exists('fphp_UserUUID')) ? $o_glob->Temp->{'fphp_UserUUID'} : 'not necessary') . ']<br />'; }
 					
-					/* active guest session found, update timestamp */
+					/* active session found, update timestamp and user uuid */
 					$o_sessionTwig->Timestamp = new forestDateTime($o_glob->Trunk->DateTimeSqlFormat);
+					
+					if ($o_glob->Temp->Exists('fphp_UserUUID')) {
+						$o_sessionTwig->UserUUID = $o_glob->Temp->{'fphp_UserUUID'};
+					}
 					
 					if ($o_sessionTwig->UpdateRecord() == -1) {
 						throw new forestException($o_glob->Temp->{'UniqueIssue'});
 					}
 					
-					if ($p_b_debug) { echo '#06__Active session updated with Timestamp;set Access true<br />'; }
+					if ($p_b_debug) { echo '#18__Active session updated with Timestamp and UserUUID;set UserAccess true<br />'; }
 				}
 				
-				$this->Access->value = true;
+				$this->UserAccess->value = true;
+				$o_glob->Trunk->NavbarShowLoginPart = false;
 			} else {
-				if ($p_b_debug) { echo '#07__No active session found;delete SessionData and InitAccess true<br />'; }
+				if ($p_b_debug) { echo '#19__No active session found;delete SessionData and throw exception<br />'; }
 				
-				/* no guest session found, clear all information and set init flag */
-				$this->SessionData->value->Del('session_uuid');
-				$this->SessionData->value->Del('session_status');
-			
-				$this->InitAccess->value = true;
+				/* no session found, clear data and throw exception */
+				$o_exception = new forestException(0x10000600);
+				$this->Logout();
+				throw $o_exception;
 			}
-		} else {
-			if ($p_b_debug) { echo '#08__SessionUUID is NOT set;InitAccess true<br />'; }
-			$this->InitAccess->value = true;
 		}
 		
-		if ($this->InitAccess->value) {
-			/* create new session entry, set session information and guest flague */
+		if ( (($this->GuestAccess->value) || ($this->UserAccess->value)) ) {
 			$o_sessionTwig = new sessionTwig();
-			$o_sessionTwig->Timestamp = new forestDateTime($o_glob->Trunk->DateTimeSqlFormat);
+			if ($p_b_debug) { echo '#20__Recheck session record<br />'; }
 			
-			if (!$o_glob->FastProcessing) {
-				if ($o_sessionTwig->InsertRecord() == -1) {
-					throw new forestException($o_glob->Temp->{'UniqueIssue'});
+			if ($o_sessionTwig->GetRecord(array($this->SessionUUID->value))) {
+				if ($p_b_debug) { echo '#21__session record found;read UserUUID<br />'; }
+				$this->UserUUID->value = $o_sessionTwig->UserUUID->PrimaryValue;
+			}
+			
+			$o_userTwig = new userTwig();
+			
+			if ($o_userTwig->GetRecord(array($this->UserUUID->value))) {
+				if ($p_b_debug) { echo '#22__user record found;read User[' . $o_userTwig->User . ']<br />'; }
+				$this->User->value = $o_userTwig->User;
+				
+				/* check locked status */
+				if ($o_userTwig->Locked) {
+					$this->Logout();
+					header('Location: ./');
+					exit();
+				}
+				
+				if ($o_userTwig->RootUser) {
+					$this->RootUser->value = true;
 				}
 			}
-			
-			if ($p_b_debug) { echo '#09__created session record; update SessionData<br />'; }
-			$this->SessionUUID->value = $o_sessionTwig->UUID;
-			
-			$this->SessionData->value->Add($this->SessionUUID->value, 'session_uuid');
-			$this->SessionData->value->Add(forestSecurity::SessionStatusAccess, 'session_status');
-		}
-		
-		if ( (!$this->InitAccess->value) && (!$this->Access->value) ) {
-			/* no session found, clear data and throw exception */
-			$o_exception = new forestException(0x10000600);
-			$this->Logout();
-			throw $o_exception;
 		}
 		
 		if ($p_b_debug) { echo '#24__sync SessionData<br />'; }
@@ -149,6 +231,185 @@ class forestSecurity {
 		if ($p_b_debug) { echo '#25__$_SESSION: '; print_r($_SESSION); echo '<br />'; }
 	}
 	
+	/* list permission records for user and save them in object twig list */
+	public function ListUserPermissions() {
+		/*
+		SELECT `sys_fphp_permission`.`Branch`, `sys_fphp_permission`.`Action`, `sys_fphp_permission`.`Name` FROM `sys_fphp_user`
+		INNER JOIN `sys_fphp_usergroup_user` ON `sys_fphp_usergroup_user`.`userUUID` = `sys_fphp_user`.`UUID`
+		INNER JOIN `sys_fphp_usergroup_role` ON `sys_fphp_usergroup_role`.`usergroupUUID` = `sys_fphp_usergroup_user`.`usergroupUUID`
+		INNER JOIN `sys_fphp_role_permission` ON `sys_fphp_role_permission`.`roleUUID` = `sys_fphp_usergroup_role`.`roleUUID`
+		INNER JOIN `sys_fphp_permission` ON `sys_fphp_permission`.`UUID` = `sys_fphp_role_permission`.`permissionUUID`
+		WHERE `sys_fphp_user`.`UUID` = '8f8861d9-9c31-3303-7660-5b588ca0050f' AND `sys_fphp_user`.`Locked` = 0
+		ORDER BY `sys_fphp_permission`.`Branch`, `sys_fphp_permission`.`Action`
+		*/
+		
+		$o_glob = forestGlobals::init();
+		
+		$o_querySelect = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::SELECT, 'sys_fphp_user');
+		
+		$o_permission_uuid = new forestSQLColumn($o_querySelect);
+			$o_permission_uuid->Table = 'sys_fphp_permission';
+			$o_permission_uuid->Column = 'UUID';
+			
+		$o_permission_branch = new forestSQLColumn($o_querySelect);
+			$o_permission_branch->Table = 'sys_fphp_permission';
+			$o_permission_branch->Column = 'Branch';
+		
+		$o_permission_action = new forestSQLColumn($o_querySelect);
+			$o_permission_action->Table = 'sys_fphp_permission';
+			$o_permission_action->Column = 'Action';
+		
+		$o_usergroupuser_useruuid = new forestSQLColumn($o_querySelect);
+			$o_usergroupuser_useruuid->Table = 'sys_fphp_usergroup_user';
+			$o_usergroupuser_useruuid->Column = 'userUUID';
+			
+		$o_usergroupuser_usergroupuuid = new forestSQLColumn($o_querySelect);
+			$o_usergroupuser_usergroupuuid->Table = 'sys_fphp_usergroup_user';
+			$o_usergroupuser_usergroupuuid->Column = 'usergroupUUID';
+		
+		$o_user_uuid = new forestSQLColumn($o_querySelect);
+			$o_user_uuid->Column = 'UUID';
+			
+		$o_user_locked = new forestSQLColumn($o_querySelect);
+			$o_user_locked->Column = 'Locked';
+			
+		$o_usergrouprole_usergroupuuid = new forestSQLColumn($o_querySelect);
+			$o_usergrouprole_usergroupuuid->Table = 'sys_fphp_usergroup_role';
+			$o_usergrouprole_usergroupuuid->Column = 'usergroupUUID';
+			
+		$o_usergrouprole_roleuuid = new forestSQLColumn($o_querySelect);
+			$o_usergrouprole_roleuuid->Table = 'sys_fphp_usergroup_role';
+			$o_usergrouprole_roleuuid->Column = 'roleUUID';
+		
+		$o_rolepermission_roleuuid = new forestSQLColumn($o_querySelect);
+			$o_rolepermission_roleuuid->Table = 'sys_fphp_role_permission';
+			$o_rolepermission_roleuuid->Column = 'roleUUID';
+			
+		$o_rolepermission_permissionuuid = new forestSQLColumn($o_querySelect);
+			$o_rolepermission_permissionuuid->Table = 'sys_fphp_role_permission';
+			$o_rolepermission_permissionuuid->Column = 'permissionUUID';
+			
+		$o_querySelect->Query->Columns->Add($o_permission_branch);
+		$o_querySelect->Query->Columns->Add($o_permission_action);
+		
+		$join_A = new forestSQLJoin($o_querySelect);
+			$join_A->JoinType = 'INNER JOIN';
+			$join_A->Table = 'sys_fphp_usergroup_user';
+		
+			$relation_A = new forestSQLRelation($o_querySelect);
+				$relation_A->ColumnLeft = $o_usergroupuser_useruuid;
+				$relation_A->ColumnRight = $o_user_uuid;
+				$relation_A->Operator = '=';
+			
+			$join_A->Relations->Add($relation_A);
+		
+		$join_B = new forestSQLJoin($o_querySelect);
+			$join_B->JoinType = 'INNER JOIN';
+			$join_B->Table = 'sys_fphp_usergroup_role';
+		
+			$relation_A = new forestSQLRelation($o_querySelect);
+				$relation_A->ColumnLeft = $o_usergrouprole_usergroupuuid;
+				$relation_A->ColumnRight = $o_usergroupuser_usergroupuuid;
+				$relation_A->Operator = '=';
+			
+			$join_B->Relations->Add($relation_A);
+		
+		$join_C = new forestSQLJoin($o_querySelect);
+			$join_C->JoinType = 'INNER JOIN';
+			$join_C->Table = 'sys_fphp_role_permission';
+		
+			$relation_A = new forestSQLRelation($o_querySelect);
+				$relation_A->ColumnLeft = $o_rolepermission_roleuuid;
+				$relation_A->ColumnRight = $o_usergrouprole_roleuuid;
+				$relation_A->Operator = '=';
+			
+			$join_C->Relations->Add($relation_A);
+		
+		$join_D = new forestSQLJoin($o_querySelect);
+			$join_D->JoinType = 'INNER JOIN';
+			$join_D->Table = 'sys_fphp_permission';
+		
+			$relation_A = new forestSQLRelation($o_querySelect);
+				$relation_A->ColumnLeft = $o_permission_uuid;
+				$relation_A->ColumnRight = $o_rolepermission_permissionuuid;
+				$relation_A->Operator = '=';
+			
+			$join_D->Relations->Add($relation_A);
+			
+		$o_querySelect->Query->Joins->Add($join_A);
+		$o_querySelect->Query->Joins->Add($join_B);
+		$o_querySelect->Query->Joins->Add($join_C);
+		$o_querySelect->Query->Joins->Add($join_D);
+		
+		$where_A = new forestSQLWhere($o_querySelect);
+			$where_A->Column = $o_user_uuid;
+			$where_A->Value = $where_A->ParseValue($this->UserUUID->value);
+			$where_A->Operator = '=';
+			
+		$where_B = new forestSQLWhere($o_querySelect);
+			$where_B->Column = $o_user_locked;
+			$where_B->Value = $where_B->ParseValue(0);
+			$where_B->Operator = '=';
+			$where_B->FilterOperator = 'AND';
+			
+		$o_querySelect->Query->Where->Add($where_A);
+		$o_querySelect->Query->Where->Add($where_B);
+		
+		$this->UserPermissions->value = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect, false, false);
+	}
+	
+	/* check if permission records for current branch/action access are available for guest or user */
+	public function CheckUserPermission($p_s_branch = null, $p_s_action = null) {
+		$o_glob = forestGlobals::init();
+		$a_branchTree = $o_glob->BranchTree;
+		
+		/*d2c('Entry Branch: ' . $p_s_branch);*/
+		/*d2c('Entry Action: ' . $p_s_action);*/
+		
+		if (!is_null($p_s_branch)) {
+			if (!array_key_exists($p_s_branch, $a_branchTree['Name'])) {
+				throw new forestException('Branch[%0] could not be found', array($p_s_branch));
+			}
+			
+			$p_s_branch = $a_branchTree['Name'][$p_s_branch];
+		} else {
+			$p_s_branch = $o_glob->URL->BranchId;
+		}
+		
+		/*d2c('Branch: ' . $p_s_branch);*/
+		
+		if (!is_null($p_s_action)) {
+			if (!array_key_exists($p_s_action, $a_branchTree['Id'][$p_s_branch]['actions']['Name'])) {
+				throw new forestException('Action[%0] could not be found', array($p_s_action));
+			}
+			
+			$p_s_action = $a_branchTree['Id'][$p_s_branch]['actions']['Name'][$p_s_action];
+		} else {
+			if ($o_glob->URL->ActionId == 0) {
+				$p_s_action = $a_branchTree['Id'][$p_s_branch]['actions']['Name']['init'];
+			} else {
+				$p_s_action = $o_glob->URL->ActionId;
+			}
+		}
+		
+		/*d2c('Action: ' . $p_s_action);*/
+		
+		/* check permission inheritance and start recursive check for user permission */
+		if ($a_branchTree['Id'][$p_s_branch]['PermissionInheritance']) {
+			return $this->CheckUserPermission($a_branchTree['Id'][$a_branchTree['Id'][$p_s_branch]['ParentBranch']]['Name'], $a_branchTree['Id'][$p_s_branch]['actions']['Id'][$p_s_action]);
+		}
+		
+		foreach($this->UserPermissions->value as $a_userpermission) {
+			if ( ($a_userpermission['Branch'] == $p_s_branch) && ($a_userpermission['Action'] == $p_s_action) ) {
+				return true;
+			} else if ( ($a_userpermission['Branch'] == 0) && ($a_branchTree['Zero']['actions']['Id'][$a_userpermission['Action']] == $a_branchTree['Id'][$p_s_branch]['actions']['Id'][$p_s_action]) ) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
 	/* logout function and cleanup */
 	public function Logout() {
 		$o_sessionTwig = new sessionTwig;
@@ -166,17 +427,22 @@ class forestSecurity {
 		@session_destroy();
 	}
 	
-	/* delete expired session records */
+	/* delete expired guest and user session records */
 	public function DeleteExpiredSessions($p_b_debug = false) {
 		$o_glob = forestGlobals::init();
 		
-		/* calculate expired time */
-		$o_DI = new forestDateInterval($o_glob->Trunk->SessionIntervalGuest);
-		$o_now = new forestDateTime($o_glob->Trunk->DateTimeSqlFormat);
+		/* calculate expired guest time */
+		$o_DIGuest = new forestDateInterval($o_glob->Trunk->SessionIntervalGuest);
+		$o_nowGuest = new forestDateTime($o_glob->Trunk->DateTimeSqlFormat);
 		
-		$o_now->SubDateInterval($o_DI->y, $o_DI->m, $o_DI->d, $o_DI->h, $o_DI->i, $o_DI->s);
+		$o_nowGuest->SubDateInterval($o_DIGuest->y, $o_DIGuest->m, $o_DIGuest->d, $o_DIGuest->h, $o_DIGuest->i, $o_DIGuest->s);
 		
-		/* create select query to delete expired sessions */
+		/* calculate expired user time */
+		$o_DIUser = new forestDateInterval($o_glob->Trunk->SessionIntervalUser);
+		$o_nowUser = new forestDateTime($o_glob->Trunk->DateTimeSqlFormat);
+		$o_nowUser->SubDateInterval($o_DIUser->y, $o_DIUser->m, $o_DIUser->d, $o_DIUser->h, $o_DIUser->i, $o_DIUser->s);
+		
+		/* create select query to delete expired guest sessions */
 		$o_querySelect = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::SELECT, 'sys_fphp_session');
 			$o_uuid = new forestSQLColumn($o_querySelect);
 				$o_uuid->Column = 'UUID';
@@ -184,21 +450,66 @@ class forestSecurity {
 			$o_timestamp = new forestSQLColumn($o_querySelect);
 				$o_timestamp->Column = 'Timestamp';
 			
+			$o_userUUID = new forestSQLColumn($o_querySelect);
+				$o_userUUID->Column = 'UserUUID';
+			
 			$o_querySelect->Query->Columns->Add($o_uuid);
 			$o_querySelect->Query->Columns->Add($o_timestamp);
 			
+			$o_whereUserUUID = new forestSQLWhere($o_querySelect);
+				$o_whereUserUUID->Column = $o_userUUID;
+				$o_whereUserUUID->Value = $o_whereUserUUID->ParseValue($o_glob->Trunk->UUIDGuest);
+				$o_whereUserUUID->Operator = '=';
+			
 			$o_whereTimestamp = new forestSQLWhere($o_querySelect);
 				$o_whereTimestamp->Column = $o_timestamp;
-				$o_whereTimestamp->Value = $o_whereTimestamp->ParseValue($o_now->ToString());
+				$o_whereTimestamp->Value = $o_whereTimestamp->ParseValue($o_nowGuest->ToString());
 				$o_whereTimestamp->Operator = '<';
-				
+				$o_whereTimestamp->FilterOperator = 'AND';
+			
+			$o_querySelect->Query->Where->Add($o_whereUserUUID);
 			$o_querySelect->Query->Where->Add($o_whereTimestamp);
 		
 		$o_result = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect);
 		
-		foreach($o_result->Twigs as $o_session) {
-			/* delete session record */
-			$o_session->DeleteRecord();
+		foreach($o_result->Twigs as $o_guest) {
+			/* delete guest session record */
+			$o_guest->DeleteRecord();
+		}
+		
+		/* create select query to delete expired user sessions */
+		$o_querySelect = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::SELECT, 'sys_fphp_session');
+			$o_uuid = new forestSQLColumn($o_querySelect);
+				$o_uuid->Column = 'UUID';
+			
+			$o_timestamp = new forestSQLColumn($o_querySelect);
+				$o_timestamp->Column = 'Timestamp';
+			
+			$o_userUUID = new forestSQLColumn($o_querySelect);
+				$o_userUUID->Column = 'UserUUID';
+			
+			$o_querySelect->Query->Columns->Add($o_uuid);
+			$o_querySelect->Query->Columns->Add($o_timestamp);
+			
+			$o_whereUserUUID = new forestSQLWhere($o_querySelect);
+				$o_whereUserUUID->Column = $o_userUUID;
+				$o_whereUserUUID->Value = $o_whereUserUUID->ParseValue($o_glob->Trunk->UUIDGuest);
+				$o_whereUserUUID->Operator = '<>';
+			
+			$o_whereTimestamp = new forestSQLWhere($o_querySelect);
+				$o_whereTimestamp->Column = $o_timestamp;
+				$o_whereTimestamp->Value = $o_whereTimestamp->ParseValue($o_nowUser->ToString());
+				$o_whereTimestamp->Operator = '<';
+				$o_whereTimestamp->FilterOperator = 'AND';
+			
+			$o_querySelect->Query->Where->Add($o_whereUserUUID);
+			$o_querySelect->Query->Where->Add($o_whereTimestamp);
+			
+		$o_result = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect);
+		
+		foreach($o_result->Twigs as $o_user) {
+			/* delete user session record */
+			$o_user->DeleteRecord();
 		}
 	}
 	

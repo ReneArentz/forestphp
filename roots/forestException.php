@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.3.0 (0x1 0000B)   | */
+/* | forestPHP V0.4.0 (0x1 0000B)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -13,6 +13,7 @@
  * + Version Log +
  * Version	Developer	Date		Comment
  * 0.1.0 alpha	renatus		2019-08-04	first build
+ * 0.4.0 beta	renatus		2019-11-18	added permission denied message rendering
  */
 
 class forestException extends Exception {
@@ -99,8 +100,8 @@ class forestException extends Exception {
 		$o_glob = forestGlobals::init();
 		$s_foo = '';
 		
-		if ($this->getCode() == 0x10000600) {
-			/* invalid session message */
+		if (($this->getCode() == 0x10000600) || ($this->getCode() == 0x10000100)) {
+			/* invalid session and permission denied messages */
 			$s_foo .= '<div class="alert alert-danger alert-dismissible">';
 				$s_foo .= '<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>' . "\n";
 				$s_foo .= '<strong>Error:</strong> ' . $this->message . "\n" . '<br>' . "\n";
@@ -130,9 +131,25 @@ class forestException extends Exception {
 					$a_parameters['targetParametersValues'] = $s_foo3;
 				}
 				
-				$s_foo .= '<a href="' . forestLink::Link('index', 'login', $a_parameters) . '">Login</a>' . "\n";
-				$o_glob->Security->Logout();
+				if ($this->getCode() == 0x10000600) {
+					/* invalid session message */
+					$s_foo .= '<a href="' . forestLink::Link('index', 'login', $a_parameters) . '">Login</a>' . "\n";
+					$o_glob->Security->Logout();
+				} else {
+					/* permission denied message */
+					$s_url = forestLink::Link($o_glob->URL->Branch);
 				
+					if (array_key_exists('HTTP_REFERER', $_SERVER)) {
+						$s_url = $_SERVER['HTTP_REFERER'];
+					}
+					
+					$s_foo .= '<a href="' . $s_url . '">Zur&uuml;ck</a>' . "\n";
+					$s_foo .= ' - ';
+					$s_foo .= '<a href="' . forestLink::Link('index') . '">Startseite</a>' . "\n";
+					$s_foo .= ' - ';
+					$s_foo .= '<a href="' . forestLink::Link('index', 'login', $a_parameters) . '">Login</a>' . "\n";
+				}
+			
 			$s_foo .= '</div>' . "\n";
 		} else if ($this->ExceptionType->value == self::WARNING) {
 			/* warning message */

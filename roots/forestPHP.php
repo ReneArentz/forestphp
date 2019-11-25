@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.3.0 (0x1 00001)   | */
+/* | forestPHP V0.4.0 (0x1 00001)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -16,6 +16,7 @@
  * 0.1.2 alpha	renatus		2019-08-23	added list and view rendering
  * 0.1.4 alpha	renatus		2019-09-26	added fphp_upload and fphp_upload_delete to fast-processing actions
  * 0.1.5 alpha	renatus		2019-10-09	added fphp_captcha and fphp_imageThumbnail to fast-processing actions
+ * 0.4.0 beta	renatus		2019-11-20	added permission checks, user and guest access
  */
 
 class forestPHP {
@@ -73,10 +74,12 @@ class forestPHP {
 				$o_glob->URL->RetrieveInformationByURL($b_write_url_info);
 				
 				$o_glob->Security->init($b_write_security_debug);
+				$o_glob->Security->ListUserPermissions();
 				
 				if (!$o_glob->FastProcessing) {
 					$o_glob->ListTranslations();
 					$o_glob->ListTables();
+					$o_glob->ListUserNames();
 				}
 				
 				if (($b_write_post_files) && (!$o_glob->FastProcessing)) {
@@ -146,7 +149,11 @@ class forestPHP {
 			
 			if ($o_glob->Security->InitAccess) {
 				/* do something if session was just created */
-			} else if ($o_glob->Security->Access) {
+			} else if (($o_glob->Security->GuestAccess) || ($o_glob->Security->UserAccess)) {
+				if (!$o_glob->Security->CheckUserPermission()) {
+					throw new forestException(0x10000100);
+				}
+				
 				/* call branch content */
 				$s_foo = $o_glob->URL->Branch . 'Branch';
 				$o_foo = new $s_foo;
@@ -173,7 +180,7 @@ class forestPHP {
 				if ($o_glob->Security->InitAccess) {
 					/* render init-leaf */
 					$this->RenderLeaf('initLeaf');
-				} else if ($o_glob->Security->Access) {
+				} else if (($o_glob->Security->GuestAccess) || ($o_glob->Security->UserAccess)) {
 					/* render trunk-head-leaf */
 					$this->RenderLeaf('trunkHeadLeaf');
 					

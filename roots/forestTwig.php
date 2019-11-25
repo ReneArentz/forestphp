@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.3.0 (0x1 0000C)   | */
+/* | forestPHP V0.4.0 (0x1 0000C)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -20,6 +20,7 @@
  * 0.1.5 alpha	renatus		2019-10-06	added sub-constraint
  * 0.1.5 alpha	renatus		2019-10-08	added caching
  * 0.1.5 alpha	renatus		2019-10-09	added forestLooukp and forestCombination
+ * 0.4.0 beta	renatus		2019-11-22	do not add system table flag protection if you are root user
  */
 
 abstract class forestTwig {
@@ -70,7 +71,7 @@ abstract class forestTwig {
 			throw new forestException('Twig needs a table value');
 		}
 		
-		if (forestStringLib::StartsWith($this->fphp_Table->value, 'sys_fphp_')) {
+		if ( (forestStringLib::StartsWith($this->fphp_Table->value, 'sys_fphp_')) && (!$o_glob->Security->RootUser) ) {
 			$this->fphp_SystemTable->value = true;
 		}
 		

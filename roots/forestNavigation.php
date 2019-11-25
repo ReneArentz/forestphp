@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.3.0 (0x1 00018)   | */
+/* | forestPHP V0.4.0 (0x1 00018)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -14,6 +14,8 @@
  * Version	Developer	Date		Comment
  * 0.1.1 alpha	renatus		2019-08-13	added to framework
  * 0.2.0 beta	renatus		2019-10-24	added RootMenu to navigation
+ * 0.4.0 beta	renatus		2019-11-14	added login an logout part
+ * 0.4.0 beta	renatus		2019-11-14	added permission check for navigation nodes
  */
 
 class forestNavigation {
@@ -29,6 +31,23 @@ class forestNavigation {
 	private $NavbarBrandTitle;
 	private $NavbarMaxLevel;
 	
+	private $NavbarShowLoginPart;
+	private $NavbarIconClass;
+	private $NavbarLoginIcon;
+	private $NavbarLoginLink;
+	private $NavbarLoginTitle;
+	private $NavbarSignUpIcon;
+	private $NavbarSignUpLink;
+	private $NavbarSignUpTitle;
+		
+	private $NavbarShowLogoutPart;
+	private $NavbarUserIcon;
+	private $NavbarUserLink;
+	private $NavbarUserTitle;
+	private $NavbarLogoutIcon;
+	private $NavbarLogoutLink;
+	private $NavbarLogoutTitle;
+	
 	/* Properties */
 
 	/* Methods */
@@ -41,16 +60,61 @@ class forestNavigation {
 		$this->NavbarBrandLink = new forestString('./');
 		$this->NavbarBrandTitle = new forestString('forestPHP');
 		$this->NavbarMaxLevel = new forestInt(10);
+		
+		$this->NavbarShowLoginPart = new forestBool;
+		$this->NavbarIconClass = new forestString('fphp_nav_icon');
+		$this->NavbarLoginIcon = new forestString('glyphicon-log-in');
+		$this->NavbarLoginLink = new forestString('./');
+		$this->NavbarLoginTitle = new forestString('Login');
+		$this->NavbarSignUpIcon = new forestString('glyphicon-user');
+		$this->NavbarSignUpLink = new forestString('./');
+		$this->NavbarSignUpTitle = new forestString('Sign up');
+		
+		$this->NavbarShowLogoutPart = new forestBool;
+		$this->NavbarUserIcon = new forestString('glyphicon-user');
+		$this->NavbarUserLink = new forestString('./');
+		$this->NavbarUserTitle = new forestString('User');
+		$this->NavbarLogoutIcon = new forestString('glyphicon-log-out');
+		$this->NavbarLogoutLink = new forestString('./');
+		$this->NavbarLogoutTitle = new forestString('Logout');
 	}
 	
 	public function InitNavigation() {
 		$o_glob = forestGlobals::init();
+		
+		/* generate nav links */
+		$this->NavbarLoginLink = new forestString(forestLink::Link($o_glob->URL->Branch, 'login'));
+		$this->NavbarSignUpLink = new forestString(forestLink::Link($o_glob->URL->Branch, 'signUp'));
+		$this->NavbarUserLink = new forestString('./');
+		$this->NavbarLogoutLink = new forestString(forestLink::Link($o_glob->URL->Branch, 'logout'));
 		
 		/* load navbar settings from trunk record */
 		$this->NavbarAdditionalClass->value = $o_glob->Trunk->NavbarAdditionalClass;
 		$this->NavbarAlign->value = $o_glob->Trunk->NavbarAlign;
 		$this->NavbarBrandTitle->value = $o_glob->Trunk->NavbarBrandTitle;
 		$this->NavbarMaxLevel->value = $o_glob->Trunk->NavbarMaxLevel;
+		
+		if (!$this->NavbarShowLogoutPart->value) {
+			$this->NavbarShowLoginPart->value = $o_glob->Trunk->NavbarShowLoginPart;
+			$this->NavbarLoginIcon->value = $o_glob->Trunk->NavbarLoginIcon;
+			$this->NavbarLoginTitle->value = $o_glob->GetTranslation('NavbarLoginTitle', 1);
+			$this->NavbarSignUpIcon->value = $o_glob->Trunk->NavbarSignUpIcon;
+			$this->NavbarSignUpTitle->value = $o_glob->GetTranslation('NavbarSignUpTitle', 1);
+		}
+		
+		if (!$this->NavbarShowLoginPart->value) {
+			$this->NavbarShowLogoutPart->value = $o_glob->Trunk->NavbarShowLogoutPart;
+			$this->NavbarUserIcon->value = $o_glob->Trunk->NavbarUserIcon;
+			
+			if (issetStr($o_glob->Security->User)) {
+				$this->NavbarUserTitle->value = $o_glob->Security->User;
+			} else {
+				$this->NavbarUserTitle->value = $o_glob->GetTranslation('NavbarUserTitle', 1);
+			}
+			
+			$this->NavbarLogoutIcon->value = $o_glob->Trunk->NavbarLogoutIcon;
+			$this->NavbarLogoutTitle->value = $o_glob->GetTranslation('NavbarLogoutTitle', 1);
+		}
 		
 		$a_branchTree = $o_glob->BranchTree;
 		
@@ -105,27 +169,30 @@ class forestNavigation {
 		
 		foreach ($o_glob->BranchTree['Id'] as $o_branch) {
 			if ($o_branch['ParentBranch'] == $p_i_branchId) {
-				/* only show navigation nodes which are activated in branch settings, or the current branch */
-				if ($o_branch['Navigation']) {
-					$o_navigationNode = new forestNavigationNode;
-					$o_navigationNode->Title = $o_glob->GetTranslation($o_branch['Title'], 1);
-					$o_navigationNode->BranchId = $o_branch['Id'];
-					$o_navigationNode->BranchName = $o_branch['Name'];
-					$o_navigationNode->Navigation = $o_branch['Navigation'];
-					$o_navigationNode->BranchFile = $o_branch['Filename'];
-					
-					$this->InitNavigationRecursive($o_branch['Id'], $o_navigationNode);
-					
-					$p_o_navigationNode->NavigationNodes->Add($o_navigationNode);
-				} else if ($o_branch['Id'] == $o_glob->URL->BranchId) {
-					$o_navigationNode = new forestNavigationNode;
-					$o_navigationNode->Title = $o_glob->GetTranslation($o_branch['Title'], 1);
-					$o_navigationNode->BranchId = $o_branch['Id'];
-					$o_navigationNode->BranchName = $o_branch['Name'];
-					$o_navigationNode->Navigation = $o_branch['Navigation'];
-					$o_navigationNode->BranchFile = $o_branch['Filename'];
-					
-					$p_o_navigationNode->NavigationNodes->Add($o_navigationNode);
+				/* only show navigation nodes where the user has permission on 'init' */
+				if ($o_glob->Security->CheckUserPermission($o_branch['Name'], 'init')) {
+					/* only show navigation nodes which are activated in branch settings, or the current branch */
+					if ($o_branch['Navigation']) {
+						$o_navigationNode = new forestNavigationNode;
+						$o_navigationNode->Title = $o_glob->GetTranslation($o_branch['Title'], 1);
+						$o_navigationNode->BranchId = $o_branch['Id'];
+						$o_navigationNode->BranchName = $o_branch['Name'];
+						$o_navigationNode->Navigation = $o_branch['Navigation'];
+						$o_navigationNode->BranchFile = $o_branch['Filename'];
+						
+						$this->InitNavigationRecursive($o_branch['Id'], $o_navigationNode);
+						
+						$p_o_navigationNode->NavigationNodes->Add($o_navigationNode);
+					} else if ($o_branch['Id'] == $o_glob->URL->BranchId) {
+						$o_navigationNode = new forestNavigationNode;
+						$o_navigationNode->Title = $o_glob->GetTranslation($o_branch['Title'], 1);
+						$o_navigationNode->BranchId = $o_branch['Id'];
+						$o_navigationNode->BranchName = $o_branch['Name'];
+						$o_navigationNode->Navigation = $o_branch['Navigation'];
+						$o_navigationNode->BranchFile = $o_branch['Filename'];
+						
+						$p_o_navigationNode->NavigationNodes->Add($o_navigationNode);
+					}
 				}
 			}
 		}
@@ -174,6 +241,33 @@ class forestNavigation {
 					}
 				
 					$s_navigation .= '</ul>' . "\n";
+					
+					if ( ($this->NavbarShowLoginPart->value) || ($this->NavbarShowLogoutPart->value) ) {
+						$s_navigation .= '<ul class="nav navbar-nav navbar-right">' . "\n";
+					}
+					
+					if ($this->NavbarShowLoginPart->value) {
+						/* render navbar login part */
+						if ( (issetStr($this->NavbarSignUpLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarSignUpIcon->value)) && (issetStr($this->NavbarSignUpTitle->value)) ) {
+							$s_navigation .= '<li><a href="' . $this->NavbarSignUpLink->value . '"><span class="' . $this->NavbarIconClass->value . ' glyphicon ' . $this->NavbarSignUpIcon->value . '"></span> ' . $this->NavbarSignUpTitle->value . '</a></li>';
+						}
+						
+						if ( (issetStr($this->NavbarLoginLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarLoginIcon->value)) && (issetStr($this->NavbarLoginTitle->value)) ) {
+							$s_navigation .= '<li><a href="' . $this->NavbarLoginLink->value . '"><span class="' . $this->NavbarIconClass->value . ' glyphicon ' . $this->NavbarLoginIcon->value . '"></span> ' . $this->NavbarLoginTitle->value . '</a></li>';
+						}
+					} else if ($this->NavbarShowLogoutPart->value) {
+						if ( (issetStr($this->NavbarUserLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarUserIcon->value)) && (issetStr($this->NavbarUserTitle->value)) ) {
+							/* $s_navigation .= '<li><a href="' . $this->NavbarUserLink->value . '"><span class="' . $this->NavbarIconClass->value . ' glyphicon ' . $this->NavbarUserIcon->value . '"></span> ' . $this->NavbarUserTitle->value . '</a></li>'; */
+						}
+						
+						if ( (issetStr($this->NavbarLogoutLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarLogoutIcon->value)) && (issetStr($this->NavbarLogoutTitle->value)) ) {
+							$s_navigation .= '<li><a href="' . $this->NavbarLogoutLink->value . '"><span class="' . $this->NavbarIconClass->value . ' glyphicon ' . $this->NavbarLogoutIcon->value . '"></span> ' . $this->NavbarLogoutTitle->value . '</a></li>';
+						}
+					}
+					
+					if ( ($this->NavbarShowLoginPart->value) || ($this->NavbarShowLogoutPart->value) ) {
+						$s_navigation .= '</ul>' . "\n";
+					}
 					
 				$s_navigation .= '</div>' . "\n";
 			$s_navigation .= '</div>' . "\n";

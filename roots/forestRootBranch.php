@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.3.0 (0x1 0001F)   | */
+/* | forestPHP V0.4.0 (0x1 0001F)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -18,6 +18,8 @@
  * 0.3.0 beta	renatus		2019-11-01	added sub-constraints tablefields
  * 0.3.0 beta	renatus		2019-11-02	added validation rules to tablefields
  * 0.3.0 beta	renatus		2019-11-04	added moveUp and moveDown for tablefields and sub-constraints
+ * 0.4.0 beta	renatus		2019-11-20	added truncateTwig and transferTwig functions
+ * 0.4.0 beta	renatus		2019-11-21	added permission checks for standard root actions
  */
 
 abstract class forestRootBranch {
@@ -52,32 +54,71 @@ abstract class forestRootBranch {
 		
 		$s_rootMenu = '';
 		
-		$s_rootMenu .= '<button class="btn btn-danger dropdown-toggle" type="button" data-toggle="dropdown" title="Root-Menu" style="margin-top: 8px;"><span class="glyphicon glyphicon glyphicon-wrench"></span></button>' . "\n";
-		$s_rootMenu .= '<ul class="dropdown-menu">' . "\n";
-			
-			$s_rootMenu .= '<li><a href="' . forestLink::Link($o_glob->URL->Branch, 'newBranch') . '"><span class="glyphicon glyphicon-plus text-success" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootCreateBranchTitle', 1) . '</a></li>' . "\n";
-			$s_rootMenu .= '<li><a href="' . forestLink::Link($o_glob->URL->Branch, 'viewBranch') . '"><span class="glyphicon glyphicon-zoom-in" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootViewBranchTitle', 1) . '</a></li>' . "\n";
-			
-			$s_rootMenu .= '<li class="dropdown-submenu">' . "\n";
+		if ($o_glob->Security->CheckUserPermission(null, 'rootMenu')) {
+			$s_rootMenu .= '<button class="btn btn-danger dropdown-toggle" type="button" data-toggle="dropdown" title="Root-Menu" style="margin-top: 8px;"><span class="glyphicon glyphicon glyphicon-wrench"></span></button>' . "\n";
+			$s_rootMenu .= '<ul class="dropdown-menu">' . "\n";
 				
-				$s_rootMenu .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'editBranch') . '"><span class="glyphicon glyphicon-pencil" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootEditBranchTitle', 1) . '</a><a class="fphp_menu_dropdown" href="#"><span class="glyphicon glyphicon-menu-down"></span></a>' . "\n";
+				if ($o_glob->Security->CheckUserPermission(null, 'newBranch')) {
+					$s_rootMenu .= '<li><a href="' . forestLink::Link($o_glob->URL->Branch, 'newBranch') . '"><span class="glyphicon glyphicon-plus text-success" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootCreateBranchTitle', 1) . '</a></li>' . "\n";
+				}
 				
-				$s_rootMenu .= '<ul class="dropdown-menu">' . "\n";
-					if (!issetStr($o_glob->BranchTree['Id'][$o_glob->URL->BranchId]['Table']->PrimaryValue)) {
-						$s_rootMenu .= '<li><a href="' . forestLink::Link($o_glob->URL->Branch, 'newTwig') . '"><span class="glyphicon glyphicon-plus text-success" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootCreateTwigTitle', 1) . '</a></li>' . "\n";
-					} else {
-						$s_rootMenu .= '<li><a href="' . forestLink::Link($o_glob->URL->Branch, 'viewTwig') . '"><span class="glyphicon glyphicon-zoom-in" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootViewTwigTitle', 1) . '</a></li>' . "\n";
-						$s_rootMenu .= '<li><a href="' . forestLink::Link($o_glob->URL->Branch, 'editTwig') . '"><span class="glyphicon glyphicon-pencil" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootEditTwigTitle', 1) . '</a></li>' . "\n";
-						$s_rootMenu .= '<li><a href="' . forestLink::Link($o_glob->URL->Branch, 'deleteTwig') . '"><span class="glyphicon glyphicon-trash text-danger" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootDeleteTwigTitle', 1) . '</a></li>' . "\n";
+				if ($o_glob->Security->CheckUserPermission(null, 'viewBranch')) {
+					$s_rootMenu .= '<li><a href="' . forestLink::Link($o_glob->URL->Branch, 'viewBranch') . '"><span class="glyphicon glyphicon-zoom-in" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootViewBranchTitle', 1) . '</a></li>' . "\n";
+				}
+				
+				$s_rootMenu .= '<li class="dropdown-submenu">' . "\n";
+					
+					if ($o_glob->Security->CheckUserPermission(null, 'editBranch')) {
+						$s_rootMenu .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'editBranch') . '"><span class="glyphicon glyphicon-pencil" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootEditBranchTitle', 1) . '</a><a class="fphp_menu_dropdown" href="#"><span class="glyphicon glyphicon-menu-down"></span></a>' . "\n";
 					}
-				$s_rootMenu .= '</ul>' . "\n";
-			$s_rootMenu .= '</li>' . "\n";
-			
-			$s_rootMenu .= '<li><a href="' . forestLink::Link($o_glob->URL->Branch, 'moveUpBranch', array('editKey' => $o_glob->URL->BranchId)) . '"><span class="glyphicon glyphicon-triangle-top" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootMoveUpBranchTitle', 1) . '</a></li>' . "\n";
-			$s_rootMenu .= '<li><a href="' . forestLink::Link($o_glob->URL->Branch, 'moveDownBranch', array('editKey' => $o_glob->URL->BranchId)) . '"><span class="glyphicon glyphicon-triangle-bottom" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootMoveDownBranchTitle', 1) . '</a></li>' . "\n";
-			$s_rootMenu .= '<li><a href="' . forestLink::Link($o_glob->URL->Branch, 'deleteBranch') . '"><span class="glyphicon glyphicon-trash text-danger" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootDeleteBranchTitle', 1) . '</a></li>' . "\n";
-			
-		$s_rootMenu .= '</ul>' . "\n";
+					
+					$s_rootMenu .= '<ul class="dropdown-menu">' . "\n";
+						if (!issetStr($o_glob->BranchTree['Id'][$o_glob->URL->BranchId]['Table']->PrimaryValue)) {
+							if ($o_glob->Security->CheckUserPermission(null, 'newTwig')) {
+								$s_rootMenu .= '<li><a href="' . forestLink::Link($o_glob->URL->Branch, 'newTwig') . '"><span class="glyphicon glyphicon-plus text-success" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootCreateTwigTitle', 1) . '</a></li>' . "\n";
+							}
+							
+							if ($o_glob->Security->CheckUserPermission(null, 'transferTwig')) {
+								$s_rootMenu .= '<li><a href="' . forestLink::Link($o_glob->URL->Branch, 'transferTwig') . '"><span class="glyphicon glyphicon-transfer" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootTransferTwigTitle', 1) . '</a></li>' . "\n";
+							}
+						} else {
+							if ($o_glob->Security->CheckUserPermission(null, 'viewTwig')) {
+								$s_rootMenu .= '<li><a href="' . forestLink::Link($o_glob->URL->Branch, 'viewTwig') . '"><span class="glyphicon glyphicon-zoom-in" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootViewTwigTitle', 1) . '</a></li>' . "\n";
+							}
+							
+							if ($o_glob->Security->CheckUserPermission(null, 'editTwig')) {
+								$s_rootMenu .= '<li><a href="' . forestLink::Link($o_glob->URL->Branch, 'editTwig') . '"><span class="glyphicon glyphicon-pencil" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootEditTwigTitle', 1) . '</a></li>' . "\n";
+							}
+							
+							if ($o_glob->Security->CheckUserPermission(null, 'truncateTwig')) {
+								$s_rootMenu .= '<li><a href="' . forestLink::Link($o_glob->URL->Branch, 'truncateTwig') . '"><span class="glyphicon glyphicon-erase text-primary" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootTruncateTwigTitle', 1) . '</a></li>' . "\n";
+							}
+							
+							if ($o_glob->Security->CheckUserPermission(null, 'transferTwig')) {
+								$s_rootMenu .= '<li><a href="' . forestLink::Link($o_glob->URL->Branch, 'transferTwig') . '"><span class="glyphicon glyphicon-transfer" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootTransferTwigTitle', 1) . '</a></li>' . "\n";
+							}
+							
+							if ($o_glob->Security->CheckUserPermission(null, 'deleteTwig')) {
+								$s_rootMenu .= '<li><a href="' . forestLink::Link($o_glob->URL->Branch, 'deleteTwig') . '"><span class="glyphicon glyphicon-trash text-danger" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootDeleteTwigTitle', 1) . '</a></li>' . "\n";
+							}
+						}
+					$s_rootMenu .= '</ul>' . "\n";
+				$s_rootMenu .= '</li>' . "\n";
+				
+				if ($o_glob->Security->CheckUserPermission(null, 'moveUpBranch')) {
+					$s_rootMenu .= '<li><a href="' . forestLink::Link($o_glob->URL->Branch, 'moveUpBranch', array('editKey' => $o_glob->URL->BranchId)) . '"><span class="glyphicon glyphicon-triangle-top" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootMoveUpBranchTitle', 1) . '</a></li>' . "\n";
+				}
+				
+				if ($o_glob->Security->CheckUserPermission(null, 'moveDownBranch')) {
+					$s_rootMenu .= '<li><a href="' . forestLink::Link($o_glob->URL->Branch, 'moveDownBranch', array('editKey' => $o_glob->URL->BranchId)) . '"><span class="glyphicon glyphicon-triangle-bottom" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootMoveDownBranchTitle', 1) . '</a></li>' . "\n";
+				}
+				
+				if ($o_glob->Security->CheckUserPermission(null, 'deleteBranch')) {
+					$s_rootMenu .= '<li><a href="' . forestLink::Link($o_glob->URL->Branch, 'deleteBranch') . '"><span class="glyphicon glyphicon-trash text-danger" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootDeleteBranchTitle', 1) . '</a></li>' . "\n";
+				}
+				
+			$s_rootMenu .= '</ul>' . "\n";
+		}
 		
 		return $s_rootMenu;
 	}
@@ -182,6 +223,22 @@ abstract class forestRootBranch {
 						throw new forestException(0x10001403, array($o_glob->Temp->{'UniqueIssue'}));
 					} else if ($i_result == 0) {
 						throw new forestException(0x10001402);
+					} else if ($i_result == 1) {
+						/* create permission for standard action of branch */
+						$o_permissionTwig = new permissionTwig;
+						$o_permissionTwig->Name = $s_actionLabel;
+						$o_permissionTwig->Branch->PrimaryValue = strval($this->Twig->Id);
+						$o_permissionTwig->Action->PrimaryValue = strval($o_actionTwig->Id);
+						
+						/* insert permission record */
+						$i_result = $o_permissionTwig->InsertRecord();
+						
+						/* evaluate result */
+						if ($i_result == -1) {
+							throw new forestException(0x10001403, array($o_glob->Temp->{'UniqueIssue'}));
+						} else if ($i_result == 0) {
+							throw new forestException(0x10001402);
+						}
 					}
 				}
 				
@@ -661,6 +718,42 @@ abstract class forestRootBranch {
 				
 				if ($o_actions->Twigs->Count() > 0) {
 					foreach ($o_actions->Twigs as $o_action) {
+						/* delete permission records linked to action record */
+						$o_permissionTwig = new permissionTwig;
+			
+						$a_sqlAdditionalFilter = array(array('column' => 'Action', 'value' => $o_action->Id, 'operator' => '=', 'filterOperator' => 'AND'));
+						$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+						$o_permissions = $o_permissionTwig->GetAllRecords(true);
+						$o_glob->Temp->Del('SQLAdditionalFilter');
+						
+						foreach ($o_permissions->Twigs as $o_permission) {
+							/* delete role_permission records linked to permission */
+							$o_role_permissionTwig = new role_permissionTwig;
+			
+							$a_sqlAdditionalFilter = array(array('column' => 'permissionUUID', 'value' => $o_permission->UUID, 'operator' => '=', 'filterOperator' => 'AND'));
+							$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+							$o_role_permissions = $o_role_permissionTwig->GetAllRecords(true);
+							$o_glob->Temp->Del('SQLAdditionalFilter');
+							
+							foreach ($o_role_permissions->Twigs as $o_role_permission) {
+								/* delete record */
+								$i_return = $o_role_permission->DeleteRecord();
+								
+								/* evaluate the result */
+								if ($i_return <= 0) {
+									throw new forestException(0x10001423);
+								}
+							}
+							
+							/* delete record */
+							$i_return = $o_permission->DeleteRecord();
+							
+							/* evaluate the result */
+							if ($i_return <= 0) {
+								throw new forestException(0x10001423);
+							}
+						}
+						
 						/* delete file record */
 						$i_return = $o_action->DeleteRecord();
 						
@@ -925,6 +1018,42 @@ abstract class forestRootBranch {
 			if (array_key_exists('sys_fphp_actionKey', $_POST)) {
 				if (! ($this->Twig->GetRecord(array($_POST['sys_fphp_actionKey']))) ) {
 					throw new forestException(0x10001401, array($this->Twig->fphp_Table));
+				}
+				
+				/* delete permission records linked to this action */
+				$o_permissionTwig = new permissionTwig;
+	
+				$a_sqlAdditionalFilter = array(array('column' => 'Action', 'value' => $this->Twig->Id, 'operator' => '=', 'filterOperator' => 'AND'));
+				$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+				$o_permissions = $o_permissionTwig->GetAllRecords(true);
+				$o_glob->Temp->Del('SQLAdditionalFilter');
+				
+				foreach ($o_permissions->Twigs as $o_permission) {
+					/* delete role_permission records linked to permission */
+					$o_role_permissionTwig = new role_permissionTwig;
+	
+					$a_sqlAdditionalFilter = array(array('column' => 'permissionUUID', 'value' => $o_permission->UUID, 'operator' => '=', 'filterOperator' => 'AND'));
+					$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+					$o_role_permissions = $o_role_permissionTwig->GetAllRecords(true);
+					$o_glob->Temp->Del('SQLAdditionalFilter');
+					
+					foreach ($o_role_permissions->Twigs as $o_role_permission) {
+						/* delete record */
+						$i_return = $o_role_permission->DeleteRecord();
+						
+						/* evaluate the result */
+						if ($i_return <= 0) {
+							throw new forestException(0x10001423);
+						}
+					}
+					
+					/* delete record */
+					$i_return = $o_permission->DeleteRecord();
+					
+					/* evaluate the result */
+					if ($i_return <= 0) {
+						throw new forestException(0x10001423);
+					}
 				}
 				
 				/* delete record */
@@ -1434,6 +1563,333 @@ abstract class forestRootBranch {
 		$this->SetNextAction('init');
 	}
 	
+	/* handle transfer twig recorrd action */
+	protected function transferTwigAction() {
+		$o_glob = forestGlobals::init();
+		
+		/* check if standard twig is a system object */
+		if ( ($this->Twig != null) && ($this->Twig->fphp_SystemTable) ) {
+			throw new forestException(0x10001F16);
+		}
+		
+		$s_nextAction = 'init';
+		$o_saveTwig = $this->Twig;
+		$this->Twig = new branchTwig;
+		$o_table = new tableTwig;
+		
+		if ($o_glob->URL->BranchId == 1) {
+			throw new forestException(0x10001F05);
+		}
+		
+		/* query branch record */
+		if (! ($this->Twig->GetRecord(array($o_glob->URL->BranchId))) ) {
+			throw new forestException(0x10001401, array($this->Twig->fphp_Table));
+		}
+		
+		$this->HandleFormKey($o_glob->URL->Branch . $o_glob->URL->Action . 'Form');
+		
+		if (!$o_glob->IsPost) {
+			/* create modal confirmation form for deleting record */
+			$o_glob->PostModalForm = new forestForm($this->Twig);
+			$s_title = $o_glob->GetTranslation('TransferTwigModalTitle', 1);
+			$o_glob->PostModalForm->CreateModalForm($this->Twig, $s_title);
+			
+			$o_branchTwig = new branchTwig;
+			$a_sqlAdditionalFilter = array();
+			
+			$s_label = $o_glob->GetTranslation('formTransferTwigFromLabel', 0);
+			$s_valMessage = $o_glob->GetTranslation('formTransferTwigFromValMessage', 0);
+			
+			if (issetStr($this->Twig->Table->PrimaryValue)) {
+				/* get all branches without table settings */
+				$a_sqlAdditionalFilter = array(array('column' => 'Table', 'value' => 'NULL', 'operator' => 'IS', 'filterOperator' => 'AND'), array('column' => 'Id', 'value' => 1, 'operator' => '<>', 'filterOperator' => 'AND'));
+				
+				$s_label = $o_glob->GetTranslation('formTransferTwigToLabel', 0);
+				$s_valMessage = $o_glob->GetTranslation('formTransferTwigToValMessage', 0);
+			} else {
+				/* get all branches with table settings */
+				$a_sqlAdditionalFilter = array(array('column' => 'Table', 'value' => 'NULL', 'operator' => 'IS NOT', 'filterOperator' => 'AND'), array('column' => 'Id', 'value' => 1, 'operator' => '<>', 'filterOperator' => 'AND'));
+			}
+			
+			$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+			$o_branches = $o_branchTwig->GetAllRecords(true);
+			$o_glob->Temp->Del('SQLAdditionalFilter');
+			
+			$a_options = array();
+			
+			foreach($o_branches->Twigs as $o_branch) {
+				$a_options[$o_branch->Title . ' (' . $o_branch->Name . ')'] = $o_branch->Id;
+			}
+			
+			$o_select = new forestFormElement(forestFormElement::SELECT);
+			$o_select->Label = $s_label;
+			$o_select->Id = 'sys_fphp_transferTwig_branch_id';
+			$o_select->ValMessage = $s_valMessage;
+			$o_select->Required = true;
+			$o_select->Options = $a_options;
+			
+			$o_glob->PostModalForm->FormElements->Add($o_select);
+			
+			/* add validation rule for manual created form element */
+			$o_glob->PostModalForm->FormObject->ValRules->Add(new forestFormValidationRule($o_select->Id, 'required', 'true'));
+		} else {
+			if (intval($_POST['sys_fphp_transferTwig_branch_id']) == 1) {
+				throw new forestException(0x10001F05);
+			}
+			
+			$o_glob->Base->{$o_glob->ActiveBase}->ManualTransaction();
+			
+			$o_branchTwig = new branchTwig;
+			
+			if (! ($o_branchTwig->GetRecord(array($_POST['sys_fphp_transferTwig_branch_id']))) ) {
+				throw new forestException(0x10001401, array($o_branchTwig->fphp_Table));
+			}
+			
+			if (issetStr($this->Twig->Table->PrimaryValue)) {
+				/* transfer twig to target branch */
+				$o_sourceBranch = $this->Twig;
+				$o_targetBranch = $o_branchTwig;
+			} else {
+				/* transfer twig from target branch */
+				$o_sourceBranch = $o_branchTwig;
+				$o_targetBranch = $this->Twig;
+			}
+			
+			/* edit translations */
+			$o_translationTwig = new translationTwig;
+			$a_sqlAdditionalFilter = array(array('column' => 'BranchId', 'value' => $o_sourceBranch->Id, 'operator' => '=', 'filterOperator' => 'AND'));
+			$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+			$o_translations = $o_translationTwig->GetAllRecords(true);
+			$o_glob->Temp->Del('SQLAdditionalFilter');
+			
+			foreach ($o_translations->Twigs as $o_translation) {
+				/* edit translation branch id */
+				$o_translation->BranchId = $o_targetBranch->Id;
+				
+				/* edit translation recrod */
+				$i_result = $o_translation->UpdateRecord();
+				
+				/* evaluate result */
+				if ($i_result == -1) {
+					throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+				}
+			}
+			
+			/* edit files */
+			$o_filesTwig = new filesTwig;
+			$a_sqlAdditionalFilter = array(array('column' => 'BranchId', 'value' => $o_sourceBranch->Id, 'operator' => '=', 'filterOperator' => 'AND'));
+			$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+			$o_files = $o_filesTwig->GetAllRecords(true);
+			$o_glob->Temp->Del('SQLAdditionalFilter');
+			
+			foreach ($o_files->Twigs as $o_file) {
+				/* edit translation branch id */
+				$o_file->BranchId = $o_targetBranch->Id;
+				
+				/* edit translation recrod */
+				$i_result = $o_file->UpdateRecord();
+				
+				/* evaluate result */
+				if ($i_result == -1) {
+					throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+				}
+			}
+			
+			/* transfer files */
+			/* generate source path */
+			$o_glob->SetVirtualTarget($o_sourceBranch->Id);
+			$s_sourcePath = '';
+			
+			if (count($o_glob->URL->VirtualBranches) > 0) {
+				foreach($o_glob->URL->VirtualBranches as $s_value) {
+					$s_sourcePath .= $s_value . '/';
+				}
+			} else {
+				$s_sourcePath .= $o_glob->URL->VirtualBranch . '/';
+			}
+			
+			$s_sourcePath = './trunk/' . $s_sourcePath . 'fphp_files/';
+			
+			/* generate target path */
+			$o_glob->SetVirtualTarget($o_targetBranch->Id);
+			$s_targetPath = '';
+			
+			if (count($o_glob->URL->VirtualBranches) > 0) {
+				foreach($o_glob->URL->VirtualBranches as $s_value) {
+					$s_targetPath .= $s_value . '/';
+				}
+			} else {
+				$s_targetPath .= $o_glob->URL->VirtualBranch . '/';
+			}
+			
+			$s_targetPath = './trunk/' . $s_targetPath . 'fphp_files/';
+			
+			forestFile::CopyRecursive($s_sourcePath, $s_targetPath);
+			forestFile::RemoveDirectoryRecursive($s_sourcePath);
+			
+			/* edit branches */
+			$o_targetBranch->Table = $o_sourceBranch->Table->PrimaryValue;
+			$o_sourceBranch->Table = 'NULL';
+			
+			/* edit source branch recrod */
+			$i_result = $o_sourceBranch->UpdateRecord();
+			
+			/* evaluate result */
+			if ($i_result == -1) {
+				throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+			}
+			
+			/* edit target branch recrod */
+			$i_result = $o_targetBranch->UpdateRecord();
+			
+			/* evaluate result */
+			if ($i_result == -1) {
+				throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+			}
+			
+			/* update source branch file */
+			/* exchange branch file with new branch file + landing page */
+			/* generate source path */
+			$o_glob->SetVirtualTarget($o_sourceBranch->Id);
+			$s_sourcePath = '';
+			
+			if (count($o_glob->URL->VirtualBranches) > 0) {
+				foreach($o_glob->URL->VirtualBranches as $s_value) {
+					$s_sourcePath .= $s_value . '/';
+				}
+			} else {
+				$s_sourcePath .= $o_glob->URL->VirtualBranch . '/';
+			}
+			
+			/* get directory content of current page into array */
+			$a_dirContent = scandir('./trunk/' . $s_sourcePath);
+			$s_sourcePath = './trunk/' . $s_sourcePath . $o_sourceBranch->Name . 'Branch.php';
+			
+			/* if we cannot find branch file */
+			if (!in_array($o_sourceBranch->Name . 'Branch.php', $a_dirContent)) {
+				throw new forestException('Cannot find file [%0].', array($o_sourceBranch->Name . 'Branch.php'));
+			}
+			
+			$o_file = new forestFile($s_sourcePath);
+			$o_file->ReplaceContent( strval(new forestTemplates(forestTemplates::CREATENEWBRANCH, array($o_sourceBranch->Name))) );
+			
+			/* update target branch file */
+			/* exchange branch file with new branch file */
+			/* generate target path */
+			$o_glob->SetVirtualTarget($o_targetBranch->Id);
+			$s_targetPath = '';
+			
+			if (count($o_glob->URL->VirtualBranches) > 0) {
+				foreach($o_glob->URL->VirtualBranches as $s_value) {
+					$s_targetPath .= $s_value . '/';
+				}
+			} else {
+				$s_targetPath .= $o_glob->URL->VirtualBranch . '/';
+			}
+			
+			/* get directory content of current page into array */
+			$a_dirContent = scandir('./trunk/' . $s_targetPath);
+			$s_targetPath = './trunk/' . $s_targetPath . $o_targetBranch->Name . 'Branch.php';
+			
+			/* if we cannot find branch file */
+			if (!in_array($o_targetBranch->Name . 'Branch.php', $a_dirContent)) {
+				throw new forestException('Cannot find file [%0].', array($o_targetBranch->Name . 'Branch.php'));
+			}
+			
+			/* gather information */
+			$s_filter = 'false';
+			
+			if ($o_targetBranch->Filter) {
+				$s_filter = 'true';
+			}
+			
+			$s_keepFilter = 'false';
+			
+			if ($o_targetBranch->KeepFilter) {
+				$s_keepFilter = 'true';
+			}
+			
+			$s_standardView = 'forestBranch::LIST';
+			
+			if ($o_targetBranch->StandardView == 10) {
+				$s_standardView = 'forestBranch::DETAIL';
+			} else if ($o_targetBranch->StandardView == 100) {
+				$s_standardView = 'forestBranch::FLEX';
+			}
+			
+			$o_tableTwig = new tableTwig;
+			
+			if (! ($o_tableTwig->GetRecord(array($o_targetBranch->Table->PrimaryValue))) ) {
+				throw new forestException(0x10001401, array($o_tableTwig->fphp_Table));
+			}
+			
+			$s_tableName = $o_tableTwig->Name;
+			forestStringLib::RemoveTablePrefix($s_tableName);
+			
+			$o_file = new forestFile($s_targetPath);
+			$o_file->ReplaceContent( strval(new forestTemplates(forestTemplates::CREATENEWBRANCHWITHTWIG, array($o_targetBranch->Name, $s_tableName, $s_filter, $s_standardView, $s_keepFilter))) );
+			
+			$o_glob->SystemMessages->Add(new forestException(0x10001F0C));
+		}
+		
+		if (isset($this->KeepFilter)) {
+			if ($this->KeepFilter->value) {
+				if ($o_glob->Security->SessionData->Exists('last_filter')) {
+					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
+				}
+			}
+		}
+		
+		$this->Twig = $o_saveTwig;
+		$this->SetNextAction($s_nextAction);
+	}
+	
+	/* handle truncate twig record action */
+	protected function truncateTwigAction() {
+		$o_glob = forestGlobals::init();
+		
+		/* check if standard twig is a system object */
+		if ($this->Twig->fphp_SystemTable) {
+			throw new forestException(0x10001F16);
+		}
+		
+		$o_saveTwig = $this->Twig;
+		$this->Twig = new tableTwig;
+			
+		/* query table record */
+		if (! ($this->Twig->GetRecord(array($o_glob->BranchTree['Id'][$o_glob->URL->BranchId]['Table']->PrimaryValue))) ) {
+			throw new forestException(0x10001401, array($this->Twig->fphp_Table));
+		}
+		
+		$this->HandleFormKey($o_glob->URL->Branch . $o_glob->URL->Action . 'Form');
+		
+		if (!$o_glob->IsPost) {
+			/* create modal confirmation form for deleting record */
+			$o_glob->PostModalForm = new forestForm($this->Twig);
+			$s_title = $o_glob->GetTranslation('TruncateModalTitle', 1);
+			$s_description = '<div class="alert alert-warning">' . $o_glob->GetTranslation('TruncateModalDescription', 1) . '</div>';
+			$o_glob->PostModalForm->CreateDeleteModalForm($this->Twig, $s_title, $s_description);
+		} else {
+			$o_glob->Base->{$o_glob->ActiveBase}->ManualTransaction();
+			
+			/* execute truncation of twig */
+			$this->executeTruncateTwig($this->Twig);
+			
+			$o_glob->SystemMessages->Add(new forestException(0x10001F0A));
+		}
+		
+		if (isset($this->KeepFilter)) {
+			if ($this->KeepFilter->value) {
+				if ($o_glob->Security->SessionData->Exists('last_filter')) {
+					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
+				}
+			}
+		}
+		
+		$this->Twig = $o_saveTwig;
+		$this->SetNextAction('init');
+	}
+	
 	/* truncate execution of a twig */
 	protected function executeTruncateTwig(tableTwig $p_o_table) {
 		$o_glob = forestGlobals::init();
@@ -1830,7 +2286,9 @@ abstract class forestRootBranch {
 			unset($a_parameters['subConstraintKey']);
 			$a_parameters['viewKey'] = $o_tablefield->UUID;
 			
-			$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'viewTwigField', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnViewText', 1) . '"><span class="glyphicon glyphicon-zoom-in"></span></a>';
+			if ($o_glob->Security->CheckUserPermission(null, 'viewTwigField')) {
+				$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'viewTwigField', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnViewText', 1) . '"><span class="glyphicon glyphicon-zoom-in"></span></a>';
+			}
 			
 			/* edit link */
 			$a_parameters = $o_glob->URL->Parameters;
@@ -1844,7 +2302,9 @@ abstract class forestRootBranch {
 			unset($a_parameters['subConstraintKey']);
 			$a_parameters['editKey'] = $o_tablefield->UUID;
 			
-			$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'editTwigField', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="glyphicon glyphicon-pencil"></span></a>' . "\n";
+			if ($o_glob->Security->CheckUserPermission(null, 'editTwigField')) {
+				$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'editTwigField', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="glyphicon glyphicon-pencil"></span></a>' . "\n";
+			}
 			
 			/* move up link */
 			$a_parameters = $o_glob->URL->Parameters;
@@ -1858,7 +2318,9 @@ abstract class forestRootBranch {
 			unset($a_parameters['subConstraintKey']);
 			$a_parameters['editKey'] = $o_tablefield->UUID;
 			
-			$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'moveUpTwigField', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnMoveUpText', 1) . '"><span class="glyphicon glyphicon-triangle-top"></span></a>';
+			if ($o_glob->Security->CheckUserPermission(null, 'moveUpTwigField')) {
+				$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'moveUpTwigField', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnMoveUpText', 1) . '"><span class="glyphicon glyphicon-triangle-top"></span></a>';
+			}
 			
 			/* move down link */
 			$a_parameters = $o_glob->URL->Parameters;
@@ -1872,7 +2334,9 @@ abstract class forestRootBranch {
 			unset($a_parameters['subConstraintKey']);
 			$a_parameters['editKey'] = $o_tablefield->UUID;
 			
-			$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'moveDownTwigField', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnMoveDownText', 1) . '"><span class="glyphicon glyphicon-triangle-bottom"></span></a>';
+			if ($o_glob->Security->CheckUserPermission(null, 'moveDownTwigField')) {
+				$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'moveDownTwigField', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnMoveDownText', 1) . '"><span class="glyphicon glyphicon-triangle-bottom"></span></a>';
+			}
 			
 			/* delete link */
 			$a_parameters = $o_glob->URL->Parameters;
@@ -1886,7 +2350,9 @@ abstract class forestRootBranch {
 			unset($a_parameters['subConstraintKey']);
 			$a_parameters['deleteKey'] = $o_tablefield->UUID;
 			
-			$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'deleteTwigField', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
+			if ($o_glob->Security->CheckUserPermission(null, 'deleteTwigField')) {
+				$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'deleteTwigField', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
+			}
 			
 			$s_options .= '</span>' . "\n";
 			$s_subTableRows .=  '<td>' . $s_options . '</td>' . "\n";
@@ -1895,7 +2361,11 @@ abstract class forestRootBranch {
 		}
 		
 		/* new link */
-		$s_newButton = '<a href="' . forestLink::Link($o_glob->URL->Branch, 'newTwigField') . '" class="btn btn-default" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="glyphicon glyphicon-plus text-success"></span></a>' . "\n";
+		if ($o_glob->Security->CheckUserPermission(null, 'newTwigField')) {
+			$s_newButton = '<a href="' . forestLink::Link($o_glob->URL->Branch, 'newTwigField') . '" class="btn btn-default" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="glyphicon glyphicon-plus text-success"></span></a>' . "\n";
+		} else {
+			$s_newButton = '';
+		}
 		
 		$s_subFormItemContent = new forestTemplates(forestTemplates::SUBLISTVIEWITEMCONTENT, array($s_newButton, $s_subTableHead, $s_subTableRows));
 		$s_subFormItems .= new forestTemplates(forestTemplates::SUBLISTVIEWITEM, array('tablefields' . $p_o_twig->fphp_Table, $o_glob->GetTranslation('TableFields', 0) . ' (' . $o_tablefields->Twigs->Count() . ')', ' in', $s_subFormItemContent));
@@ -1966,7 +2436,9 @@ abstract class forestRootBranch {
 			unset($a_parameters['subConstraintKey']);
 			$a_parameters['editKey'] = $o_translation->UUID;
 			
-			$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'editTranslation', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="glyphicon glyphicon-pencil"></span></a>' . "\n";
+			if ($o_glob->Security->CheckUserPermission(null, 'editTranslation')) {
+				$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'editTranslation', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="glyphicon glyphicon-pencil"></span></a>' . "\n";
+			}
 			
 			/* delete link */
 			$a_parameters = $o_glob->URL->Parameters;
@@ -1980,7 +2452,9 @@ abstract class forestRootBranch {
 			unset($a_parameters['subConstraintKey']);
 			$a_parameters['deleteKey'] = $o_translation->UUID;
 			
-			$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'deleteTranslation', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
+			if ($o_glob->Security->CheckUserPermission(null, 'deleteTranslation')) {
+				$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'deleteTranslation', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
+			}
 			
 			$s_options .= '</span>' . "\n";
 			$s_subTableRows .=  '<td>' . $s_options . '</td>' . "\n";
@@ -1989,7 +2463,11 @@ abstract class forestRootBranch {
 		}
 		
 		/* new link */
-		$s_newButton = '<a href="' . forestLink::Link($o_glob->URL->Branch, 'newTranslation') . '" class="btn btn-default" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="glyphicon glyphicon-plus text-success"></span></a>' . "\n";
+		if ($o_glob->Security->CheckUserPermission(null, 'newTwigField')) {
+			$s_newButton = '<a href="' . forestLink::Link($o_glob->URL->Branch, 'newTranslation') . '" class="btn btn-default" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="glyphicon glyphicon-plus text-success"></span></a>' . "\n";
+		} else {
+			$s_newButton = '';
+		}
 		
 		$s_subFormItemContent = new forestTemplates(forestTemplates::SUBLISTVIEWITEMCONTENT, array($s_newButton, $s_subTableHead, $s_subTableRows));
 		$s_subFormItems .= new forestTemplates(forestTemplates::SUBLISTVIEWITEM, array('translations' . $p_o_twig->fphp_Table, $o_glob->GetTranslation('TranslationLines', 0) . ' (' . $o_translations->Twigs->Count() . ')', '', $s_subFormItemContent));
@@ -2056,7 +2534,9 @@ abstract class forestRootBranch {
 			unset($a_parameters['subConstraintKey']);
 			$a_parameters['editKey'] = $i;
 			
-			$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'editUnique', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="glyphicon glyphicon-pencil"></span></a>' . "\n";
+			if ($o_glob->Security->CheckUserPermission(null, 'editUnique')) {
+				$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'editUnique', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="glyphicon glyphicon-pencil"></span></a>' . "\n";
+			}
 			
 			/* delete link */
 			$a_parameters = $o_glob->URL->Parameters;
@@ -2070,7 +2550,9 @@ abstract class forestRootBranch {
 			unset($a_parameters['subConstraintKey']);
 			$a_parameters['deleteKey'] = $i;
 			
-			$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'deleteUnique', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
+			if ($o_glob->Security->CheckUserPermission(null, 'deleteUnique')) {
+				$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'deleteUnique', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
+			}
 			
 			$s_options .= '</span>' . "\n";
 			$s_subTableRows .=  '<td>' . $s_options . '</td>' . "\n";
@@ -2081,7 +2563,11 @@ abstract class forestRootBranch {
 		}
 		
 		/* new link */
-		$s_newButton = '<a href="' . forestLink::Link($o_glob->URL->Branch, 'newUnique') . '" class="btn btn-default" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="glyphicon glyphicon-plus text-success"></span></a>' . "\n";
+		if ($o_glob->Security->CheckUserPermission(null, 'newUnique')) {
+			$s_newButton = '<a href="' . forestLink::Link($o_glob->URL->Branch, 'newUnique') . '" class="btn btn-default" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="glyphicon glyphicon-plus text-success"></span></a>' . "\n";
+		} else {
+			$s_newButton = '';
+		}
 		
 		$s_subFormItemContent = new forestTemplates(forestTemplates::SUBLISTVIEWITEMCONTENT, array($s_newButton, $s_subTableHead, $s_subTableRows));
 		$s_subFormItems .= new forestTemplates(forestTemplates::SUBLISTVIEWITEM, array('uniques' . $p_o_twig->fphp_Table, $o_glob->GetTranslation('UniqueKey', 0) . ' (' . count($a_uniqueKeys) . ')', '', $s_subFormItemContent));
@@ -2152,7 +2638,9 @@ abstract class forestRootBranch {
 			unset($a_parameters['subConstraintKey']);
 			$a_parameters['editKey'] = $i;
 			
-			$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'editSort', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="glyphicon glyphicon-pencil"></span></a>' . "\n";
+			if ($o_glob->Security->CheckUserPermission(null, 'editSort')) {
+				$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'editSort', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="glyphicon glyphicon-pencil"></span></a>' . "\n";
+			}
 			
 			/* delete link */
 			$a_parameters = $o_glob->URL->Parameters;
@@ -2166,7 +2654,9 @@ abstract class forestRootBranch {
 			unset($a_parameters['subConstraintKey']);
 			$a_parameters['deleteKey'] = $i;
 			
-			$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'deleteSort', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
+			if ($o_glob->Security->CheckUserPermission(null, 'deleteSort')) {
+				$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'deleteSort', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
+			}
 			
 			$s_options .= '</span>' . "\n";
 			$s_subTableRows .=  '<td>' . $s_options . '</td>' . "\n";
@@ -2177,7 +2667,11 @@ abstract class forestRootBranch {
 		}
 		
 		/* new link */
-		$s_newButton = '<a href="' . forestLink::Link($o_glob->URL->Branch, 'newSort') . '" class="btn btn-default" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="glyphicon glyphicon-plus text-success"></span></a>' . "\n";
+		if ($o_glob->Security->CheckUserPermission(null, 'newSort')) {
+			$s_newButton = '<a href="' . forestLink::Link($o_glob->URL->Branch, 'newSort') . '" class="btn btn-default" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="glyphicon glyphicon-plus text-success"></span></a>' . "\n";
+		} else {
+			$s_newButton = '';
+		}
 		
 		$s_subFormItemContent = new forestTemplates(forestTemplates::SUBLISTVIEWITEMCONTENT, array($s_newButton, $s_subTableHead, $s_subTableRows));
 		$s_subFormItems .= new forestTemplates(forestTemplates::SUBLISTVIEWITEM, array('sortOrders' . $p_o_twig->fphp_Table, $o_glob->GetTranslation('SortOrder', 0) . ' (' . count($a_sortOrders) . ')', '', $s_subFormItemContent));
@@ -2246,7 +2740,9 @@ abstract class forestRootBranch {
 			unset($a_parameters['subConstraintKey']);
 			$a_parameters['editKey'] = $o_subconstraint->UUID;
 			
-			$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'editSubConstraint', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="glyphicon glyphicon-pencil"></span></a>' . "\n";
+			if ($o_glob->Security->CheckUserPermission(null, 'editSubConstraint')) {
+				$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'editSubConstraint', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="glyphicon glyphicon-pencil"></span></a>' . "\n";
+			}
 			
 			/* move up link */
 			$a_parameters = $o_glob->URL->Parameters;
@@ -2260,8 +2756,10 @@ abstract class forestRootBranch {
 			unset($a_parameters['subConstraintKey']);
 			$a_parameters['editKey'] = $o_subconstraint->UUID;
 			
-			$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'moveUpSubConstraint', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnMoveUpText', 1) . '"><span class="glyphicon glyphicon-triangle-top"></span></a>';
-			
+			if ($o_glob->Security->CheckUserPermission(null, 'moveUpSubConstraint')) {
+				$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'moveUpSubConstraint', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnMoveUpText', 1) . '"><span class="glyphicon glyphicon-triangle-top"></span></a>';
+			}
+
 			/* move down link */
 			$a_parameters = $o_glob->URL->Parameters;
 			unset($a_parameters['newKey']);
@@ -2274,8 +2772,10 @@ abstract class forestRootBranch {
 			unset($a_parameters['subConstraintKey']);
 			$a_parameters['editKey'] = $o_subconstraint->UUID;
 			
-			$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'moveDownSubConstraint', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnMoveDownText', 1) . '"><span class="glyphicon glyphicon-triangle-bottom"></span></a>';
-			
+			if ($o_glob->Security->CheckUserPermission(null, 'moveDownSubConstraint')) {
+				$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'moveDownSubConstraint', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnMoveDownText', 1) . '"><span class="glyphicon glyphicon-triangle-bottom"></span></a>';
+			}
+
 			/* delete link */
 			$a_parameters = $o_glob->URL->Parameters;
 			unset($a_parameters['newKey']);
@@ -2288,8 +2788,10 @@ abstract class forestRootBranch {
 			unset($a_parameters['subConstraintKey']);
 			$a_parameters['deleteKey'] = $o_subconstraint->UUID;
 			
-			$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'deleteSubConstraint', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
-			
+			if ($o_glob->Security->CheckUserPermission(null, 'deleteSubConstraint')) {
+				$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'deleteSubConstraint', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
+			}
+
 			$s_options .= '</span>' . "\n";
 			$s_subTableRows .=  '<td>' . $s_options . '</td>' . "\n";
 			
@@ -2297,8 +2799,12 @@ abstract class forestRootBranch {
 		}
 		
 		/* new link */
-		$s_newButton = '<a href="' . forestLink::Link($o_glob->URL->Branch, 'newSubConstraint') . '" class="btn btn-default" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="glyphicon glyphicon-plus text-success"></span></a>' . "\n";
-		
+		if ($o_glob->Security->CheckUserPermission(null, 'newSubConstraint')) {
+			$s_newButton = '<a href="' . forestLink::Link($o_glob->URL->Branch, 'newSubConstraint') . '" class="btn btn-default" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="glyphicon glyphicon-plus text-success"></span></a>' . "\n";
+		} else {
+			$s_newButton = '';
+		}
+
 		$s_subFormItemContent = new forestTemplates(forestTemplates::SUBLISTVIEWITEMCONTENT, array($s_newButton, $s_subTableHead, $s_subTableRows));
 		$s_subFormItems .= new forestTemplates(forestTemplates::SUBLISTVIEWITEM, array('subConstraints' . $p_o_twig->fphp_Table, $o_glob->GetTranslation('SubConstraints', 0) . ' (' . $o_subconstraints->Twigs->Count() . ')', '', $s_subFormItemContent));
 		
@@ -2403,8 +2909,10 @@ abstract class forestRootBranch {
 				$a_parameters['viewKey'] = $o_subTablefield->UUID;
 				$a_parameters['rootSubConstraintKey'] = $o_subconstraint->UUID;
 				
-				$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'viewTwigField', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnViewText', 1) . '"><span class="glyphicon glyphicon-zoom-in"></span></a>';
-				
+				if ($o_glob->Security->CheckUserPermission(null, 'viewTwigField')) {
+					$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'viewTwigField', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnViewText', 1) . '"><span class="glyphicon glyphicon-zoom-in"></span></a>';
+				}
+
 				/* edit link */
 				$a_parameters = $o_glob->URL->Parameters;
 				unset($a_parameters['newKey']);
@@ -2419,8 +2927,10 @@ abstract class forestRootBranch {
 				$a_parameters['editKey'] = $o_subTablefield->UUID;
 				$a_parameters['rootSubConstraintKey'] = $o_subconstraint->UUID;
 				
-				$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'editTwigField', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="glyphicon glyphicon-pencil"></span></a>' . "\n";
-				
+				if ($o_glob->Security->CheckUserPermission(null, 'editTwigField')) {
+					$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'editTwigField', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="glyphicon glyphicon-pencil"></span></a>' . "\n";
+				}
+
 				/* move up link */
 				$a_parameters = $o_glob->URL->Parameters;
 				unset($a_parameters['newKey']);
@@ -2435,8 +2945,10 @@ abstract class forestRootBranch {
 				$a_parameters['editKey'] = $o_subTablefield->UUID;
 				$a_parameters['rootSubConstraintKey'] = $o_subconstraint->UUID;
 				
-				$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'moveUpTwigField', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnMoveUpText', 1) . '"><span class="glyphicon glyphicon-triangle-top"></span></a>';
-				
+				if ($o_glob->Security->CheckUserPermission(null, 'moveUpTwigField')) {
+					$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'moveUpTwigField', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnMoveUpText', 1) . '"><span class="glyphicon glyphicon-triangle-top"></span></a>';
+				}
+
 				/* move down link */
 				$a_parameters = $o_glob->URL->Parameters;
 				unset($a_parameters['newKey']);
@@ -2451,8 +2963,10 @@ abstract class forestRootBranch {
 				$a_parameters['editKey'] = $o_subTablefield->UUID;
 				$a_parameters['rootSubConstraintKey'] = $o_subconstraint->UUID;
 				
-				$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'moveDownTwigField', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnMoveDownText', 1) . '"><span class="glyphicon glyphicon-triangle-bottom"></span></a>';
-				
+				if ($o_glob->Security->CheckUserPermission(null, 'moveDownTwigField')) {
+					$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'moveDownTwigField', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnMoveDownText', 1) . '"><span class="glyphicon glyphicon-triangle-bottom"></span></a>';
+				}
+
 				/* delete link */
 				$a_parameters = $o_glob->URL->Parameters;
 				unset($a_parameters['newKey']);
@@ -2467,8 +2981,10 @@ abstract class forestRootBranch {
 				$a_parameters['deleteKey'] = $o_subTablefield->UUID;
 				$a_parameters['rootSubConstraintKey'] = $o_subconstraint->UUID;
 				
-				$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'deleteTwigField', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
-				
+				if ($o_glob->Security->CheckUserPermission(null, 'deleteTwigField')) {
+					$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'deleteTwigField', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
+				}
+
 				$s_options .= '</span>' . "\n";
 				$s_subTableRows .=  '<td>' . $s_options . '</td>' . "\n";
 				
@@ -2476,8 +2992,12 @@ abstract class forestRootBranch {
 			}
 			
 			/* new link */
-			$s_newButton = '<a href="' . forestLink::Link($o_glob->URL->Branch, 'newTwigField', array('rootSubConstraintKey' => $o_subconstraint->UUID)) . '" class="btn btn-default" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="glyphicon glyphicon-plus text-success"></span></a>' . "\n";
-			
+			if ($o_glob->Security->CheckUserPermission(null, 'newTwigField')) {
+				$s_newButton = '<a href="' . forestLink::Link($o_glob->URL->Branch, 'newTwigField', array('rootSubConstraintKey' => $o_subconstraint->UUID)) . '" class="btn btn-default" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="glyphicon glyphicon-plus text-success"></span></a>' . "\n";
+			} else {
+				$s_newButton = '';
+			}
+
 			$s_tempTable = $o_glob->TablesInformation[$o_subconstraint->SubTableUUID->PrimaryValue]['Name'];
 			forestStringLib::RemoveTablePrefix($s_tempTable);
 			
@@ -3802,8 +4322,10 @@ abstract class forestRootBranch {
 				$a_parameters['viewKey'] = $this->Twig->UUID;
 				$a_parameters['editKey'] = $o_tablefield_validationrule->UUID;
 				
-				$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'editValidationRule', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="glyphicon glyphicon-pencil"></span></a>' . "\n";
-				
+				if ($o_glob->Security->CheckUserPermission(null, 'editValidationRule')) {
+					$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'editValidationRule', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="glyphicon glyphicon-pencil"></span></a>' . "\n";
+				}
+
 				/* delete link */
 				$a_parameters = $o_glob->URL->Parameters;
 				unset($a_parameters['newKey']);
@@ -3817,8 +4339,10 @@ abstract class forestRootBranch {
 				$a_parameters['viewKey'] = $this->Twig->UUID;
 				$a_parameters['deleteKey'] = $o_tablefield_validationrule->UUID;
 				
-				$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'deleteValidationRule', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
-				
+				if ($o_glob->Security->CheckUserPermission(null, 'deleteValidationRule')) {
+					$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'deleteValidationRule', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
+				}
+
 				$s_options .= '</span>' . "\n";
 				$s_subTableRows .=  '<td>' . $s_options . '</td>' . "\n";
 				
@@ -3837,8 +4361,12 @@ abstract class forestRootBranch {
 			unset($a_parameters['subConstraintKey']);
 			$a_parameters['viewKey'] = $this->Twig->UUID;
 			
-			$s_newButton = '<a href="' . forestLink::Link($o_glob->URL->Branch, 'newValidationRule', $a_parameters) . '" class="btn btn-default" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="glyphicon glyphicon-plus text-success"></span></a>' . "\n";
-			
+			if ($o_glob->Security->CheckUserPermission(null, 'newValidationRule')) {
+				$s_newButton = '<a href="' . forestLink::Link($o_glob->URL->Branch, 'newValidationRule', $a_parameters) . '" class="btn btn-default" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="glyphicon glyphicon-plus text-success"></span></a>' . "\n";
+			} else {
+				$s_newButton = '';
+			}
+
 			$s_subFormItemContent = new forestTemplates(forestTemplates::SUBLISTVIEWITEMCONTENT, array($s_newButton, $s_subTableHead, $s_subTableRows));
 			$s_subFormItems .= new forestTemplates(forestTemplates::SUBLISTVIEWITEM, array('tablefield_validationrules' . $this->Twig->fphp_Table, $o_glob->GetTranslation('ValidationRules', 0), ' in', $s_subFormItemContent));
 			

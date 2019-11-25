@@ -15,6 +15,7 @@ class branchTwig extends forestTwig {
 	private $StandardView;
 	private $Filter;
 	private $KeepFilter;
+	private $PermissionInheritance;
 	
 	/* Properties */
 	
@@ -32,6 +33,7 @@ class branchTwig extends forestTwig {
 		$this->StandardView = new forestInt;
 		$this->Filter = new forestBool;
 		$this->KeepFilter = new forestBool;
+		$this->PermissionInheritance = new forestBool;
 		
 		/* forestTwig system fields */
 		$this->fphp_Table->value = 'sys_fphp_branch';
@@ -40,7 +42,7 @@ class branchTwig extends forestTwig {
 		$this->fphp_SortOrder->value->Add(true, 'ParentBranch');
 		$this->fphp_SortOrder->value->Add(true, 'NavigationOrder');
 		$this->fphp_Interval->value = 50;
-		$this->fphp_View->value = array('Name', 'Title', 'Navigation', 'NavigationOrder', 'Table', 'StandardView', 'Filter', 'KeepFilter');
+		$this->fphp_View->value = array('Name', 'Title', 'Navigation', 'NavigationOrder', 'Table', 'StandardView', 'Filter', 'KeepFilter', 'PermissionInheritance');
 		$this->fphp_FillMapping(get_object_vars($this));
 	}
 }

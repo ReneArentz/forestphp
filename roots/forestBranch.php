@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.3.0 (0x1 00014)   | */
+/* | forestPHP V0.4.0 (0x1 00014)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -25,6 +25,8 @@
  * 0.1.5 alpha	renatus		2019-10-05	added Captcha and thumbnail functionality
  * 0.1.5 alpha	renatus		2019-10-08	added forestLookup and forestCombination functionality
  * 0.2.0 beta	renatus		2019-10-25	added forestRootBranch inheritance and activated RootMenu rendering
+ * 0.4.0 beta	renatus		2019-11-13	added login, logout and signIn functionality
+ * 0.4.0 beta	renatus		2019-11-18	added permission checks to all standard actions
  */
 
 abstract class forestBranch extends forestRootBranch {
@@ -186,7 +188,9 @@ abstract class forestBranch extends forestRootBranch {
 		
 		if (!$o_glob->FastProcessing) {
 			/* clean up routine for temporary files */
-			$this->CleanUpTempFiles();
+			if ($o_glob->Security->RootUser) {
+				$this->CleanUpTempFiles();
+			}
 		}
 	}
 	
@@ -478,6 +482,377 @@ abstract class forestBranch extends forestRootBranch {
 	}
 	
 	
+	/* handle login action */
+	protected function loginAction() {
+		$o_glob = forestGlobals::init();
+		$s_nextAction = 'init';
+		
+		if ($o_glob->Security->UserUUID != $o_glob->Trunk->UUIDGuest->PrimaryValue) {
+			throw new forestException(0x1000143E);
+		}
+		
+		$this->HandleFormKey($o_glob->URL->Branch . $o_glob->URL->Action . 'Form');
+		
+		$o_glob->Temp->Add( get($o_glob->URL->Parameters, 'targetBranch'), 'targetBranch' );
+		$o_glob->Temp->Add( get($o_glob->URL->Parameters, 'targetAction'), 'targetAction' );
+		$o_glob->Temp->Add( get($o_glob->URL->Parameters, 'targetParametersKeys'), 'targetParametersKeys' );
+		$o_glob->Temp->Add( get($o_glob->URL->Parameters, 'targetParametersValues'), 'targetParametersValues' );
+		
+		if (!$o_glob->IsPost) {
+			/* create modal form for login */
+			$o_glob->PostModalForm = new forestForm(new trunkTwig);
+			$s_title = $o_glob->GetTranslation('LoginModalTitle', 1);
+			$o_glob->PostModalForm->CreateModalForm(new trunkTwig, $s_title);
+			
+			/* add username field */
+			$o_username = new forestFormElement(forestFormElement::TEXT);
+			$o_username->Label = $o_glob->GetTranslation('formUsernameLabel');
+			$o_username->Id = 'sys_fphp_login_Username';
+			$o_username->Placeholder = $o_glob->GetTranslation('formUsernamePlaceholder');
+			$o_username->ValMessage = $o_glob->GetTranslation('formUsernameValMessage');
+			$o_username->Required = true;
+			$o_glob->PostModalForm->FormElements->Add($o_username);
+			
+			/* add password field */
+			$o_password = new forestFormElement(forestFormElement::PASSWORD);
+			$o_password->Label = $o_glob->GetTranslation('formPasswordLabel');
+			$o_password->Id = 'sys_fphp_login_Password';
+			$o_password->Placeholder = $o_glob->GetTranslation('formPasswordPlaceholder');
+			$o_password->ValMessage = $o_glob->GetTranslation('formPasswordValMessage');
+			$o_password->Required = true;
+			$o_glob->PostModalForm->FormElements->Add($o_password);
+			
+			/* add validation rules for manual created form elements */
+			$o_glob->PostModalForm->FormObject->ValRules->Add(new forestFormValidationRule('sys_fphp_login_Username', 'required', 'true'));
+			$o_glob->PostModalForm->FormObject->ValRules->Add(new forestFormValidationRule('sys_fphp_login_Password', 'required', 'true'));
+			
+			/* change submit button text to Login */
+			$o_submitElement = $o_glob->PostModalForm->GetFormElementByFormId('sys_fphp_SubmitStandard');
+			
+			if ($o_submitElement != null) {
+				$o_submitElement->ButtonText = '<span class="glyphicon glyphicon-ok"></span> Login';
+			}
+			
+			/* add hidden target branch for automatic forwarding */
+			if ( ($o_glob->Temp->Exists('targetBranch')) && ($o_glob->Temp->{'targetBranch'} != null) ) {
+				$o_hiddenBranch = new forestFormElement(forestFormElement::HIDDEN);
+				$o_hiddenBranch->Id = 'sys_fphp_targetBranch';
+				$o_hiddenBranch->Value = $o_glob->Temp->{'targetBranch'};
+				$o_glob->PostModalForm->FormElements->Add($o_hiddenBranch);
+			}
+			
+			/* add hidden target action for automatic forwarding */
+			if ( ($o_glob->Temp->Exists('targetAction')) && ($o_glob->Temp->{'targetAction'} != null) ) {
+				$o_hiddenAction = new forestFormElement(forestFormElement::HIDDEN);
+				$o_hiddenAction->Id = 'sys_fphp_targetAction';
+				$o_hiddenAction->Value = $o_glob->Temp->{'targetAction'};
+				$o_glob->PostModalForm->FormElements->Add($o_hiddenAction);
+			}
+			
+			/* add hidden target parameters keys for automatic forwarding */
+			if ( ($o_glob->Temp->Exists('targetParametersKeys')) && ($o_glob->Temp->{'targetParametersKeys'} != null) ) {
+				$o_hiddenParametersKeys = new forestFormElement(forestFormElement::HIDDEN);
+				$o_hiddenParametersKeys->Id = 'sys_fphp_targetParametersKeys';
+				$o_hiddenParametersKeys->Value = $o_glob->Temp->{'targetParametersKeys'};
+				$o_glob->PostModalForm->FormElements->Add($o_hiddenParametersKeys);
+			}
+			
+			/* add hidden target parameters values for automatic forwarding */
+			if ( ($o_glob->Temp->Exists('targetParametersValues')) && ($o_glob->Temp->{'targetParametersValues'} != null) ) {
+				$o_hiddenParametersValues = new forestFormElement(forestFormElement::HIDDEN);
+				$o_hiddenParametersValues->Id = 'sys_fphp_targetParametersValues';
+				$o_hiddenParametersValues->Value = $o_glob->Temp->{'targetParametersValues'};
+				$o_glob->PostModalForm->FormElements->Add($o_hiddenParametersValues);
+			}
+		} else {
+			$o_userTwig = new userTwig;
+			
+			if (!$o_userTwig->GetRecordPrimary(array($_POST['sys_fphp_login_Username']), array('User'))) {
+				/* delay server answer, because of bot attacks */
+				sleep(3);
+				
+				throw new forestException(0x1000142E);
+			}
+			
+			if (!password_verify($_POST['sys_fphp_login_Password'], $o_userTwig->Password)) {
+				if ($o_userTwig->UUID != $o_glob->Trunk->UUIDGuest) {
+					/* only increase failed login counter if the user is not locked */
+					if (!$o_userTwig->Locked) {
+						$o_userTwig->FailLogin = $o_userTwig->FailLogin + 1;
+						
+						if ($o_userTwig->FailLogin >= $o_glob->Trunk->MaxLoginTrials) {
+							$o_userTwig->Locked = true;
+						}
+						
+						/* edit user recrod */
+						$i_result = $o_userTwig->UpdateRecord();
+						
+						/* evaluate result */
+						if ($i_result == -1) {
+							throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+						}
+						
+						
+					}
+				}
+				
+				/* delay server answer, because of bot attacks */
+				sleep(3);
+				
+				throw new forestException(0x1000142E);
+			} else {
+				/* check locked status */
+				if ($o_userTwig->Locked) {
+					throw new forestException(0x1000142F);
+				}
+				
+				$o_userTwig->FailLogin = 0;
+				
+				/* edit user recrod */
+				$i_result = $o_userTwig->UpdateRecord();
+				
+				/* evaluate result */
+				if ($i_result == -1) {
+					throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+				}
+				
+				/* set security state to user */
+				$o_glob->Security->SessionData->Add(forestSecurity::SessionStatusUser, 'session_status');
+				$o_glob->Temp->Add($o_userTwig->UUID, 'fphp_UserUUID');
+				$o_glob->Security->init();
+				
+				/* system message login successful */
+				$o_glob->SystemMessages->Add(new forestException(0x10001430));
+				
+				/* check if we have target elements for automatic forwarding */
+				if (array_key_exists('sys_fphp_targetBranch', $_POST)) {
+					$s_branch = $_POST['sys_fphp_targetBranch'];
+					$s_action = null;
+					$a_parameters = array();
+					
+					/* target action in post data */
+					if (array_key_exists('sys_fphp_targetAction', $_POST)) {
+						$s_action = $_POST['sys_fphp_targetAction'];
+					}
+					
+					/* target parameter keys in post data */
+					if (array_key_exists('sys_fphp_targetParametersKeys', $_POST)) {
+						$a_parameterKeys = explode('~', $_POST['sys_fphp_targetParametersKeys']);
+					}
+					
+					/* target parameter values in post data */
+					if (array_key_exists('sys_fphp_targetParametersValues', $_POST)) {
+						$a_parameterValues = explode('~', $_POST['sys_fphp_targetParametersValues']);
+					}
+					
+					/* target parameter keys and values must have the same amount */
+					if (count($a_parameterKeys) == count($a_parameterValues)) {
+						for ($i = 0; $i < count($a_parameterKeys); $i++) {
+							$a_parameters[$a_parameterKeys[$i]] = $a_parameterValues[$i];
+						}
+					}
+					
+					/* do automatic forwarding after successful login */
+					header('Location: ' . forestLink::Link($s_branch, $s_action, $a_parameters));
+					exit;
+				} else {
+					$s_nextAction = 'RELOADBRANCH';
+				}
+			}
+		}
+		
+		if (isset($this->KeepFilter)) {
+			if ($this->KeepFilter->value) {
+				if ($o_glob->Security->SessionData->Exists('last_filter')) {
+					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
+				}
+			}
+		}
+		
+		$this->SetNextAction($s_nextAction);
+	}
+	
+	/* handle logout action */
+	protected function logoutAction() {
+		$o_glob = forestGlobals::Init();
+		$o_glob->Security->Logout();
+		
+		header('Location: ./');
+		exit();
+	}
+	
+	/* handle sign up action */
+	protected function signUpAction() {
+		$o_glob = forestGlobals::init();
+		
+		$this->HandleFormKey($o_glob->URL->Branch . $o_glob->URL->Action . 'Form');
+		
+		if (!$o_glob->IsPost) {
+			/* create modal form for login */
+			$o_glob->PostModalForm = new forestForm(new trunkTwig);
+			$s_title = $o_glob->GetTranslation('SignModalTitle', 1);
+			$o_glob->PostModalForm->CreateModalForm(new trunkTwig, $s_title);
+			
+			/* add username field */
+			$o_username = new forestFormElement(forestFormElement::TEXT);
+			$o_username->Label = $o_glob->GetTranslation('formUsernameLabel');
+			$o_username->Id = 'sys_fphp_signUp_Username';
+			$o_username->Placeholder = $o_glob->GetTranslation('formUsernamePlaceholder');
+			$o_username->ValMessage = $o_glob->GetTranslation('formUsernameValMessage');
+			$o_username->Required = true;
+			$o_username->Description = $o_glob->GetTranslation('formUsernameHint');
+			$o_username->DescriptionClass = 'text-right text-info';
+			$o_glob->PostModalForm->FormElements->Add($o_username);
+			
+			/* add email field */
+			$o_username = new forestFormElement(forestFormElement::TEXT);
+			$o_username->Label = $o_glob->GetTranslation('formEmailLabel');
+			$o_username->Id = 'sys_fphp_signUp_Email';
+			$o_username->Placeholder = $o_glob->GetTranslation('formEmailPlaceholder');
+			$o_username->ValMessage = $o_glob->GetTranslation('formEmailValMessage');
+			$o_username->Required = true;
+			$o_glob->PostModalForm->FormElements->Add($o_username);
+			
+			/* add password field */
+			$o_password = new forestFormElement(forestFormElement::PASSWORD);
+			$o_password->Label = $o_glob->GetTranslation('formPasswordLabel');
+			$o_password->Id = 'sys_fphp_signUp_Password';
+			$o_password->Placeholder = $o_glob->GetTranslation('formPasswordPlaceholder');
+			$o_password->ValMessage = $o_glob->GetTranslation('formPasswordValMessage');
+			$o_password->Required = true;
+			$o_password->Description = $o_glob->GetTranslation('formPasswordHint');
+			$o_password->DescriptionClass = 'text-right text-info';
+			$o_glob->PostModalForm->FormElements->Add($o_password);
+			
+			/* add password repeat field */
+			$o_passwordRepeat = new forestFormElement(forestFormElement::PASSWORD);
+			$o_passwordRepeat->Label = $o_glob->GetTranslation('formPasswordRepeatLabel');
+			$o_passwordRepeat->Id = 'sys_fphp_signUp_PasswordRepeat';
+			$o_passwordRepeat->Placeholder = $o_glob->GetTranslation('formPasswordRepeatPlaceholder');
+			$o_passwordRepeat->ValMessage = $o_glob->GetTranslation('formPasswordRepeatValMessage');
+			$o_passwordRepeat->Required = true;
+			$o_passwordRepeat->Description = $o_glob->GetTranslation('formPasswordHint');
+			$o_passwordRepeat->DescriptionClass = 'text-right text-info';
+			$o_glob->PostModalForm->FormElements->Add($o_passwordRepeat);
+			
+			/* query captcha form element */
+			$o_formelementTwig = new formelementTwig;
+			
+			if (!($o_formelementTwig->GetRecordPrimary(array(forestFormElement::CAPTCHA), array('Name')))) {
+				throw new forestException(0x10001401, array($o_formelementTwig->fphp_Table));
+			}
+			
+			/* create captcha form element and adjust settings */
+			$o_captcha = new forestFormElement(forestFormElement::CAPTCHA);
+			$o_captcha->loadJSON($o_formelementTwig->JSONEncodedSettings);
+			$o_captcha->Id = 'sys_fphp_signUp_Captcha';
+			$o_glob->PostModalForm->FormElements->Add($o_captcha);
+			
+			/* add validation rules for manual created form elements */
+			$o_glob->PostModalForm->FormObject->ValRules->Add(new forestFormValidationRule('sys_fphp_signUp_Username', 'fphp_username', 'true'));
+			$o_glob->PostModalForm->FormObject->ValRules->Add(new forestFormValidationRule('sys_fphp_signUp_Username', 'rangelength', '10', '36'));
+			$o_glob->PostModalForm->FormObject->ValRules->Add(new forestFormValidationRule('sys_fphp_signUp_Email', 'email', 'true'));
+			$o_glob->PostModalForm->FormObject->ValRules->Add(new forestFormValidationRule('sys_fphp_signUp_Password', 'fphp_password', 'true'));
+			$o_glob->PostModalForm->FormObject->ValRules->Add(new forestFormValidationRule('sys_fphp_signUp_Password', 'minlength', '10'));
+			$o_glob->PostModalForm->FormObject->ValRules->Add(new forestFormValidationRule('sys_fphp_signUp_PasswordRepeat', 'fphp_password', 'true'));
+			$o_glob->PostModalForm->FormObject->ValRules->Add(new forestFormValidationRule('sys_fphp_signUp_PasswordRepeat', 'minlength', '10'));
+			$o_glob->PostModalForm->FormObject->ValRules->Add(new forestFormValidationRule('sys_fphp_signUp_PasswordRepeat', 'equalTo', '#sys_fphp_signUp_Password'));
+			$o_glob->PostModalForm->FormObject->ValRules->Add(new forestFormValidationRule('sys_fphp_signUp_Captcha', 'required', 'true'));
+			
+			/* change submit button text to Sign Up */
+			$o_submitElement = $o_glob->PostModalForm->GetFormElementByFormId('sys_fphp_SubmitStandard');
+			
+			if ($o_submitElement != null) {
+				$o_submitElement->ButtonText = '<span class="glyphicon glyphicon-ok"></span> ' . $s_title;
+			}
+		} else {
+			if (array_key_exists('sys_fphp_signUp_Captcha', $_POST)) {
+				/* handle captcha */
+				if (!array_key_exists('sys_fphp_signUp_Captcha_Hidden', $_POST)) {
+					/* delay server answer, because of bot attacks */
+					sleep(3);
+					
+					throw new forestException(0x10001420);
+				}
+				
+				if (!password_verify($_POST['sys_fphp_signUp_Captcha'], $_POST['sys_fphp_signUp_Captcha_Hidden'])) {
+					/* delay server answer, because of bot attacks */
+					sleep(3);
+					
+					throw new forestException(0x10001421);
+				}
+				
+				if ($o_glob->Security->SessionData->Exists('fphp_captcha')) {
+					$o_glob->Security->SessionData->Del('fphp_captcha');
+				}
+				
+				if ($o_glob->Security->SessionData->Exists('fphp_captcha_length')) {
+					$o_glob->Security->SessionData->Del('fphp_captcha_length');
+				}
+			}
+			
+			$o_userTwig = new userTwig;
+			
+			if ($o_userTwig->GetRecordPrimary(array($_POST['sys_fphp_signUp_Username']), array('User'))) {
+				/* delay server answer, because of bot attacks */
+				sleep(3);
+				
+				throw new forestException(0x10001431, array($_POST['sys_fphp_signUp_Username']));
+			} else {
+				if ($_POST['sys_fphp_signUp_Password'] != $_POST['sys_fphp_signUp_PasswordRepeat']) {
+					/* delay server answer, because of bot attacks */
+					sleep(3);
+					
+					throw new forestException(0x10001432);
+				} else {
+					$o_userTwig->User = strval($_POST['sys_fphp_signUp_Username']);
+					$o_userTwig->Password = password_hash(strval($_POST['sys_fphp_signUp_PasswordRepeat']), PASSWORD_DEFAULT);
+					/* create user with status locked */
+					$o_userTwig->Locked = true;
+					
+					/* insert user record */
+					$i_result = $o_userTwig->InsertRecord();
+					
+					/* evaluate result */
+					if ($i_result == -1) {
+						throw new forestException(0x10001431, array($_POST['sys_fphp_signUp_Username']));
+					} else if ($i_result == 0) {
+						throw new forestException(0x10001402);
+					}
+					
+					/* add user to standard usergroup */
+					$o_usergroup_userTwig = new usergroup_userTwig;
+					$o_usergroup_userTwig->usergroupUUID = $o_glob->Trunk->UUIDUsergroup->PrimaryValue;
+					$o_usergroup_userTwig->userUUID = $o_userTwig->UUID;
+					
+					/* insert membership record */
+					$i_result = $o_usergroup_userTwig->InsertRecord(true);
+					
+					/* evaluate result */
+					if ($i_result == -1) {
+						throw new forestException(0x10001403, array($o_glob->Temp->{'UniqueIssue'}));
+					} else if ($i_result == 0) {
+						throw new forestException(0x10001402);
+					}
+					
+					/* system message sign up successful */
+					$o_glob->SystemMessages->Add(new forestException(0x10001433));
+				}
+			}
+		}
+		
+		if (isset($this->KeepFilter)) {
+			if ($this->KeepFilter->value) {
+				if ($o_glob->Security->SessionData->Exists('last_filter')) {
+					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
+				}
+			}
+		}
+		
+		$this->SetNextAction('init');
+	}
+	
+	
 	/* generates list view */
 	protected function GenerateListView() {
 		$o_glob = forestGlobals::init();
@@ -498,8 +873,10 @@ abstract class forestBranch extends forestRootBranch {
 		unset($a_parameters['deleteFileKey']);
 		unset($a_parameters['subConstraintKey']);
 		
-		$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'new', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="glyphicon glyphicon-plus text-success"></span></a>' . "\n";
-		
+		if ($o_glob->Security->CheckUserPermission(null, 'new')) {
+			$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'new', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="glyphicon glyphicon-plus text-success"></span></a>' . "\n";
+		}
+
 		/* edit link */
 		$a_parameters = $o_glob->URL->Parameters;
 		unset($a_parameters['newKey']);
@@ -512,8 +889,10 @@ abstract class forestBranch extends forestRootBranch {
 		unset($a_parameters['subConstraintKey']);
 		$a_parameters['editKey'] = 'inserteditkey';
 		
-		$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'edit', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'Edit" class="btn btn-default a-button-edit-record disabled" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="glyphicon glyphicon-pencil"></span></a>' . "\n";
-		
+		if ($o_glob->Security->CheckUserPermission(null, 'edit')) {
+			$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'edit', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'Edit" class="btn btn-default a-button-edit-record disabled" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="glyphicon glyphicon-pencil"></span></a>' . "\n";
+		}
+
 		/* delete link */
 		$a_parameters = $o_glob->URL->Parameters;
 		unset($a_parameters['newKey']);
@@ -526,8 +905,10 @@ abstract class forestBranch extends forestRootBranch {
 		unset($a_parameters['subConstraintKey']);
 		$a_parameters['deleteKey'] = 'insertdeletekey';
 		
-		$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'Delete" class="btn btn-default a-button-delete-record disabled" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
-		
+		if ($o_glob->Security->CheckUserPermission(null, 'delete')) {
+			$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'Delete" class="btn btn-default a-button-delete-record disabled" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
+		}
+
 		/* check if we have SortColumn set for current branch */
 		if (array_key_exists($this->Twig->fphp_TableUUID, $o_glob->TablesInformation)) {
 			if (issetStr($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['SortColumn']->PrimaryValue)) {
@@ -543,8 +924,10 @@ abstract class forestBranch extends forestRootBranch {
 				unset($a_parameters['subConstraintKey']);
 				$a_parameters['editKey'] = 'inserteditkey';
 				
-				$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'moveUp', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'MoveUp" class="btn btn-default a-button-moveUp-record disabled" title="' . $o_glob->GetTranslation('btnMoveUpText', 1) . '"><span class="glyphicon glyphicon-triangle-top"></span></a>' . "\n";
-				
+				if ($o_glob->Security->CheckUserPermission(null, 'moveUp')) {
+					$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'moveUp', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'MoveUp" class="btn btn-default a-button-moveUp-record disabled" title="' . $o_glob->GetTranslation('btnMoveUpText', 1) . '"><span class="glyphicon glyphicon-triangle-top"></span></a>' . "\n";
+				}
+
 				/* move down link */
 				$a_parameters = $o_glob->URL->Parameters;
 				unset($a_parameters['newKey']);
@@ -557,7 +940,9 @@ abstract class forestBranch extends forestRootBranch {
 				unset($a_parameters['subConstraintKey']);
 				$a_parameters['editKey'] = 'inserteditkey';
 				
-				$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'moveDown', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'MoveDown" class="btn btn-default a-button-moveDown-record disabled" title="' . $o_glob->GetTranslation('btnMoveDownText', 1) . '"><span class="glyphicon glyphicon-triangle-bottom"></span></a>' . "\n";
+				if ($o_glob->Security->CheckUserPermission(null, 'moveDown')) {
+					$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'moveDown', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'MoveDown" class="btn btn-default a-button-moveDown-record disabled" title="' . $o_glob->GetTranslation('btnMoveDownText', 1) . '"><span class="glyphicon glyphicon-triangle-bottom"></span></a>' . "\n";
+				}
 			}
 		}
 		
@@ -573,8 +958,10 @@ abstract class forestBranch extends forestRootBranch {
 		unset($a_parameters['subConstraintKey']);
 		$a_parameters['viewKey'] = 'insertviewkey';
 		
-		$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'view', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'View" class="btn btn-default a-button-view-record disabled" title="' . $o_glob->GetTranslation('btnViewText', 1) . '"><span class="glyphicon glyphicon-zoom-in"></span></a>' . "\n";
-		
+		if ($o_glob->Security->CheckUserPermission(null, 'view')) {
+			$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'view', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'View" class="btn btn-default a-button-view-record disabled" title="' . $o_glob->GetTranslation('btnViewText', 1) . '"><span class="glyphicon glyphicon-zoom-in"></span></a>' . "\n";
+		}
+
 		/* details link */
 		$a_parameters = $o_glob->URL->Parameters;
 		unset($a_parameters['viewKey']);
@@ -585,7 +972,9 @@ abstract class forestBranch extends forestRootBranch {
 		unset($a_parameters['deleteFileKey']);
 		unset($a_parameters['subConstraintKey']);
 		
-		$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, (($this->OriginalView == forestBranch::LIST) ? 'view' : null), $a_parameters) . '" class="btn btn-default"><span class="glyphicon glyphicon-eye-open text-info" title="' . $o_glob->GetTranslation('btnDetailsText', 1) . '"></span></a>' . "\n";
+		if ($o_glob->Security->CheckUserPermission(null, 'view')) {
+			$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, (($this->OriginalView == forestBranch::LIST) ? 'view' : null), $a_parameters) . '" class="btn btn-default"><span class="glyphicon glyphicon-eye-open text-info" title="' . $o_glob->GetTranslation('btnDetailsText', 1) . '"></span></a>' . "\n";
+		}
 		
 		/* add columns link */
 		$o_options .= '<a href="#" class="btn btn-default modal-call" data-modal-call="#' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'ListViewAddColumns" title="' . $o_glob->GetTranslation('btnAddColumnsText', 1) . '"><span class="glyphicon glyphicon-cog"></span></a>' . "\n";
@@ -1197,8 +1586,10 @@ abstract class forestBranch extends forestRootBranch {
 			$o_options = '<div class="btn-group">' . "\n";
 			
 			/* new link */
-			$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'new') . '" class="btn btn-default"  title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="glyphicon glyphicon-plus text-success"></span></a>' . "\n";
-			
+			if ($o_glob->Security->CheckUserPermission(null, 'new')) {
+				$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'new') . '" class="btn btn-default"  title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="glyphicon glyphicon-plus text-success"></span></a>' . "\n";
+			}
+
 			/* edit link */
 			$a_parameters = $o_glob->URL->Parameters;
 			unset($a_parameters['newKey']);
@@ -1211,11 +1602,15 @@ abstract class forestBranch extends forestRootBranch {
 			unset($a_parameters['subConstraintKey']);
 			$a_parameters['editKey'] = $o_records->Twigs->{0}->UUID;
 			
-			$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'edit', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="glyphicon glyphicon-pencil"></span></a>' . "\n";
-			
+			if ($o_glob->Security->CheckUserPermission(null, 'edit')) {
+				$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'edit', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="glyphicon glyphicon-pencil"></span></a>' . "\n";
+			}
+
 			/* delete link */
-			$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'delete', array('deleteKey' => $o_records->Twigs->{0}->UUID)) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
-			
+			if ($o_glob->Security->CheckUserPermission(null, 'delete')) {
+				$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'delete', array('deleteKey' => $o_records->Twigs->{0}->UUID)) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
+			}
+
 			/* check if we have SortColumn set for current branch */
 			if (array_key_exists($this->Twig->fphp_TableUUID, $o_glob->TablesInformation)) {
 				if (issetStr($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['SortColumn'])) {
@@ -1231,8 +1626,10 @@ abstract class forestBranch extends forestRootBranch {
 					unset($a_parameters['subConstraintKey']);
 					$a_parameters['editKey'] = $o_records->Twigs->{0}->UUID;
 					
-					$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'moveUp', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnMoveUpText', 1) . '"><span class="glyphicon glyphicon-triangle-top"></span></a>' . "\n";
-					
+					if ($o_glob->Security->CheckUserPermission(null, 'moveUp')) {
+						$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'moveUp', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnMoveUpText', 1) . '"><span class="glyphicon glyphicon-triangle-top"></span></a>' . "\n";
+					}*/
+
 					/* move down link */
 					/*$a_parameters = $o_glob->URL->Parameters;
 					unset($a_parameters['newKey']);
@@ -1245,14 +1642,17 @@ abstract class forestBranch extends forestRootBranch {
 					unset($a_parameters['subConstraintKey']);
 					$a_parameters['editKey'] = $o_records->Twigs->{0}->UUID;
 					
-					$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'moveDown', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnMoveDownText', 1) . '"><span class="glyphicon glyphicon-triangle-bottom"></span></a>' . "\n";
-					*/
+					if ($o_glob->Security->CheckUserPermission(null, 'moveDown')) {
+						$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'moveDown', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnMoveDownText', 1) . '"><span class="glyphicon glyphicon-triangle-bottom"></span></a>' . "\n";
+					}*/
 				}
 			}
 			
 			/* list link */
-			$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, (($this->OriginalView == forestBranch::LIST) ? null : 'view')) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="glyphicon glyphicon-th-list text-info"></span></a>' . "\n";
-			
+			if ($o_glob->Security->CheckUserPermission(null, 'view')) {
+				$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, (($this->OriginalView == forestBranch::LIST) ? null : 'view')) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="glyphicon glyphicon-th-list text-info"></span></a>' . "\n";
+			}
+
 			$o_options .= '</div>' . "\n";
 			
 			/* create form with record in read only mode */
@@ -1267,10 +1667,21 @@ abstract class forestBranch extends forestRootBranch {
 		} else {
 			$o_options = '<div class="btn-group">' . "\n";
 			
-			$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'new') . '" class="btn btn-default"  title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="glyphicon glyphicon-plus text-success"></span></a>' . "\n";
-			$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'edit') . '" class="btn btn-default disabled"  title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="glyphicon glyphicon-pencil"></span></a>' . "\n";
-			$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'delete') . '" class="btn btn-default disabled"  title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
-			$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, (($this->OriginalView == forestBranch::LIST) ? null : 'view')) . '" class="btn btn-default"  title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="glyphicon glyphicon-th-list text-info"></span></a>' . "\n";
+			if ($o_glob->Security->CheckUserPermission(null, 'new')) {
+				$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'new') . '" class="btn btn-default"  title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="glyphicon glyphicon-plus text-success"></span></a>' . "\n";
+			}
+			
+			if ($o_glob->Security->CheckUserPermission(null, 'edit')) {
+				$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'edit') . '" class="btn btn-default disabled"  title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="glyphicon glyphicon-pencil"></span></a>' . "\n";
+			}
+			
+			if ($o_glob->Security->CheckUserPermission(null, 'delete')) {
+				$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'delete') . '" class="btn btn-default disabled"  title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
+			}
+			
+			if ($o_glob->Security->CheckUserPermission(null, 'view')) {
+				$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, (($this->OriginalView == forestBranch::LIST) ? null : 'view')) . '" class="btn btn-default"  title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="glyphicon glyphicon-th-list text-info"></span></a>' . "\n";
+			}
 			
 			$o_options .= '</div>' . "\n";
 			
@@ -1478,8 +1889,10 @@ abstract class forestBranch extends forestRootBranch {
 								$a_parameters['editSubKey'] = $o_subRecord->UUID;
 								$a_parameters['subConstraintKey'] = $o_subconstraint->UUID;
 								
-								$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'edit', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="glyphicon glyphicon-pencil"></span></a>' . "\n";
-								
+								if ($o_glob->Security->CheckUserPermission(null, 'edit')) {
+									$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'edit', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="glyphicon glyphicon-pencil"></span></a>' . "\n";
+								}
+
 								if ($i_files > 0) {
 									$a_parameters = $o_glob->URL->Parameters;
 									unset($a_parameters['newKey']);
@@ -1494,7 +1907,9 @@ abstract class forestBranch extends forestRootBranch {
 									$a_parameters['viewSubKey'] = $o_subRecord->UUID;
 									$a_parameters['subConstraintKey'] = $o_subconstraint->UUID;
 									
-									$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'viewFiles', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnViewFilesText', 1) . '"><span class="glyphicon glyphicon-file"></span></a>' . "\n";
+									if ($o_glob->Security->CheckUserPermission(null, 'viewFiles')) {
+										$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'viewFiles', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnViewFilesText', 1) . '"><span class="glyphicon glyphicon-file"></span></a>' . "\n";
+									}
 								}
 								
 								$a_parameters = $o_glob->URL->Parameters;
@@ -1508,7 +1923,9 @@ abstract class forestBranch extends forestRootBranch {
 								unset($a_parameters['subConstraintKey']);
 								$a_parameters['deleteSubKey'] = $o_subRecord->UUID;
 								
-								$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
+								if ($o_glob->Security->CheckUserPermission(null, 'delete')) {
+									$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
+								}
 							} else {
 								if ($i_files > 0) {
 									$a_parameters = $o_glob->URL->Parameters;
@@ -1524,7 +1941,9 @@ abstract class forestBranch extends forestRootBranch {
 									$a_parameters['viewSubKey'] = $o_subRecord->UUID;
 									$a_parameters['subConstraintKey'] = $o_subconstraint->UUID;
 									
-									$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'viewFiles', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnViewFilesText', 1) . '"><span class="glyphicon glyphicon-file"></span></a>' . "\n";
+									if ($o_glob->Security->CheckUserPermission(null, 'viewFiles')) {
+										$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'viewFiles', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnViewFilesText', 1) . '"><span class="glyphicon glyphicon-file"></span></a>' . "\n";
+									}
 								} else {
 									$s_options .= '-';
 								}
@@ -1558,7 +1977,9 @@ abstract class forestBranch extends forestRootBranch {
 							$a_parameters['newKey'] = $p_o_twig->UUID;
 							$a_parameters['subConstraintKey'] = $o_subconstraint->UUID;
 							
-							$s_newButton = '<a href="' . forestLink::Link($o_glob->URL->Branch, 'new', $a_parameters) . '" class="btn btn-default" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="glyphicon glyphicon-plus text-success"></span></a>' . "\n";
+							if ($o_glob->Security->CheckUserPermission(null, 'new')) {
+								$s_newButton = '<a href="' . forestLink::Link($o_glob->URL->Branch, 'new', $a_parameters) . '" class="btn btn-default" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="glyphicon glyphicon-plus text-success"></span></a>' . "\n";
+							}
 						} else {
 							$s_newButton = '';
 						}
@@ -1635,7 +2056,9 @@ abstract class forestBranch extends forestRootBranch {
 							$a_parameters['viewSubKey'] = $o_file->UUID;
 							$a_parameters['subConstraintKey'] = $p_o_twig->fphp_TableUUID;
 							
-							$s_options .=  '<a href="' . forestLink::Link($o_glob->URL->Branch, 'viewFilesHistory', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnHistoryText', 1) . ' (' . $i_historyFiles . ')"><span class="glyphicon glyphicon-hourglass"></span></a>' . "\n";
+							if ($o_glob->Security->CheckUserPermission(null, 'viewFilesHistory')) {
+								$s_options .=  '<a href="' . forestLink::Link($o_glob->URL->Branch, 'viewFilesHistory', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnHistoryText', 1) . ' (' . $i_historyFiles . ')"><span class="glyphicon glyphicon-hourglass"></span></a>' . "\n";
+							}
 						}
 						
 						if (!$p_b_readonly) {
@@ -1653,7 +2076,9 @@ abstract class forestBranch extends forestRootBranch {
 							$a_parameters['editFileKey'] = $o_file->UUID;
 							$a_parameters['subConstraintKey'] = $p_o_twig->fphp_TableUUID;
 							
-							$s_options .=  '<a href="' . forestLink::Link($o_glob->URL->Branch, 'replaceFile', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnUploadText', 1) . '"><span class="glyphicon glyphicon-upload"></span></a>' . "\n";
+							if ($o_glob->Security->CheckUserPermission(null, 'replaceFile')) {
+								$s_options .=  '<a href="' . forestLink::Link($o_glob->URL->Branch, 'replaceFile', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnUploadText', 1) . '"><span class="glyphicon glyphicon-upload"></span></a>' . "\n";
+							}
 							
 							$a_parameters = $o_glob->URL->Parameters;
 							unset($a_parameters['newKey']);
@@ -1664,7 +2089,9 @@ abstract class forestBranch extends forestRootBranch {
 							unset($a_parameters['deleteSubKey']);
 							$a_parameters['deleteFileKey'] = $o_file->UUID;
 							
-							$s_options .=  '<a href="' . forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
+							if ($o_glob->Security->CheckUserPermission(null, 'delete')) {
+								$s_options .=  '<a href="' . forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
+							}
 						}
 
 						
@@ -1843,7 +2270,9 @@ abstract class forestBranch extends forestRootBranch {
 							$a_parameters['viewSubKey'] = $o_file->UUID;
 							$a_parameters['subConstraintKey'] = $o_subconstraintTwig->UUID;
 							
-							$s_options .=  '<a href="' . forestLink::Link($o_glob->URL->Branch, 'viewFilesHistory', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnHistoryText', 1) . ' (' . $i_historyFiles . ')"><span class="glyphicon glyphicon-hourglass"></span></a>' . "\n";
+							if ($o_glob->Security->CheckUserPermission(null, 'viewFilesHistory')) {
+								$s_options .=  '<a href="' . forestLink::Link($o_glob->URL->Branch, 'viewFilesHistory', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnHistoryText', 1) . ' (' . $i_historyFiles . ')"><span class="glyphicon glyphicon-hourglass"></span></a>' . "\n";
+							}
 						}
 						
 						if (!$p_b_readonly) {
@@ -1861,7 +2290,9 @@ abstract class forestBranch extends forestRootBranch {
 							$a_parameters['editFileKey'] = $o_file->UUID;
 							$a_parameters['subConstraintKey'] = $o_subconstraintTwig->UUID;
 							
-							$s_options .=  '<a href="' . forestLink::Link($o_glob->URL->Branch, 'replaceFile', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnUploadText', 1) . '"><span class="glyphicon glyphicon-upload"></span></a>' . "\n";
+							if ($o_glob->Security->CheckUserPermission(null, 'replaceFile')) {
+								$s_options .=  '<a href="' . forestLink::Link($o_glob->URL->Branch, 'replaceFile', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnUploadText', 1) . '"><span class="glyphicon glyphicon-upload"></span></a>' . "\n";
+							}
 							
 							$a_parameters = $o_glob->URL->Parameters;
 							unset($a_parameters['newKey']);
@@ -1872,7 +2303,9 @@ abstract class forestBranch extends forestRootBranch {
 							unset($a_parameters['deleteSubKey']);
 							$a_parameters['deleteFileKey'] = $o_file->UUID;
 							
-							$s_options .=  '<a href="' . forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
+							if ($o_glob->Security->CheckUserPermission(null, 'delete')) {
+								$s_options .=  '<a href="' . forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
+							}
 						}
 
 						

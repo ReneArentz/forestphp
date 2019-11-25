@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.3.0 (0x1 00004)   | */
+/* | forestPHP V0.4.0 (0x1 00004)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -17,6 +17,7 @@
  * 0.1.2 alpha	renatus		2019-08-07	added sort, filter and limit functionality
  * 0.1.5 alpha	renatus		2019-10-10	added lookup and sub-constraint dictionary
  * 0.2.0 beta	renatus		2019-10-25	added RootMenu
+ * 0.4.0 beta	renatus		2019-11-14	added user dictionary and functions
  */
 
 class forestGlobals {
@@ -58,6 +59,7 @@ class forestGlobals {
 	private $TablesWithTablefields;
 	private $TablesWithTablefieldsCached;
 	private $TablefieldsDictionary;
+	private $UsersDictionary;
 	private $SubConstraintsDictionary;
 	private $LookupResultsDictionary;
 	private $OriginalView;
@@ -102,6 +104,7 @@ class forestGlobals {
 		$this->TablesWithTablefields = new forestArray;
 		$this->TablesWithTablefieldsCached = new forestArray;
 		$this->TablefieldsDictionary = new forestObject(new forestObjectList('forestTableFieldProperties'), false);
+		$this->UsersDictionary = new forestArray;
 		$this->SubConstraintsDictionary = new forestArray;
 		$this->LookupResultsDictionary = new forestObject(new forestObjectList('stdClass'), false);
 		$this->OriginalView = new forestString;
@@ -188,6 +191,7 @@ class forestGlobals {
 				$a_branchTree['Id'][$o_branch->Id]['NavigationOrder'] = $o_branch->NavigationOrder;
 				$a_branchTree['Id'][$o_branch->Id]['Filename'] = $o_branch->Filename;
 				$a_branchTree['Id'][$o_branch->Id]['Table'] = $o_branch->Table;
+				$a_branchTree['Id'][$o_branch->Id]['PermissionInheritance'] = $o_branch->PermissionInheritance;
 				
 				/* get actions of each branch */
 				if ($o_actions->Twigs->Count() > 0) {
@@ -292,6 +296,25 @@ class forestGlobals {
 		
 		/*echo '<pre>';
 		print_r($this->Translations->value);
+		echo '</pre>';*/
+	}
+	
+	/* load all user names from database */
+	public function ListUserNames() {
+		$o_userTwig = new userTwig;
+		
+		/* read all user records */
+		$o_result = $o_userTwig->GetAllRecords(true);
+		
+		/* put translation records into global 3 dimensional array */
+		if ($o_result->Twigs->Count() > 0) {
+			foreach ($o_result->Twigs as $o_user) {
+				$this->UsersDictionary->value[$o_user->UUID] = $o_user->User;
+			}
+		}
+		
+		/*echo '<pre>';
+		print_r($this->UsersDictionary->value);
 		echo '</pre>';*/
 	}
 	
@@ -409,6 +432,15 @@ class forestGlobals {
 		}
 		
 		return $o_return;
+	}
+
+	/* fast access to a user name in global dictionary by user uuid */
+	public function GetUserNameByUUID($p_s_uuid) {
+		if (array_key_exists($p_s_uuid, $this->UsersDictionary->value)) {
+			return $this->UsersDictionary->value[$p_s_uuid];
+		} else {
+			return '-';
+		}
 	}
 }
 ?>
