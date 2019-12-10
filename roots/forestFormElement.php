@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.4.0 (0x1 00016)   | */
+/* | forestPHP V0.5.0 (0x1 00016)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -17,6 +17,7 @@
  * 0.1.3 alpha	renatus		2019-09-06	added validationrules
  * 0.1.4 alpha	renatus		2019-09-23	added file, dropzone and richtext
  * 0.1.5 alpha	renatus		2019-10-04	added forestLookup and Captcha
+ * 0.5.0 beta	renatus		2019-12-04	added auto checkin element
  */
 
 class forestFormElement {
@@ -54,6 +55,7 @@ class forestFormElement {
 	const DESCRIPTION = 'description';
 	const BUTTON = 'button';
 	const CAPTCHA = 'captcha';
+	const AUTOCHECKIN = 'autocheckin';
 	const FIELDSET = 'fieldset';
 	
 	private $Type;
@@ -189,6 +191,10 @@ class forestFormElement {
 			case self::CAPTCHA:
 				$this->Type->value = self::CAPTCHA;
 				$this->FormElement->value = new forestFormElementCaptcha();
+			break;
+			case self::AUTOCHECKIN:
+				$this->Type->value = self::AUTOCHECKIN;
+				$this->FormElement->value = new forestFormElementRadio();
 			break;
 			case self::FIELDSET:
 				$this->Type->value = self::FIELDSET;

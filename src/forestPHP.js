@@ -1,6 +1,6 @@
 /* +--------------------------------+ */
 /* |                                | */
-/* | forestPHP V0.4.0               | */
+/* | forestPHP V0.5.0               | */
 /* |                                | */
 /* +--------------------------------+ */
 
@@ -14,6 +14,7 @@
  * 0.1.1 alpha	renatus		2019-08-14	added functionality for navigation and modal-call
  * 0.1.2 alpha	renatus		2019-08-25	added functionality for list view
  * 0.1.5 alpha	renatus		2019-10-07	added functionality for moveUp and moveDown
+ * 0.5.0 beta 	renatus		2019-11-25	added functionality for checkin and checkout
  */
 
 $(function(){
@@ -191,6 +192,42 @@ $(function(){
 				a_uuids.pop();
 				s_key = a_uuids.join('~');
 				s_href = s_href.replace('inserteditkey', s_key);
+			}
+			
+			$(this).attr('href', s_href);
+		});
+	});
+	
+	$('.a-button-checkout-record').each(function() {
+		$(this).on('click', function(p_o_event) {
+			var s_href= $(this).attr('href');
+			var s_uniqueSelect = $(this).attr('id').replace('Checkout', '');
+			
+			if ($('tbody#' + s_uniqueSelect + 'ListView').data('fphp_uuids') != '') {
+				var s_uuids = $('tbody#' + s_uniqueSelect + 'ListView').data('fphp_uuids');
+				var s_key = '';
+				var a_uuids = s_uuids.split(';');
+				a_uuids.pop();
+				s_key = a_uuids.join('~');
+				s_href = s_href.replace('insertcheckoutkey', s_key);
+			}
+			
+			$(this).attr('href', s_href);
+		});
+	});
+	
+	$('.a-button-checkin-record').each(function() {
+		$(this).on('click', function(p_o_event) {
+			var s_href= $(this).attr('href');
+			var s_uniqueSelect = $(this).attr('id').replace('Checkin', '');
+			
+			if ($('tbody#' + s_uniqueSelect + 'ListView').data('fphp_uuids') != '') {
+				var s_uuids = $('tbody#' + s_uniqueSelect + 'ListView').data('fphp_uuids');
+				var s_key = '';
+				var a_uuids = s_uuids.split(';');
+				a_uuids.pop();
+				s_key = a_uuids.join('~');
+				s_href = s_href.replace('insertcheckinkey', s_key);
 			}
 			
 			$(this).attr('href', s_href);

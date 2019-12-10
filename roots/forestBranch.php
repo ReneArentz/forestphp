@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.4.0 (0x1 00014)   | */
+/* | forestPHP V0.5.0 (0x1 00014)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -27,6 +27,10 @@
  * 0.2.0 beta	renatus		2019-10-25	added forestRootBranch inheritance and activated RootMenu rendering
  * 0.4.0 beta	renatus		2019-11-13	added login, logout and signIn functionality
  * 0.4.0 beta	renatus		2019-11-18	added permission checks to all standard actions
+ * 0.5.0 beta	renatus		2019-11-17	added checkin action
+ * 0.5.0 beta	renatus		2019-11-28	added checkout action
+ * 0.5.0 beta	renatus		2019-12-02	added honeypot fields functionality
+ * 0.5.0 beta	renatus		2019-12-04	added verification of checked out elements on all standard actions
  */
 
 abstract class forestBranch extends forestRootBranch {
@@ -121,6 +125,9 @@ abstract class forestBranch extends forestRootBranch {
 					}
 				}
 			}
+			
+			/* check honeypot fields */
+			$this->HandleHoneypotFields();
 		}
 		
 		/* handle branch's action */
@@ -470,7 +477,30 @@ abstract class forestBranch extends forestRootBranch {
 			}
 		}
 	}
+	
+	/* handle honeypot fields functionality */
+	protected function HandleHoneypotFields() {
+		$o_glob = forestGlobals::init();
 		
+		if ( ($o_glob->IsPost) && ($o_glob->Trunk->HoneypotFields) ) {
+			if ($o_glob->Security->SessionData->Exists('sys_fphp_honeypotfields')) {
+				$s_honeypotFields = $o_glob->Security->SessionData->{'sys_fphp_honeypotfields'};
+				$a_honeypotFields = explode(';', $s_honeypotFields);
+				
+				/* check each honeypot field */
+				foreach ($a_honeypotFields as $s_honeypotField) {
+					if (array_key_exists($s_honeypotField, $_POST)) {
+						/* if honeypot field is not empty, a bot has entered some value */
+						if (!empty($_POST[$s_honeypotField])) {
+							/* access denied */
+							throw new forestException(0x10000100);
+						}
+					}
+				}
+			}
+		}
+	}
+	
 	
 	/* generates landing page */
 	protected function GenerateLandingPage() {
@@ -946,6 +976,41 @@ abstract class forestBranch extends forestRootBranch {
 			}
 		}
 		
+		/* check versioning settings of twig */
+		if ($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['Versioning'] > 1) {
+			/* checkout link */
+			$a_parameters = $o_glob->URL->Parameters;
+			unset($a_parameters['newKey']);
+			unset($a_parameters['viewKey']);
+			unset($a_parameters['editKey']);
+			unset($a_parameters['deleteKey']);
+			unset($a_parameters['editSubKey']);
+			unset($a_parameters['deleteSubKey']);
+			unset($a_parameters['deleteFileKey']);
+			unset($a_parameters['subConstraintKey']);
+			$a_parameters['editKey'] = 'insertcheckoutkey';
+			
+			if ($o_glob->Security->CheckUserPermission(null, 'checkout')) {
+				$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'checkout', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'Checkout" class="btn btn-default a-button-checkout-record disabled" title="' . $o_glob->GetTranslation('btnCheckoutText', 1) . '"><span class="glyphicon glyphicon-share text-warning"></span></a>' . "\n";
+			}
+			
+			/* checkin link */
+			$a_parameters = $o_glob->URL->Parameters;
+			unset($a_parameters['newKey']);
+			unset($a_parameters['viewKey']);
+			unset($a_parameters['editKey']);
+			unset($a_parameters['deleteKey']);
+			unset($a_parameters['editSubKey']);
+			unset($a_parameters['deleteSubKey']);
+			unset($a_parameters['deleteFileKey']);
+			unset($a_parameters['subConstraintKey']);
+			$a_parameters['editKey'] = 'insertcheckinkey';
+			
+			if ($o_glob->Security->CheckUserPermission(null, 'checkin')) {
+				$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'checkin', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'Checkin" class="btn btn-default a-button-checkin-record disabled" title="' . $o_glob->GetTranslation('btnCheckinText', 1) . '"><span class="glyphicon glyphicon-check text-primary"></span></a>' . "\n";
+			}
+		}
+		
 		/* view link */
 		$a_parameters = $o_glob->URL->Parameters;
 		unset($a_parameters['newKey']);
@@ -1009,6 +1074,10 @@ abstract class forestBranch extends forestRootBranch {
 				$s_tableRows .=  '<tr';
 				
 				if ($o_record->fphp_HasUUID) {
+					if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_record->UUID), array('ForeignUUID'))) {
+						$s_tableRows .= ' class="bg-warning"';
+					}
+					
 					$s_tableRows .= ' data-fphp_uuid="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . ';' . $o_record->UUID;
 				}
 				
@@ -1581,6 +1650,7 @@ abstract class forestBranch extends forestRootBranch {
 		$s_form = '';
 		$s_title = '';
 		$s_subRecords = '';
+		$s_checkoutMessage = '';
 		
 		if ($o_records->Twigs->Count() > 0) {
 			$o_options = '<div class="btn-group">' . "\n";
@@ -1648,6 +1718,45 @@ abstract class forestBranch extends forestRootBranch {
 				}
 			}
 			
+			/* check versioning settings of twig */
+			if ($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['Versioning'] > 1) {
+				if (!($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_records->Twigs->{0}->UUID), array('ForeignUUID'))) {
+					/* checkout link */
+					$a_parameters = $o_glob->URL->Parameters;
+					unset($a_parameters['newKey']);
+					unset($a_parameters['viewKey']);
+					unset($a_parameters['editKey']);
+					unset($a_parameters['deleteKey']);
+					unset($a_parameters['editSubKey']);
+					unset($a_parameters['deleteSubKey']);
+					unset($a_parameters['deleteFileKey']);
+					unset($a_parameters['subConstraintKey']);
+					$a_parameters['editKey'] = $o_records->Twigs->{0}->UUID;
+					
+					if ($o_glob->Security->CheckUserPermission(null, 'checkout')) {
+						$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'checkout', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnCheckoutText', 1) . '"><span class="glyphicon glyphicon-share text-warning"></span></a>' . "\n";
+					}
+				} else {
+					/* checkin link */
+					$a_parameters = $o_glob->URL->Parameters;
+					unset($a_parameters['newKey']);
+					unset($a_parameters['viewKey']);
+					unset($a_parameters['editKey']);
+					unset($a_parameters['deleteKey']);
+					unset($a_parameters['editSubKey']);
+					unset($a_parameters['deleteSubKey']);
+					unset($a_parameters['deleteFileKey']);
+					unset($a_parameters['subConstraintKey']);
+					$a_parameters['editKey'] = $o_records->Twigs->{0}->UUID;
+					
+					if ($o_glob->Security->CheckUserPermission(null, 'checkin')) {
+						$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'checkin', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnCheckinText', 1) . '"><span class="glyphicon glyphicon-check text-primary"></span></a>' . "\n";
+					}
+					
+					$s_checkoutMessage = '<div class="alert alert-warning">' . forestStringLib::sprintf2($o_glob->GetTranslation('messageCheckoutText', 1), array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID), $o_checkoutTwig->Timestamp)) . '</div>';
+				}
+			}
+			
 			/* list link */
 			if ($o_glob->Security->CheckUserPermission(null, 'view')) {
 				$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, (($this->OriginalView == forestBranch::LIST) ? null : 'view')) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="glyphicon glyphicon-th-list text-info"></span></a>' . "\n";
@@ -1701,7 +1810,7 @@ abstract class forestBranch extends forestRootBranch {
 		$o_viewOptionsDown = new forestTemplates(forestTemplates::VIEWOPTIONSDOWN, array($o_options, strval($o_glob->Limit)));
 		
 		/* use template to render general view */
-		$o_glob->Templates->Add(new forestTemplates(forestTemplates::VIEW, array($o_viewOptionsTop, $s_title, '', strval($s_form), $s_subRecords, $o_viewOptionsDown)), $o_glob->URL->Branch . 'View');
+		$o_glob->Templates->Add(new forestTemplates(forestTemplates::VIEW, array($o_viewOptionsTop, $s_title, $s_checkoutMessage, strval($s_form), $s_subRecords, $o_viewOptionsDown)), $o_glob->URL->Branch . 'View');
 	}
 	
 	/* handle sub records display in detail view */
@@ -1841,7 +1950,14 @@ abstract class forestBranch extends forestRootBranch {
 							echo '</pre>';*/
 							
 							/* render records, based on subconstraint view columns, if it is null, just use view setting from join twig object */
-							$s_subTableRows .= '<tr>' . "\n";
+							$s_subTableRows .= '<tr';
+							
+							/* checkout rendering */
+							if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_subRecord->UUID), array('ForeignUUID'))) {
+								$s_subTableRows .= ' class="bg-warning"';
+							}
+							
+							$s_subTableRows .= '>' . "\n";
 							
 							/* render join columns */
 							foreach ($a_view as $s_column) {
@@ -1909,6 +2025,43 @@ abstract class forestBranch extends forestRootBranch {
 									
 									if ($o_glob->Security->CheckUserPermission(null, 'viewFiles')) {
 										$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'viewFiles', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnViewFilesText', 1) . '"><span class="glyphicon glyphicon-file"></span></a>' . "\n";
+									}
+								}
+								
+								/* check versioning settings of twig */
+								if ($o_glob->TablesInformation[$o_subconstraint->TableUUID]['Versioning'] > 1) {
+									if (!($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_subRecord->UUID), array('ForeignUUID'))) {
+										/* checkout link */
+										$a_parameters = $o_glob->URL->Parameters;
+										unset($a_parameters['newKey']);
+										unset($a_parameters['viewKey']);
+										unset($a_parameters['editKey']);
+										unset($a_parameters['deleteKey']);
+										unset($a_parameters['editSubKey']);
+										unset($a_parameters['deleteSubKey']);
+										unset($a_parameters['deleteFileKey']);
+										unset($a_parameters['subConstraintKey']);
+										$a_parameters['editKey'] = $o_subRecord->UUID;
+										
+										if ($o_glob->Security->CheckUserPermission(null, 'checkout')) {
+											$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'checkout', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnCheckoutText', 1) . '"><span class="glyphicon glyphicon-share text-warning"></span></a>';
+										}
+									} else {
+										/* checkin link */
+										$a_parameters = $o_glob->URL->Parameters;
+										unset($a_parameters['newKey']);
+										unset($a_parameters['viewKey']);
+										unset($a_parameters['editKey']);
+										unset($a_parameters['deleteKey']);
+										unset($a_parameters['editSubKey']);
+										unset($a_parameters['deleteSubKey']);
+										unset($a_parameters['deleteFileKey']);
+										unset($a_parameters['subConstraintKey']);
+										$a_parameters['editKey'] = $o_subRecord->UUID;
+										
+										if ($o_glob->Security->CheckUserPermission(null, 'checkin')) {
+											$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'checkin', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnCheckinText', 1) . '"><span class="glyphicon glyphicon-check text-primary"></span></a>';
+										}
 									}
 								}
 								
@@ -2005,7 +2158,13 @@ abstract class forestBranch extends forestRootBranch {
 					$s_subTableRows = '';
 		
 					foreach ($o_files->Twigs as $o_file) {
-						$s_subTableRows .= '<tr>' . "\n";
+						$s_subTableRows .= '<tr';
+							
+						if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_file->UUID), array('ForeignUUID'))) {
+							$s_subTableRows .= ' class="bg-warning"';
+						}
+							
+						$s_subTableRows .= '>' . "\n";
 							
 						$s_subTableRows .=  '<td>' . $o_file->DisplayName . '</td>' . "\n";
 						
@@ -2078,6 +2237,43 @@ abstract class forestBranch extends forestRootBranch {
 							
 							if ($o_glob->Security->CheckUserPermission(null, 'replaceFile')) {
 								$s_options .=  '<a href="' . forestLink::Link($o_glob->URL->Branch, 'replaceFile', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnUploadText', 1) . '"><span class="glyphicon glyphicon-upload"></span></a>' . "\n";
+							}
+							
+							/* check versioning settings of twig */
+							if ($o_glob->TablesInformation[$p_o_twig->fphp_TableUUID]['Versioning'] > 1) {
+								if (!($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_file->UUID), array('ForeignUUID'))) {
+									/* checkout link */
+									$a_parameters = $o_glob->URL->Parameters;
+									unset($a_parameters['newKey']);
+									unset($a_parameters['viewKey']);
+									unset($a_parameters['editKey']);
+									unset($a_parameters['deleteKey']);
+									unset($a_parameters['editSubKey']);
+									unset($a_parameters['deleteSubKey']);
+									unset($a_parameters['deleteFileKey']);
+									unset($a_parameters['subConstraintKey']);
+									$a_parameters['editKey'] = $o_file->UUID;
+									
+									if ($o_glob->Security->CheckUserPermission(null, 'checkout')) {
+										$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'checkout', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnCheckoutText', 1) . '"><span class="glyphicon glyphicon-share text-warning"></span></a>';
+									}
+								} else {
+									/* checkin link */
+									$a_parameters = $o_glob->URL->Parameters;
+									unset($a_parameters['newKey']);
+									unset($a_parameters['viewKey']);
+									unset($a_parameters['editKey']);
+									unset($a_parameters['deleteKey']);
+									unset($a_parameters['editSubKey']);
+									unset($a_parameters['deleteSubKey']);
+									unset($a_parameters['deleteFileKey']);
+									unset($a_parameters['subConstraintKey']);
+									$a_parameters['editKey'] = $o_file->UUID;
+									
+									if ($o_glob->Security->CheckUserPermission(null, 'checkin')) {
+										$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'checkin', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnCheckinText', 1) . '"><span class="glyphicon glyphicon-check text-primary"></span></a>';
+									}
+								}
 							}
 							
 							$a_parameters = $o_glob->URL->Parameters;
@@ -2155,6 +2351,16 @@ abstract class forestBranch extends forestRootBranch {
 				$this->GenerateListView();
 			} else if ($this->StandardView == forestBranch::LIST) {
 				$this->GenerateView();
+			} else if ($this->StandardView == forestBranch::FLEX) {
+				if ($o_glob->Security->SessionData->Exists('lastView')) {
+					if ( ($o_glob->Security->SessionData->{'lastView'} == forestBranch::LIST) || ($o_glob->Security->SessionData->{'lastView'} == forestBranch::DETAIL) ) {
+						$this->GenerateView();
+					} else {
+						$this->GenerateListView();
+					}
+				} else {
+					$this->GenerateListView();
+				}
 			}
 		}
 	}
@@ -2219,7 +2425,13 @@ abstract class forestBranch extends forestRootBranch {
 					$s_subTableRows = '';
 		
 					foreach ($o_files->Twigs as $o_file) {
-						$s_subTableRows .= '<tr>' . "\n";
+						$s_subTableRows .= '<tr';
+							
+						if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_file->UUID), array('ForeignUUID'))) {
+							$s_subTableRows .= ' class="bg-warning"';
+						}
+							
+						$s_subTableRows .= '>' . "\n";
 							
 						$s_subTableRows .=  '<td>' . $o_file->DisplayName . '</td>' . "\n";
 						
@@ -2292,6 +2504,43 @@ abstract class forestBranch extends forestRootBranch {
 							
 							if ($o_glob->Security->CheckUserPermission(null, 'replaceFile')) {
 								$s_options .=  '<a href="' . forestLink::Link($o_glob->URL->Branch, 'replaceFile', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnUploadText', 1) . '"><span class="glyphicon glyphicon-upload"></span></a>' . "\n";
+							}
+							
+							/* check versioning settings of twig */
+							if ($o_glob->TablesInformation[$o_subconstraintTwig->TableUUID]['Versioning'] > 1) {
+								if (!($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_file->UUID), array('ForeignUUID'))) {
+									/* checkout link */
+									$a_parameters = $o_glob->URL->Parameters;
+									unset($a_parameters['newKey']);
+									unset($a_parameters['viewKey']);
+									unset($a_parameters['editKey']);
+									unset($a_parameters['deleteKey']);
+									unset($a_parameters['editSubKey']);
+									unset($a_parameters['deleteSubKey']);
+									unset($a_parameters['deleteFileKey']);
+									unset($a_parameters['subConstraintKey']);
+									$a_parameters['editKey'] = $o_file->UUID;
+									
+									if ($o_glob->Security->CheckUserPermission(null, 'checkout')) {
+										$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'checkout', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnCheckoutText', 1) . '"><span class="glyphicon glyphicon-share text-warning"></span></a>';
+									}
+								} else {
+									/* checkin link */
+									$a_parameters = $o_glob->URL->Parameters;
+									unset($a_parameters['newKey']);
+									unset($a_parameters['viewKey']);
+									unset($a_parameters['editKey']);
+									unset($a_parameters['deleteKey']);
+									unset($a_parameters['editSubKey']);
+									unset($a_parameters['deleteSubKey']);
+									unset($a_parameters['deleteFileKey']);
+									unset($a_parameters['subConstraintKey']);
+									$a_parameters['editKey'] = $o_file->UUID;
+									
+									if ($o_glob->Security->CheckUserPermission(null, 'checkin')) {
+										$s_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, 'checkin', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnCheckinText', 1) . '"><span class="glyphicon glyphicon-check text-primary"></span></a>';
+									}
+								}
 							}
 							
 							$a_parameters = $o_glob->URL->Parameters;
@@ -2474,6 +2723,13 @@ abstract class forestBranch extends forestRootBranch {
 		
 		if (!$o_glob->IsPost) {
 			if ( ($o_glob->Temp->Exists('newKey')) && ($o_glob->Temp->{'newKey'} != null) && ($o_glob->Temp->Exists('subConstraintKey')) && ($o_glob->Temp->{'subConstraintKey'} != null) ) {
+				if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_glob->Temp->{'newKey'}), array('ForeignUUID'))) {
+					/* check if user is the same user who has checked out the record */
+					if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+						throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+					}
+				}
+				
 				/* add new sub record */
 				$this->RenderNewSubRecordForm();
 				$this->StandardView = forestBranch::DETAIL; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
@@ -2503,6 +2759,13 @@ abstract class forestBranch extends forestRootBranch {
 				/* check if posted uuid matches with head record */
 				if (! ($o_headTwig->GetRecord(array($_POST['sys_fphp_newKey']))) ) {
 					throw new forestException(0x10001402);
+				}
+				
+				if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_headTwig->UUID), array('ForeignUUID'))) {
+					/* check if user is the same user who has checked out the record */
+					if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+						throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+					}
 				}
 				
 				$s_tempTable = array_search($o_subconstraintTwig->SubTableUUID->PrimaryValue, $o_glob->Tables);
@@ -2849,6 +3112,20 @@ abstract class forestBranch extends forestRootBranch {
 					throw new forestException(0x10001401, array($this->Twig->fphp_Table));
 				}
 				
+				if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($this->Twig->HeadUUID), array('ForeignUUID'))) {
+					/* check if user is the same user who has checked out the record */
+					if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+						throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+					}
+				}
+				
+				if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($this->Twig->UUID), array('ForeignUUID'))) {
+					/* check if user is the same user who has checked out the record */
+					if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+						throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+					}
+				}
+				
 				$this->TransferPOST_Twig();
 				
 				if (method_exists($this, 'beforeEditSubAction')) {
@@ -2875,6 +3152,12 @@ abstract class forestBranch extends forestRootBranch {
 				/* handle uploads */
 				$this->TransferFILES_Twig();
 			
+				/* check if user chose auto chekin */
+				if ( (array_key_exists($this->Twig->fphp_Table . '_AutocheckinStandard', $_POST)) && (intval($_POST[$this->Twig->fphp_Table . '_AutocheckinStandard']) == 1) ) {
+					$i_foo = 0;
+					$this->executeCheckin($this->Twig->UUID, $i_foo, $o_glob->HeadTwig);
+				}
+				
 				$this->Twig = $o_glob->HeadTwig;
 				$this->StandardView = forestBranch::DETAIL; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
 			} else {
@@ -2883,6 +3166,13 @@ abstract class forestBranch extends forestRootBranch {
 				/* query record */
 				if (! ($this->Twig->GetRecord(array($_POST['sys_fphp_editKey']))) ) {
 					throw new forestException(0x10001401, array($this->Twig->fphp_Table));
+				}
+				
+				if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($this->Twig->UUID), array('ForeignUUID'))) {
+					/* check if user is the same user who has checked out the record */
+					if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+						throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+					}
 				}
 				
 				$this->TransferPOST_Twig();
@@ -2910,9 +3200,22 @@ abstract class forestBranch extends forestRootBranch {
 				
 				/* handle file uploads */
 				$this->TransferFILES_Twig();
+				
+				/* check if user chose auto chekin */
+				if ( (array_key_exists($this->Twig->fphp_Table . '_AutocheckinStandard', $_POST)) && (intval($_POST[$this->Twig->fphp_Table . '_AutocheckinStandard']) == 1) ) {
+					$i_foo = 0;
+					$this->executeCheckin($this->Twig->UUID, $i_foo);
+				}
 			}
 		} else {
 			if ( ($o_glob->Temp->Exists('editSubKey')) && ($o_glob->Temp->{'editSubKey'} != null) && ($o_glob->Temp->Exists('subConstraintKey')) && ($o_glob->Temp->{'subConstraintKey'} != null) ) {
+				if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_glob->Temp->{'editSubKey'}), array('ForeignUUID'))) {
+					/* check if user is the same user who has checked out the record */
+					if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+						throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+					}
+				}
+				
 				/* edit sub record */
 				$this->HandleFormKey($o_glob->URL->Branch . $o_glob->URL->Action . 'Form', true);
 				$this->RenderEditSubRecordForm();
@@ -2931,6 +3234,14 @@ abstract class forestBranch extends forestRootBranch {
 			if (! ($this->Twig->GetRecord(array($a_editKeys[0]))) ) {
 				throw new forestException(0x10001401, array($this->Twig->fphp_Table));
 			}
+			
+			if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($this->Twig->UUID), array('ForeignUUID'))) {
+				/* check if user is the same user who has checked out the record */
+				if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+					throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+				}
+			}
+			
 			/* build modal form */
 			$o_glob->PostModalForm = new forestForm($this->Twig, true);
 			$o_glob->PostModalForm->FormModalConfiguration->ModalTitle = $o_glob->GetTranslation('EditModalTitle', 1);
@@ -3025,6 +3336,13 @@ abstract class forestBranch extends forestRootBranch {
 		
 		if (! ($o_subrecordsTwig->GetRecord(array($o_glob->Temp->{'editSubKey'}))) ) {
 			$o_glob->SystemMessages->Add(new forestException(0x10001406));
+		}
+		
+		if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_subrecordsTwig->HeadUUID), array('ForeignUUID'))) {
+			/* check if user is the same user who has checked out the record */
+			if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+				throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+			}
 		}
 		
 		/* create join twig object by sub constraint sub table value */
@@ -3141,6 +3459,20 @@ abstract class forestBranch extends forestRootBranch {
 		$o_glob->PostModalForm->FormObject->ValRequiredMessage = $o_glob->GetTranslation('ValRequiredMessage', 1);
 		
 		$this->AddAdditionalSubRecordFormElements($o_subconstraintTwig, $o_subrecordsTwig);
+		
+		/* add auto checkin form element if current record is checked out */
+		if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_subrecordsTwig->UUID), array('ForeignUUID'))) {
+			/* query auto checkin form element */
+			if (!($o_formelementTwig->GetRecordPrimary(array(forestFormElement::AUTOCHECKIN), array('Name')))) {
+				throw new forestException(0x10001401, array($o_formelementTwig->fphp_Table));
+			}
+			
+			/* create captcha form element and adjust settings */
+			$o_formElement = new forestFormElement(forestFormElement::AUTOCHECKIN);
+			$o_formElement->loadJSON($o_formelementTwig->JSONEncodedSettings);
+			$o_formElement->Id = $o_subrecordsTwig->fphp_Table . '_AutocheckinStandard';
+			$o_glob->PostModalForm->FormElements->Add($o_formElement);
+		}
 		
 		$o_hidden = new forestFormElement(forestFormElement::HIDDEN);
 		$o_hidden->Id = 'sys_fphp_subConstraintKey';
@@ -3900,9 +4232,49 @@ abstract class forestBranch extends forestRootBranch {
 					throw new forestException(0x10001401, array($this->Twig->fphp_Table));
 				}
 				
+				$b_superordinateCheckout = false;
+				$o_subrecord = new subrecordsTwig;
+				
+				if (($o_subrecord->GetRecord(array($this->Twig->ForeignUUID))) ) {
+					if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_subrecord->HeadUUID), array('ForeignUUID'))) {
+						$b_superordinateCheckout = true;
+						
+						/* check if user is the same user who has checked out the record */
+						if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+							throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+						}
+					}
+					
+					if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_subrecord->UUID), array('ForeignUUID'))) {
+						$b_superordinateCheckout = true;
+						
+						/* check if user is the same user who has checked out the record */
+						if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+							throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+						}
+					}
+				}
+				
+				if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($this->Twig->ForeignUUID), array('ForeignUUID'))) {
+					$b_superordinateCheckout = true;
+					
+					/* check if user is the same user who has checked out the record */
+					if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+						throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+					}
+				}
+				
+				if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($this->Twig->UUID), array('ForeignUUID'))) {
+					/* check if user is the same user who has checked out the record */
+					if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+						throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+					}
+				}
+				
 				if (method_exists($this, 'beforeReplaceFileAction')) {
 					$this->beforeReplaceFileAction();
 				}
+				
 				
 				/* delete old file */
 				$s_folder = substr(pathinfo($this->Twig->Name, PATHINFO_FILENAME), 6, 2);
@@ -3986,6 +4358,12 @@ abstract class forestBranch extends forestRootBranch {
 					}
 					
 					$o_glob->SystemMessages->Add(new forestException(0x1000143C));
+					
+					/* check if user chose auto chekin */
+					if ( (array_key_exists('sys_fphp_files_AutocheckinStandard', $_POST)) && (intval($_POST['sys_fphp_files_AutocheckinStandard']) == 1) ) {
+						$i_foo = 0;
+						$this->executeCheckin($this->Twig->UUID, $i_foo, $o_glob->HeadTwig);
+					}
 				}
 			}
 		} else {
@@ -3993,6 +4371,38 @@ abstract class forestBranch extends forestRootBranch {
 				/* query file record */
 				if (! ($this->Twig->GetRecord(array($o_glob->Temp->{'editFileKey'}))) ) {
 					throw new forestException(0x10001401, array($this->Twig->fphp_Table));
+				}
+				
+				$o_subrecord = new subrecordsTwig;
+				
+				if (($o_subrecord->GetRecord(array($this->Twig->ForeignUUID))) ) {
+					if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_subrecord->HeadUUID), array('ForeignUUID'))) {
+						/* check if user is the same user who has checked out the record */
+						if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+							throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+						}
+					}
+					
+					if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_subrecord->UUID), array('ForeignUUID'))) {
+						/* check if user is the same user who has checked out the record */
+						if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+							throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+						}
+					}
+				}
+				
+				if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($this->Twig->ForeignUUID), array('ForeignUUID'))) {
+					/* check if user is the same user who has checked out the record */
+					if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+						throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+					}
+				}
+				
+				if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($this->Twig->UUID), array('ForeignUUID'))) {
+					/* check if user is the same user who has checked out the record */
+					if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+						throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+					}
 				}
 				
 				/* create modal form for file record */
@@ -4019,6 +4429,20 @@ abstract class forestBranch extends forestRootBranch {
 				/* add validation rule for manual created FILE form element */
 				$o_glob->PostModalForm->FormObject->ValRules->Add(new forestFormValidationRule('sys_fphp_files_NewFile', 'required', 'true'));
 				
+				/* add auto checkin form element if current record is checked out */
+				if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_glob->Temp->{'editFileKey'}), array('ForeignUUID'))) {
+					/* query auto checkin form element */
+					if (!(($o_formelementTwig = new formelementTwig)->GetRecordPrimary(array(forestFormElement::AUTOCHECKIN), array('Name')))) {
+						throw new forestException(0x10001401, array($o_formelementTwig->fphp_Table));
+					}
+					
+					/* create auto chekin form element and adjust settings */
+					$o_formElement = new forestFormElement(forestFormElement::AUTOCHECKIN);
+					$o_formElement->loadJSON($o_formelementTwig->JSONEncodedSettings);
+					$o_formElement->Id = 'sys_fphp_files_AutocheckinStandard';
+					$o_glob->PostModalForm->FormElements->Add($o_formElement);
+				}
+				
 				/* create hidden element to store file UUID */
 				$o_hidden = new forestFormElement(forestFormElement::HIDDEN);
 				$o_hidden->Id = 'sys_fphp_editFileKey';
@@ -4041,6 +4465,297 @@ abstract class forestBranch extends forestRootBranch {
 	}
 	
 	
+	/* handle checkout record action */
+	protected function checkoutAction() {
+		$o_glob = forestGlobals::init();
+		
+		/* check if versioning of twig is really enabled */
+		if ($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['Versioning'] > 1) {
+			$this->HandleFormKey($o_glob->URL->Branch . $o_glob->URL->Action . 'Form');
+			$o_glob->Temp->Add( get($o_glob->URL->Parameters, 'editKey'), 'editKey' );
+			
+			if (!$o_glob->IsPost) {
+				/* checkout record form */
+				if ( ($o_glob->Temp->Exists('editKey')) && ($o_glob->Temp->{'editKey'} != null) ) {
+					/* check checkout for superordinate elements */
+					$o_filesTwig = new filesTwig;
+					$o_subrecordsTwig = new subrecordsTwig;
+					
+					/* if record is a file record */
+					if ($o_filesTwig->GetRecord(array($o_glob->Temp->{'editKey'}))) {
+						/* if superordinate element of file record is a sub record */
+						if (($o_subrecordsTwig->GetRecord(array($o_filesTwig->ForeignUUID))) ) {
+							/* check head record of sub record */
+							if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_subrecordsTwig->HeadUUID), array('ForeignUUID'))) {
+								throw new forestException(0x1000143B);
+							}
+							
+							/* check sub record */
+							if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_subrecordsTwig->UUID), array('ForeignUUID'))) {
+								throw new forestException(0x1000143B);
+							}
+						}
+						
+						/* check superordinate element of file record */
+						if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_filesTwig->ForeignUUID), array('ForeignUUID'))) {
+							throw new forestException(0x1000143B);
+						}
+					}
+					
+					/* if record is a sub record */
+					if (($o_subrecordsTwig->GetRecord(array($o_glob->Temp->{'editKey'}))) ) {
+						/* check head record of sub record */
+						if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_subrecordsTwig->HeadUUID), array('ForeignUUID'))) {
+							throw new forestException(0x1000143B);
+						}
+					}
+					
+					/* create modal confirmation form for checkout record */
+					$o_glob->PostModalForm = new forestForm($this->Twig);
+					$s_title = $o_glob->GetTranslation('CheckoutModalTitle', 1);
+					
+					if (count(explode('~', $o_glob->Temp->{'editKey'})) == 1) {
+						$s_description = '<b>' . $o_glob->GetTranslation('CheckoutModalDescriptionOne', 1) . '</b>';
+					} else {
+						$s_description = forestStringLib::sprintf2('<b>' . $o_glob->GetTranslation('CheckoutModalDescriptionMultiple', 1) . '</b>', array(count(explode('~', $o_glob->Temp->{'editKey'}))));
+					}
+					
+					$o_glob->PostModalForm->CreateDeleteModalForm($this->Twig, $s_title, $s_description);
+					
+					$o_hidden = new forestFormElement(forestFormElement::HIDDEN);
+					$o_hidden->Id = 'sys_fphp_checkoutKey';
+					$o_hidden->Value = $o_glob->Temp->{'editKey'};
+					$o_glob->PostModalForm->FormElements->Add($o_hidden);
+				}
+			} else {
+				/* checkout record(s) */
+				if (array_key_exists('sys_fphp_checkoutKey', $_POST)) {
+					$a_checkoutKeys = explode('~', $_POST['sys_fphp_checkoutKey']);
+					$i_checkoutDone = 0;
+					
+					foreach ($a_checkoutKeys as $s_checkoutKey) {
+						if (!($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($s_checkoutKey), array('ForeignUUID'))) {
+							$o_newCheckoutTwig = new checkoutTwig;
+							$o_newCheckoutTwig->ForeignUUID = $s_checkoutKey;
+							$o_newCheckoutTwig->Timestamp = new forestDateTime;
+							$o_newCheckoutTwig->UserUUID = $o_glob->Security->UserUUID;
+							
+							/* insert record */
+							$i_result = $o_newCheckoutTwig->InsertRecord();
+							
+							/* evaluate result */
+							if ($i_result == -1) {
+								throw new forestException(0x10001403, array($o_glob->Temp->{'UniqueIssue'}));
+							} else if ($i_result == 0) {
+								throw new forestException(0x10001402);
+							} else if ($i_result == 1) {
+								$i_checkoutDone++;
+							}
+						}
+					}
+					
+					if ($i_checkoutDone == 1) {
+						$o_glob->SystemMessages->Add(new forestException(0x10001434));
+					} else if ($i_checkoutDone > 1) {
+						$o_glob->SystemMessages->Add(new forestException(0x10001435));
+					}
+				}
+			}
+		}
+		
+		if (isset($this->KeepFilter)) {
+			if ($this->KeepFilter->value) {
+				if ($o_glob->Security->SessionData->Exists('last_filter')) {
+					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
+				}
+			}
+		}
+		
+		if ($o_glob->Security->SessionData->Exists('lastView')) {
+			$this->StandardView = $o_glob->Security->SessionData->{'lastView'};
+		}
+		
+		$this->SetNextAction('init');
+	}
+	
+	/* handle checkin record action */
+	protected function checkinAction() {
+		$o_glob = forestGlobals::init();
+		
+		/* check if versioning of twig is really enabled */
+		if ($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['Versioning'] > 1) {
+			$this->HandleFormKey($o_glob->URL->Branch . $o_glob->URL->Action . 'Form');
+			$o_glob->Temp->Add( get($o_glob->URL->Parameters, 'editKey'), 'editKey' );
+			
+			if (!$o_glob->IsPost) {
+				/* checkin record form */
+				if ( ($o_glob->Temp->Exists('editKey')) && ($o_glob->Temp->{'editKey'} != null) ) {
+					/* create modal confirmation form for checkin record */
+					$o_glob->PostModalForm = new forestForm($this->Twig);
+					$s_title = $o_glob->GetTranslation('CheckinModalTitle', 1);
+					
+					if (count(explode('~', $o_glob->Temp->{'editKey'})) == 1) {
+						$s_description = '<b>' . $o_glob->GetTranslation('CheckinModalDescriptionOne', 1) . '</b>';
+					} else {
+						$s_description = forestStringLib::sprintf2('<b>' . $o_glob->GetTranslation('CheckinModalDescriptionMultiple', 1) . '</b>', array(count(explode('~', $o_glob->Temp->{'editKey'}))));
+					}
+					
+					$o_glob->PostModalForm->CreateDeleteModalForm($this->Twig, $s_title, $s_description);
+					
+					$o_hidden = new forestFormElement(forestFormElement::HIDDEN);
+					$o_hidden->Id = 'sys_fphp_checkinKey';
+					$o_hidden->Value = $o_glob->Temp->{'editKey'};
+					$o_glob->PostModalForm->FormElements->Add($o_hidden);
+				}
+			} else {
+				/* checkin record(s) */
+				if (array_key_exists('sys_fphp_checkinKey', $_POST)) {
+					$a_checkinKeys = explode('~', $_POST['sys_fphp_checkinKey']);
+					$i_checkinDone = 0;
+					
+					foreach ($a_checkinKeys as $s_checkinKey) {
+						$this->executeCheckin($s_checkinKey, $i_checkinDone);
+					}
+					
+					if ($i_checkinDone == 1) {
+						$o_glob->SystemMessages->Add(new forestException(0x10001436));
+					} else if ($i_checkinDone > 1) {
+						$o_glob->SystemMessages->Add(new forestException(0x10001437));
+					}
+				}
+			}
+		}
+		
+		if (isset($this->KeepFilter)) {
+			if ($this->KeepFilter->value) {
+				if ($o_glob->Security->SessionData->Exists('last_filter')) {
+					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
+				}
+			}
+		}
+		
+		if ($o_glob->Security->SessionData->Exists('lastView')) {
+			$this->StandardView = $o_glob->Security->SessionData->{'lastView'};
+		}
+		
+		$this->SetNextAction('init');
+	}
+	
+	/* re-usable checkin function */
+	protected function executeCheckin($p_s_recordUUID, &$p_i_checkinDone, $p_o_headTwig = null) {
+		$o_glob = forestGlobals::init();
+		
+		if ($p_o_headTwig != null) {
+			$o_saveTwig = $this->Twig;
+			$this->Twig = $p_o_headTwig;
+		}
+		
+		/* check if versioning of twig is really enabled */
+		if ($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['Versioning'] > 1) {
+			if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($p_s_recordUUID), array('ForeignUUID'))) {
+				/* check if user is the same user who has checked out the record */
+				if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+					/* if it is not the same user, check if we have a checkout interval in trunk or twig settings */
+					if ( (issetStr($o_glob->Trunk->CheckoutInterval)) || (issetStr($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['CheckoutInterval'])) ) {
+						/* twig settings overwrites trunk settings */
+						if (issetStr($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['CheckoutInterval'])) {
+							$o_DICheckoutInterval = new forestDateInterval($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['CheckoutInterval']);
+						} else if (issetStr($o_glob->Trunk->CheckoutInterval)) {
+							$o_DICheckoutInterval = new forestDateInterval($o_glob->Trunk->CheckoutInterval);
+						}
+						
+						/* if checkout interval has not expired, user cannot checkin record */
+						$o_checkoutTwig->Timestamp->AddDateInterval($o_DICheckoutInterval->y, $o_DICheckoutInterval->m, $o_DICheckoutInterval->d, $o_DICheckoutInterval->h, $o_DICheckoutInterval->i, $o_DICheckoutInterval->s);
+						$o_now = new forestDateTime($o_glob->Trunk->DateTimeSqlFormat);
+						
+						if ($o_now < $o_checkoutTwig->Timestamp) {
+							$o_diff = $o_checkoutTwig->Timestamp->DateTime->diff($o_now->DateTime);
+							$o_DIDiff = new forestDateInterval();
+							$o_DIDiff->SetDateInterval($o_diff);
+						
+							throw new forestException(0x10001439, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID), strval($o_DIDiff)));
+						}
+					} else {
+						throw new forestException(0x10001438, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+					}
+				}
+				
+				/* delete checkout record */
+				$i_return = $o_checkoutTwig->DeleteRecord();
+					
+				/* evaluate the result */
+				if ($i_return > 0) {
+					$p_i_checkinDone++;
+				}
+				
+				/* if checked in element is a record */
+				$s_foo = $this->Twig->fphp_Table . 'Twig';
+				forestStringLib::RemoveTablePrefix($s_foo);
+				if (($o_record = new $s_foo)->GetRecord(array($p_s_recordUUID))) {
+					/* iterate sub records of record */
+					$o_subrecordsTwig = new subrecordsTwig;
+					
+					$a_sqlAdditionalFilter = array(array('column' => 'HeadUUID', 'value' => $o_record->UUID, 'operator' => '=', 'filterOperator' => 'AND'));
+					$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+					$o_subRecords = $o_subrecordsTwig->GetAllRecords(true);
+					$o_glob->Temp->Del('SQLAdditionalFilter');
+					
+					foreach ($o_subRecords->Twigs as $o_subRecord) {
+						/* delete checkout of sub record */
+						$this->executeDeleteCheckoutRecord($o_subRecord);
+						
+						/* iterate files of sub record */
+						$o_filesTwig = new filesTwig; 
+	
+						$a_sqlAdditionalFilter = array(array('column' => 'ForeignUUID', 'value' => $o_subRecord->UUID, 'operator' => '=', 'filterOperator' => 'AND'));
+						$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+						$o_files = $o_filesTwig->GetAllRecords(true);
+						$o_glob->Temp->Del('SQLAdditionalFilter');
+						
+						foreach ($o_files->Twigs as $o_file) {
+							/* delete checkout of file */
+							$this->executeDeleteCheckoutRecord($o_file);
+						}
+					}
+					
+					/* iterate files of record */
+					$o_filesTwig = new filesTwig; 
+
+					$a_sqlAdditionalFilter = array(array('column' => 'ForeignUUID', 'value' => $o_record->UUID, 'operator' => '=', 'filterOperator' => 'AND'));
+					$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+					$o_files = $o_filesTwig->GetAllRecords(true);
+					$o_glob->Temp->Del('SQLAdditionalFilter');
+					
+					foreach ($o_files->Twigs as $o_file) {
+						/* delete checkout of file */
+						$this->executeDeleteCheckoutRecord($o_file);
+					}
+				}
+				
+				/* if checked in element is a sub record */
+				if (($o_subrecords = new subrecordsTwig)->GetRecord(array($p_s_recordUUID))) {
+					/* iterate files of sub record */
+					$o_filesTwig = new filesTwig; 
+	
+					$a_sqlAdditionalFilter = array(array('column' => 'ForeignUUID', 'value' => $o_subrecords->UUID, 'operator' => '=', 'filterOperator' => 'AND'));
+					$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+					$o_files = $o_filesTwig->GetAllRecords(true);
+					$o_glob->Temp->Del('SQLAdditionalFilter');
+					
+					foreach ($o_files->Twigs as $o_file) {
+						/* delete checkout of file */
+						$this->executeDeleteCheckoutRecord($o_file);
+					}
+				}
+			}
+		}
+		
+		if ($p_o_headTwig != null) {
+			$this->Twig = $o_saveTwig;
+		}
+	}
+	
+	
 	/* handle delete record action */
 	protected function DeleteRecord() {
 		$o_glob = forestGlobals::init();
@@ -4058,6 +4773,13 @@ abstract class forestBranch extends forestRootBranch {
 				$s_title = $o_glob->GetTranslation('DeleteModalTitle', 1);
 				
 				if (count(explode('~', $o_glob->Temp->{'deleteKey'})) == 1) {
+					if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_glob->Temp->{'deleteKey'}), array('ForeignUUID'))) {
+						/* check if user is the same user who has checked out the record */
+						if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+							throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+						}
+					}
+					
 					$s_description = '<b>' . $o_glob->GetTranslation('DeleteModalDescriptionOne', 1) . '</b>';
 				} else {
 					$s_description = forestStringLib::sprintf2('<b>' . $o_glob->GetTranslation('DeleteModalDescriptionMultiple', 1) . '</b>', array(count(explode('~', $o_glob->Temp->{'deleteKey'}))));
@@ -4073,6 +4795,29 @@ abstract class forestBranch extends forestRootBranch {
 			
 			/* delete sub record form */
 			else if ( ($o_glob->Temp->Exists('deleteSubKey')) && ($o_glob->Temp->{'deleteSubKey'} != null) ) {
+				$o_subrecord = new subrecordsTwig;
+				
+				if (! ($o_subrecord->GetRecord(array($o_glob->Temp->{'deleteSubKey'}))) ) {
+					/* check if user is the same user who has checked out the record */
+					if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+						throw new forestException(0x10001401, array($o_subrecord->fphp_Table));
+					}
+				}
+				
+				if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_subrecord->HeadUUID), array('ForeignUUID'))) {
+					/* check if user is the same user who has checked out the record */
+					if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+						throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+					}
+				}
+				
+				if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_subrecord->UUID), array('ForeignUUID'))) {
+					/* check if user is the same user who has checked out the record */
+					if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+						throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+					}
+				}
+				
 				$o_subrecordsTwig = new subrecordsTwig;
 				
 				/* create modal confirmation form for deleting record */
@@ -4091,6 +4836,46 @@ abstract class forestBranch extends forestRootBranch {
 			
 			/* delete file form */
 			else if ( ($o_glob->Temp->Exists('deleteFileKey')) && ($o_glob->Temp->{'deleteFileKey'} != null) ) {
+				$o_filerecord = new filesTwig;
+				$o_subrecord = new subrecordsTwig;
+				
+				if (! ($o_filerecord->GetRecord(array($o_glob->Temp->{'deleteFileKey'}))) ) {
+					/* check if user is the same user who has checked out the record */
+					if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+						throw new forestException(0x10001401, array($o_subrecord->fphp_Table));
+					}
+				}
+				
+				if (($o_subrecord->GetRecord(array($o_filerecord->ForeignUUID))) ) {
+					if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_subrecord->HeadUUID), array('ForeignUUID'))) {
+						/* check if user is the same user who has checked out the record */
+						if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+							throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+						}
+					}
+					
+					if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_subrecord->UUID), array('ForeignUUID'))) {
+						/* check if user is the same user who has checked out the record */
+						if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+							throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+						}
+					}
+				}
+				
+				if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_filerecord->ForeignUUID), array('ForeignUUID'))) {
+					/* check if user is the same user who has checked out the record */
+					if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+						throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+					}
+				}
+				
+				if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_filerecord->UUID), array('ForeignUUID'))) {
+					/* check if user is the same user who has checked out the record */
+					if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+						throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+					}
+				}
+				
 				$o_filesTwig = new filesTwig;
 				
 				/* create modal confirmation form for deleting record */
@@ -4116,6 +4901,13 @@ abstract class forestBranch extends forestRootBranch {
 				foreach ($a_deleteKeys as $s_deleteKey) {
 					if (! ($this->Twig->GetRecord(array($s_deleteKey))) ) {
 						throw new forestException(0x10001401, array($this->Twig->fphp_Table));
+					}
+					
+					if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($this->Twig->UUID), array('ForeignUUID'))) {
+						/* check if user is the same user who has checked out the record */
+						if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+							continue;
+						}
 					}
 					
 					/* check record relations before deletion */
@@ -4149,6 +4941,20 @@ abstract class forestBranch extends forestRootBranch {
 					throw new forestException(0x10001401, array($o_subrecordsTwig->fphp_Table));
 				}
 				
+				if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_subrecordsTwig->HeadUUID), array('ForeignUUID'))) {
+					/* check if user is the same user who has checked out the record */
+					if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+						throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+					}
+				}
+				
+				if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_subrecordsTwig->UUID), array('ForeignUUID'))) {
+					/* check if user is the same user who has checked out the record */
+					if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+						throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+					}
+				}
+				
 				if (method_exists($this, 'beforeDeleteSubAction')) {
 					$this->beforeDeleteSubAction();
 				}
@@ -4171,6 +4977,38 @@ abstract class forestBranch extends forestRootBranch {
 				
 				if (! ($o_filesTwig->GetRecord(array($_POST['sys_fphp_deleteFileKey']))) ) {
 					throw new forestException(0x10001401, array($o_filesTwig->fphp_Table));
+				}
+				
+				$o_subrecord = new subrecordsTwig;
+				
+				if (($o_subrecord->GetRecord(array($o_filesTwig->ForeignUUID))) ) {
+					if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_subrecord->HeadUUID), array('ForeignUUID'))) {
+						/* check if user is the same user who has checked out the record */
+						if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+							throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+						}
+					}
+					
+					if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_subrecord->UUID), array('ForeignUUID'))) {
+						/* check if user is the same user who has checked out the record */
+						if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+							throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+						}
+					}
+				}
+				
+				if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_filesTwig->ForeignUUID), array('ForeignUUID'))) {
+					/* check if user is the same user who has checked out the record */
+					if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+						throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+					}
+				}
+				
+				if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_filesTwig->UUID), array('ForeignUUID'))) {
+					/* check if user is the same user who has checked out the record */
+					if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+						throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+					}
 				}
 				
 				if (method_exists($this, 'beforeDeleteFileAction')) {
@@ -4305,6 +5143,9 @@ abstract class forestBranch extends forestRootBranch {
 			$this->executeDeleteFileRecord($o_file, true, true);
 		}
 		
+		/* delete checkout of record record */
+		$this->executeDeleteCheckoutRecord($p_o_record);
+		
 		/* delete record */
 		$i_return = $p_o_record->DeleteRecord();
 		
@@ -4330,6 +5171,9 @@ abstract class forestBranch extends forestRootBranch {
 			/* delete file record */
 			$this->executeDeleteFileRecord($o_file, true, true);
 		}
+		
+		/* delete checkout of sub record record */
+		$this->executeDeleteCheckoutRecord($p_o_subrecord);
 		
 		/* delete record */
 		$i_return = $p_o_subrecord->DeleteRecord();
@@ -4383,8 +5227,27 @@ abstract class forestBranch extends forestRootBranch {
 		}
 		
 		if ($p_b_deleteRecord) {
+			/* delete checkout of file record */
+			$this->executeDeleteCheckoutRecord($p_o_file);
+			
 			/* delete file record */
 			$i_return = $p_o_file->DeleteRecord();
+				
+			/* evaluate the result */
+			if ($i_return <= 0) {
+				throw new forestException(0x10001423);
+			}
+		}
+	}
+	
+	/* re-usable delete checkout record function */
+	protected function executeDeleteCheckoutRecord(forestTwig $p_o_record) {
+		$o_glob = forestGlobals::init();
+		
+		/* delete checkout of record */
+		if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($p_o_record->UUID), array('ForeignUUID'))) {
+			/* delete checkout record */
+			$i_return = $o_checkoutTwig->DeleteRecord();
 				
 			/* evaluate the result */
 			if ($i_return <= 0) {
@@ -4409,6 +5272,13 @@ abstract class forestBranch extends forestRootBranch {
 						/* query record */
 						if (! ($this->Twig->GetRecord(array($o_glob->Temp->{'editKey'}))) ) {
 							throw new forestException(0x10001401, array($this->Twig->fphp_Table));
+						}
+						
+						if ( ($this->Twig->fphp_HasUUID) && (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($this->Twig->UUID), array('ForeignUUID'))) ) {
+							/* check if user is the same user who has checked out the record */
+							if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+								throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+							}
 						}
 						
 						$o_currentRecord = clone $this->Twig;
@@ -4441,6 +5311,13 @@ abstract class forestBranch extends forestRootBranch {
 										
 										if (! ($o_lastRecord->GetRecord(array($o_lastRecordUUID))) ) {
 											throw new forestException(0x10001401, array($o_lastRecord->fphp_Table));
+										}
+										
+										if ( ($o_lastRecord->fphp_HasUUID) && (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_lastRecord->UUID), array('ForeignUUID'))) ) {
+											/* check if user is the same user who has checked out the record */
+											if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+												throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+											}
 										}
 										
 										/* exchange SortColumn value of current record with previous record, use value 0 as intermediate value */
@@ -4495,6 +5372,13 @@ abstract class forestBranch extends forestRootBranch {
 							throw new forestException(0x10001401, array($this->Twig->fphp_Table));
 						}
 						
+						if ( ($this->Twig->fphp_HasUUID) && (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($this->Twig->UUID), array('ForeignUUID'))) ) {
+							/* check if user is the same user who has checked out the record */
+							if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+								throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+							}
+						}
+						
 						$o_currentRecord = clone $this->Twig;
 						$s_primaryField = 'UUID';
 						
@@ -4532,6 +5416,13 @@ abstract class forestBranch extends forestRootBranch {
 										
 										if (! ($o_nextRecord->GetRecord(array($o_nextRecordUUID))) ) {
 											throw new forestException(0x10001401, array($o_nextRecord->fphp_Table));
+										}
+										
+										if ( ($o_nextRecord->fphp_HasUUID) && (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_nextRecord->UUID), array('ForeignUUID'))) ) {
+											/* check if user is the same user who has checked out the record */
+											if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+												throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+											}
 										}
 										
 										/* exchange SortColumn value of current record with next record, use value 0 as intermediate value */

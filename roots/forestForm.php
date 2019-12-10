@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.4.0 (0x1 00015)   | */
+/* | forestPHP V0.5.0 (0x1 00015)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -18,6 +18,8 @@
  * 0.1.4 alpha	renatus		2019-09-23	added dropzone and richtext
  * 0.1.5 alpha	renatus		2019-10-04	added forestLookup
  * 0.1.5 alpha	renatus		2019-10-05	added forestCombination and Captcha
+ * 0.5.0 beta	renatus		2019-12-02	added honeypot fields functionality
+ * 0.5.0 beta	renatus		2019-12-04	added auto checkin question
  */
 
 class forestForm {
@@ -385,6 +387,26 @@ class forestForm {
 				}
 			}
 			
+			/* add auto checkin form element if current record is checked out */
+			if ( ($p_o_twig->fphp_HasUUID) && (!$p_o_twig->IsEmpty()) && (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($p_o_twig->UUID), array('ForeignUUID'))) && (!$this->FormObject->value->ReadonlyAll) ) {
+				/* query auto checkin form element */
+				if (!($o_formelementTwig->GetRecordPrimary(array(forestFormElement::AUTOCHECKIN), array('Name')))) {
+					throw new forestException(0x10001401, array($o_formelementTwig->fphp_Table));
+				}
+				
+				/* create captcha form element and adjust settings */
+				$o_formElement = new forestFormElement(forestFormElement::AUTOCHECKIN);
+				$o_formElement->loadJSON($o_formelementTwig->JSONEncodedSettings);
+				$o_formElement->Id = $p_o_twig->fphp_Table . '_AutocheckinStandard';
+				
+				/* usually it will be added to the last tab or to form element object list */
+				if ($o_lastTab != null) {
+					$o_lastTab->FormElements->Add($o_formElement);
+				} else {
+					$this->FormElements->value->Add($o_formElement);
+				}
+			}
+			
 			/* if we are using a captcha element and we have not read only mode */
 			if ( ($this->FormObject->value->UseCaptcha) && (!$this->FormObject->value->ReadonlyAll) ) {
 				/* query captcha form element */
@@ -442,6 +464,9 @@ class forestForm {
 			
 			/* add form key as hash as hidden field in form footer */
 			$this->AddFormKey();
+			
+			/* use honeypot fields if it is activated and configured in fphp-trunk */
+			$this->AddHoneypotFields($p_o_twig);
 			
 			/* add form tabs if we have any */
 			foreach ($a_tabsInfo as $o_tab) {
@@ -856,6 +881,9 @@ class forestForm {
 		/* add form key as hash as hidden field in form footer */
 		$this->AddFormKey();
 		
+		/* use honeypot fields if it is activated and configured in fphp-trunk */
+		$this->AddHoneypotFields($p_o_twig);
+		
 		/* automatic display of modal form */
 		$this->Automatic->value = true;
 	}
@@ -927,6 +955,9 @@ class forestForm {
 		/* add form key as hash as hidden field in form footer */
 		$this->AddFormKey();
 		
+		/* use honeypot fields if it is activated and configured in fphp-trunk */
+		$this->AddHoneypotFields($p_o_twig);
+		
 		/* automatic display of modal form */
 		$this->Automatic->value = true;
 	}
@@ -941,6 +972,38 @@ class forestForm {
 			$o_hidden->Value = password_hash($o_glob->Security->SessionData->{'formkey'}, PASSWORD_DEFAULT);
 			
 			$this->FormFooterElements->value->Add($o_hidden);
+		}
+	}
+
+	public function AddHoneypotFields(forestTwig $p_o_twig) {
+		$o_glob = forestGlobals::init();
+		
+		if ( ($o_glob->Trunk->HoneypotFields) && ($o_glob->Trunk->MaxAmountHoneypot > 0) ) {
+			$a_memory = array();
+			$a_randomNames = array('buzz','rex','bo','hamm','slink','potato','woody','sarge','etch','lenny','squeeze','wheezy','jessie','stretch','buster','bullseye','bookworm','sid');
+
+			$i_amount = mt_rand(1, $o_glob->Trunk->MaxAmountHoneypot);
+
+			for ($i = 0; $i < $i_amount; $i++) {
+				$s_hiddenId = null;
+				
+				do {
+					$j = mt_rand(0, (count($a_randomNames) - 1));
+					$k = mt_rand(1, 999);
+					$s_hiddenId = $p_o_twig->fphp_Table . '_' . $a_randomNames[$j] . $k;
+				} while (in_array($s_hiddenId, $a_memory));
+				
+				$a_memory[] = $s_hiddenId;
+				
+				$o_hiddenText = new forestFormElement(forestFormElement::TEXT);
+				$o_hiddenText->Id = $s_hiddenId;
+				$o_hiddenText->NoDisplay = true;
+				
+				$this->FormFooterElements->value->Add($o_hiddenText);
+			}
+			
+			/* insert hidden text ids into session */
+			$o_glob->Security->SessionData->Add(implode(';', $a_memory), 'sys_fphp_honeypotfields');
 		}
 	}
 

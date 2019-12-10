@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.4.0 (0x1 0001F)   | */
+/* | forestPHP V0.5.0 (0x1 0001F)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -20,6 +20,7 @@
  * 0.3.0 beta	renatus		2019-11-04	added moveUp and moveDown for tablefields and sub-constraints
  * 0.4.0 beta	renatus		2019-11-20	added truncateTwig and transferTwig functions
  * 0.4.0 beta	renatus		2019-11-21	added permission checks for standard root actions
+ * 0.5.0 beta	renatus		2019-12-05	added checkout and checkin functionality for twigs
  */
 
 abstract class forestRootBranch {
@@ -29,6 +30,8 @@ abstract class forestRootBranch {
 	
 	private $ForbiddenTablefieldNames = array('Id', 'UUID');
 	private $StandardActions = array(
+		'Checkin' => 'checkin',
+		'Checkout' => 'checkout',
 		'Delete' => 'delete',
 		'Edit' => 'edit',
 		'fphp Captcha' => 'fphp_captcha',
@@ -1106,19 +1109,26 @@ abstract class forestRootBranch {
 			$o_glob->PostModalForm = new forestForm($this->Twig, true);
 			$o_glob->PostModalForm->FormModalConfiguration->ModalTitle = $o_glob->GetTranslation('NewModalTitle', 1);
 			
+			$o_description = new forestFormElement(forestFormElement::DESCRIPTION);
+			$o_description->Description = '<b>' . $o_glob->GetTranslation('rootNewTwigTableTitle', 0) . '</b>';
+			
 			$o_hidden = new forestFormElement(forestFormElement::HIDDEN);
 			$o_hidden->Id = 'sys_fphp_table_name';
 			$o_hidden->Value = strval($o_glob->URL->Branch);
 			
-			$o_description = new forestFormElement(forestFormElement::DESCRIPTION);
-			$o_description->Description = '<b>' . $o_glob->GetTranslation('rootNewTwigFirstFieldTitle', 0) . '</b>';
+			$o_description2 = new forestFormElement(forestFormElement::DESCRIPTION);
+			$o_description2->Description = '<b>' . $o_glob->GetTranslation('rootNewTwigFirstFieldTitle', 0) . '</b>';
 			
 			/* add manual created form elements to genereal tab */
-			if (!$o_glob->PostModalForm->AddFormElement($o_description, 'general', true)) {
+			if (!$o_glob->PostModalForm->AddFormElement($o_description2, 'general', true)) {
 				throw new forestException('Cannot add form element to tab with id[general].');
 			}
 			
 			if (!$o_glob->PostModalForm->AddFormElement($o_hidden, 'general', true)) {
+				throw new forestException('Cannot add form element to tab with id[general].');
+			}
+			
+			if (!$o_glob->PostModalForm->AddFormElement($o_description, 'general', true)) {
 				throw new forestException('Cannot add form element to tab with id[general].');
 			}
 			
@@ -4683,6 +4693,11 @@ abstract class forestRootBranch {
 			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_SortColumn')) {
 				throw new forestException('Cannot delete form element with Id[sys_fphp_table_SortColumn].');
 			}
+			
+			/* delete CheckoutInterval-element */
+			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_CheckoutInterval')) {
+				throw new forestException('Cannot delete form element with Id[sys_fphp_table_CheckoutInterval].');
+			}
 		} else {
 			$s_unique = '';
 			
@@ -4896,6 +4911,11 @@ abstract class forestRootBranch {
 				if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_SortColumn')) {
 					throw new forestException('Cannot delete form element with Id[sys_fphp_table_SortColumn].');
 				}
+				
+				/* delete CheckoutInterval-element */
+				if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_CheckoutInterval')) {
+					throw new forestException('Cannot delete form element with Id[sys_fphp_table_CheckoutInterval].');
+				}
 			}
 		}
 		
@@ -5077,6 +5097,11 @@ abstract class forestRootBranch {
 			/* delete SortColumn-element */
 			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_SortColumn')) {
 				throw new forestException('Cannot delete form element with Id[sys_fphp_table_SortColumn].');
+			}
+			
+			/* delete CheckoutInterval-element */
+			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_CheckoutInterval')) {
+				throw new forestException('Cannot delete form element with Id[sys_fphp_table_CheckoutInterval].');
 			}
 		} else {
 			$s_sortOrder = '';
@@ -5291,6 +5316,11 @@ abstract class forestRootBranch {
 				/* delete SortColumn-element */
 				if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_SortColumn')) {
 					throw new forestException('Cannot delete form element with Id[sys_fphp_table_SortColumn].');
+				}
+				
+				/* delete CheckoutInterval-element */
+				if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_CheckoutInterval')) {
+					throw new forestException('Cannot delete form element with Id[sys_fphp_table_CheckoutInterval].');
 				}
 			}
 		}
