@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.5.0 (0x1 00004)   | */
+/* | forestPHP V0.6.0 (0x1 00004)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -19,6 +19,7 @@
  * 0.2.0 beta	renatus		2019-10-25	added RootMenu
  * 0.4.0 beta	renatus		2019-11-14	added user dictionary and functions
  * 0.5.0 beta	renatus		2019-12-05	changed ListTables, added CheckoutInterval and Versioning to dictionary
+ * 0.6.0 beta	renatus		2019-12-14	changed ListTables, added Versioning and InfoColumns to dictionary
  */
 
 class forestGlobals {
@@ -373,8 +374,10 @@ class forestGlobals {
 				$this->TablesInformation->value[$o_table->UUID]['Interval'] = $o_table->Interval;
 				$this->TablesInformation->value[$o_table->UUID]['View'] = $o_table->View;
 				$this->TablesInformation->value[$o_table->UUID]['SortColumn'] = $o_table->SortColumn;
-				$this->TablesInformation->value[$o_table->UUID]['CheckoutInterval'] = $o_table->CheckoutInterval;
+				$this->TablesInformation->value[$o_table->UUID]['InfoColumns'] = $o_table->InfoColumns;
+				$this->TablesInformation->value[$o_table->UUID]['InfoColumnsView'] = $o_table->InfoColumnsView;
 				$this->TablesInformation->value[$o_table->UUID]['Versioning'] = $o_table->Versioning;
+				$this->TablesInformation->value[$o_table->UUID]['CheckoutInterval'] = $o_table->CheckoutInterval;
 			}
 		}
 		

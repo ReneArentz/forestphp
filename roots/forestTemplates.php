@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.5.0 (0x1 0001B)   | */
+/* | forestPHP V0.6.0 (0x1 0001B)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -15,6 +15,7 @@
  * 0.1.2 alpha	renatus		2019-08-25	added listview and view
  * 0.1.4 alpha	renatus		2019-09-28	added sublistview
  * 0.2.0 beta	renatus		2019-10-20	added create-new-branch and create-new-twig
+ * 0.6.0 beta	renatus		2019-12-20	added restoreFile additional actions for create-new-branch-with-twig
  */
 
 class forestTemplates {
@@ -325,6 +326,14 @@ class %0Branch extends forestBranch {
 		}
 		
 		protected function afterReplaceFileAction() {
+			/* \$this->Twig holds current file record */
+		}
+		
+		protected function beforeRestoreFileAction() {
+			/* \$this->Twig holds current file record */
+		}
+		
+		protected function afterRestoreFileAction() {
 			/* \$this->Twig holds current file record */
 		}
 }

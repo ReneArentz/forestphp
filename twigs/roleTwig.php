@@ -6,6 +6,10 @@ class roleTwig extends forestTwig {
 	
 	private $Id;
 	private $UUID;
+	private $Created;
+	private $CreatedBy;
+	private $Modified;
+	private $ModifiedBy;
 	private $Name;
 	
 	/* Properties */
@@ -15,6 +19,10 @@ class roleTwig extends forestTwig {
 	protected function init() {
 		$this->Id = new forestNumericString(1);
 		$this->UUID = new forestString;
+		$this->Created = new forestObject('forestDateTime');
+		$this->CreatedBy = new forestString;
+		$this->Modified = new forestObject('forestDateTime');
+		$this->ModifiedBy = new forestString;
 		$this->Name = new forestString;
 		
 		/* forestTwig system fields */

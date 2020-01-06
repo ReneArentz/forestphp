@@ -420,6 +420,14 @@ class usergroupBranch extends forestBranch {
 			/* $this->Twig holds current file record */
 		}
 		
+		protected function beforeRestoreFileAction() {
+			/* $this->Twig holds current file record */
+		}
+		
+		protected function afterRestoreFileAction() {
+			/* $this->Twig holds current file record */
+		}
+
 	/* overwrite - handle sub records display in detail view */
 	protected function additionalListSubRecordsAction(forestTwig $p_o_twig, $p_b_readonly, &$p_s_subFormItems, &$p_b_firstSubElement) {
 		$o_glob = forestGlobals::init();

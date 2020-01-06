@@ -12,6 +12,8 @@ class tableTwig extends forestTwig {
 	private $Interval;
 	private $View;
 	private $SortColumn;
+	private $InfoColumns;
+	private $InfoColumnsView;
 	private $Versioning;
 	private $CheckoutInterval;
 	
@@ -28,6 +30,8 @@ class tableTwig extends forestTwig {
 		$this->Interval = new forestInt;
 		$this->View = new forestLookup(new forestLookupData('sys_fphp_tablefield', array('UUID'), array('FieldName'), array('TableUUID' => 'foo')));
 		$this->SortColumn = new forestLookup(new forestLookupData('sys_fphp_tablefield', array('UUID'), array('FieldName'), array('TableUUID' => 'foo')));
+		$this->InfoColumns = new forestInt;
+		$this->InfoColumnsView = new forestInt;
 		$this->Versioning = new forestInt;
 		$this->CheckoutInterval = new forestString;
 		

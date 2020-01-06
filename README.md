@@ -20,9 +20,14 @@ Following **database systems** are supported by forestPHP:
 
 * MariaDB/MySQL
 
+At the core of forestPHP measures have been taken to implement **security best practices** and to maximize the security of a web application. This helps prevent attacks such as SQL injection, CRFS, XSS, and form manipulation.
+
 forestPHP framework will be released under the **GPLv3 license** and the **MIT license**. Thus it is freely possible to use forestPHP in other projects - projects with free software or in commercial projects.
 
 ## Releases
+
+### 0.6.0 (beta)
+New features: Created + Modified information columns, Versioning + History of files, Submit-button time delay. *01/2020*
 
 ### 0.5.0 (beta)
 New features: Checkout of records, Honeypot Fields, Administration of Form-Elements + ForestData + SqlType + Validation Rules. *12/2019*

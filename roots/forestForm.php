@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.5.0 (0x1 00015)   | */
+/* | forestPHP V0.6.0 (0x1 00015)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -20,6 +20,7 @@
  * 0.1.5 alpha	renatus		2019-10-05	added forestCombination and Captcha
  * 0.5.0 beta	renatus		2019-12-02	added honeypot fields functionality
  * 0.5.0 beta	renatus		2019-12-04	added auto checkin question
+ * 0.6.0 beta	renatus		2019-12-18	added info columns in readonly mode
  */
 
 class forestForm {
@@ -383,6 +384,110 @@ class forestForm {
 							
 							$this->FormObject->value->ValRules->Add(new forestFormValidationRule($p_o_twig->fphp_Table . '_' . $o_tableField->FieldName, $o_row['Name'], $s_param01, $s_param02, $s_autoRequired));
 						}
+					}
+				}
+			}
+			
+			/* render info columns - readonly */
+			if ($this->FormObject->value->ReadonlyAll) {
+				/* get values for info columns when configured */
+				$i_infoColumns = $o_glob->TablesInformation[$p_o_twig->fphp_TableUUID]['InfoColumns'];
+				
+				if ($i_infoColumns == 10) {
+					$o_formElement = new forestFormElement(forestFormElement::DATETIMELOCAL);
+					$o_formElement->Id = 'readonly_' . $p_o_twig->fphp_Table . 'Created';
+					$o_formElement->Label = $o_glob->GetTranslation('sortCreated') . ':';
+					if (strval($p_o_twig->{'Created'}) != 'NULL') {
+						$o_formElement->Value = $p_o_twig->{'Created'}->ToString('Y-m-d\TH:i:s');
+					}
+					
+					if ($o_lastTab != null) {
+						$o_lastTab->FormElements->Add($o_formElement);
+					} else {
+						$this->FormElements->value->Add($o_formElement);
+					}
+					
+					$o_formElement = new forestFormElement(forestFormElement::TEXT);
+					$o_formElement->Id = 'readonly_' . $p_o_twig->fphp_Table . 'CreatedBy';
+					$o_formElement->Label = $o_glob->GetTranslation('sortCreatedBy') . ':';
+					$o_formElement->Value = $o_glob->GetUserNameByUUID($p_o_twig->{'CreatedBy'});
+					
+					if ($o_lastTab != null) {
+						$o_lastTab->FormElements->Add($o_formElement);
+					} else {
+						$this->FormElements->value->Add($o_formElement);
+					}
+				} else if ($i_infoColumns == 100) {
+					$o_formElement = new forestFormElement(forestFormElement::DATETIMELOCAL);
+					$o_formElement->Id = 'readonly_' . $p_o_twig->fphp_Table . 'Modified';
+					$o_formElement->Label = $o_glob->GetTranslation('sortModified') . ':';
+					if (strval($p_o_twig->{'Modified'}) != 'NULL') {
+						$o_formElement->Value = $p_o_twig->{'Modified'}->ToString('Y-m-d\TH:i:s');
+					}
+					
+					if ($o_lastTab != null) {
+						$o_lastTab->FormElements->Add($o_formElement);
+					} else {
+						$this->FormElements->value->Add($o_formElement);
+					}
+					
+					$o_formElement = new forestFormElement(forestFormElement::TEXT);
+					$o_formElement->Id = 'readonly_' . $p_o_twig->fphp_Table . 'ModifiedBy';
+					$o_formElement->Label = $o_glob->GetTranslation('sortModifiedBy') . ':';
+					$o_formElement->Value = $o_glob->GetUserNameByUUID($p_o_twig->{'ModifiedBy'});
+					
+					if ($o_lastTab != null) {
+						$o_lastTab->FormElements->Add($o_formElement);
+					} else {
+						$this->FormElements->value->Add($o_formElement);
+					}
+				} else if ($i_infoColumns == 1000) {
+					$o_formElement = new forestFormElement(forestFormElement::DATETIMELOCAL);
+					$o_formElement->Id = 'readonly_' . $p_o_twig->fphp_Table . 'Created';
+					$o_formElement->Label = $o_glob->GetTranslation('sortCreated') . ':';
+					if (strval($p_o_twig->{'Created'}) != 'NULL') {
+						$o_formElement->Value = $p_o_twig->{'Created'}->ToString('Y-m-d\TH:i:s');
+					}
+					
+					if ($o_lastTab != null) {
+						$o_lastTab->FormElements->Add($o_formElement);
+					} else {
+						$this->FormElements->value->Add($o_formElement);
+					}
+					
+					$o_formElement = new forestFormElement(forestFormElement::TEXT);
+					$o_formElement->Id = 'readonly_' . $p_o_twig->fphp_Table . 'CreatedBy';
+					$o_formElement->Label = $o_glob->GetTranslation('sortCreatedBy') . ':';
+					$o_formElement->Value = $o_glob->GetUserNameByUUID($p_o_twig->{'CreatedBy'});
+					
+					if ($o_lastTab != null) {
+						$o_lastTab->FormElements->Add($o_formElement);
+					} else {
+						$this->FormElements->value->Add($o_formElement);
+					}
+					
+					$o_formElement = new forestFormElement(forestFormElement::DATETIMELOCAL);
+					$o_formElement->Id = 'readonly_' . $p_o_twig->fphp_Table . 'Modified';
+					$o_formElement->Label = $o_glob->GetTranslation('sortModified') . ':';
+					if (strval($p_o_twig->{'Modified'}) != 'NULL') {
+						$o_formElement->Value = $p_o_twig->{'Modified'}->ToString('Y-m-d\TH:i:s');
+					}
+					
+					if ($o_lastTab != null) {
+						$o_lastTab->FormElements->Add($o_formElement);
+					} else {
+						$this->FormElements->value->Add($o_formElement);
+					}
+					
+					$o_formElement = new forestFormElement(forestFormElement::TEXT);
+					$o_formElement->Id = 'readonly_' . $p_o_twig->fphp_Table . 'ModifiedBy';
+					$o_formElement->Label = $o_glob->GetTranslation('sortModifiedBy') . ':';
+					$o_formElement->Value = $o_glob->GetUserNameByUUID($p_o_twig->{'ModifiedBy'});
+					
+					if ($o_lastTab != null) {
+						$o_lastTab->FormElements->Add($o_formElement);
+					} else {
+						$this->FormElements->value->Add($o_formElement);
 					}
 				}
 			}

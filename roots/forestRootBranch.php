@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.5.0 (0x1 0001F)   | */
+/* | forestPHP V0.6.0 (0x1 0001F)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -21,6 +21,7 @@
  * 0.4.0 beta	renatus		2019-11-20	added truncateTwig and transferTwig functions
  * 0.4.0 beta	renatus		2019-11-21	added permission checks for standard root actions
  * 0.5.0 beta	renatus		2019-12-05	added checkout and checkin functionality for twigs
+ * 0.6.0 beta	renatus		2019-12-12	added versioning and info columns administration
  */
 
 abstract class forestRootBranch {
@@ -28,7 +29,7 @@ abstract class forestRootBranch {
 	
 	/* Fields */
 	
-	private $ForbiddenTablefieldNames = array('Id', 'UUID');
+	private $ForbiddenTablefieldNames = array('Id', 'UUID', 'Created', 'CreatedBy', 'Modified', 'ModifiedBy');
 	private $StandardActions = array(
 		'Checkin' => 'checkin',
 		'Checkout' => 'checkout',
@@ -43,8 +44,10 @@ abstract class forestRootBranch {
 		'Move Up' => 'moveUp',
 		'New' => 'new',
 		'Replace File' => 'replaceFile',
+		'Restore File' => 'restoreFile',
 		'View' => 'view',
-		'View Files' => 'viewFiles'
+		'View Files' => 'viewFiles',
+		'View Files History' => 'viewFilesHistory',
 	);
 	
 	/* Properties */
@@ -1116,11 +1119,52 @@ abstract class forestRootBranch {
 			$o_hidden->Id = 'sys_fphp_table_name';
 			$o_hidden->Value = strval($o_glob->URL->Branch);
 			
+			$o_radioInfoColumns = new forestFormElement(forestFormElement::RADIO);
+			$o_radioInfoColumns->Label = $o_glob->GetTranslation('formInfoColumnsLabel', 0);
+			$o_radioInfoColumns->Id = 'sys_fphp_table_infoColumns';
+			$o_radioInfoColumns->RadioClass = 'radio-inline';
+			$o_radioInfoColumns->Break = false;
+			$o_radioInfoColumns->ValMessage = $o_glob->GetTranslation('formInfoColumnsValMessage', 0);
+			$o_radioInfoColumns->Options = array('None' => '1', 'Created' => '10', 'Modified' => '100', 'Created + Modified' => '1000');
+			
+			$o_checkboxInfoColumnsView = new forestFormElement(forestFormElement::CHECKBOX);
+			$o_checkboxInfoColumnsView->Label = $o_glob->GetTranslation('formInfoColumnsViewLabel', 0);
+			$o_checkboxInfoColumnsView->Id = 'sys_fphp_table_infoColumnsView[]';
+			$o_checkboxInfoColumnsView->CheckboxClass = 'checkbox-inline';
+			$o_checkboxInfoColumnsView->Break = false;
+			$o_checkboxInfoColumnsView->ValMessage = $o_glob->GetTranslation('formInfoColumnsViewValMessage', 0);
+			$o_checkboxInfoColumnsView->Options = array(
+				'Created' => '0001',
+				'Created By' => '0010',
+				'Modified' => '0100',
+				'Modified By' => '1000'
+			);
+			
+			$o_radioVersioning = new forestFormElement(forestFormElement::RADIO);
+			$o_radioVersioning->Label = $o_glob->GetTranslation('formVersioningLabel', 0);
+			$o_radioVersioning->Id = 'sys_fphp_table_versioning';
+			$o_radioVersioning->RadioClass = 'radio-inline';
+			$o_radioVersioning->Break = false;
+			$o_radioVersioning->ValMessage = $o_glob->GetTranslation('formVersioningValMessage', 0);
+			$o_radioVersioning->Options = array('None' => '1', 'Checkout' => '10', 'Checkout + Versioning (Files)' => '100');
+			
 			$o_description2 = new forestFormElement(forestFormElement::DESCRIPTION);
 			$o_description2->Description = '<b>' . $o_glob->GetTranslation('rootNewTwigFirstFieldTitle', 0) . '</b>';
 			
 			/* add manual created form elements to genereal tab */
 			if (!$o_glob->PostModalForm->AddFormElement($o_description2, 'general', true)) {
+				throw new forestException('Cannot add form element to tab with id[general].');
+			}
+			
+			if (!$o_glob->PostModalForm->AddFormElement($o_radioVersioning, 'general', true)) {
+				throw new forestException('Cannot add form element to tab with id[general].');
+			}
+			
+			if (!$o_glob->PostModalForm->AddFormElement($o_checkboxInfoColumnsView, 'general', true)) {
+				throw new forestException('Cannot add form element to tab with id[general].');
+			}
+						
+			if (!$o_glob->PostModalForm->AddFormElement($o_radioInfoColumns, 'general', true)) {
 				throw new forestException('Cannot add form element to tab with id[general].');
 			}
 			
@@ -1141,6 +1185,10 @@ abstract class forestRootBranch {
 			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_tablefield_SubRecordField')) {
 				throw new forestException('Cannot delete form element with Id[sys_fphp_tablefield_SubRecordField].');
 			}
+			
+			/* add validation rules for manual created form elements */
+			$o_glob->PostModalForm->FormObject->ValRules->Add(new forestFormValidationRule('sys_fphp_table_infoColumns', 'required', 'true', 'fphpByName'));
+			$o_glob->PostModalForm->FormObject->ValRules->Add(new forestFormValidationRule('sys_fphp_table_versioning', 'required', 'true', 'fphpByName'));
 		} else {
 			if (!array_key_exists('sys_fphp_table_name', $_POST)) {
 				throw new forestException('No POST data for field[sys_fphp_table_name]');
@@ -1200,6 +1248,59 @@ abstract class forestRootBranch {
 			}
 			
 			$o_tableTwig->Name = $_POST['sys_fphp_table_name'];
+			$o_tableTwig->InfoColumns = intval($_POST['sys_fphp_table_infoColumns']);
+			
+			if (is_array($_POST['sys_fphp_table_infoColumnsView'])) {
+				/* post value is array, so we need to valiate multiple checkboxes */
+				$i_sum = 0;
+				
+				foreach ($_POST['sys_fphp_table_infoColumnsView'] as $s_checkboxValue) {
+					if (!preg_match('/[^01$]/', $s_checkboxValue)) {
+						$i_sum += intval($s_checkboxValue);
+					}
+				}
+				
+				$o_tableTwig->InfoColumnsView = $i_sum;
+			} else {
+				if (!preg_match('/[^01$]/', $_POST['sys_fphp_table_infoColumnsView'])) {
+					$o_tableTwig->InfoColumnsView = intval($_POST['sys_fphp_table_infoColumnsView']);
+				} else {
+					$o_tableTwig->InfoColumnsView = 0;
+				}
+			}
+			
+			$o_tableTwig->Versioning = intval($_POST['sys_fphp_table_versioning']);
+			
+			/* check that info columns and info columns view match together */
+			if ($o_tableTwig->InfoColumns == 1) {
+				$o_tableTwig->InfoColumnsView = 0;
+			} else if ($o_tableTwig->InfoColumns == 10) {
+				if ($o_tableTwig->InfoColumnsView > 11) {
+					if ($o_tableTwig->InfoColumnsView > 111) {
+						$o_tableTwig->InfoColumnsView -= 1000;
+					} else {
+						$o_tableTwig->InfoColumnsView -= 100;
+					}
+				}
+			} else if ($o_tableTwig->InfoColumns == 100) {
+				$i_temp = $o_tableTwig->InfoColumnsView;
+				
+				if ($i_temp > 111) {
+					$i_temp -= 1000;
+				}
+				
+				if ($i_temp > 11) {
+					$i_temp -= 100;
+				}
+				
+				if ($i_temp == 11) {
+					$o_tableTwig->InfoColumnsView -= 11;
+				} else if ($i_temp == 10) {
+					$o_tableTwig->InfoColumnsView -= 10;
+				} else if ($i_temp == 1) {
+					$o_tableTwig->InfoColumnsView -= 1;
+				}
+			}
 			
 			/* insert record */
 			$i_result = $o_tableTwig->InsertRecord();
@@ -1351,6 +1452,64 @@ abstract class forestRootBranch {
 							}
 						}
 						
+						/* column declaration for created, createdby, modified, modifiedby */
+						$o_queryAlter = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::ALTER, $o_tableTwig->Name);
+						
+						$o_columnCreated = new forestSQLColumnStructure($o_queryAlter);
+							$o_columnCreated->Name = 'Created';
+							$o_columnCreated->ColumnType = 'TIMESTAMP';
+							$o_columnCreated->AlterOperation = 'ADD';
+							$o_columnCreated->ConstraintList->Add('NULL');
+							
+						$o_columnCreatedBy = new forestSQLColumnStructure($o_queryAlter);
+							$o_columnCreatedBy->Name = 'CreatedBy';
+							$o_columnCreatedBy->ColumnType = 'VARCHAR';
+							$o_columnCreatedBy->ColumnTypeLength = 36;
+							$o_columnCreatedBy->AlterOperation = 'ADD';
+							$o_columnCreatedBy->ConstraintList->Add('NULL');
+						
+						$o_columnModified = new forestSQLColumnStructure($o_queryAlter);
+							$o_columnModified->Name = 'Modified';
+							$o_columnModified->ColumnType = 'TIMESTAMP';
+							$o_columnModified->AlterOperation = 'ADD';
+							$o_columnModified->ConstraintList->Add('NULL');
+								
+						$o_columnModifiedBy = new forestSQLColumnStructure($o_queryAlter);
+							$o_columnModifiedBy->Name = 'ModifiedBy';
+							$o_columnModifiedBy->ColumnType = 'VARCHAR';
+							$o_columnModifiedBy->ColumnTypeLength = 36;
+							$o_columnModifiedBy->AlterOperation = 'ADD';
+							$o_columnModifiedBy->ConstraintList->Add('NULL');
+						
+						/* handle info columns */
+						if ($o_tableTwig->InfoColumns == 10) {
+							/* create created, createdby columns */
+							$o_queryAlter = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::ALTER, $o_tableTwig->Name);
+							$o_queryAlter->Query->Columns->Add($o_columnCreated);
+							$o_queryAlter->Query->Columns->Add($o_columnCreatedBy);
+							
+							/* alter table does not return a value */
+							$o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_queryAlter, false, false);
+						} else if ($o_tableTwig->InfoColumns == 100) {
+							/* create modified, modifiedby columns */
+							$o_queryAlter = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::ALTER, $o_tableTwig->Name);
+							$o_queryAlter->Query->Columns->Add($o_columnModified);
+							$o_queryAlter->Query->Columns->Add($o_columnModifiedBy);
+							
+							/* alter table does not return a value */
+							$o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_queryAlter, false, false);
+						} else if ($o_tableTwig->InfoColumns == 1000) {
+							/* create created, createdby, modified, modifiedby columns */
+							$o_queryAlter = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::ALTER, $o_tableTwig->Name);
+							$o_queryAlter->Query->Columns->Add($o_columnCreated);
+							$o_queryAlter->Query->Columns->Add($o_columnCreatedBy);
+							$o_queryAlter->Query->Columns->Add($o_columnModified);
+							$o_queryAlter->Query->Columns->Add($o_columnModifiedBy);
+							
+							/* alter table does not return a value */
+							$o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_queryAlter, false, false);
+						}
+						
 						/* create twig file */
 						$this->doTwigFile($o_tableTwig);
 						
@@ -1443,7 +1602,41 @@ abstract class forestRootBranch {
 			
 			$o_glob->Base->{$o_glob->ActiveBase}->ManualTransaction();
 			
+			/* save old info columns value for later check */
+			$i_oldInfoColumns = $this->Twig->InfoColumns;
+			
 			$this->TransferPOST_Twig();
+			
+			/* check that info columns and info columns view match together */
+			if ($this->Twig->InfoColumns == 1) {
+				$this->Twig->InfoColumnsView = 0;
+			} else if ($this->Twig->InfoColumns == 10) {
+				if ($this->Twig->InfoColumnsView > 11) {
+					if ($this->Twig->InfoColumnsView > 111) {
+						$this->Twig->InfoColumnsView -= 1000;
+					} else {
+						$this->Twig->InfoColumnsView -= 100;
+					}
+				}
+			} else if ($this->Twig->InfoColumns == 100) {
+				$i_temp = $this->Twig->InfoColumnsView;
+				
+				if ($i_temp > 111) {
+					$i_temp -= 1000;
+				}
+				
+				if ($i_temp > 11) {
+					$i_temp -= 100;
+				}
+				
+				if ($i_temp == 11) {
+					$this->Twig->InfoColumnsView -= 11;
+				} else if ($i_temp == 10) {
+					$this->Twig->InfoColumnsView -= 10;
+				} else if ($i_temp == 1) {
+					$this->Twig->InfoColumnsView -= 1;
+				}
+			}
 			
 			/* edit recrod */
 			$i_result = $this->Twig->UpdateRecord();
@@ -1455,6 +1648,117 @@ abstract class forestRootBranch {
 				$o_glob->SystemMessages->Add(new forestException(0x10001406));
 			} else if ($i_result == 1) {
 				$o_glob->SystemMessages->Add(new forestException(0x10001407));
+				
+				/* column declaration for created, createdby, modified, modifiedby */
+				$o_queryAlter = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::ALTER, $this->Twig->Name);
+				
+				$o_columnCreated = new forestSQLColumnStructure($o_queryAlter);
+					$o_columnCreated->Name = 'Created';
+					$o_columnCreated->ColumnType = 'TIMESTAMP';
+					$o_columnCreated->AlterOperation = 'ADD';
+					$o_columnCreated->ConstraintList->Add('NULL');
+					
+				$o_columnCreatedBy = new forestSQLColumnStructure($o_queryAlter);
+					$o_columnCreatedBy->Name = 'CreatedBy';
+					$o_columnCreatedBy->ColumnType = 'VARCHAR';
+					$o_columnCreatedBy->ColumnTypeLength = 36;
+					$o_columnCreatedBy->AlterOperation = 'ADD';
+					$o_columnCreatedBy->ConstraintList->Add('NULL');
+				
+				$o_columnModified = new forestSQLColumnStructure($o_queryAlter);
+					$o_columnModified->Name = 'Modified';
+					$o_columnModified->ColumnType = 'TIMESTAMP';
+					$o_columnModified->AlterOperation = 'ADD';
+					$o_columnModified->ConstraintList->Add('NULL');
+						
+				$o_columnModifiedBy = new forestSQLColumnStructure($o_queryAlter);
+					$o_columnModifiedBy->Name = 'ModifiedBy';
+					$o_columnModifiedBy->ColumnType = 'VARCHAR';
+					$o_columnModifiedBy->ColumnTypeLength = 36;
+					$o_columnModifiedBy->AlterOperation = 'ADD';
+					$o_columnModifiedBy->ConstraintList->Add('NULL');
+				
+				/* handle info columns */
+				$a_infoColumnsCommands = array();
+				
+				/* calculate commands based on infocolumns before-after value */
+				if (($i_oldInfoColumns == 1) && ($this->Twig->InfoColumns == 10)) {
+					$a_infoColumnsCommands[] = 'addC';
+				} else if (($i_oldInfoColumns == 1) && ($this->Twig->InfoColumns == 100)) {
+					$a_infoColumnsCommands[] = 'addM';
+				} else if (($i_oldInfoColumns == 1) && ($this->Twig->InfoColumns == 1000)) {
+					$a_infoColumnsCommands[] = 'addC';
+					$a_infoColumnsCommands[] = 'addM';
+				} else if (($i_oldInfoColumns == 10) && ($this->Twig->InfoColumns == 1)) {
+					$a_infoColumnsCommands[] = 'dropC';
+				} else if (($i_oldInfoColumns == 10) && ($this->Twig->InfoColumns == 100)) {
+					$a_infoColumnsCommands[] = 'dropC';
+					$a_infoColumnsCommands[] = 'addM';
+				} else if (($i_oldInfoColumns == 10) && ($this->Twig->InfoColumns == 1000)) {
+					$a_infoColumnsCommands[] = 'addM';
+				} else if (($i_oldInfoColumns == 100) && ($this->Twig->InfoColumns == 1)) {
+					$a_infoColumnsCommands[] = 'dropM';
+				} else if (($i_oldInfoColumns == 100) && ($this->Twig->InfoColumns == 10)) {
+					$a_infoColumnsCommands[] = 'dropM';
+					$a_infoColumnsCommands[] = 'addC';
+				} else if (($i_oldInfoColumns == 100) && ($this->Twig->InfoColumns == 1000)) {
+					$a_infoColumnsCommands[] = 'addC';
+				} else if (($i_oldInfoColumns == 1000) && ($this->Twig->InfoColumns == 1)) {
+					$a_infoColumnsCommands[] = 'dropC';
+					$a_infoColumnsCommands[] = 'dropM';
+				} else if (($i_oldInfoColumns == 1000) && ($this->Twig->InfoColumns == 10)) {
+					$a_infoColumnsCommands[] = 'dropM';
+				} else if (($i_oldInfoColumns == 1000) && ($this->Twig->InfoColumns == 100)) {
+					$a_infoColumnsCommands[] = 'dropC';
+				}
+				
+				/* execute alter table commands based on infocolumns before-after value */
+				
+				if (in_array('addC', $a_infoColumnsCommands)) {
+					/* create created, createdby columns */
+					$o_queryAlter = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::ALTER, $this->Twig->Name);
+					$o_queryAlter->Query->Columns->Add($o_columnCreated);
+					$o_queryAlter->Query->Columns->Add($o_columnCreatedBy);
+					
+					/* alter table does not return a value */
+					$o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_queryAlter, false, false);
+				}
+				
+				if (in_array('addM', $a_infoColumnsCommands)) {
+					/* create modified, modifiedby columns */
+					$o_queryAlter = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::ALTER, $this->Twig->Name);
+					$o_queryAlter->Query->Columns->Add($o_columnModified);
+					$o_queryAlter->Query->Columns->Add($o_columnModifiedBy);
+					
+					/* alter table does not return a value */
+					$o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_queryAlter, false, false);
+				}
+				
+				if (in_array('dropC', $a_infoColumnsCommands)) {
+					$o_columnCreated->AlterOperation = 'DROP';
+					$o_columnCreatedBy->AlterOperation = 'DROP';
+					
+					/* drop created, createdby columns */
+					$o_queryAlter = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::ALTER, $this->Twig->Name);
+					$o_queryAlter->Query->Columns->Add($o_columnCreated);
+					$o_queryAlter->Query->Columns->Add($o_columnCreatedBy);
+					
+					/* alter table does not return a value */
+					$o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_queryAlter, false, false);
+				}
+				
+				if (in_array('dropM', $a_infoColumnsCommands)) {
+					$o_columnModified->AlterOperation = 'DROP';
+					$o_columnModifiedBy->AlterOperation = 'DROP';
+					
+					/* drop modified, modifiedby columns */
+					$o_queryAlter = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::ALTER, $this->Twig->Name);
+					$o_queryAlter->Query->Columns->Add($o_columnModified);
+					$o_queryAlter->Query->Columns->Add($o_columnModifiedBy);
+					
+					/* alter table does not return a value */
+					$o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_queryAlter, false, false);
+				}
 				
 				/* update twig file */
 				$this->doTwigFile($this->Twig);
@@ -3042,6 +3346,23 @@ abstract class forestRootBranch {
 		$s_fieldDefinitions .= 'private $Id;' . "\n\t" . 'private $UUID;' . "\n\t";
 		$s_fields .= '$this->Id = new forestNumericString(1);' . "\n\t\t" . '$this->UUID = new forestString;' . "\n\t\t";
 		
+		/* handle info columns */
+		if ($p_o_tableTwig->InfoColumns == 10) {
+			/* create created, createdby columns */
+			$s_fieldDefinitions .= 'private $Created;' . "\n\t" . 'private $CreatedBy;' . "\n\t";
+			$s_fields .= '$this->Created = new forestObject(\'forestDateTime\');' . "\n\t\t" . '$this->CreatedBy = new forestString;' . "\n\t\t";
+		} else if ($p_o_tableTwig->InfoColumns == 100) {
+			/* create modified, modifiedby columns */
+			$s_fieldDefinitions .= 'private $Modified;' . "\n\t" . 'private $ModifiedBy;' . "\n\t";
+			$s_fields .= '$this->Modified = new forestObject(\'forestDateTime\');' . "\n\t\t" . '$this->ModifiedBy = new forestString;' . "\n\t\t";
+		} else if ($p_o_tableTwig->InfoColumns == 1000) {
+			/* create created, createdby, modified, modifiedby columns */
+			$s_fieldDefinitions .= 'private $Created;' . "\n\t" . 'private $CreatedBy;' . "\n\t";
+			$s_fields .= '$this->Created = new forestObject(\'forestDateTime\');' . "\n\t\t" . '$this->CreatedBy = new forestString;' . "\n\t\t";
+			$s_fieldDefinitions .= 'private $Modified;' . "\n\t" . 'private $ModifiedBy;' . "\n\t";
+			$s_fields .= '$this->Modified = new forestObject(\'forestDateTime\');' . "\n\t\t" . '$this->ModifiedBy = new forestString;' . "\n\t\t";
+		}
+		
 		/* look for tablefields */
 		$o_tablefieldTwig = new tablefieldTwig;
 		
@@ -3213,6 +3534,43 @@ abstract class forestRootBranch {
 			$s_view .=  '\'' . implode('\',\'', $a_keys) . '\'';
 		} else {
 			$s_view .= substr($s_view_reserve, 0, -1);
+		}
+		
+		if ($p_o_tableTwig->InfoColumnsView > 0) {
+			$a_keys = array();
+			$i_temp = $p_o_tableTwig->InfoColumnsView;
+			
+			if ($i_temp >= 1000) {
+				/* add modified by field */
+				$a_keys[] = 'ModifiedBy';
+				$i_temp -= 1000;
+			}
+			
+			if ($i_temp >= 100) {
+				/* add modified field */
+				$a_keys[] = 'Modified';
+				$i_temp -= 100;
+			}
+			
+			if ($i_temp >= 10) {
+				/* add created by field */
+				$a_keys[] = 'CreatedBy';
+				$i_temp -= 10;
+			}
+			
+			if ($i_temp == 1) {
+				/* add created field */
+				$a_keys[] = 'Created';
+			}
+			
+			/* revert sort within array */
+			krsort($a_keys);
+			
+			if ($s_view != '') {
+				$s_view .=  ',\'' . implode('\',\'', $a_keys) . '\'';
+			} else {
+				$s_view .=  '\'' . implode('\',\'', $a_keys) . '\'';
+			}
 		}
 		
 		/* get twigs directory content */
@@ -4694,6 +5052,21 @@ abstract class forestRootBranch {
 				throw new forestException('Cannot delete form element with Id[sys_fphp_table_SortColumn].');
 			}
 			
+			/* delete InfoColumns-element */
+			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_InfoColumns')) {
+				throw new forestException('Cannot delete form element with Id[sys_fphp_table_InfoColumns].');
+			}
+			
+			/* delete InfoColumnsView-element */
+			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_InfoColumnsView[]')) {
+				throw new forestException('Cannot delete form element with Id[sys_fphp_table_InfoColumnsView[]].');
+			}
+			
+			/* delete Versioning-element */
+			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_Versioning')) {
+				throw new forestException('Cannot delete form element with Id[sys_fphp_table_Versioning].');
+			}
+			
 			/* delete CheckoutInterval-element */
 			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_CheckoutInterval')) {
 				throw new forestException('Cannot delete form element with Id[sys_fphp_table_CheckoutInterval].');
@@ -4912,6 +5285,21 @@ abstract class forestRootBranch {
 					throw new forestException('Cannot delete form element with Id[sys_fphp_table_SortColumn].');
 				}
 				
+				/* delete InfoColumns-element */
+				if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_InfoColumns')) {
+					throw new forestException('Cannot delete form element with Id[sys_fphp_table_InfoColumns].');
+				}
+				
+				/* delete InfoColumnsView-element */
+				if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_InfoColumnsView[]')) {
+					throw new forestException('Cannot delete form element with Id[sys_fphp_table_InfoColumnsView[]].');
+				}
+				
+				/* delete Versioning-element */
+				if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_Versioning')) {
+					throw new forestException('Cannot delete form element with Id[sys_fphp_table_Versioning].');
+				}
+				
 				/* delete CheckoutInterval-element */
 				if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_CheckoutInterval')) {
 					throw new forestException('Cannot delete form element with Id[sys_fphp_table_CheckoutInterval].');
@@ -5097,6 +5485,21 @@ abstract class forestRootBranch {
 			/* delete SortColumn-element */
 			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_SortColumn')) {
 				throw new forestException('Cannot delete form element with Id[sys_fphp_table_SortColumn].');
+			}
+			
+			/* delete InfoColumns-element */
+			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_InfoColumns')) {
+				throw new forestException('Cannot delete form element with Id[sys_fphp_table_InfoColumns].');
+			}
+			
+			/* delete InfoColumnsView-element */
+			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_InfoColumnsView[]')) {
+				throw new forestException('Cannot delete form element with Id[sys_fphp_table_InfoColumnsView[]].');
+			}
+			
+			/* delete Versioning-element */
+			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_Versioning')) {
+				throw new forestException('Cannot delete form element with Id[sys_fphp_table_Versioning].');
 			}
 			
 			/* delete CheckoutInterval-element */
@@ -5316,6 +5719,21 @@ abstract class forestRootBranch {
 				/* delete SortColumn-element */
 				if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_SortColumn')) {
 					throw new forestException('Cannot delete form element with Id[sys_fphp_table_SortColumn].');
+				}
+				
+				/* delete InfoColumns-element */
+				if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_InfoColumns')) {
+					throw new forestException('Cannot delete form element with Id[sys_fphp_table_InfoColumns].');
+				}
+				
+				/* delete InfoColumnsView-element */
+				if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_InfoColumnsView[]')) {
+					throw new forestException('Cannot delete form element with Id[sys_fphp_table_InfoColumnsView[]].');
+				}
+				
+				/* delete Versioning-element */
+				if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_Versioning')) {
+					throw new forestException('Cannot delete form element with Id[sys_fphp_table_Versioning].');
 				}
 				
 				/* delete CheckoutInterval-element */

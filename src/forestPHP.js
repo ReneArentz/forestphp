@@ -1,6 +1,6 @@
 /* +--------------------------------+ */
 /* |                                | */
-/* | forestPHP V0.5.0               | */
+/* | forestPHP V0.6.0               | */
 /* |                                | */
 /* +--------------------------------+ */
 
@@ -15,6 +15,7 @@
  * 0.1.2 alpha	renatus		2019-08-25	added functionality for list view
  * 0.1.5 alpha	renatus		2019-10-07	added functionality for moveUp and moveDown
  * 0.5.0 beta 	renatus		2019-11-25	added functionality for checkin and checkout
+ * 0.6.0 beta 	renatus		2019-12-10	added timeout submit button functionality
  */
 
 $(function(){
@@ -399,4 +400,8 @@ $(function(){
 			}
 		}
 	});
+	
+	setTimeout(function() {
+        $("button[name^='sys_fphp_SubmitStandard']").attr('disabled', false);
+    }, 3000);
 });

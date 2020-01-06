@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.5.0 (0x1 00014)   | */
+/* | forestPHP V0.6.0 (0x1 00014)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -31,6 +31,9 @@
  * 0.5.0 beta	renatus		2019-11-28	added checkout action
  * 0.5.0 beta	renatus		2019-12-02	added honeypot fields functionality
  * 0.5.0 beta	renatus		2019-12-04	added verification of checked out elements on all standard actions
+ * 0.5.0 beta	renatus		2019-12-17	added info columns
+ * 0.5.0 beta	renatus		2019-12-18	added versioning
+ * 0.5.0 beta	renatus		2019-12-19	added restoreFile action
  */
 
 abstract class forestBranch extends forestRootBranch {
@@ -253,6 +256,15 @@ abstract class forestBranch extends forestRootBranch {
 				/* add new filter to our filter-array if the new line of our filter formular has been used */
 				if ((array_key_exists('newFilterColumn', $_POST)) && (array_key_exists('newFilterValue', $_POST))) {
 					if ((!empty($_POST['newFilterColumn'])) && (!empty($_POST['newFilterValue']))) {
+						/* interpret user name to user uuid */
+						if ( ($_POST['newFilterColumn'] == 'CreatedBy') || ($_POST['newFilterColumn'] == 'ModifiedBy') ) {
+							foreach($o_glob->UsersDictionary as $s_userUUID => $s_user) {
+								if (strtolower($s_user) == strtolower($_POST['newFilterValue'])) {
+									$_POST['newFilterValue'] = $s_userUUID;
+								}
+							}
+						}
+						
 						$a_filter[$_POST['newFilterColumn']] = $_POST['newFilterValue'];
 					}
 				}
@@ -837,6 +849,7 @@ abstract class forestBranch extends forestRootBranch {
 				} else {
 					$o_userTwig->User = strval($_POST['sys_fphp_signUp_Username']);
 					$o_userTwig->Password = password_hash(strval($_POST['sys_fphp_signUp_PasswordRepeat']), PASSWORD_DEFAULT);
+					$o_userTwig->Created = new forestDateTime;
 					/* create user with status locked */
 					$o_userTwig->Locked = true;
 					
@@ -1053,6 +1066,14 @@ abstract class forestBranch extends forestRootBranch {
 			if ($o_glob->TablefieldsDictionary->Exists($this->Twig->fphp_Table . '_' . $s_columnHead)) {
 				$s_formElement = $o_glob->TablefieldsDictionary->{$this->Twig->fphp_Table . '_' . $s_columnHead}->FormElementName;
 				$s_forestData = $o_glob->TablefieldsDictionary->{$this->Twig->fphp_Table . '_' . $s_columnHead}->ForestDataName;
+			} else {
+				if ( ($s_columnHead == 'Created') || ($s_columnHead == 'Modified') ) {
+					$s_formElement = forestFormElement::DATETIMELOCAL;
+					$s_forestData = 'forestObject(\'forestDateTime\')';
+				} else if ( ($s_columnHead == 'CreatedBy') || ($s_columnHead == 'ModifiedBy') ) {
+					$s_formElement = forestFormElement::TEXT;
+					$s_forestData = 'forestString';
+				}
 			}
 			
 			if ( ($s_formElement == forestFormElement::FORM) || ($s_formElement == forestFormElement::PASSWORD) ||($s_formElement == forestFormElement::RICHTEXT) || ($s_formElement == forestFormElement::CAPTCHA) || ($s_formElement == forestFormElement::DROPZONE) ) {
@@ -1087,6 +1108,14 @@ abstract class forestBranch extends forestRootBranch {
 					if ($o_glob->TablefieldsDictionary->Exists($this->Twig->fphp_Table . '_' . $s_column)) {
 						$s_formElement = $o_glob->TablefieldsDictionary->{$this->Twig->fphp_Table . '_' . $s_column}->FormElementName;
 						$s_forestData = $o_glob->TablefieldsDictionary->{$this->Twig->fphp_Table . '_' . $s_column}->ForestDataName;
+					} else {
+						if ( ($s_column == 'Created') || ($s_column == 'Modified') ) {
+							$s_formElement = forestFormElement::DATETIMELOCAL;
+							$s_forestData = 'forestObject(\'forestDateTime\')';
+						} else if ( ($s_column == 'CreatedBy') || ($s_column == 'ModifiedBy') ) {
+							$s_formElement = forestFormElement::TEXT;
+							$s_forestData = 'forestString';
+						}
 					}
 					
 					if ( ($s_formElement == forestFormElement::FORM) || ($s_formElement == forestFormElement::PASSWORD) ||($s_formElement == forestFormElement::RICHTEXT) || ($s_formElement == forestFormElement::CAPTCHA) || ($s_formElement == forestFormElement::DROPZONE) ) {
@@ -1405,10 +1434,16 @@ abstract class forestBranch extends forestRootBranch {
 				}
 			}
 			
-			
-			/* standard rendering value */
-			if (issetStr($p_o_record->{$p_s_column})) {
-				$p_s_value = $p_o_record->{$p_s_column};
+			/* render created by and modified by columns as datetime values */
+			if ( ($p_s_column == 'CreatedBy') || ($p_s_column == 'ModifiedBy') ) {
+				if (issetStr($p_o_record->{$p_s_column})) {
+					$p_s_value = $o_glob->GetUserNameByUUID($p_o_record->{$p_s_column});
+				}
+			} else {
+				/* standard rendering value */
+				if (issetStr($p_o_record->{$p_s_column})) {
+					$p_s_value = $p_o_record->{$p_s_column};
+				}
 			}
 		}
 	}
@@ -1510,6 +1545,43 @@ abstract class forestBranch extends forestRootBranch {
 			}
 		}
 		
+		/* get values for info columns when configured */
+		$i_infoColumns = $o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['InfoColumns'];
+		
+		if ($i_infoColumns == 10) {
+			if (!in_array('Created', $this->Twig->fphp_View)) {
+				$a_hidden_columns[$o_glob->GetTranslation('sortCreated')] = 'Created';
+			}
+			
+			if (!in_array('CreatedBy', $this->Twig->fphp_View)) {
+				$a_hidden_columns[$o_glob->GetTranslation('sortCreatedBy')] = 'CreatedBy';
+			}
+		} else if ($i_infoColumns == 100) {
+			if (!in_array('Modified', $this->Twig->fphp_View)) {
+				$a_hidden_columns[$o_glob->GetTranslation('sortModified')] = 'Modified';
+			}
+			
+			if (!in_array('ModifiedBy', $this->Twig->fphp_View)) {
+				$a_hidden_columns[$o_glob->GetTranslation('sortModifiedBy')] = 'ModifiedBy';
+			}
+		} else if ($i_infoColumns == 1000) {
+			if (!in_array('Created', $this->Twig->fphp_View)) {
+				$a_hidden_columns[$o_glob->GetTranslation('sortCreated')] = 'Created';
+			}
+			
+			if (!in_array('CreatedBy', $this->Twig->fphp_View)) {
+				$a_hidden_columns[$o_glob->GetTranslation('sortCreatedBy')] = 'CreatedBy';
+			}
+			
+			if (!in_array('Modified', $this->Twig->fphp_View)) {
+				$a_hidden_columns[$o_glob->GetTranslation('sortModified')] = 'Modified';
+			}
+			
+			if (!in_array('ModifiedBy', $this->Twig->fphp_View)) {
+				$a_hidden_columns[$o_glob->GetTranslation('sortModifiedBy')] = 'ModifiedBy';
+			}
+		}
+		
 		$o_select->Options = $a_hidden_columns;
 		
 		$o_description = new forestFormElement(forestFormElement::DESCRIPTION);
@@ -1585,6 +1657,25 @@ abstract class forestBranch extends forestRootBranch {
 								}
 							}
 							
+							/* if info columns are configured */
+							$i_infoColumns = $o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['InfoColumns'];
+			
+							if ($i_infoColumns == 10) {
+								$p_s_searchForm .= '<li><a href="#Created">' . $o_glob->GetTranslation('sortCreated') . '</a></li>';
+								$p_s_searchForm .= '<li><a href="#CreatedBy">' . $o_glob->GetTranslation('sortCreatedBy') . '</a></li>';
+								$b_columns = true;
+							} else if ($i_infoColumns == 100) {
+								$p_s_searchForm .= '<li><a href="#Modified">' . $o_glob->GetTranslation('sortModified') . '</a></li>';
+								$p_s_searchForm .= '<li><a href="#ModifiedBy">' . $o_glob->GetTranslation('sortModifiedBy') . '</a></li>';
+								$b_columns = true;
+							} else if ($i_infoColumns == 1000) {
+								$p_s_searchForm .= '<li><a href="#Created">' . $o_glob->GetTranslation('sortCreated') . '</a></li>';
+								$p_s_searchForm .= '<li><a href="#CreatedBy">' . $o_glob->GetTranslation('sortCreatedBy') . '</a></li>';
+								$p_s_searchForm .= '<li><a href="#Modified">' . $o_glob->GetTranslation('sortModified') . '</a></li>';
+								$p_s_searchForm .= '<li><a href="#ModifiedBy">' . $o_glob->GetTranslation('sortModifiedBy') . '</a></li>';
+								$b_columns = true;
+							}
+							
 							$b_all = true;
 							
 							/* if we are using at least one column for filtering, we cannot use option to filter "all columns" anymore */
@@ -1621,6 +1712,11 @@ abstract class forestBranch extends forestRootBranch {
 							if ($o_glob->TablefieldsDictionary->{$this->Twig->fphp_Table . '_' . $s_filterColumn}->FormElementName == forestFormElement::PASSWORD) {
 								continue;
 							}
+						}
+						
+						/* translate user uuid to user name */
+						if ( ($s_filterColumn == 'CreatedBy') || ($s_filterColumn == 'ModifiedBy') ) {
+							$s_filterValue = $o_glob->GetUserNameByUUID($s_filterValue);
 						}
 						
 						$s_displayFilterColumn = $o_glob->GetTranslation('sort' . $s_filterColumn);
@@ -1820,6 +1916,9 @@ abstract class forestBranch extends forestRootBranch {
 		$s_subFormItems = '';
 		$b_firstSubElement = false;
 		
+		/* get value for info columns when configured */
+		$i_infoColumns = $o_glob->TablesInformation[$p_o_twig->fphp_TableUUID]['InfoColumns'];
+		
 		/* check if table of twig parameter is valid table and has tablefields */
 		if (array_key_exists($p_o_twig->fphp_Table, $o_glob->Tables)) {
 			$s_tableUUID = $o_glob->Tables[$p_o_twig->fphp_Table];
@@ -1921,6 +2020,20 @@ abstract class forestBranch extends forestRootBranch {
 							}
 						}
 						
+						/* render info columns when configured */
+						if ($i_infoColumns == 10) {
+							$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortCreated', 1) . '</th>' . "\n";
+							$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortCreatedBy', 1) . '</th>' . "\n";
+						} else if ($i_infoColumns == 100) {
+							$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortModified', 1) . '</th>' . "\n";
+							$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortModifiedBy', 1) . '</th>' . "\n";
+						} else if ($i_infoColumns == 1000) {
+							$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortCreated', 1) . '</th>' . "\n";
+							$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortCreatedBy', 1) . '</th>' . "\n";
+							$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortModified', 1) . '</th>' . "\n";
+							$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortModifiedBy', 1) . '</th>' . "\n";
+						}
+						
 						/* render option column head */
 						$s_subTableHead .= '<th>' . $o_glob->GetTranslation('formSubOptions', 1) . '</th>' . "\n";
 						
@@ -1987,6 +2100,41 @@ abstract class forestBranch extends forestRootBranch {
 									$this->ListViewRenderColumnValue($s_value, $s_formElement, $o_tableFieldDictionaryObject->SubRecordField, $o_subRecord, $s_tableName . '_' . $s_joinTableName . '_' . $o_tableFieldDictionaryObject->FieldName);
 									$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
 								}
+							}
+							
+							/* render info columns when configured */
+							if ($i_infoColumns == 10) {
+								$s_value = '-';
+								$this->ListViewRenderColumnValue($s_value, forestFormElement::DATETIMELOCAL, 'Created', $o_subRecord, $s_tableName . '_' . $s_joinTableName . '_Created');
+								$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+								
+								$s_value = '-';
+								$this->ListViewRenderColumnValue($s_value, forestFormElement::TEXT, 'CreatedBy', $o_subRecord, $s_tableName . '_' . $s_joinTableName . '_CreatedBy');
+								$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+							} else if ($i_infoColumns == 100) {
+								$s_value = '-';
+								$this->ListViewRenderColumnValue($s_value, forestFormElement::DATETIMELOCAL, 'Modified', $o_subRecord, $s_tableName . '_' . $s_joinTableName . 'Modified');
+								$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+								
+								$s_value = '-';
+								$this->ListViewRenderColumnValue($s_value, forestFormElement::TEXT, 'ModifiedBy', $o_subRecord, $s_tableName . '_' . $s_joinTableName . '_ModifiedBy');
+								$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+							} else if ($i_infoColumns == 1000) {
+								$s_value = '-';
+								$this->ListViewRenderColumnValue($s_value, forestFormElement::DATETIMELOCAL, 'Created', $o_subRecord, $s_tableName . '_' . $s_joinTableName . '_Created');
+								$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+								
+								$s_value = '-';
+								$this->ListViewRenderColumnValue($s_value, forestFormElement::TEXT, 'CreatedBy', $o_subRecord, $s_tableName . '_' . $s_joinTableName . '_CreatedBy');
+								$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+								
+								$s_value = '-';
+								$this->ListViewRenderColumnValue($s_value, forestFormElement::DATETIMELOCAL, 'Modified', $o_subRecord, $s_tableName . '_' . $s_joinTableName . 'Modified');
+								$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+								
+								$s_value = '-';
+								$this->ListViewRenderColumnValue($s_value, forestFormElement::TEXT, 'ModifiedBy', $o_subRecord, $s_tableName . '_' . $s_joinTableName . '_ModifiedBy');
+								$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
 							}
 							
 							/* render options */
@@ -2153,6 +2301,26 @@ abstract class forestBranch extends forestRootBranch {
 				if ($o_files->Twigs->Count() > 0) {
 					$s_subTableHead = '';
 					$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortFile', 1) . '</th>' . "\n";
+					
+					/* check versioning settings of twig */
+					if ($o_glob->TablesInformation[$p_o_twig->fphp_TableUUID]['Versioning'] == 100) {
+						$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortVersion', 1) . '</th>' . "\n";
+					}
+					
+					/* render info columns when configured */
+					if ($i_infoColumns == 10) {
+						$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortCreated', 1) . '</th>' . "\n";
+						$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortCreatedBy', 1) . '</th>' . "\n";
+					} else if ($i_infoColumns == 100) {
+						$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortModified', 1) . '</th>' . "\n";
+						$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortModifiedBy', 1) . '</th>' . "\n";
+					} else if ($i_infoColumns == 1000) {
+						$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortCreated', 1) . '</th>' . "\n";
+						$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortCreatedBy', 1) . '</th>' . "\n";
+						$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortModified', 1) . '</th>' . "\n";
+						$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortModifiedBy', 1) . '</th>' . "\n";
+					}
+					
 					$s_subTableHead .= '<th>' . $o_glob->GetTranslation('formSubOptions', 1) . '</th>' . "\n";
 					
 					$s_subTableRows = '';
@@ -2167,6 +2335,46 @@ abstract class forestBranch extends forestRootBranch {
 						$s_subTableRows .= '>' . "\n";
 							
 						$s_subTableRows .=  '<td>' . $o_file->DisplayName . '</td>' . "\n";
+						
+						/* check versioning settings of twig */
+						if ($o_glob->TablesInformation[$p_o_twig->fphp_TableUUID]['Versioning'] == 100) {
+							$s_subTableRows .= '<td>' . $o_file->Major . $o_glob->Trunk->VersionDelimiter . $o_file->Minor . '</td>' . "\n";
+						}
+						
+						/* render info columns when configured */
+						if ($i_infoColumns == 10) {
+							$s_value = '-';
+							$this->ListViewRenderColumnValue($s_value, forestFormElement::DATETIMELOCAL, 'Created', $o_file, $o_file->fphp_Table . '_Created');
+							$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+							
+							$s_value = '-';
+							$this->ListViewRenderColumnValue($s_value, forestFormElement::TEXT, 'CreatedBy', $o_file, $o_file->fphp_Table . '_CreatedBy');
+							$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+						} else if ($i_infoColumns == 100) {
+							$s_value = '-';
+							$this->ListViewRenderColumnValue($s_value, forestFormElement::DATETIMELOCAL, 'Modified', $o_file, $o_file->fphp_Table . 'Modified');
+							$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+							
+							$s_value = '-';
+							$this->ListViewRenderColumnValue($s_value, forestFormElement::TEXT, 'ModifiedBy', $o_file, $o_file->fphp_Table . '_ModifiedBy');
+							$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+						} else if ($i_infoColumns == 1000) {
+							$s_value = '-';
+							$this->ListViewRenderColumnValue($s_value, forestFormElement::DATETIMELOCAL, 'Created', $o_file, $o_file->fphp_Table . '_Created');
+							$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+							
+							$s_value = '-';
+							$this->ListViewRenderColumnValue($s_value, forestFormElement::TEXT, 'CreatedBy', $o_file, $o_file->fphp_Table . '_CreatedBy');
+							$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+							
+							$s_value = '-';
+							$this->ListViewRenderColumnValue($s_value, forestFormElement::DATETIMELOCAL, 'Modified', $o_file, $o_file->fphp_Table . 'Modified');
+							$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+							
+							$s_value = '-';
+							$this->ListViewRenderColumnValue($s_value, forestFormElement::TEXT, 'ModifiedBy', $o_file, $o_file->fphp_Table . '_ModifiedBy');
+							$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+						}
 						
 						$s_options = '<span class="btn-group">' . "\n";
 						
@@ -2380,6 +2588,9 @@ abstract class forestBranch extends forestRootBranch {
 				throw new forestException(0x10001401, array($o_subconstraintTwig->fphp_Table));
 			}
 			
+			/* get value for info columns when configured */
+			$i_infoColumns = $o_glob->TablesInformation[$o_subconstraintTwig->TableUUID]['InfoColumns'];
+			
 			if ($o_glob->Temp->{'viewSubKey'} != null) {
 				/* query sub record if we have view key in url parameters */
 				$o_subrecordsTwig = new subrecordsTwig;
@@ -2420,6 +2631,26 @@ abstract class forestBranch extends forestRootBranch {
 					/* list files of sub record */
 					$s_subTableHead = '';
 					$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortFile', 1) . '</th>' . "\n";
+					
+					/* check versioning settings of twig */
+					if ($o_glob->TablesInformation[$o_subconstraintTwig->TableUUID]['Versioning'] == 100) {
+						$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortVersion', 1) . '</th>' . "\n";
+					}
+					
+					/* render info columns when configured */
+					if ($i_infoColumns == 10) {
+						$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortCreated', 1) . '</th>' . "\n";
+						$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortCreatedBy', 1) . '</th>' . "\n";
+					} else if ($i_infoColumns == 100) {
+						$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortModified', 1) . '</th>' . "\n";
+						$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortModifiedBy', 1) . '</th>' . "\n";
+					} else if ($i_infoColumns == 1000) {
+						$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortCreated', 1) . '</th>' . "\n";
+						$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortCreatedBy', 1) . '</th>' . "\n";
+						$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortModified', 1) . '</th>' . "\n";
+						$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortModifiedBy', 1) . '</th>' . "\n";
+					}
+					
 					$s_subTableHead .= '<th>' . $o_glob->GetTranslation('formSubOptions', 1) . '</th>' . "\n";
 					
 					$s_subTableRows = '';
@@ -2434,6 +2665,46 @@ abstract class forestBranch extends forestRootBranch {
 						$s_subTableRows .= '>' . "\n";
 							
 						$s_subTableRows .=  '<td>' . $o_file->DisplayName . '</td>' . "\n";
+						
+						/* check versioning settings of twig */
+						if ($o_glob->TablesInformation[$o_subconstraintTwig->TableUUID]['Versioning'] == 100) {
+							$s_subTableRows .= '<td>' . $o_file->Major . $o_glob->Trunk->VersionDelimiter . $o_file->Minor . '</td>' . "\n";
+						}
+						
+						/* render info columns when configured */
+						if ($i_infoColumns == 10) {
+							$s_value = '-';
+							$this->ListViewRenderColumnValue($s_value, forestFormElement::DATETIMELOCAL, 'Created', $o_file, $o_file->fphp_Table . '_Created');
+							$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+							
+							$s_value = '-';
+							$this->ListViewRenderColumnValue($s_value, forestFormElement::TEXT, 'CreatedBy', $o_file, $o_file->fphp_Table . '_CreatedBy');
+							$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+						} else if ($i_infoColumns == 100) {
+							$s_value = '-';
+							$this->ListViewRenderColumnValue($s_value, forestFormElement::DATETIMELOCAL, 'Modified', $o_file, $o_file->fphp_Table . 'Modified');
+							$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+							
+							$s_value = '-';
+							$this->ListViewRenderColumnValue($s_value, forestFormElement::TEXT, 'ModifiedBy', $o_file, $o_file->fphp_Table . '_ModifiedBy');
+							$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+						} else if ($i_infoColumns == 1000) {
+							$s_value = '-';
+							$this->ListViewRenderColumnValue($s_value, forestFormElement::DATETIMELOCAL, 'Created', $o_file, $o_file->fphp_Table . '_Created');
+							$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+							
+							$s_value = '-';
+							$this->ListViewRenderColumnValue($s_value, forestFormElement::TEXT, 'CreatedBy', $o_file, $o_file->fphp_Table . '_CreatedBy');
+							$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+							
+							$s_value = '-';
+							$this->ListViewRenderColumnValue($s_value, forestFormElement::DATETIMELOCAL, 'Modified', $o_file, $o_file->fphp_Table . 'Modified');
+							$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+							
+							$s_value = '-';
+							$this->ListViewRenderColumnValue($s_value, forestFormElement::TEXT, 'ModifiedBy', $o_file, $o_file->fphp_Table . '_ModifiedBy');
+							$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+						}
 						
 						$s_options = '<span class="btn-group">' . "\n";
 						
@@ -2600,9 +2871,13 @@ abstract class forestBranch extends forestRootBranch {
 			$o_subconstraintTwig = new subconstraintTwig;
 			
 			if (! ($o_subconstraintTwig->GetRecord(array($o_glob->Temp->{'subConstraintKey'}))) ) {
+				$i_infoColumns = $o_glob->TablesInformation[$o_glob->Temp->{'subConstraintKey'}]['InfoColumns'];
+				$i_versioning = $o_glob->TablesInformation[$o_glob->Temp->{'subConstraintKey'}]['Versioning'];
 				$s_tableUUID = $o_glob->Temp->{'subConstraintKey'};
 			} else {
 				/* get value for info columns when configured */
+				$i_infoColumns = $o_glob->TablesInformation[$o_subconstraintTwig->TableUUID]['InfoColumns'];
+				$i_versioning = $o_glob->TablesInformation[$o_subconstraintTwig->TableUUID]['Versioning'];
 				$s_tableUUID = $o_subconstraintTwig->TableUUID;
 			}
 		}
@@ -2619,6 +2894,7 @@ abstract class forestBranch extends forestRootBranch {
 			$o_filesTwig = new filesTwig;
 			
 			$a_sqlAdditionalFilter = array(array('column' => 'ForeignUUID', 'value' => $o_originFile->UUID, 'operator' => '=', 'filterOperator' => 'AND'));
+			$a_sqlAdditionalSorts = array('Major' => false, 'Minor' => false);
 			$o_glob->Temp->Add($a_sqlAdditionalSorts, 'SQLAdditionalSorts');
 			$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
 			$o_files = $o_filesTwig->GetAllRecords(true);
@@ -2649,6 +2925,26 @@ abstract class forestBranch extends forestRootBranch {
 				/* list files of sub record */
 				$s_subTableHead = '';
 				$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortFile', 1) . '</th>' . "\n";
+				
+				/* check versioning settings of twig */
+				if ($o_glob->TablesInformation[$s_tableUUID]['Versioning'] == 100) {
+					$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortVersion', 1) . '</th>' . "\n";
+				}
+				
+				/* render info columns when configured */
+				if ($i_infoColumns == 10) {
+					$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortCreated', 1) . '</th>' . "\n";
+					$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortCreatedBy', 1) . '</th>' . "\n";
+				} else if ($i_infoColumns == 100) {
+					$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortModified', 1) . '</th>' . "\n";
+					$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortModifiedBy', 1) . '</th>' . "\n";
+				} else if ($i_infoColumns == 1000) {
+					$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortCreated', 1) . '</th>' . "\n";
+					$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortCreatedBy', 1) . '</th>' . "\n";
+					$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortModified', 1) . '</th>' . "\n";
+					$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortModifiedBy', 1) . '</th>' . "\n";
+				}
+				
 				$s_subTableHead .= '<th>' . $o_glob->GetTranslation('formSubOptions', 1) . '</th>' . "\n";
 				
 				$s_subTableRows = '';
@@ -2658,6 +2954,46 @@ abstract class forestBranch extends forestRootBranch {
 					$s_subTableRows .= '>' . "\n";
 						
 					$s_subTableRows .=  '<td>' . $o_file->DisplayName . '</td>' . "\n";
+					
+					/* check versioning settings of twig */
+					if ($o_glob->TablesInformation[$s_tableUUID]['Versioning'] == 100) {
+						$s_subTableRows .= '<td>' . $o_file->Major . $o_glob->Trunk->VersionDelimiter . $o_file->Minor . '</td>' . "\n";
+					}
+					
+					/* render info columns when configured */
+					if ($i_infoColumns == 10) {
+						$s_value = '-';
+						$this->ListViewRenderColumnValue($s_value, forestFormElement::DATETIMELOCAL, 'Created', $o_file, $o_file->fphp_Table . '_Created');
+						$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+						
+						$s_value = '-';
+						$this->ListViewRenderColumnValue($s_value, forestFormElement::TEXT, 'CreatedBy', $o_file, $o_file->fphp_Table . '_CreatedBy');
+						$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+					} else if ($i_infoColumns == 100) {
+						$s_value = '-';
+						$this->ListViewRenderColumnValue($s_value, forestFormElement::DATETIMELOCAL, 'Modified', $o_file, $o_file->fphp_Table . 'Modified');
+						$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+						
+						$s_value = '-';
+						$this->ListViewRenderColumnValue($s_value, forestFormElement::TEXT, 'ModifiedBy', $o_file, $o_file->fphp_Table . '_ModifiedBy');
+						$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+					} else if ($i_infoColumns == 1000) {
+						$s_value = '-';
+						$this->ListViewRenderColumnValue($s_value, forestFormElement::DATETIMELOCAL, 'Created', $o_file, $o_file->fphp_Table . '_Created');
+						$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+						
+						$s_value = '-';
+						$this->ListViewRenderColumnValue($s_value, forestFormElement::TEXT, 'CreatedBy', $o_file, $o_file->fphp_Table . '_CreatedBy');
+						$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+						
+						$s_value = '-';
+						$this->ListViewRenderColumnValue($s_value, forestFormElement::DATETIMELOCAL, 'Modified', $o_file, $o_file->fphp_Table . 'Modified');
+						$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+						
+						$s_value = '-';
+						$this->ListViewRenderColumnValue($s_value, forestFormElement::TEXT, 'ModifiedBy', $o_file, $o_file->fphp_Table . '_ModifiedBy');
+						$s_subTableRows .=  '<td><span>' . $s_value . '</span></td>' . "\n";
+					}
 					
 					$s_options = '<span class="btn-group">' . "\n";
 					
@@ -2682,6 +3018,27 @@ abstract class forestBranch extends forestRootBranch {
 					}
 					
 					$s_options .=  $s_value;
+					
+					if ( (!$p_b_readonly) && ($o_glob->TablesInformation[$s_tableUUID]['Versioning'] == 100) ) {
+						$a_parameters = $o_glob->URL->Parameters;
+						unset($a_parameters['newKey']);
+						unset($a_parameters['viewKey']);
+						unset($a_parameters['viewSubKey']);
+						unset($a_parameters['editKey']);
+						unset($a_parameters['editFileKey']);
+						unset($a_parameters['deleteKey']);
+						unset($a_parameters['editSubKey']);
+						unset($a_parameters['deleteSubKey']);
+						unset($a_parameters['deleteFileKey']);
+						unset($a_parameters['subConstraintKey']);
+						$a_parameters['editFileKey'] = $o_file->UUID;
+						$a_parameters['subConstraintKey'] = $s_tableUUID;
+						
+						if ($o_glob->Security->CheckUserPermission(null, 'restoreFile')) {
+							$s_options .=  '<a href="' . forestLink::Link($o_glob->URL->Branch, 'restoreFile', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnRestoreText', 1) . '"><span class="glyphicon glyphicon-repeat"></span></a>' . "\n";
+						}
+					}
+
 					
 					$s_options .= '</span>' . "\n";
 					$s_subTableRows .=  '<td>' . $s_options . '</td>' . "\n";
@@ -2782,6 +3139,22 @@ abstract class forestBranch extends forestRootBranch {
 				$this->Twig->HeadUUID = $_POST['sys_fphp_newKey'];
 				$this->Twig->JoinUUID = $_POST['sys_fphp_subconstraint_Lookup'];
 				
+				/* set values for info columns when configured */
+				$i_infoColumns = $o_glob->TablesInformation[$o_glob->HeadTwig->fphp_TableUUID]['InfoColumns'];
+				
+				if ($i_infoColumns == 10) {
+					$this->Twig->Created = new forestDateTime;
+					$this->Twig->CreatedBy = $o_glob->Security->UserUUID;
+				} else if ($i_infoColumns == 100) {
+					$this->Twig->Modified = new forestDateTime;
+					$this->Twig->ModifiedBy = $o_glob->Security->UserUUID;
+				} else if ($i_infoColumns == 1000) {
+					$this->Twig->Created = new forestDateTime;
+					$this->Twig->CreatedBy = $o_glob->Security->UserUUID;
+					$this->Twig->Modified = new forestDateTime;
+					$this->Twig->ModifiedBy = $o_glob->Security->UserUUID;
+				}
+				
 				if (method_exists($this, 'beforeNewSubAction')) {
 					$this->beforeNewSubAction();
 				}
@@ -2812,6 +3185,22 @@ abstract class forestBranch extends forestRootBranch {
 			} else {
 				/* check posted data for new record */
 				$this->TransferPOST_Twig();
+				
+				/* set values for info columns when configured */
+				$i_infoColumns = $o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['InfoColumns'];
+				
+				if ($i_infoColumns == 10) {
+					$this->Twig->Created = new forestDateTime;
+					$this->Twig->CreatedBy = $o_glob->Security->UserUUID;
+				} else if ($i_infoColumns == 100) {
+					$this->Twig->Modified = new forestDateTime;
+					$this->Twig->ModifiedBy = $o_glob->Security->UserUUID;
+				} else if ($i_infoColumns == 1000) {
+					$this->Twig->Created = new forestDateTime;
+					$this->Twig->CreatedBy = $o_glob->Security->UserUUID;
+					$this->Twig->Modified = new forestDateTime;
+					$this->Twig->ModifiedBy = $o_glob->Security->UserUUID;
+				}
 				
 				if (method_exists($this, 'beforeNewAction')) {
 					$this->beforeNewAction();
@@ -3128,6 +3517,17 @@ abstract class forestBranch extends forestRootBranch {
 				
 				$this->TransferPOST_Twig();
 				
+				/* set values for info columns when configured */
+				$i_infoColumns = $o_glob->TablesInformation[$o_glob->HeadTwig->fphp_TableUUID]['InfoColumns'];
+				
+				if ($i_infoColumns == 100) {
+					$this->Twig->Modified = new forestDateTime;
+					$this->Twig->ModifiedBy = $o_glob->Security->UserUUID;
+				} else if ($i_infoColumns == 1000) {
+					$this->Twig->Modified = new forestDateTime;
+					$this->Twig->ModifiedBy = $o_glob->Security->UserUUID;
+				}
+				
 				if (method_exists($this, 'beforeEditSubAction')) {
 					$this->beforeEditSubAction();
 				}
@@ -3176,6 +3576,17 @@ abstract class forestBranch extends forestRootBranch {
 				}
 				
 				$this->TransferPOST_Twig();
+				
+				/* set values for info columns when configured */
+				$i_infoColumns = $o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['InfoColumns'];
+				
+				if ($i_infoColumns == 100) {
+					$this->Twig->Modified = new forestDateTime;
+					$this->Twig->ModifiedBy = $o_glob->Security->UserUUID;
+				} else if ($i_infoColumns == 1000) {
+					$this->Twig->Modified = new forestDateTime;
+					$this->Twig->ModifiedBy = $o_glob->Security->UserUUID;
+				}
 				
 				if (method_exists($this, 'beforeEditAction')) {
 					$this->beforeEditAction();
@@ -3828,6 +4239,26 @@ abstract class forestBranch extends forestRootBranch {
 						$o_filesTwig->Name = $s_newFilename . '.' . $s_extension;
 						$o_filesTwig->DisplayName = $s_fileName;
 						
+						/* set values for info columns when configured */
+						$i_infoColumns = $o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['InfoColumns'];
+						
+						if ($o_glob->HeadTwig != null) {
+							$i_infoColumns = $o_glob->TablesInformation[$o_glob->HeadTwig->fphp_TableUUID]['InfoColumns'];
+						}
+						
+						if ($i_infoColumns == 10) {
+							$o_filesTwig->Created = new forestDateTime;
+							$o_filesTwig->CreatedBy = $o_glob->Security->UserUUID;
+						} else if ($i_infoColumns == 100) {
+							$o_filesTwig->Modified = new forestDateTime;
+							$o_filesTwig->ModifiedBy = $o_glob->Security->UserUUID;
+						} else if ($i_infoColumns == 1000) {
+							$o_filesTwig->Created = new forestDateTime;
+							$o_filesTwig->CreatedBy = $o_glob->Security->UserUUID;
+							$o_filesTwig->Modified = new forestDateTime;
+							$o_filesTwig->ModifiedBy = $o_glob->Security->UserUUID;
+						}
+						
 						$i_result = $o_filesTwig->InsertRecord();
 			
 						if ($i_result == -1) {
@@ -3867,6 +4298,26 @@ abstract class forestBranch extends forestRootBranch {
 					$o_filesTwig->ForeignUUID = $o_glob->Security->GenUUID();
 					$o_filesTwig->Name = $s_newFilename . '.' . $s_extension;
 					$o_filesTwig->DisplayName = $s_fileName;
+					
+					/* set values for info columns when configured */
+					$i_infoColumns = $o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['InfoColumns'];
+					
+					if ($o_glob->HeadTwig != null) {
+						$i_infoColumns = $o_glob->TablesInformation[$o_glob->HeadTwig->fphp_TableUUID]['InfoColumns'];
+					}
+					
+					if ($i_infoColumns == 10) {
+						$o_filesTwig->Created = new forestDateTime;
+						$o_filesTwig->CreatedBy = $o_glob->Security->UserUUID;
+					} else if ($i_infoColumns == 100) {
+						$o_filesTwig->Modified = new forestDateTime;
+						$o_filesTwig->ModifiedBy = $o_glob->Security->UserUUID;
+					} else if ($i_infoColumns == 1000) {
+						$o_filesTwig->Created = new forestDateTime;
+						$o_filesTwig->CreatedBy = $o_glob->Security->UserUUID;
+						$o_filesTwig->Modified = new forestDateTime;
+						$o_filesTwig->ModifiedBy = $o_glob->Security->UserUUID;
+					}
 					
 					$i_result = $o_filesTwig->InsertRecord();
 		
@@ -3916,40 +4367,50 @@ abstract class forestBranch extends forestRootBranch {
 						$o_filesTwig = new filesTwig;
 						
 						if ($o_glob->Temp->Exists($s_column . '_uploadFilesTwigUUID')) {
+							/* get versioning settings */
+							if ($o_glob->HeadTwig != null) {
+								$i_versioning = $o_glob->TablesInformation[$o_glob->HeadTwig->fphp_TableUUID]['Versioning'];
+							} else {
+								$i_versioning = $o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['Versioning'];
+							}
+							
 							if ($o_filesTwig->GetRecord(array($o_glob->Temp->{$s_column . '_uploadFilesTwigUUID'}))) {
 								$o_oldFilesTwig = new filesTwig;
 								
 								/* delete old file */
 								if ($o_glob->Temp->Exists($s_column . '_oldFilesTwigUUID')) {
 									if ($o_oldFilesTwig->GetRecord(array($o_glob->Temp->{$s_column . '_oldFilesTwigUUID'}))) {
-										$s_folder = substr(pathinfo($o_oldFilesTwig->Name, PATHINFO_FILENAME), 6, 2);
-										
-										$s_path = '';
-					
-										if (count($o_glob->URL->Branches) > 0) {
-											foreach($o_glob->URL->Branches as $s_value) {
-												$s_path .= $s_value . '/';
-											}
-										}
-										
-										$s_path .= $o_glob->URL->Branch . '/';
-										
-										$s_path = './trunk/' . $s_path . 'fphp_files/' . $s_folder . '/';
-										
-										if (is_dir($s_path)) {
-											if (file_exists($s_path . $o_oldFilesTwig->Name)) {
-												if (!(@unlink($s_path . $o_oldFilesTwig->Name))) {
-													throw new forestException(0x10001422, array($s_path . $o_oldFilesTwig->Name));
+										/* do not delete old file if versioning is activated for twig */
+										if ($i_versioning != 100) {
+											$s_folder = substr(pathinfo($o_oldFilesTwig->Name, PATHINFO_FILENAME), 6, 2);
+											
+											$s_path = '';
+						
+											if (count($o_glob->URL->Branches) > 0) {
+												foreach($o_glob->URL->Branches as $s_value) {
+													$s_path .= $s_value . '/';
 												}
 											}
-										}
-										
-										/* delete old file record */
-										$i_return = $o_oldFilesTwig->DeleteRecord();
-										
-										/* evaluate result */
-										if ($i_return <= 0) {
-											throw new forestException(0x10001423);
+											
+											$s_path .= $o_glob->URL->Branch . '/';
+											
+											$s_path = './trunk/' . $s_path . 'fphp_files/' . $s_folder . '/';
+											
+											if (is_dir($s_path)) {
+												if (file_exists($s_path . $o_oldFilesTwig->Name)) {
+													if (!(@unlink($s_path . $o_oldFilesTwig->Name))) {
+														throw new forestException(0x10001422, array($s_path . $o_oldFilesTwig->Name));
+													}
+												}
+											}
+											
+											/* delete old file record */
+											$i_return = $o_oldFilesTwig->DeleteRecord();
+											
+											/* evaluate result */
+											if ($i_return <= 0) {
+												throw new forestException(0x10001423);
+											}
 										}
 									}
 								}
@@ -4015,10 +4476,74 @@ abstract class forestBranch extends forestRootBranch {
 									throw new forestException(0x10001425, array($o_filesTwig->DisplayName));
 								}
 								
+								/* check if versioning is activated */
+								if ( ($i_versioning == 100) && (!$o_oldFilesTwig->IsEmpty()) ) {
+									/* assume checkout if old file record has checkout entry */
+									if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_oldFilesTwig->UUID), array('ForeignUUID'))) {
+										$o_checkoutTwig->ForeignUUID = $o_filesTwig->UUID;
+										
+										/* update checkout entry */
+										$i_result = $o_checkoutTwig->UpdateRecord();
+				
+										/* evaluate result */
+										if ($i_result == -1) {
+											throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+										}
+									}
+									
+									/* assume old version */
+									$o_filesTwig->Major = $o_oldFilesTwig->Major;
+									$o_filesTwig->Minor = $o_oldFilesTwig->Minor;
+									
+									/* increase new version */
+									/* if head record, current record or file record is checked out, increase minor version */
+									if ( ( ($o_glob->HeadTwig != null) && (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($this->Twig->HeadUUID), array('ForeignUUID'))) ) || (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($this->Twig->UUID), array('ForeignUUID'))) || (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_filesTwig->UUID), array('ForeignUUID'))) ) {
+										$o_filesTwig->Minor = $o_filesTwig->Minor + 1;
+									} else {
+										/* otherwise increase major version and reset minor version */
+										$o_filesTwig->Major = $o_filesTwig->Major + 1;
+										$o_filesTwig->Minor = 0;
+									}
+									
+									/* assume created fields and update modified fields */
+									$o_filesTwig->Created = $o_oldFilesTwig->Created;
+									$o_filesTwig->CreatedBy = $o_oldFilesTwig->CreatedBy;
+									$o_filesTwig->Modified = new forestDateTime;
+									$o_filesTwig->ModifiedBy = $o_glob->Security->UserUUID;
+									
+									/* update old version entry of old file record */
+									$o_oldFilesTwig->ForeignUUID = $o_filesTwig->UUID;
+									$i_result = $o_oldFilesTwig->UpdateRecord();
+			
+									/* evaluate result */
+									if ($i_result == -1) {
+										throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+									}
+									
+									/* get all files linked to old version entry */
+									$o_filesOldVersionsTwig = new filesTwig; 
+			
+									$a_sqlAdditionalFilter = array(array('column' => 'ForeignUUID', 'value' => $o_oldFilesTwig->UUID, 'operator' => '=', 'filterOperator' => 'AND'));
+									$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+									$o_files = $o_filesOldVersionsTwig->GetAllRecords(true);
+									$o_glob->Temp->Del('SQLAdditionalFilter');
+									
+									foreach ($o_files->Twigs as $o_file) {
+										/* update foreign uuid to new file record */
+										$o_file->ForeignUUID = $o_filesTwig->UUID;
+										$i_result = $o_file->UpdateRecord();
+			
+										/* evaluate result */
+										if ($i_result == -1) {
+											throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+										}
+									}
+								}
+								
 								/* append new file to current record */
 								$o_filesTwig->ForeignUUID = $this->Twig->UUID;
 								
-								/* update current file record */
+								/* update new version entry of current file record */
 								$i_result = $o_filesTwig->UpdateRecord();
 								
 								/* evaluate result */
@@ -4223,6 +4748,21 @@ abstract class forestBranch extends forestRootBranch {
 		$o_glob->Temp->Add( get($o_glob->URL->Parameters, 'editFileKey'), 'editFileKey' );
 		$o_glob->Temp->Add( get($o_glob->URL->Parameters, 'subConstraintKey'), 'subConstraintKey' );
 		
+		/* sub constraint key can be the uuid of the sub constraint or the table uuid */
+		if ($o_glob->Temp->{'subConstraintKey'} != null) {
+			/* query sub constraint if we have sub constraint key in url parameters */
+			$o_subconstraintTwig = new subconstraintTwig;
+			
+			if (! ($o_subconstraintTwig->GetRecord(array($o_glob->Temp->{'subConstraintKey'}))) ) {
+				$i_infoColumns = $o_glob->TablesInformation[$o_glob->Temp->{'subConstraintKey'}]['InfoColumns'];
+				$i_versioning = $o_glob->TablesInformation[$o_glob->Temp->{'subConstraintKey'}]['Versioning'];
+			} else {
+				/* get value for info columns when configured */
+				$i_infoColumns = $o_glob->TablesInformation[$o_subconstraintTwig->TableUUID]['InfoColumns'];
+				$i_versioning = $o_glob->TablesInformation[$o_subconstraintTwig->TableUUID]['Versioning'];
+			}
+		}
+		
 		$this->HandleFormKey($o_glob->URL->Branch . $o_glob->URL->Action . 'Form');
 		
 		if ($o_glob->IsPost) {
@@ -4275,26 +4815,28 @@ abstract class forestBranch extends forestRootBranch {
 					$this->beforeReplaceFileAction();
 				}
 				
-				
-				/* delete old file */
-				$s_folder = substr(pathinfo($this->Twig->Name, PATHINFO_FILENAME), 6, 2);
-				
-				$s_path = '';
+				/* check if versioning is activated */
+				if ($i_versioning != 100) {
+					/* delete old file */
+					$s_folder = substr(pathinfo($this->Twig->Name, PATHINFO_FILENAME), 6, 2);
+					
+					$s_path = '';
 
-				if (count($o_glob->URL->Branches) > 0) {
-					foreach($o_glob->URL->Branches as $s_value) {
-						$s_path .= $s_value . '/';
+					if (count($o_glob->URL->Branches) > 0) {
+						foreach($o_glob->URL->Branches as $s_value) {
+							$s_path .= $s_value . '/';
+						}
 					}
-				}
-				
-				$s_path .= $o_glob->URL->Branch . '/';
-				
-				$s_path = './trunk/' . $s_path . 'fphp_files/' . $s_folder . '/';
-				
-				if (is_dir($s_path)) {
-					if (file_exists($s_path . $this->Twig->Name)) {
-						if (!(@unlink($s_path . $this->Twig->Name))) {
-							throw new forestException(0x10001422, array($s_path . $this->Twig->Name));
+					
+					$s_path .= $o_glob->URL->Branch . '/';
+					
+					$s_path = './trunk/' . $s_path . 'fphp_files/' . $s_folder . '/';
+					
+					if (is_dir($s_path)) {
+						if (file_exists($s_path . $this->Twig->Name)) {
+							if (!(@unlink($s_path . $this->Twig->Name))) {
+								throw new forestException(0x10001422, array($s_path . $this->Twig->Name));
+							}
 						}
 					}
 				}
@@ -4342,9 +4884,66 @@ abstract class forestBranch extends forestRootBranch {
 					throw new forestException(0x10001425, array($s_fileName));
 				}
 				
+				/* check if versioning is activated */
+				if ($i_versioning == 100) {
+					/* create old version entry of current file record */
+					$o_oldFile = new filesTwig;
+					$o_oldFile->BranchId = $this->Twig->BranchId;
+					$o_oldFile->ForeignUUID = $this->Twig->UUID;
+					$o_oldFile->Name = $this->Twig->Name;
+					$o_oldFile->DisplayName = $this->Twig->DisplayName;
+					$o_oldFile->Major = $this->Twig->Major;
+					$o_oldFile->Minor = $this->Twig->Minor;
+					
+					/* set values for info columns when configured */
+					if ($i_infoColumns == 10) {
+						$o_oldFile->Created = $this->Twig->Created;
+						$o_oldFile->CreatedBy = $this->Twig->CreatedBy;
+					} else if ($i_infoColumns == 100) {
+						$o_oldFile->Modified = $this->Twig->Modified;
+						$o_oldFile->ModifiedBy = $this->Twig->ModifiedBy;
+					} else if ($i_infoColumns == 1000) {
+						$o_oldFile->Created = $this->Twig->Created;
+						$o_oldFile->CreatedBy = $this->Twig->CreatedBy;
+						$o_oldFile->Modified = $this->Twig->Modified;
+						$o_oldFile->ModifiedBy = $this->Twig->ModifiedBy;
+					}
+					
+					/* insert old version entry of current file record */
+					$i_result = $o_oldFile->InsertRecord();
+					
+					/* evaluate result */
+					if ($i_result == -1) {
+						throw new forestException(0x10001403, array($o_glob->Temp->{'UniqueIssue'}));
+					} else if ($i_result == 0) {
+						throw new forestException(0x10001402);
+					}
+				}
+				
 				/* change record data */
 				$this->Twig->Name = $s_newFilename;
 				$this->Twig->DisplayName = $s_fileName;
+				
+				/* check if versioning is activated */
+				if ($i_versioning == 100) {
+					/* if file or superordinate elements are checked out, increase minor version */
+					if ( (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($this->Twig->UUID), array('ForeignUUID'))) || ($b_superordinateCheckout) ) {
+						$this->Twig->Minor = $this->Twig->Minor + 1;
+					} else {
+						/* otherwise increase major version and reset minor version */
+						$this->Twig->Major = $this->Twig->Major + 1;
+						$this->Twig->Minor = 0;
+					}
+				}
+				
+				/* set values for info columns when configured */
+				if ($i_infoColumns == 100) {
+					$this->Twig->Modified = new forestDateTime;
+					$this->Twig->ModifiedBy = $o_glob->Security->UserUUID;
+				} else if ($i_infoColumns == 1000) {
+					$this->Twig->Modified = new forestDateTime;
+					$this->Twig->ModifiedBy = $o_glob->Security->UserUUID;
+				}
 				
 				/* edit file recrod */
 				$i_result = $this->Twig->UpdateRecord();
@@ -4447,6 +5046,211 @@ abstract class forestBranch extends forestRootBranch {
 				$o_hidden = new forestFormElement(forestFormElement::HIDDEN);
 				$o_hidden->Id = 'sys_fphp_editFileKey';
 				$o_hidden->Value = $o_glob->Temp->{'editFileKey'};
+				$o_glob->PostModalForm->FormElements->Add($o_hidden);
+			}
+		}
+		
+		if (isset($this->KeepFilter)) {
+			if ($this->KeepFilter->value) {
+				if ($o_glob->Security->SessionData->Exists('last_filter')) {
+					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
+				}
+			}
+		}
+		
+		$this->Twig = $o_glob->HeadTwig;
+		$this->StandardView = forestBranch::DETAIL; /* because it only makes sense if we stay in detail view, when we open modal read only form for sub record */
+		$this->SetNextAction('init');
+	}
+	
+	/* handle restore file record action */
+	protected function restoreFileAction() {
+		$o_glob = forestGlobals::init();
+		$o_glob->HeadTwig = $this->Twig;
+		$this->Twig = new filesTwig;
+		
+		$o_glob->Temp->Add( get($o_glob->URL->Parameters, 'editFileKey'), 'editFileKey' );
+		$o_glob->Temp->Add( get($o_glob->URL->Parameters, 'subConstraintKey'), 'subConstraintKey' );
+		
+		/* sub constraint key can be the uuid of the sub constraint or the table uuid */
+		if ($o_glob->Temp->{'subConstraintKey'} != null) {
+			/* query sub constraint if we have sub constraint key in url parameters */
+			$o_subconstraintTwig = new subconstraintTwig;
+			
+			if (! ($o_subconstraintTwig->GetRecord(array($o_glob->Temp->{'subConstraintKey'}))) ) {
+				$i_infoColumns = $o_glob->TablesInformation[$o_glob->Temp->{'subConstraintKey'}]['InfoColumns'];
+				$i_versioning = $o_glob->TablesInformation[$o_glob->Temp->{'subConstraintKey'}]['Versioning'];
+			} else {
+				/* get value for info columns when configured */
+				$i_infoColumns = $o_glob->TablesInformation[$o_subconstraintTwig->TableUUID]['InfoColumns'];
+				$i_versioning = $o_glob->TablesInformation[$o_subconstraintTwig->TableUUID]['Versioning'];
+			}
+		}
+		
+		$this->HandleFormKey($o_glob->URL->Branch . $o_glob->URL->Action . 'Form');
+		
+		if ($o_glob->IsPost) {
+			if ( (array_key_exists('sys_fphp_editFileKey', $_POST)) && ($i_versioning == 100) ) {
+				$o_glob->Base->{$o_glob->ActiveBase}->ManualTransaction();
+				
+				/* query sub record */
+				if (! ($this->Twig->GetRecord(array($_POST['sys_fphp_editFileKey']))) ) {
+					throw new forestException(0x10001401, array($this->Twig->fphp_Table));
+				}
+				
+				/* query root file record */
+				$o_rootFile = new filesTwig;
+				
+				if (! ($o_rootFile->GetRecord(array($this->Twig->ForeignUUID))) ) {
+					throw new forestException(0x10001401, array($o_rootFile->fphp_Table));
+				}
+				
+				$o_subrecord = new subrecordsTwig;
+				
+				if (($o_subrecord->GetRecord(array($o_rootFile->ForeignUUID))) ) {
+					if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_subrecord->HeadUUID), array('ForeignUUID'))) {
+						/* check if user is the same user who has checked out the record */
+						if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+							throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+						}
+					}
+					
+					if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_subrecord->UUID), array('ForeignUUID'))) {
+						/* check if user is the same user who has checked out the record */
+						if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+							throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+						}
+					}
+				}
+				
+				if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_rootFile->ForeignUUID), array('ForeignUUID'))) {
+					/* check if user is the same user who has checked out the record */
+					if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+						throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+					}
+				}
+				
+				if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_rootFile->UUID), array('ForeignUUID'))) {
+					/* check if user is the same user who has checked out the record */
+					if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+						throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+					}
+				}
+				
+				if (method_exists($this, 'beforeRestoreFileAction')) {
+					$this->beforeRestoreFileAction();
+				}
+				
+				/* look for file versions which are higher than the file record we want to restore */
+				$o_filesTwig = new filesTwig; 
+				
+				$a_sqlAdditionalFilter = array(
+					array('column' => 'UUID', 'value' => $this->Twig->UUID, 'operator' => '<>', 'filterOperator' => 'AND'),
+					array('column' => 'ForeignUUID', 'value' => $this->Twig->ForeignUUID, 'operator' => '=', 'filterOperator' => 'AND'),
+					array('column' => 'Major', 'value' => $this->Twig->Major, 'operator' => '>', 'filterOperator' => 'AND'),
+					array('column' => 'Major', 'value' => $this->Twig->Major, 'operator' => '=', 'filterOperator' => 'OR'),
+					array('column' => 'Minor', 'value' => $this->Twig->Minor, 'operator' => '>', 'filterOperator' => 'AND')
+				);
+				$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+				$o_files = $o_filesTwig->GetAllRecords(true);
+				$o_glob->Temp->Del('SQLAdditionalFilter');
+				
+				foreach ($o_files->Twigs as $o_file) {
+					/* delete file */
+					$this->executeDeleteFileRecord($o_file, true, false);
+				}
+				
+				/* delete root file */
+				$this->executeDeleteFileRecord($o_rootFile, false, false);
+				
+				/* delete file record */
+				$i_return = $this->Twig->DeleteRecord();
+				
+				/* evaluate the result */
+				if ($i_return <= 0) {
+					throw new forestException(0x10001423);
+				}
+				
+				/* save information of file record which we want to restore in root file */
+				$o_rootFile->Name = $this->Twig->Name;
+				$o_rootFile->DisplayName = $this->Twig->DisplayName;
+				$o_rootFile->Major = $this->Twig->Major;
+				$o_rootFile->Minor = $this->Twig->Minor;
+				$o_rootFile->Created = $this->Twig->Created;
+				$o_rootFile->CreatedBy = $this->Twig->CreatedBy;
+				$o_rootFile->Modified = $this->Twig->Modified;
+				$o_rootFile->ModifiedBy = $this->Twig->ModifiedBy;
+				
+				/* edit file recrod */
+				$i_result = $o_rootFile->UpdateRecord(true);
+				
+				/* evaluate result */
+				if ($i_result == -1) {
+					throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+				} else if ($i_result == 1) {
+					if (method_exists($this, 'afterRestoreFileAction')) {
+						$this->afterRestoreFileAction();
+					}
+					
+					$o_glob->SystemMessages->Add(new forestException(0x1000143D));
+				}
+			}
+		} else {
+			if ( ($o_glob->Temp->Exists('editFileKey')) && ($o_glob->Temp->{'editFileKey'} != null) && ($i_versioning == 100) ) {
+				/* query file record */
+				if (! ($this->Twig->GetRecord(array($o_glob->Temp->{'editFileKey'}))) ) {
+					throw new forestException(0x10001401, array($this->Twig->fphp_Table));
+				}
+				
+				/* query root file record */
+				$o_rootFile = new filesTwig;
+				
+				if (! ($o_rootFile->GetRecord(array($this->Twig->ForeignUUID))) ) {
+					throw new forestException(0x10001401, array($o_rootFile->fphp_Table));
+				}
+				
+				$o_subrecord = new subrecordsTwig;
+				
+				if (($o_subrecord->GetRecord(array($o_rootFile->ForeignUUID))) ) {
+					if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_subrecord->HeadUUID), array('ForeignUUID'))) {
+						/* check if user is the same user who has checked out the record */
+						if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+							throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+						}
+					}
+					
+					if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_subrecord->UUID), array('ForeignUUID'))) {
+						/* check if user is the same user who has checked out the record */
+						if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+							throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+						}
+					}
+				}
+				
+				if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_rootFile->ForeignUUID), array('ForeignUUID'))) {
+					/* check if user is the same user who has checked out the record */
+					if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+						throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+					}
+				}
+				
+				if (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($o_rootFile->UUID), array('ForeignUUID'))) {
+					/* check if user is the same user who has checked out the record */
+					if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+						throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+					}
+				}
+				
+				/* create modal confirmation form for restore file record */
+				$o_glob->PostModalForm = new forestForm($this->Twig);
+				$s_title = $o_glob->GetTranslation('RestoreFileModalTitle', 1);
+				$s_description = '<b>' . forestStringLib::sprintf2($o_glob->GetTranslation('RestoreFileModalDescription', 1), array($this->Twig->DisplayName, $this->Twig->Major . $o_glob->Trunk->VersionDelimiter . $this->Twig->Minor)) . '</b>';
+				$o_glob->PostModalForm->CreateDeleteModalForm($this->Twig, $s_title, $s_description);
+				
+				/* create hidden element to store file UUID */
+				$o_hidden = new forestFormElement(forestFormElement::HIDDEN);
+				$o_hidden->Id = 'sys_fphp_editFileKey';
+				$o_hidden->Value = $this->Twig->UUID;
 				$o_glob->PostModalForm->FormElements->Add($o_hidden);
 			}
 		}
@@ -4715,6 +5519,20 @@ abstract class forestBranch extends forestRootBranch {
 						foreach ($o_files->Twigs as $o_file) {
 							/* delete checkout of file */
 							$this->executeDeleteCheckoutRecord($o_file);
+							
+							/* update major version, if minor version > 0 */
+							if ($o_file->Minor > 0) {
+								$o_file->Major = $o_file->Major + 1;
+								$o_file->Minor = 0;
+								
+								/* edit file recrod */
+								$i_result = $o_file->UpdateRecord();
+								
+								/* evaluate result */
+								if ($i_result == -1) {
+									throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+								}
+							}
 						}
 					}
 					
@@ -4729,6 +5547,20 @@ abstract class forestBranch extends forestRootBranch {
 					foreach ($o_files->Twigs as $o_file) {
 						/* delete checkout of file */
 						$this->executeDeleteCheckoutRecord($o_file);
+						
+						/* update major version, if minor version > 0 */
+						if ($o_file->Minor > 0) {
+							$o_file->Major = $o_file->Major + 1;
+							$o_file->Minor = 0;
+							
+							/* edit file recrod */
+							$i_result = $o_file->UpdateRecord();
+							
+							/* evaluate result */
+							if ($i_result == -1) {
+								throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+							}
+						}
 					}
 				}
 				
@@ -4745,6 +5577,37 @@ abstract class forestBranch extends forestRootBranch {
 					foreach ($o_files->Twigs as $o_file) {
 						/* delete checkout of file */
 						$this->executeDeleteCheckoutRecord($o_file);
+						
+						/* update major version, if minor version > 0 */
+						if ($o_file->Minor > 0) {
+							$o_file->Major = $o_file->Major + 1;
+							$o_file->Minor = 0;
+							
+							/* edit file recrod */
+							$i_result = $o_file->UpdateRecord();
+							
+							/* evaluate result */
+							if ($i_result == -1) {
+								throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+							}
+						}
+					}
+				}
+				
+				/* if checked in element is a file */
+				if (($o_file = new filesTwig)->GetRecord(array($p_s_recordUUID))) {
+					/* update major version, if minor version > 0 */
+					if ($o_file->Minor > 0) {
+						$o_file->Major = $o_file->Major + 1;
+						$o_file->Minor = 0;
+						
+						/* edit file recrod */
+						$i_result = $o_file->UpdateRecord();
+						
+						/* evaluate result */
+						if ($i_result == -1) {
+							throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+						}
 					}
 				}
 			}

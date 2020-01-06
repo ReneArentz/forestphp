@@ -10,6 +10,12 @@ class filesTwig extends forestTwig {
 	private $ForeignUUID;
 	private $Name;
 	private $DisplayName;
+	private $Major;
+	private $Minor;
+	private $Created;
+	private $CreatedBy;
+	private $Modified;
+	private $ModifiedBy;
 	
 	/* Properties */
 	
@@ -22,6 +28,12 @@ class filesTwig extends forestTwig {
 		$this->ForeignUUID = new forestString;
 		$this->Name = new forestString;
 		$this->DisplayName = new forestString;
+		$this->Major = new forestInt(1);
+		$this->Minor = new forestInt;
+		$this->Created = new forestObject('forestDateTime');
+		$this->CreatedBy = new forestString;
+		$this->Modified = new forestObject('forestDateTime');
+		$this->ModifiedBy = new forestString;
 		
 		/* forestTwig system fields */
 		$this->fphp_Table->value = 'sys_fphp_files';

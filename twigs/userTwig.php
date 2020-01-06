@@ -6,6 +6,10 @@ class userTwig extends forestTwig {
 	
 	private $Id;
 	private $UUID;
+	private $Created;
+	private $CreatedBy;
+	private $Modified;
+	private $ModifiedBy;
 	private $User;
 	private $Password;
 	private $Locked;
@@ -19,6 +23,10 @@ class userTwig extends forestTwig {
 	protected function init() {
 		$this->Id = new forestNumericString(1);
 		$this->UUID = new forestString;
+		$this->Created = new forestObject('forestDateTime');
+		$this->CreatedBy = new forestString;
+		$this->Modified = new forestObject('forestDateTime');
+		$this->ModifiedBy = new forestString;
 		$this->User = new forestString;
 		$this->Password = new forestString;
 		$this->Locked = new forestBool;

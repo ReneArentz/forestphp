@@ -66,6 +66,7 @@ INSERT INTO `sys_fphp_action` (`Id`, `BranchId`, `Name`) VALUES
 (30,	0,	'newUnique'),
 (40,	0,	'newValidationRule'),
 (49,	0,	'replaceFile'),
+(106,	0,	'restoreFile'),
 (56,	0,	'rootMenu'),
 (55,	0,	'signUp'),
 (21,	0,	'transferTwig'),
@@ -73,6 +74,7 @@ INSERT INTO `sys_fphp_action` (`Id`, `BranchId`, `Name`) VALUES
 (2,	0,	'view'),
 (20,	0,	'viewBranch'),
 (48,	0,	'viewFiles'),
+(103,	0,	'viewFilesHistory'),
 (16,	0,	'viewTwig'),
 (39,	0,	'viewTwigField'),
 (52,	1,	'init');
@@ -125,7 +127,7 @@ CREATE TABLE `sys_fphp_checkout` (
   PRIMARY KEY (`Id`),
   UNIQUE KEY `uuid` (`UUID`),
   UNIQUE KEY `unique` (`ForeignUUID`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 
 
 DROP TABLE IF EXISTS `sys_fphp_files`;
@@ -136,10 +138,16 @@ CREATE TABLE `sys_fphp_files` (
   `ForeignUUID` varchar(36) NOT NULL,
   `Name` varchar(255) NOT NULL,
   `DisplayName` varchar(255) DEFAULT NULL,
+  `Major` smallint(6) NOT NULL,
+  `Minor` smallint(6) NOT NULL,
+  `Created` timestamp NULL DEFAULT NULL,
+  `CreatedBy` varchar(36) DEFAULT NULL,
+  `Modified` timestamp NULL DEFAULT NULL,
+  `ModifiedBy` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`Id`),
   UNIQUE KEY `uuid` (`UUID`),
-  UNIQUE KEY `unique` (`BranchId`,`ForeignUUID`,`Name`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+  UNIQUE KEY `unique` (`BranchId`,`ForeignUUID`,`Name`,`Major`,`Minor`)
+) ENGINE=InnoDB AUTO_INCREMENT=57 DEFAULT CHARSET=latin1;
 
 
 DROP TABLE IF EXISTS `sys_fphp_forestdata`;
@@ -202,9 +210,9 @@ INSERT INTO `sys_fphp_formelement` (`Id`, `UUID`, `Name`, `JSONEncodedSettings`)
 (24,	'ac2447f7-4717-11e9-8210-1062e50d1fcb',	'richtext',	NULL),
 (25,	'ac24a5bd-4717-11e9-8210-1062e50d1fcb',	'description',	'{\r\n				\"FormGroupClass\" : \"NULL\",\r\n				\"Label\" : \"NULL\",\r\n				\"LabelClass\" : \"NULL\",\r\n				\"LabelFor\" : \"NULL\",\r\n				\"FormElementClass\" : \"NULL\",\r\n				\r\n				\"Class\" : \"NULL\",\r\n				\"Description\" : \"NULL\",\r\n				\"DescriptionClass\" : \"NULL\",\r\n				\"Disabled\" : false,\r\n				\"Id\" : \"NULL\",\r\n				\"Name\" : \"NULL\",\r\n				\"AutoFocus\" : false,\r\n				\"Required\" : false,\r\n				\"Style\" : \"NULL\",\r\n				\"Value\" : \"NULL\",\r\n				\"ValMessage\" : \"NULL\"\r\n			}'),
 (26,	'ac24f45b-4717-11e9-8210-1062e50d1fcb',	'button',	'{\r\n				\"FormGroupClass\" : \"NULL\",\r\n				\"Label\" : \"NULL\",\r\n				\"LabelClass\" : \"NULL\",\r\n				\"LabelFor\" : \"NULL\",\r\n				\"FormElementClass\" : \"NULL\",\r\n				\r\n				\"Class\" : \"NULL\",\r\n				\"Description\" : \"NULL\",\r\n				\"DescriptionClass\" : \"NULL\",\r\n				\"Disabled\" : false,\r\n				\"Id\" : \"NULL\",\r\n				\"Name\" : \"NULL\",\r\n				\"AutoFocus\" : false,\r\n				\"Required\" : false,\r\n				\"Style\" : \"NULL\",\r\n				\"Value\" : \"NULL\",\r\n				\"ValMessage\" : \"NULL\",\r\n				\r\n				\"Accept\" : \"NULL\",\r\n				\"AutoComplete\" : true,\r\n				\"Capture\" : \"NULL\",\r\n				\"Dirname\" : \"NULL\",\r\n				\"List\" : \"NULL\",\r\n				\"Max\" : \"NULL\",\r\n				\"Min\" : \"NULL\",\r\n				\"Multiple\" : false,\r\n				\"Options\" : {},\r\n				\"Pattern\" : \"NULL\",\r\n				\"PatternTitle\" : \"NULL\",\r\n				\"Placeholder\" : \"NULL\",\r\n				\"Readonly\" : false,\r\n				\"Size\" : 0,\r\n				\"Step\" : 0,\r\n				\r\n				\"Form\" : \"NULL\",\r\n				\"FormAction\" : \"NULL\",\r\n				\"FormEnctype\" : \"NULL\",\r\n				\"FormMethod\" : \"NULL\",\r\n				\"FormTarget\" : \"NULL\",\r\n				\"FormNoValidate\" : false,\r\n				\r\n				\"Type\" : \"NULL\",\r\n				\"Data\" : \"NULL\",\r\n				\"ButtonText\" : \"NULL\",\r\n				\"NoFormGroup\" : \"NULL\",\r\n				\"WrapSpanClass\" : \"NULL\"\r\n			}'),
-(27,	'f2b8a6a0-495b-11e9-a835-1062e50d1fcb',	'submit',	'{\r\n	\"Class\" : \"btn btn-success btn-default pull-right\",\r\n	\"Id\" : \"sys_fphp_SubmitStandard\",\r\n	\"ButtonText\" : \"<span class=\\\"glyphicon glyphicon-ok\\\"></span> #001.formSubmit#\",\r\n	\"NoFormGroup\" : true\r\n}'),
+(27,	'f2b8a6a0-495b-11e9-a835-1062e50d1fcb',	'submit',	'{\r\n	\"Class\" : \"btn btn-success btn-default pull-right\",\r\n	\"Id\" : \"sys_fphp_SubmitStandard\",\r\n	\"ButtonText\" : \"<span class=\\\"glyphicon glyphicon-ok\\\"></span> #001.formSubmit#\",\r\n	\"NoFormGroup\" : true,\r\n	\"Disabled\" : \"true\"\r\n}'),
 (28,	'f87dc690-495b-11e9-a835-1062e50d1fcb',	'cancel',	'{\r\n	\"Class\" : \"btn btn-danger btn-default pull-right\",\r\n	\"Id\" : \"sys_fphp_CancelStandard\",\r\n	\"Style\" : \"margin-left: 10px;\",\r\n	\"Data\" : \"dismiss=\\\"modal\\\"\",\r\n	\"ButtonText\" : \"<span class=\\\"glyphicon glyphicon-remove\\\"></span> #001.formCancel#\",\r\n	\"NoFormGroup\" : true\r\n}'),
-(29,	'8f08df6d-4a31-11e9-9584-1062e50d1fcb',	'yes',	'{\r\n	\"Class\" : \"btn btn-success btn-default pull-right\",\r\n	\"Id\" : \"sys_fphp_SubmitStandard\",\r\n	\"ButtonText\" : \"<span class=\\\"glyphicon glyphicon-ok\\\"></span> #001.formYes#\",\r\n	\"NoFormGroup\" : true\r\n}'),
+(29,	'8f08df6d-4a31-11e9-9584-1062e50d1fcb',	'yes',	'{\r\n	\"Class\" : \"btn btn-success btn-default pull-right\",\r\n	\"Id\" : \"sys_fphp_SubmitStandard\",\r\n	\"ButtonText\" : \"<span class=\\\"glyphicon glyphicon-ok\\\"></span> #001.formYes#\",\r\n	\"NoFormGroup\" : true,\r\n	\"Disabled\" : \"true\"\r\n}'),
 (30,	'999d4c71-4a31-11e9-9584-1062e50d1fcb',	'no',	'{\r\n	\"Class\" : \"btn btn-danger btn-default pull-right\",\r\n	\"Id\" : \"sys_fphp_CancelStandard\",\r\n	\"Style\" : \"margin-left: 10px;\",\r\n	\"Data\" : \"dismiss=\\\"modal\\\"\",\r\n	\"ButtonText\" : \"<span class=\\\"glyphicon glyphicon-remove\\\"></span> #001.formNo#\",\r\n	\"NoFormGroup\" : true\r\n}'),
 (31,	'3bb71d43-4ca4-11e9-bc30-1062e50d1fcb',	'lookup',	'{\r\n				\"FormGroupClass\" : \"NULL\",\r\n				\"Label\" : \"NULL\",\r\n				\"LabelClass\" : \"NULL\",\r\n				\"LabelFor\" : \"NULL\",\r\n				\"FormElementClass\" : \"NULL\",\r\n				\r\n				\"Class\" : \"NULL\",\r\n				\"Description\" : \"NULL\",\r\n				\"DescriptionClass\" : \"NULL\",\r\n				\"Disabled\" : false,\r\n				\"Id\" : \"NULL\",\r\n				\"Name\" : \"NULL\",\r\n				\"AutoFocus\" : false,\r\n				\"Required\" : false,\r\n				\"Style\" : \"NULL\",\r\n				\"Value\" : \"NULL\",\r\n				\"ValMessage\" : \"NULL\",\r\n				\r\n				\"Multiple : false,	\r\n				\"Options : {},\r\n				\"Size : 1,\r\n				\"Data : \"NULL\"\r\n			}'),
 (32,	'0e0e77c8-5543-11e9-b1d7-1062e50d1fcb',	'captcha',	'{\n	\"Label\" : \"#001.formCaptchaLabel#\",\n	\"Id\" : \"fphp_captcha\",\n	\"Size\" : 8,\n	\"ValMessage\" : \"#001.formCaptchaValMessage#\",\n	\"Placeholder\" : \"#001.formCaptchaPlaceholder#\",\n\n				\"FormGroupClass\" : \"NULL\",\n				\"LabelClass\" : \"NULL\",\n				\"LabelFor\" : \"NULL\",\n				\"FormElementClass\" : \"NULL\",\n				\n				\"Class\" : \"NULL\",\n				\"Description\" : \"NULL\",\n				\"DescriptionClass\" : \"NULL\",\n				\"Disabled\" : false,\n				\"Name\" : \"NULL\",\n				\"AutoFocus\" : false,\n				\"Required\" : false,\n				\"Style\" : \"NULL\",\n				\"Value\" : \"NULL\",\n				\n				\"Accept\" : \"NULL\",\n				\"AutoComplete\" : true,\n				\"Capture\" : \"NULL\",\n				\"Dirname\" : \"NULL\",\n				\"List\" : \"NULL\",\n				\"Max\" : \"NULL\",\n				\"Min\" : \"NULL\",\n				\"Multiple\" : false,\n				\"Options\" : {},\n				\"Pattern\" : \"NULL\",\n				\"PatternTitle\" : \"NULL\",\n				\"Readonly\" : false,\n				\"Step\" : 0,\n				\n				\"Form\" : \"NULL\",\n				\"FormAction\" : \"NULL\",\n				\"FormEnctype\" : \"NULL\",\n				\"FormMethod\" : \"NULL\",\n				\"FormTarget\" : \"NULL\",\n				\"FormNoValidate\" : false\n			}'),
@@ -365,7 +373,7 @@ CREATE TABLE `sys_fphp_formkey` (
   `FormId` varchar(255) NOT NULL,
   PRIMARY KEY (`Id`),
   UNIQUE KEY `unqiue` (`UUID`,`SessionUUID`,`Timestamp`,`FormId`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=206 DEFAULT CHARSET=latin1;
 
 
 DROP TABLE IF EXISTS `sys_fphp_language`;
@@ -389,85 +397,95 @@ CREATE TABLE `sys_fphp_permission` (
   `Id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `UUID` varchar(36) NOT NULL,
   `Name` varchar(255) DEFAULT NULL,
+  `Created` timestamp NULL DEFAULT NULL,
+  `CreatedBy` varchar(36) DEFAULT NULL,
+  `Modified` timestamp NULL DEFAULT NULL,
+  `ModifiedBy` varchar(36) DEFAULT NULL,
   `Branch` varchar(255) DEFAULT NULL,
   `Action` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`Id`),
   UNIQUE KEY `UUID` (`UUID`)
 ) ENGINE=InnoDB AUTO_INCREMENT=329 DEFAULT CHARSET=latin1;
 
-INSERT INTO `sys_fphp_permission` (`Id`, `UUID`, `Name`, `Branch`, `Action`) VALUES
-(5,	'2410ff1b-efb8-7046-9b77-3c9535372836',	'Read',	'0',	'1'),
-(6,	'787a15d2-9d73-9a3e-a607-fd54be1688f2',	'View',	'0',	'2'),
-(7,	'95ebb17c-fa3b-a6f6-f1ac-364f21a0e1f0',	'New',	'0',	'3'),
-(8,	'e4d817e6-06da-4ac4-797c-ec9b471a2d76',	'Edit',	'0',	'4'),
-(9,	'4fb46522-37cb-fcd8-f366-effff96a207f',	'Delete',	'0',	'5'),
-(10,	'd6000326-a70d-57e0-fdd8-a36708d927a7',	'Move Up',	'0',	'6'),
-(11,	'2d4a9a9d-9fa5-ce62-bf5c-db764697f533',	'Move Down',	'0',	'7'),
-(12,	'e333798c-21ec-e958-4b9b-05e1f1c60a2e',	'fphp Upload',	'0',	'8'),
-(13,	'1c7d48de-ef28-3c3c-80ef-e28f5e6fff7c',	'fphp Upload Delete',	'0',	'9'),
-(14,	'81be3044-3e7a-31b5-c2b0-0fa3aae907a1',	'fphp Captcha',	'0',	'10'),
-(15,	'62a3b9a8-b927-f338-883e-08386c2b4f63',	'fphp Image Thumbnail',	'0',	'11'),
-(16,	'b2a6569c-221c-7f02-b42d-3172aad0c68a',	'New Branch',	'0',	'12'),
-(17,	'b95ea3bd-0673-6d5a-b6df-9d877e9a5aef',	'Edit Branch',	'0',	'13'),
-(18,	'11ff1c74-c6c9-deff-e879-d7a9a490ef37',	'Delete Branch',	'0',	'14'),
-(19,	'46083024-94d6-b58e-8aeb-fd290ac0bb98',	'New Twig',	'0',	'15'),
-(20,	'36b09529-232d-c3a5-71b2-6d57c456acda',	'View Twig',	'0',	'16'),
-(21,	'2610a13d-85c7-1fc6-ba72-ddd3e8930f9b',	'Edit Twig',	'0',	'17'),
-(22,	'55d6b907-43e6-3ce3-1866-bd6df567f47d',	'Truncate Twig',	'0',	'18'),
-(23,	'ff42c95c-f0fa-6eda-46fc-4c0437c61021',	'Delete Twig',	'0',	'19'),
-(24,	'6920c780-bebb-ca20-faa7-b530911f8a77',	'View Branch',	'0',	'20'),
-(25,	'96b2c765-2065-a813-5641-916ce05357b0',	'Transfer Twig',	'0',	'21'),
-(26,	'3fbe9e6f-8a89-03dc-714f-9255206364ca',	'New Twig Field',	'0',	'22'),
-(27,	'47767ccd-9ae6-b9c6-1269-eff0c2403d14',	'Edit Twig Field',	'0',	'23'),
-(28,	'9fde4a8d-1773-0672-f006-2a68f7ed7907',	'Delete Twig Field',	'0',	'24'),
-(29,	'3ef18b5a-8560-2d6d-35b9-f2a54eee190d',	'Move Up Twig Field',	'0',	'25'),
-(30,	'b6a1a76c-e509-078d-3bbe-e6a6a5d1d6da',	'Move Down Twig Field',	'0',	'26'),
-(31,	'c5dea443-5669-1ae5-75a9-d91f3d35e45c',	'New Translation',	'0',	'27'),
-(32,	'eac6b21b-29bd-23e3-df66-0e21a7fe701a',	'Edit Translation',	'0',	'28'),
-(33,	'93adc356-ae72-41aa-97a4-f81c1a931c94',	'Delete Translation',	'0',	'29'),
-(34,	'9cedb475-1c4c-50a6-9c67-1ff5f205be0c',	'New Unique',	'0',	'30'),
-(35,	'16534346-c822-7d3b-4459-e5366ec82755',	'Edit Unique',	'0',	'31'),
-(36,	'9012b0ab-dbd0-0828-a2d7-d62893c7157c',	'Delete Unique',	'0',	'32'),
-(37,	'5974589a-16c8-f4a0-5fa3-c8756d63a589',	'New Sort',	'0',	'33'),
-(38,	'3edb5320-36ec-ca33-5f5a-ffebfe93023f',	'Edit Sort',	'0',	'34'),
-(39,	'6d98a06d-9f30-f5ba-a229-424e958cd181',	'Delete Sort',	'0',	'35'),
-(40,	'be41433c-69bc-9a36-51f2-43b9d2f7d83d',	'New Sub Constraint',	'0',	'36'),
-(41,	'159a0e68-62d5-12a6-cd36-380909f81303',	'Edit Sub Constraint',	'0',	'37'),
-(42,	'a6f843d0-013a-3fa4-b644-c17a789fa83c',	'Delete Sub Constraint',	'0',	'38'),
-(43,	'6fab5e75-8d9c-26f8-4944-5c56db0e0f26',	'Move Up Sub Constraint',	'0',	'50'),
-(44,	'cca91b5c-7a4e-db3f-f175-b5d6eb06af9a',	'Move Down Sub Constraint',	'0',	'51'),
-(45,	'2c950e1a-dd86-8ed2-f78d-895707733819',	'View Twig Field',	'0',	'39'),
-(46,	'5736307b-5ac9-38df-b7d6-a16b7bf6153a',	'New Validation Rule',	'0',	'40'),
-(47,	'f045ce7d-8daa-5de9-9ccb-cf9c2e9e8e33',	'Edit Validation Rule',	'0',	'41'),
-(48,	'24007b7b-5658-97b9-67fe-357ee6b745f5',	'Delete Validation Rule',	'0',	'42'),
-(49,	'0dea00f2-7d9f-459c-0d04-15a5aaa19fee',	'Move Up Branch',	'0',	'43'),
-(50,	'91668fe6-7c0b-b722-968b-323f8b1d3fe8',	'Move Down Branch',	'0',	'44'),
-(51,	'1966b3a3-6190-70ff-87b3-60c19b5b7a43',	'New Action',	'0',	'45'),
-(52,	'94c8ca4f-2591-0cf2-cede-ca52be470675',	'Edit Action',	'0',	'46'),
-(53,	'f7d1d094-1e55-9869-7049-278b0edfdc8a',	'Delete Action',	'0',	'47'),
-(54,	'73637a8e-08ec-98a0-7555-1ec877fa742b',	'View Files',	'0',	'48'),
-(55,	'16bd62a7-35ae-b055-a093-67660559b9ac',	'Replace File',	'0',	'49'),
-(56,	'618bae42-1eb9-dbcd-f5ca-50498ce83762',	'Read',	'1',	'52'),
-(57,	'f3c31c57-4f91-62c2-22c0-c378b622aeb3',	'Login',	'0',	'53'),
-(58,	'3181cee6-3892-6a46-f2cc-61b892a2176e',	'Logout',	'0',	'54'),
-(59,	'8000e34b-a98e-dfa9-bd7c-71af17ffe64f',	'Sign Up',	'0',	'55'),
-(60,	'827c5651-b5c5-0dd0-1674-2f3cdd199c25',	'Show Root Menu',	'0',	'56'),
-(100,	'1c349fdc-31f3-24ac-d9ff-b1fb09d6ce4c',	'Checkout',	'0',	'99'),
-(101,	'f619f95d-c86c-33ae-25a3-8f2476d08085',	'Checkin',	'0',	'100');
+INSERT INTO `sys_fphp_permission` (`Id`, `UUID`, `Name`, `Created`, `CreatedBy`, `Modified`, `ModifiedBy`, `Branch`, `Action`) VALUES
+(5,	'2410ff1b-efb8-7046-9b77-3c9535372836',	'Read',	NULL,	NULL,	NULL,	NULL,	'0',	'1'),
+(6,	'787a15d2-9d73-9a3e-a607-fd54be1688f2',	'View',	NULL,	NULL,	NULL,	NULL,	'0',	'2'),
+(7,	'95ebb17c-fa3b-a6f6-f1ac-364f21a0e1f0',	'New',	NULL,	NULL,	NULL,	NULL,	'0',	'3'),
+(8,	'e4d817e6-06da-4ac4-797c-ec9b471a2d76',	'Edit',	NULL,	NULL,	NULL,	NULL,	'0',	'4'),
+(9,	'4fb46522-37cb-fcd8-f366-effff96a207f',	'Delete',	NULL,	NULL,	NULL,	NULL,	'0',	'5'),
+(10,	'd6000326-a70d-57e0-fdd8-a36708d927a7',	'Move Up',	NULL,	NULL,	NULL,	NULL,	'0',	'6'),
+(11,	'2d4a9a9d-9fa5-ce62-bf5c-db764697f533',	'Move Down',	NULL,	NULL,	NULL,	NULL,	'0',	'7'),
+(12,	'e333798c-21ec-e958-4b9b-05e1f1c60a2e',	'fphp Upload',	NULL,	NULL,	NULL,	NULL,	'0',	'8'),
+(13,	'1c7d48de-ef28-3c3c-80ef-e28f5e6fff7c',	'fphp Upload Delete',	NULL,	NULL,	NULL,	NULL,	'0',	'9'),
+(14,	'81be3044-3e7a-31b5-c2b0-0fa3aae907a1',	'fphp Captcha',	NULL,	NULL,	NULL,	NULL,	'0',	'10'),
+(15,	'62a3b9a8-b927-f338-883e-08386c2b4f63',	'fphp Image Thumbnail',	NULL,	NULL,	NULL,	NULL,	'0',	'11'),
+(16,	'b2a6569c-221c-7f02-b42d-3172aad0c68a',	'New Branch',	NULL,	NULL,	NULL,	NULL,	'0',	'12'),
+(17,	'b95ea3bd-0673-6d5a-b6df-9d877e9a5aef',	'Edit Branch',	NULL,	NULL,	NULL,	NULL,	'0',	'13'),
+(18,	'11ff1c74-c6c9-deff-e879-d7a9a490ef37',	'Delete Branch',	NULL,	NULL,	NULL,	NULL,	'0',	'14'),
+(19,	'46083024-94d6-b58e-8aeb-fd290ac0bb98',	'New Twig',	NULL,	NULL,	NULL,	NULL,	'0',	'15'),
+(20,	'36b09529-232d-c3a5-71b2-6d57c456acda',	'View Twig',	NULL,	NULL,	NULL,	NULL,	'0',	'16'),
+(21,	'2610a13d-85c7-1fc6-ba72-ddd3e8930f9b',	'Edit Twig',	NULL,	NULL,	NULL,	NULL,	'0',	'17'),
+(22,	'55d6b907-43e6-3ce3-1866-bd6df567f47d',	'Truncate Twig',	NULL,	NULL,	NULL,	NULL,	'0',	'18'),
+(23,	'ff42c95c-f0fa-6eda-46fc-4c0437c61021',	'Delete Twig',	NULL,	NULL,	NULL,	NULL,	'0',	'19'),
+(24,	'6920c780-bebb-ca20-faa7-b530911f8a77',	'View Branch',	NULL,	NULL,	NULL,	NULL,	'0',	'20'),
+(25,	'96b2c765-2065-a813-5641-916ce05357b0',	'Transfer Twig',	NULL,	NULL,	NULL,	NULL,	'0',	'21'),
+(26,	'3fbe9e6f-8a89-03dc-714f-9255206364ca',	'New Twig Field',	NULL,	NULL,	NULL,	NULL,	'0',	'22'),
+(27,	'47767ccd-9ae6-b9c6-1269-eff0c2403d14',	'Edit Twig Field',	NULL,	NULL,	NULL,	NULL,	'0',	'23'),
+(28,	'9fde4a8d-1773-0672-f006-2a68f7ed7907',	'Delete Twig Field',	NULL,	NULL,	NULL,	NULL,	'0',	'24'),
+(29,	'3ef18b5a-8560-2d6d-35b9-f2a54eee190d',	'Move Up Twig Field',	NULL,	NULL,	NULL,	NULL,	'0',	'25'),
+(30,	'b6a1a76c-e509-078d-3bbe-e6a6a5d1d6da',	'Move Down Twig Field',	NULL,	NULL,	NULL,	NULL,	'0',	'26'),
+(31,	'c5dea443-5669-1ae5-75a9-d91f3d35e45c',	'New Translation',	NULL,	NULL,	NULL,	NULL,	'0',	'27'),
+(32,	'eac6b21b-29bd-23e3-df66-0e21a7fe701a',	'Edit Translation',	NULL,	NULL,	NULL,	NULL,	'0',	'28'),
+(33,	'93adc356-ae72-41aa-97a4-f81c1a931c94',	'Delete Translation',	NULL,	NULL,	NULL,	NULL,	'0',	'29'),
+(34,	'9cedb475-1c4c-50a6-9c67-1ff5f205be0c',	'New Unique',	NULL,	NULL,	NULL,	NULL,	'0',	'30'),
+(35,	'16534346-c822-7d3b-4459-e5366ec82755',	'Edit Unique',	NULL,	NULL,	NULL,	NULL,	'0',	'31'),
+(36,	'9012b0ab-dbd0-0828-a2d7-d62893c7157c',	'Delete Unique',	NULL,	NULL,	NULL,	NULL,	'0',	'32'),
+(37,	'5974589a-16c8-f4a0-5fa3-c8756d63a589',	'New Sort',	NULL,	NULL,	NULL,	NULL,	'0',	'33'),
+(38,	'3edb5320-36ec-ca33-5f5a-ffebfe93023f',	'Edit Sort',	NULL,	NULL,	NULL,	NULL,	'0',	'34'),
+(39,	'6d98a06d-9f30-f5ba-a229-424e958cd181',	'Delete Sort',	NULL,	NULL,	NULL,	NULL,	'0',	'35'),
+(40,	'be41433c-69bc-9a36-51f2-43b9d2f7d83d',	'New Sub Constraint',	NULL,	NULL,	NULL,	NULL,	'0',	'36'),
+(41,	'159a0e68-62d5-12a6-cd36-380909f81303',	'Edit Sub Constraint',	NULL,	NULL,	NULL,	NULL,	'0',	'37'),
+(42,	'a6f843d0-013a-3fa4-b644-c17a789fa83c',	'Delete Sub Constraint',	NULL,	NULL,	NULL,	NULL,	'0',	'38'),
+(43,	'6fab5e75-8d9c-26f8-4944-5c56db0e0f26',	'Move Up Sub Constraint',	NULL,	NULL,	NULL,	NULL,	'0',	'50'),
+(44,	'cca91b5c-7a4e-db3f-f175-b5d6eb06af9a',	'Move Down Sub Constraint',	NULL,	NULL,	NULL,	NULL,	'0',	'51'),
+(45,	'2c950e1a-dd86-8ed2-f78d-895707733819',	'View Twig Field',	NULL,	NULL,	NULL,	NULL,	'0',	'39'),
+(46,	'5736307b-5ac9-38df-b7d6-a16b7bf6153a',	'New Validation Rule',	NULL,	NULL,	NULL,	NULL,	'0',	'40'),
+(47,	'f045ce7d-8daa-5de9-9ccb-cf9c2e9e8e33',	'Edit Validation Rule',	NULL,	NULL,	NULL,	NULL,	'0',	'41'),
+(48,	'24007b7b-5658-97b9-67fe-357ee6b745f5',	'Delete Validation Rule',	NULL,	NULL,	NULL,	NULL,	'0',	'42'),
+(49,	'0dea00f2-7d9f-459c-0d04-15a5aaa19fee',	'Move Up Branch',	NULL,	NULL,	NULL,	NULL,	'0',	'43'),
+(50,	'91668fe6-7c0b-b722-968b-323f8b1d3fe8',	'Move Down Branch',	NULL,	NULL,	NULL,	NULL,	'0',	'44'),
+(51,	'1966b3a3-6190-70ff-87b3-60c19b5b7a43',	'New Action',	NULL,	NULL,	NULL,	NULL,	'0',	'45'),
+(52,	'94c8ca4f-2591-0cf2-cede-ca52be470675',	'Edit Action',	NULL,	NULL,	NULL,	NULL,	'0',	'46'),
+(53,	'f7d1d094-1e55-9869-7049-278b0edfdc8a',	'Delete Action',	NULL,	NULL,	NULL,	NULL,	'0',	'47'),
+(54,	'73637a8e-08ec-98a0-7555-1ec877fa742b',	'View Files',	NULL,	NULL,	NULL,	NULL,	'0',	'48'),
+(55,	'16bd62a7-35ae-b055-a093-67660559b9ac',	'Replace File',	NULL,	NULL,	NULL,	NULL,	'0',	'49'),
+(56,	'618bae42-1eb9-dbcd-f5ca-50498ce83762',	'Read',	'2019-05-21 07:29:13',	'8f8861d9-9c31-3303-7660-5b588ca0050f',	'2019-05-21 07:29:13',	'8f8861d9-9c31-3303-7660-5b588ca0050f',	'1',	'52'),
+(57,	'f3c31c57-4f91-62c2-22c0-c378b622aeb3',	'Login',	'2019-05-21 11:11:32',	'8f8861d9-9c31-3303-7660-5b588ca0050f',	'2019-05-21 11:11:32',	'8f8861d9-9c31-3303-7660-5b588ca0050f',	'0',	'53'),
+(58,	'3181cee6-3892-6a46-f2cc-61b892a2176e',	'Logout',	'2019-05-21 11:11:42',	'8f8861d9-9c31-3303-7660-5b588ca0050f',	'2019-05-21 11:11:42',	'8f8861d9-9c31-3303-7660-5b588ca0050f',	'0',	'54'),
+(59,	'8000e34b-a98e-dfa9-bd7c-71af17ffe64f',	'Sign Up',	'2019-05-21 11:11:52',	'8f8861d9-9c31-3303-7660-5b588ca0050f',	'2019-05-21 11:11:52',	'8f8861d9-9c31-3303-7660-5b588ca0050f',	'0',	'55'),
+(60,	'827c5651-b5c5-0dd0-1674-2f3cdd199c25',	'Show Root Menu',	'2019-05-22 06:57:25',	'a3202977-e008-f01f-8f60-00a13dd0699b',	'2019-05-22 06:57:25',	'a3202977-e008-f01f-8f60-00a13dd0699b',	'0',	'56'),
+(100,	'1c349fdc-31f3-24ac-d9ff-b1fb09d6ce4c',	'Checkout',	'2019-05-23 06:53:33',	'a3202977-e008-f01f-8f60-00a13dd0699b',	'2019-05-23 06:53:33',	'a3202977-e008-f01f-8f60-00a13dd0699b',	'0',	'99'),
+(101,	'f619f95d-c86c-33ae-25a3-8f2476d08085',	'Checkin',	'2019-05-23 06:53:49',	'a3202977-e008-f01f-8f60-00a13dd0699b',	'2019-05-23 06:53:49',	'a3202977-e008-f01f-8f60-00a13dd0699b',	'0',	'100'),
+(104,	'0fa00715-ca61-754d-919f-5328d3d2bbf6',	'View Files History',	'2019-05-24 09:14:39',	'a3202977-e008-f01f-8f60-00a13dd0699b',	'2019-05-24 09:14:39',	'a3202977-e008-f01f-8f60-00a13dd0699b',	'0',	'103'),
+(107,	'4356087d-681b-efae-33a8-0f94158b3649',	'Restore File',	'2019-05-24 09:15:08',	'a3202977-e008-f01f-8f60-00a13dd0699b',	'2019-05-24 09:15:08',	'a3202977-e008-f01f-8f60-00a13dd0699b',	'0',	'106');
 
 DROP TABLE IF EXISTS `sys_fphp_role`;
 CREATE TABLE `sys_fphp_role` (
   `Id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `UUID` varchar(36) NOT NULL,
   `Name` varchar(255) DEFAULT NULL,
+  `Created` timestamp NULL DEFAULT NULL,
+  `CreatedBy` varchar(36) DEFAULT NULL,
+  `Modified` timestamp NULL DEFAULT NULL,
+  `ModifiedBy` varchar(36) DEFAULT NULL,
   PRIMARY KEY (`Id`),
   UNIQUE KEY `UUID` (`UUID`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
 
-INSERT INTO `sys_fphp_role` (`Id`, `UUID`, `Name`) VALUES
-(1,	'5aa330b0-0b7f-531f-20b6-ead8e86c5102',	'Root'),
-(3,	'0a5d5371-e6fb-a390-b901-6e2655ce696c',	'Guest'),
-(4,	'f5bf34c0-8430-407f-171f-4ab8ea7dd540',	'User');
+INSERT INTO `sys_fphp_role` (`Id`, `UUID`, `Name`, `Created`, `CreatedBy`, `Modified`, `ModifiedBy`) VALUES
+(1,	'5aa330b0-0b7f-531f-20b6-ead8e86c5102',	'Root',	NULL,	NULL,	NULL,	NULL),
+(3,	'0a5d5371-e6fb-a390-b901-6e2655ce696c',	'Guest',	NULL,	NULL,	NULL,	NULL),
+(4,	'f5bf34c0-8430-407f-171f-4ab8ea7dd540',	'User',	'2019-05-22 08:49:47',	'a3202977-e008-f01f-8f60-00a13dd0699b',	'2019-05-22 08:49:47',	'a3202977-e008-f01f-8f60-00a13dd0699b');
 
 DROP TABLE IF EXISTS `sys_fphp_role_permission`;
 CREATE TABLE `sys_fphp_role_permission` (
@@ -482,6 +500,7 @@ INSERT INTO `sys_fphp_role_permission` (`roleUUID`, `permissionUUID`) VALUES
 ('0a5d5371-e6fb-a390-b901-6e2655ce696c',	'81be3044-3e7a-31b5-c2b0-0fa3aae907a1'),
 ('0a5d5371-e6fb-a390-b901-6e2655ce696c',	'f3c31c57-4f91-62c2-22c0-c378b622aeb3'),
 ('5aa330b0-0b7f-531f-20b6-ead8e86c5102',	'0dea00f2-7d9f-459c-0d04-15a5aaa19fee'),
+('5aa330b0-0b7f-531f-20b6-ead8e86c5102',	'0fa00715-ca61-754d-919f-5328d3d2bbf6'),
 ('5aa330b0-0b7f-531f-20b6-ead8e86c5102',	'11ff1c74-c6c9-deff-e879-d7a9a490ef37'),
 ('5aa330b0-0b7f-531f-20b6-ead8e86c5102',	'159a0e68-62d5-12a6-cd36-380909f81303'),
 ('5aa330b0-0b7f-531f-20b6-ead8e86c5102',	'16534346-c822-7d3b-4459-e5366ec82755'),
@@ -499,6 +518,7 @@ INSERT INTO `sys_fphp_role_permission` (`roleUUID`, `permissionUUID`) VALUES
 ('5aa330b0-0b7f-531f-20b6-ead8e86c5102',	'3edb5320-36ec-ca33-5f5a-ffebfe93023f'),
 ('5aa330b0-0b7f-531f-20b6-ead8e86c5102',	'3ef18b5a-8560-2d6d-35b9-f2a54eee190d'),
 ('5aa330b0-0b7f-531f-20b6-ead8e86c5102',	'3fbe9e6f-8a89-03dc-714f-9255206364ca'),
+('5aa330b0-0b7f-531f-20b6-ead8e86c5102',	'4356087d-681b-efae-33a8-0f94158b3649'),
 ('5aa330b0-0b7f-531f-20b6-ead8e86c5102',	'46083024-94d6-b58e-8aeb-fd290ac0bb98'),
 ('5aa330b0-0b7f-531f-20b6-ead8e86c5102',	'47767ccd-9ae6-b9c6-1269-eff0c2403d14'),
 ('5aa330b0-0b7f-531f-20b6-ead8e86c5102',	'4fb46522-37cb-fcd8-f366-effff96a207f'),
@@ -550,8 +570,10 @@ CREATE TABLE `sys_fphp_session` (
   `Timestamp` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`Id`),
   UNIQUE KEY `UNIQUE1` (`UUID`,`UserUUID`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=288 DEFAULT CHARSET=latin1;
 
+INSERT INTO `sys_fphp_session` (`Id`, `UUID`, `UserUUID`, `Timestamp`) VALUES
+(287,	'1e32343a-2b4e-990b-c0d6-84c23245f45e',	'a3202977-e008-f01f-8f60-00a13dd0699b',	'2019-07-12 09:10:13');
 
 DROP TABLE IF EXISTS `sys_fphp_sqltype`;
 CREATE TABLE `sys_fphp_sqltype` (
@@ -585,7 +607,7 @@ CREATE TABLE `sys_fphp_subconstraint` (
   PRIMARY KEY (`Id`),
   UNIQUE KEY `uuid` (`UUID`),
   UNIQUE KEY `TableUUID_SubTableUUID` (`TableUUID`,`SubTableUUID`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=latin1;
 
 
 DROP TABLE IF EXISTS `sys_fphp_subrecords`;
@@ -634,10 +656,14 @@ CREATE TABLE `sys_fphp_subrecords` (
   `Lookup03` varchar(255) DEFAULT NULL,
   `Lookup04` varchar(255) DEFAULT NULL,
   `Lookup05` varchar(255) DEFAULT NULL,
+  `Created` timestamp NULL DEFAULT NULL,
+  `CreatedBy` varchar(36) DEFAULT NULL,
+  `Modified` timestamp NULL DEFAULT NULL,
+  `ModifiedBy` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`Id`),
   UNIQUE KEY `UUID` (`UUID`),
   UNIQUE KEY `UNIQUE` (`Id`,`HeadUUID`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=48 DEFAULT CHARSET=latin1;
 
 
 DROP TABLE IF EXISTS `sys_fphp_systemmessage`;
@@ -751,42 +777,44 @@ CREATE TABLE `sys_fphp_table` (
   `Interval` smallint(6) DEFAULT NULL,
   `View` varchar(2048) DEFAULT NULL,
   `SortColumn` varchar(255) DEFAULT NULL,
-  `CheckoutInterval` varchar(255) DEFAULT NULL,
+  `InfoColumns` smallint(6) NOT NULL,
+  `InfoColumnsView` smallint(6) NOT NULL,
   `Versioning` smallint(6) NOT NULL,
+  `CheckoutInterval` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`Id`),
   UNIQUE KEY `uuid` (`UUID`)
 ) ENGINE=InnoDB AUTO_INCREMENT=82 DEFAULT CHARSET=latin1;
 
-INSERT INTO `sys_fphp_table` (`Id`, `UUID`, `Name`, `Unique`, `SortOrder`, `Interval`, `View`, `SortColumn`, `CheckoutInterval`, `Versioning`) VALUES
-(3,	'0af5dace-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_action',	NULL,	NULL,	50,	NULL,	NULL,	NULL,	1),
-(4,	'0af64123-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_branch',	NULL,	NULL,	NULL,	NULL,	'7913f0a9-7339-11e9-9b90-54bf640e09ee',	NULL,	1),
-(5,	'0af6ab5d-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_subconstraint',	NULL,	NULL,	50,	NULL,	'6939a291-77be-11e9-b285-1062e50d1fcb',	NULL,	1),
-(6,	'0af7016f-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_forestdata',	'Unique_Name=288bf780-7554-11e9-9305-1062e50d1fcb',	'true;288bf780-7554-11e9-9305-1062e50d1fcb',	50,	'288bf780-7554-11e9-9305-1062e50d1fcb',	NULL,	NULL,	1),
-(7,	'0af750ee-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_formelement',	'Unique_Name=b848c6c1-7552-11e9-9305-1062e50d1fcb',	'true;b848c6c1-7552-11e9-9305-1062e50d1fcb',	50,	'b848c6c1-7552-11e9-9305-1062e50d1fcb',	NULL,	NULL,	1),
-(9,	'0af7f536-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_formelement_forestdata',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	1),
-(10,	'0af84f8f-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_formelement_sqltype',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	1),
-(11,	'0af8a511-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_formkey',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	1),
-(12,	'0af8f35c-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_language',	NULL,	NULL,	0,	NULL,	NULL,	NULL,	1),
-(18,	'0afad5e0-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_session',	NULL,	'true;42886706-7592-11e9-980a-54bf640e09ee:false;6a5dcaa7-7592-11e9-980a-54bf640e09ee',	50,	'42886706-7592-11e9-980a-54bf640e09ee;6a5dcaa7-7592-11e9-980a-54bf640e09ee',	NULL,	NULL,	1),
-(19,	'0afb2800-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_sqltype',	'Unique_Name=3ff05d3c-7554-11e9-9305-1062e50d1fcb',	'true;3ff05d3c-7554-11e9-9305-1062e50d1fcb',	50,	'3ff05d3c-7554-11e9-9305-1062e50d1fcb',	NULL,	NULL,	1),
-(21,	'0afbdaa4-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_systemmessage',	'Unique_IdInternal_LanguageCode=bf10cdc8-7580-11e9-9305-1062e50d1fcb;7e9b0336-7580-11e9-9305-1062e50d1fcb',	'true;7e9b0336-7580-11e9-9305-1062e50d1fcb:true;bf10cdc8-7580-11e9-9305-1062e50d1fcb',	50,	'bf10cdc8-7580-11e9-9305-1062e50d1fcb;7e9b0336-7580-11e9-9305-1062e50d1fcb;e3af52e9-7580-11e9-9305-1062e50d1fcb;2b0db223-7581-11e9-9305-1062e50d1fcb',	NULL,	NULL,	1),
-(22,	'0afc33bd-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_table',	NULL,	NULL,	50,	NULL,	NULL,	NULL,	1),
-(23,	'0afc8f93-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_tablefield',	NULL,	NULL,	NULL,	NULL,	'bdb0a255-6a7c-11e9-8f4f-1062e50d1fcb',	NULL,	1),
-(24,	'0afcfb2e-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_tablefield_validationrule',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	1),
-(25,	'0afd586d-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_translation',	'Unique=835410a5-e7a7-2381-a8bd-f20c05502fdd;51074834-d7f3-9e94-23f9-fcd829ea7410;11e34a7c-81f4-ca8c-05ec-5e1c678be25b',	'true;835410a5-e7a7-2381-a8bd-f20c05502fdd:true;51074834-d7f3-9e94-23f9-fcd829ea7410:true;11e34a7c-81f4-ca8c-05ec-5e1c678be25b',	50,	'51074834-d7f3-9e94-23f9-fcd829ea7410;11e34a7c-81f4-ca8c-05ec-5e1c678be25b;ed2e3a42-29a6-7dc9-331b-a6bd57988c66',	NULL,	NULL,	1),
-(26,	'0afdb7e6-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_trunk',	NULL,	NULL,	1,	'4975e4e3-7574-11e9-9305-1062e50d1fcb;4a2fa8b1-7575-11e9-9305-1062e50d1fcb;5e95cc53-7575-11e9-9305-1062e50d1fcb;6e1cc647-7575-11e9-9305-1062e50d1fcb;855e5411-7575-11e9-9305-1062e50d1fcb;a749a58b-7575-11e9-9305-1062e50d1fcb;9141511f-7574-11e9-9305-1062e50d1fcb;ca8dbf51-7574-11e9-9305-1062e50d1fcb;1e7ff352-7575-11e9-9305-1062e50d1fcb;355837a3-7575-11e9-9305-1062e50d1fcb;c334ca32-7575-11e9-9305-1062e50d1fcb;3a0d8e37-7576-11e9-9305-1062e50d1fcb;4ea1eef9-7576-11e9-9305-1062e50d1fcb;09f60fd4-3363-6fd9-e2bc-655aa28f2063;e248bc6d-8e86-725c-3b03-029fe34bbce3;e167614c-8b89-8321-7ca3-74b8e1b2f1f3;36c43a38-7577-11e9-9305-1062e50d1fcb;61a08f02-7577-11e9-9305-1062e50d1fcb;72c7ef3d-7577-11e9-9305-1062e50d1fcb;7da3190b-7577-11e9-9305-1062e50d1fcb;86967692-7577-11e9-9305-1062e50d1fcb;92c1dd3a-7577-11e9-9305-1062e50d1fcb;9c6522b6-7577-11e9-9305-1062e50d1fcb;a6d7e39a-7577-11e9-9305-1062e50d1fcb;b2a8f4dc-7577-11e9-9305-1062e50d1fcb;bbb77cd5-7577-11e9-9305-1062e50d1fcb;f5c6548f-7575-11e9-9305-1062e50d1fcb;070e32c8-7576-11e9-9305-1062e50d1fcb;1ea48201-7576-11e9-9305-1062e50d1fcb;2ae84af7-7576-11e9-9305-1062e50d1fcb;c2db1b54-7577-11e9-9305-1062e50d1fcb;e4972502-3b8b-4844-5288-f6f08c0d3c02',	NULL,	NULL,	1),
-(27,	'0afe0a96-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_user',	'Unique_User=865977b1-7594-11e9-980a-54bf640e09ee',	'true;865977b1-7594-11e9-980a-54bf640e09ee',	50,	'865977b1-7594-11e9-980a-54bf640e09ee;1ed2ba32-7595-11e9-980a-54bf640e09ee;3bb2d94b-7595-11e9-980a-54bf640e09ee',	NULL,	NULL,	1),
-(31,	'0aff422e-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_validationrule',	'Unique_Name=e6f6cee6-7554-11e9-9305-1062e50d1fcb',	'true;e6f6cee6-7554-11e9-9305-1062e50d1fcb',	50,	'e6f6cee6-7554-11e9-9305-1062e50d1fcb',	NULL,	NULL,	1),
-(32,	'f9035923-4727-11e9-8210-1062e50d1fcb',	'sys_fphp_formelement_validationrule',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	1),
-(35,	'3090e31c-56da-11e9-b941-1062e50d1fcb',	'sys_fphp_files',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	1),
-(37,	'1e08c187-5c37-11e9-9ffe-1062e50d1fcb',	'sys_fphp_subrecords',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	1),
-(63,	'f5eabf24-2f18-b00e-11bb-e116730065b2',	'sys_fphp_usergroup',	'Unique=38c109c1-3b19-9d77-001c-c851eb05d99f',	'true;38c109c1-3b19-9d77-001c-c851eb05d99f',	50,	'38c109c1-3b19-9d77-001c-c851eb05d99f',	NULL,	NULL,	1),
-(64,	'd3339177-68e5-ff56-eb88-8948fe19cae7',	'sys_fphp_role',	'Unique=327e79ce-53d2-adc6-239f-53465b2c563e',	'true;327e79ce-53d2-adc6-239f-53465b2c563e',	50,	'327e79ce-53d2-adc6-239f-53465b2c563e',	NULL,	NULL,	1),
-(65,	'6af9cbf6-6e9a-5296-5e85-6a3d8bf0b09e',	'sys_fphp_permission',	'Unique=a2fa15e2-de70-ff33-69d6-a65c1f9498e6;1566fb5c-4ec7-7cc4-23b0-7179447e049e:Unique2=77476afd-83cf-2b8f-fb1b-75329ca9baaf;a2fa15e2-de70-ff33-69d6-a65c1f9498e6',	'true;a2fa15e2-de70-ff33-69d6-a65c1f9498e6:true;77476afd-83cf-2b8f-fb1b-75329ca9baaf',	50,	'77476afd-83cf-2b8f-fb1b-75329ca9baaf;a2fa15e2-de70-ff33-69d6-a65c1f9498e6;1566fb5c-4ec7-7cc4-23b0-7179447e049e',	NULL,	NULL,	1),
-(66,	'aab873d2-7af7-11e9-ab72-1062e50d1fcb',	'sys_fphp_role_permission',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	1),
-(67,	'b71bbd97-7af7-11e9-ab72-1062e50d1fcb',	'sys_fphp_usergroup_role',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	1),
-(68,	'bfbdff51-7af7-11e9-ab72-1062e50d1fcb',	'sys_fphp_usergroup_user',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	1),
-(70,	'53c0f571-7d25-11e9-ac58-1062e50d1fcb',	'sys_fphp_checkout',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	1);
+INSERT INTO `sys_fphp_table` (`Id`, `UUID`, `Name`, `Unique`, `SortOrder`, `Interval`, `View`, `SortColumn`, `InfoColumns`, `InfoColumnsView`, `Versioning`, `CheckoutInterval`) VALUES
+(3,	'0af5dace-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_action',	NULL,	NULL,	50,	NULL,	NULL,	1,	0,	1,	NULL),
+(4,	'0af64123-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_branch',	NULL,	NULL,	NULL,	NULL,	'7913f0a9-7339-11e9-9b90-54bf640e09ee',	1,	0,	1,	NULL),
+(5,	'0af6ab5d-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_subconstraint',	NULL,	NULL,	50,	NULL,	'6939a291-77be-11e9-b285-1062e50d1fcb',	1,	0,	1,	NULL),
+(6,	'0af7016f-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_forestdata',	'Unique_Name=288bf780-7554-11e9-9305-1062e50d1fcb',	'true;288bf780-7554-11e9-9305-1062e50d1fcb',	50,	'288bf780-7554-11e9-9305-1062e50d1fcb',	NULL,	1,	0,	1,	NULL),
+(7,	'0af750ee-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_formelement',	'Unique_Name=b848c6c1-7552-11e9-9305-1062e50d1fcb',	'true;b848c6c1-7552-11e9-9305-1062e50d1fcb',	50,	'b848c6c1-7552-11e9-9305-1062e50d1fcb',	NULL,	1,	0,	1,	NULL),
+(9,	'0af7f536-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_formelement_forestdata',	NULL,	NULL,	NULL,	NULL,	NULL,	1,	0,	1,	NULL),
+(10,	'0af84f8f-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_formelement_sqltype',	NULL,	NULL,	NULL,	NULL,	NULL,	1,	0,	1,	NULL),
+(11,	'0af8a511-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_formkey',	NULL,	NULL,	NULL,	NULL,	NULL,	1,	0,	1,	NULL),
+(12,	'0af8f35c-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_language',	NULL,	NULL,	0,	NULL,	NULL,	1,	0,	1,	NULL),
+(18,	'0afad5e0-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_session',	NULL,	'true;42886706-7592-11e9-980a-54bf640e09ee:false;6a5dcaa7-7592-11e9-980a-54bf640e09ee',	50,	'42886706-7592-11e9-980a-54bf640e09ee;6a5dcaa7-7592-11e9-980a-54bf640e09ee',	NULL,	1,	0,	1,	NULL),
+(19,	'0afb2800-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_sqltype',	'Unique_Name=3ff05d3c-7554-11e9-9305-1062e50d1fcb',	'true;3ff05d3c-7554-11e9-9305-1062e50d1fcb',	50,	'3ff05d3c-7554-11e9-9305-1062e50d1fcb',	NULL,	1,	0,	1,	NULL),
+(21,	'0afbdaa4-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_systemmessage',	'Unique_IdInternal_LanguageCode=bf10cdc8-7580-11e9-9305-1062e50d1fcb;7e9b0336-7580-11e9-9305-1062e50d1fcb',	'true;7e9b0336-7580-11e9-9305-1062e50d1fcb:true;bf10cdc8-7580-11e9-9305-1062e50d1fcb',	50,	'bf10cdc8-7580-11e9-9305-1062e50d1fcb;7e9b0336-7580-11e9-9305-1062e50d1fcb;e3af52e9-7580-11e9-9305-1062e50d1fcb;2b0db223-7581-11e9-9305-1062e50d1fcb',	NULL,	1,	0,	1,	NULL),
+(22,	'0afc33bd-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_table',	NULL,	NULL,	50,	NULL,	NULL,	1,	0,	1,	NULL),
+(23,	'0afc8f93-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_tablefield',	NULL,	NULL,	NULL,	NULL,	'bdb0a255-6a7c-11e9-8f4f-1062e50d1fcb',	1,	0,	1,	NULL),
+(24,	'0afcfb2e-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_tablefield_validationrule',	NULL,	NULL,	NULL,	NULL,	NULL,	1,	0,	1,	NULL),
+(25,	'0afd586d-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_translation',	'Unique=835410a5-e7a7-2381-a8bd-f20c05502fdd;51074834-d7f3-9e94-23f9-fcd829ea7410;11e34a7c-81f4-ca8c-05ec-5e1c678be25b',	'true;835410a5-e7a7-2381-a8bd-f20c05502fdd:true;51074834-d7f3-9e94-23f9-fcd829ea7410:true;11e34a7c-81f4-ca8c-05ec-5e1c678be25b',	50,	'51074834-d7f3-9e94-23f9-fcd829ea7410;11e34a7c-81f4-ca8c-05ec-5e1c678be25b;ed2e3a42-29a6-7dc9-331b-a6bd57988c66',	NULL,	1,	0,	1,	NULL),
+(26,	'0afdb7e6-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_trunk',	NULL,	NULL,	1,	'4975e4e3-7574-11e9-9305-1062e50d1fcb;4a2fa8b1-7575-11e9-9305-1062e50d1fcb;5e95cc53-7575-11e9-9305-1062e50d1fcb;6e1cc647-7575-11e9-9305-1062e50d1fcb;855e5411-7575-11e9-9305-1062e50d1fcb;a749a58b-7575-11e9-9305-1062e50d1fcb;9141511f-7574-11e9-9305-1062e50d1fcb;ca8dbf51-7574-11e9-9305-1062e50d1fcb;1e7ff352-7575-11e9-9305-1062e50d1fcb;355837a3-7575-11e9-9305-1062e50d1fcb;c334ca32-7575-11e9-9305-1062e50d1fcb;3a0d8e37-7576-11e9-9305-1062e50d1fcb;4ea1eef9-7576-11e9-9305-1062e50d1fcb;09f60fd4-3363-6fd9-e2bc-655aa28f2063;e248bc6d-8e86-725c-3b03-029fe34bbce3;e167614c-8b89-8321-7ca3-74b8e1b2f1f3;36c43a38-7577-11e9-9305-1062e50d1fcb;61a08f02-7577-11e9-9305-1062e50d1fcb;72c7ef3d-7577-11e9-9305-1062e50d1fcb;7da3190b-7577-11e9-9305-1062e50d1fcb;86967692-7577-11e9-9305-1062e50d1fcb;92c1dd3a-7577-11e9-9305-1062e50d1fcb;9c6522b6-7577-11e9-9305-1062e50d1fcb;a6d7e39a-7577-11e9-9305-1062e50d1fcb;b2a8f4dc-7577-11e9-9305-1062e50d1fcb;bbb77cd5-7577-11e9-9305-1062e50d1fcb;f5c6548f-7575-11e9-9305-1062e50d1fcb;070e32c8-7576-11e9-9305-1062e50d1fcb;1ea48201-7576-11e9-9305-1062e50d1fcb;2ae84af7-7576-11e9-9305-1062e50d1fcb;c2db1b54-7577-11e9-9305-1062e50d1fcb;e4972502-3b8b-4844-5288-f6f08c0d3c02;a4dc604a-49a6-21ac-a9ba-a92186f1fe7e',	NULL,	1,	0,	1,	NULL),
+(27,	'0afe0a96-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_user',	'Unique_User=865977b1-7594-11e9-980a-54bf640e09ee',	'true;865977b1-7594-11e9-980a-54bf640e09ee',	50,	'865977b1-7594-11e9-980a-54bf640e09ee;1ed2ba32-7595-11e9-980a-54bf640e09ee;3bb2d94b-7595-11e9-980a-54bf640e09ee',	NULL,	1000,	0,	1,	NULL),
+(31,	'0aff422e-4721-11e9-8210-1062e50d1fcb',	'sys_fphp_validationrule',	'Unique_Name=e6f6cee6-7554-11e9-9305-1062e50d1fcb',	'true;e6f6cee6-7554-11e9-9305-1062e50d1fcb',	50,	'e6f6cee6-7554-11e9-9305-1062e50d1fcb',	NULL,	1,	0,	1,	NULL),
+(32,	'f9035923-4727-11e9-8210-1062e50d1fcb',	'sys_fphp_formelement_validationrule',	NULL,	NULL,	NULL,	NULL,	NULL,	1,	0,	1,	NULL),
+(35,	'3090e31c-56da-11e9-b941-1062e50d1fcb',	'sys_fphp_files',	NULL,	NULL,	NULL,	NULL,	NULL,	1,	0,	1,	NULL),
+(37,	'1e08c187-5c37-11e9-9ffe-1062e50d1fcb',	'sys_fphp_subrecords',	NULL,	NULL,	NULL,	NULL,	NULL,	1,	0,	1,	NULL),
+(63,	'f5eabf24-2f18-b00e-11bb-e116730065b2',	'sys_fphp_usergroup',	'Unique=38c109c1-3b19-9d77-001c-c851eb05d99f',	'true;38c109c1-3b19-9d77-001c-c851eb05d99f',	50,	'38c109c1-3b19-9d77-001c-c851eb05d99f',	NULL,	1000,	0,	1,	NULL),
+(64,	'd3339177-68e5-ff56-eb88-8948fe19cae7',	'sys_fphp_role',	'Unique=327e79ce-53d2-adc6-239f-53465b2c563e',	'true;327e79ce-53d2-adc6-239f-53465b2c563e',	50,	'327e79ce-53d2-adc6-239f-53465b2c563e',	NULL,	1000,	0,	1,	NULL),
+(65,	'6af9cbf6-6e9a-5296-5e85-6a3d8bf0b09e',	'sys_fphp_permission',	'Unique=a2fa15e2-de70-ff33-69d6-a65c1f9498e6;1566fb5c-4ec7-7cc4-23b0-7179447e049e:Unique2=77476afd-83cf-2b8f-fb1b-75329ca9baaf;a2fa15e2-de70-ff33-69d6-a65c1f9498e6',	'true;a2fa15e2-de70-ff33-69d6-a65c1f9498e6:true;77476afd-83cf-2b8f-fb1b-75329ca9baaf',	50,	'77476afd-83cf-2b8f-fb1b-75329ca9baaf;a2fa15e2-de70-ff33-69d6-a65c1f9498e6;1566fb5c-4ec7-7cc4-23b0-7179447e049e',	NULL,	1000,	0,	1,	NULL),
+(66,	'aab873d2-7af7-11e9-ab72-1062e50d1fcb',	'sys_fphp_role_permission',	NULL,	NULL,	NULL,	NULL,	NULL,	1,	0,	1,	NULL),
+(67,	'b71bbd97-7af7-11e9-ab72-1062e50d1fcb',	'sys_fphp_usergroup_role',	NULL,	NULL,	NULL,	NULL,	NULL,	1,	0,	1,	NULL),
+(68,	'bfbdff51-7af7-11e9-ab72-1062e50d1fcb',	'sys_fphp_usergroup_user',	NULL,	NULL,	NULL,	NULL,	NULL,	1,	0,	1,	NULL),
+(70,	'53c0f571-7d25-11e9-ac58-1062e50d1fcb',	'sys_fphp_checkout',	NULL,	NULL,	NULL,	NULL,	NULL,	1,	0,	1,	NULL);
 
 DROP TABLE IF EXISTS `sys_fphp_tablefield`;
 CREATE TABLE `sys_fphp_tablefield` (
@@ -894,6 +922,7 @@ INSERT INTO `sys_fphp_tablefield` (`Id`, `UUID`, `TableUUID`, `FieldName`, `Form
 (237,	'e665df10-762c-11e9-80e9-1062e50d1fcb',	'0af5dace-4721-11e9-8210-1062e50d1fcb',	'BranchId',	'ac21769b-4717-11e9-8210-1062e50d1fcb',	'1592a0e1-4718-11e9-8210-1062e50d1fcb',	'18d92e02-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formBranchIdLabel#\",\r\n	\"Id\" : \"sys_fphp_action_BranchId\",\r\n	\"ValMessage\" : \"#000.formBranchIdValMessage#\",\r\n	\"Min\" : \"1\"\r\n}',	NULL,	NULL,	1),
 (238,	'080104fe-762d-11e9-80e9-1062e50d1fcb',	'0af5dace-4721-11e9-8210-1062e50d1fcb',	'Name',	'ac1c4d63-4717-11e9-8210-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'1098ab89-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formActionNameLabel#\",\r\n	\"Id\" : \"sys_fphp_action_Name\",\r\n	\"ValMessage\" : \"#000.formActionNameValMessage#\",\r\n	\"Placeholder\" : \"#000.formActionNamePlaceholder#\"\r\n}',	CONV('0', 2, 10) + 0,	NULL,	2),
 (243,	'6939a291-77be-11e9-b285-1062e50d1fcb',	'0af6ab5d-4721-11e9-8210-1062e50d1fcb',	'Order',	'ac21769b-4717-11e9-8210-1062e50d1fcb',	'1592a0e1-4718-11e9-8210-1062e50d1fcb',	'18d92e02-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formOrderLabel#\",\r\n	\"Id\" : \"sys_fphp_subconstraint_Order\",\r\n	\"ValMessage\" : \"#000.formOrderValMessage#\",\r\n	\"Min\" : \"1\"\r\n}',	NULL,	NULL,	4),
+(244,	'af9c9ec9-7875-11e9-85bd-1062e50d1fcb',	'0afc33bd-4721-11e9-8210-1062e50d1fcb',	'InfoColumns',	'ac1e7f1c-4717-11e9-8210-1062e50d1fcb',	'1592a0e1-4718-11e9-8210-1062e50d1fcb',	'18d92e02-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formInfoColumnsLabel#\",\r\n	\"Id\" : \"sys_fphp_table_InfoColumns\",\r\n	\"ValMessage\" : \"#000.formInfoColumnsValMessage#\",\r\n	\"Options\" : { \"None\" : \"1\", \"Created\" : \"10\", \"Modifed\" : \"100\", \"Created + Modified\" : \"1000\" },\"RadioClass\":\"radio-inline\",\"Break\":false\r\n}',	NULL,	NULL,	9),
 (245,	'ec299ec5-8509-ca7c-a78e-68f8be9cf902',	'518422b1-09a5-2d2e-8b36-acd252c72a7b',	'InfoText',	'ac1c4d63-4717-11e9-8210-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'1098ab89-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#formInfoTextLabel#\",\r\n	\"SortHeader\" : \"#sortInfoText#\",\r\n	\"Id\" : \"fphp_infocolumns_InfoText\",\r\n	\"ValMessage\" : \"#formInfoTextValMessage#\",\r\n	\"Placeholder\" : \"#formInfoTextPlaceholder#\"\r\n}',	CONV('0', 2, 10) + 0,	NULL,	1),
 (254,	'38c109c1-3b19-9d77-001c-c851eb05d99f',	'f5eabf24-2f18-b00e-11bb-e116730065b2',	'Name',	'ac1c4d63-4717-11e9-8210-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'1098ab89-4717-11e9-8210-1062e50d1fcb',	'general',	'{\"Label\":\"#formNameLabel#\",\"SortHeader\":\"#sortName#\",\"ValMessage\":\"#formNameValMessage#\",\"Placeholder\":\"#formNamePlaceholder#\",\"Id\":\"sys_fphp_usergroup_Name\"}',	CONV('0', 2, 10) + 0,	NULL,	1),
 (255,	'327e79ce-53d2-adc6-239f-53465b2c563e',	'd3339177-68e5-ff56-eb88-8948fe19cae7',	'Name',	'ac1c4d63-4717-11e9-8210-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'1098ab89-4717-11e9-8210-1062e50d1fcb',	'general',	'{\"Label\":\"#formNameLabel#\",\"SortHeader\":\"#sortName#\",\"ValMessage\":\"#formNameValMessage#\",\"Placeholder\":\"#formNamePlaceholder#\",\"Id\":\"sys_fphp_role_Name\"}',	CONV('0', 2, 10) + 0,	NULL,	1),
@@ -902,10 +931,12 @@ INSERT INTO `sys_fphp_tablefield` (`Id`, `UUID`, `TableUUID`, `FieldName`, `Form
 (258,	'1566fb5c-4ec7-7cc4-23b0-7179447e049e',	'6af9cbf6-6e9a-5296-5e85-6a3d8bf0b09e',	'Action',	'3bb71d43-4ca4-11e9-bc30-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'faf27830-4c9a-11e9-bc30-1062e50d1fcb',	'general',	'{\"Label\":\"#formActionLabel#\",\"SortHeader\":\"#sortAction#\",\"forestLookupDataTable\":\"sys_fphp_action\",\"forestLookupDataPrimary\":[\"Id\"],\"forestLookupDataLabel\":[\"Name\"],\"Required\":true,\"Id\":\"sys_fphp_permission_Action\"}',	CONV('0', 2, 10) + 0,	NULL,	3),
 (260,	'6456d92d-7a9d-4e78-74b4-5b6c6449da98',	'0afe0a96-4721-11e9-8210-1062e50d1fcb',	'RootUser',	'ac1ed318-4717-11e9-8210-1062e50d1fcb',	'159489e2-4718-11e9-8210-1062e50d1fcb',	'1e7bae52-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#formRootUserLabel#\",\r\n	\"SortHeader\" : \"#sortRootUser#\",\r\n	\"Id\" : \"sys_fphp_user_RootUser\",\r\n	\"ValMessage\" : \"#formRootUserValMessage#\",\r\n	\"Options\" : { \"#formRootUserOptionLabel00#\" : \"1\" }\r\n}',	CONV('0', 2, 10) + 0,	NULL,	6),
 (263,	'84565c7b-7c8f-11e9-94dc-1062e50d1fcb',	'0af64123-4721-11e9-8210-1062e50d1fcb',	'PermissionInheritance',	'ac1ed318-4717-11e9-8210-1062e50d1fcb',	'159489e2-4718-11e9-8210-1062e50d1fcb',	'1e7bae52-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formPermissionInheritanceLabel#\",\r\n	\"Id\" : \"sys_fphp_branch_PermissionInheritance\",\r\n	\"ValMessage\" : \"#000.formPermissionInheritanceValMessage#\",\r\n	\"Options\" : { \"#000.formPermissionInheritanceOptionLabel00#\" : \"1\" }\r\n}',	NULL,	NULL,	9),
-(265,	'817d68bc-7d28-11e9-ac58-1062e50d1fcb',	'0afc33bd-4721-11e9-8210-1062e50d1fcb',	'Versioning',	'ac1e7f1c-4717-11e9-8210-1062e50d1fcb',	'1592a0e1-4718-11e9-8210-1062e50d1fcb',	'18d92e02-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formVersioningLabel#\",\r\n	\"Id\" : \"sys_fphp_table_Versioning\",\r\n	\"ValMessage\" : \"#000.formVersioningValMessage#\",\r\n	\"Options\" : { \"None\" : \"1\", \"Checkout\" : \"10\" }\r\n,\"RadioClass\":\"radio-inline\",\"Break\":false }',	NULL,	NULL,	11),
+(265,	'817d68bc-7d28-11e9-ac58-1062e50d1fcb',	'0afc33bd-4721-11e9-8210-1062e50d1fcb',	'Versioning',	'ac1e7f1c-4717-11e9-8210-1062e50d1fcb',	'1592a0e1-4718-11e9-8210-1062e50d1fcb',	'18d92e02-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formVersioningLabel#\",\r\n	\"Id\" : \"sys_fphp_table_Versioning\",\r\n	\"ValMessage\" : \"#000.formVersioningValMessage#\",\r\n	\"Options\" : { \"None\" : \"1\", \"Checkout\" : \"10\", \"Checkout + Versioning (Files)\" : \"100\" }\r\n,\"RadioClass\":\"radio-inline\",\"Break\":false }',	NULL,	NULL,	11),
 (266,	'e4972502-3b8b-4844-5288-f6f08c0d3c02',	'0afdb7e6-4721-11e9-8210-1062e50d1fcb',	'CheckoutInterval',	'ac1c4d63-4717-11e9-8210-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'1098ab89-4717-11e9-8210-1062e50d1fcb',	'other',	'{\r\n	\"Label\" : \"#formCheckoutIntervalLabel#\",\r\n	\"SortHeader\" : \"#sortCheckoutInterval#\",\r\n	\"Id\" : \"sys_fphp_trunk_CheckoutInterval\",\r\n	\"ValMessage\" : \"#formCheckoutIntervalValMessage#\",\r\n	\"Placeholder\" : \"#formCheckoutIntervalPlaceholder#\",\r\n	\"DateIntervalFormat\" : true\r\n}',	CONV('0', 2, 10) + 0,	NULL,	35),
 (267,	'846567fe-7d57-11e9-ac58-1062e50d1fcb',	'0afc33bd-4721-11e9-8210-1062e50d1fcb',	'CheckoutInterval',	'ac1c4d63-4717-11e9-8210-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'1098ab89-4717-11e9-8210-1062e50d1fcb',	'general',	'{\r\n	\"Label\" : \"#000.formCheckoutIntervalLabel#\",\r\n	\"Id\" : \"sys_fphp_table_CheckoutInterval\",\r\n	\"ValMessage\" : \"#000.formCheckoutIntervalValMessage#\",\r\n	\"Placeholder\" : \"#000.formCheckoutIntervalPlaceholder#\"\r\n}',	NULL,	NULL,	12),
-(290,	'1119141b-6d93-277c-d43b-efc0e6189c68',	'0afdb7e6-4721-11e9-8210-1062e50d1fcb',	'form',	'5d044167-4717-11e9-8210-1062e50d1fcb',	NULL,	NULL,	'general',	'{\"FormTabConfiguration\":{\"Tab\":true,\"TabMenuClass\":\"nav nav-tabs\",\"TabActiveClass\":\"active\",\"TabToggle\":\"tab\",\"TabContentClass\":\"tab-content\",\"TabFooterClass\":\"tab-footer\",\"TabElementClass\":\"tab-pane fade\",\"TabElementActiveClass\":\"tab-pane fade in active\",\"TabsInfo\":[{\"TabId\":\"general\",\"TabTitle\":\"#001.formTabTitle#\"},{\"TabId\":\"useradmin\",\"TabTitle\":\"#formUserTitle#\"},{\"TabId\":\"formkey\",\"TabTitle\":\"#formFormKeyTitle#\"},{\"TabId\":\"navbar\",\"TabTitle\":\"#formNavbarTitle#\"},{\"TabId\":\"other\",\"TabTitle\":\"#formOtherTitle#\"}]},\"FormModalConfiguration\":{\"Modal\":true,\"ModalClass\":\"modal fade\",\"ModalId\":\"fphp_Modal\",\"ModalTitle\":\"forestPHP Modal Form\",\"ModalRole\":\"dialog\",\"ModalDialogClass\":\"modal-dialog modal-xl\",\"ModalDialogContentClass\":\"modal-content\",\"ModalHeaderClass\":\"modal-header\",\"ModalHeaderCloseClass\":\"close\",\"ModalHeaderDismissClass\":\"modal\",\"ModalHeaderCloseContent\":\"×\",\"ModalBodyClass\":\"modal-body\",\"ModalFooterClass\":\"modal-footer\"},\"Class\":\"form-horizontal\",\"FormGroupClass\":\"form-group\",\"LabelClass\":\"col-sm-3 control-label\",\"FormElementClass\":\"col-sm-9\",\"ClassAll\":\"form-control\",\"RadioClass\":\"radio\",\"CheckboxClass\":\"checkbox\",\"UseCaptcha\":false,\"Id\":\"sys_fphp_trunk_form\"}',	CONV('0', 2, 10) + 0,	NULL,	37);
+(268,	'a4dc604a-49a6-21ac-a9ba-a92186f1fe7e',	'0afdb7e6-4721-11e9-8210-1062e50d1fcb',	'VersionDelimiter',	'ac1c4d63-4717-11e9-8210-1062e50d1fcb',	'd8796ff4-4717-11e9-8210-1062e50d1fcb',	'1098ab89-4717-11e9-8210-1062e50d1fcb',	'other',	'{\r\n	\"Label\" : \"#formVersionDelimiterLabel#\",\r\n	\"SortHeader\" : \"#sortVersionDelimiter#\",\r\n	\"Id\" : \"sys_fphp_trunk_VersionDelimiter\",\r\n	\"ValMessage\" : \"#formVersionDelimiterValMessage#\",\r\n	\"Placeholder\" : \"#formVersionDelimiterPlaceholder#\"\r\n}',	CONV('0', 2, 10) + 0,	NULL,	36),
+(290,	'1119141b-6d93-277c-d43b-efc0e6189c68',	'0afdb7e6-4721-11e9-8210-1062e50d1fcb',	'form',	'5d044167-4717-11e9-8210-1062e50d1fcb',	NULL,	NULL,	'general',	'{\"FormTabConfiguration\":{\"Tab\":true,\"TabMenuClass\":\"nav nav-tabs\",\"TabActiveClass\":\"active\",\"TabToggle\":\"tab\",\"TabContentClass\":\"tab-content\",\"TabFooterClass\":\"tab-footer\",\"TabElementClass\":\"tab-pane fade\",\"TabElementActiveClass\":\"tab-pane fade in active\",\"TabsInfo\":[{\"TabId\":\"general\",\"TabTitle\":\"#001.formTabTitle#\"},{\"TabId\":\"useradmin\",\"TabTitle\":\"#formUserTitle#\"},{\"TabId\":\"formkey\",\"TabTitle\":\"#formFormKeyTitle#\"},{\"TabId\":\"navbar\",\"TabTitle\":\"#formNavbarTitle#\"},{\"TabId\":\"other\",\"TabTitle\":\"#formOtherTitle#\"}]},\"FormModalConfiguration\":{\"Modal\":true,\"ModalClass\":\"modal fade\",\"ModalId\":\"fphp_Modal\",\"ModalTitle\":\"forestPHP Modal Form\",\"ModalRole\":\"dialog\",\"ModalDialogClass\":\"modal-dialog modal-xl\",\"ModalDialogContentClass\":\"modal-content\",\"ModalHeaderClass\":\"modal-header\",\"ModalHeaderCloseClass\":\"close\",\"ModalHeaderDismissClass\":\"modal\",\"ModalHeaderCloseContent\":\"×\",\"ModalBodyClass\":\"modal-body\",\"ModalFooterClass\":\"modal-footer\"},\"Class\":\"form-horizontal\",\"FormGroupClass\":\"form-group\",\"LabelClass\":\"col-sm-3 control-label\",\"FormElementClass\":\"col-sm-9\",\"ClassAll\":\"form-control\",\"RadioClass\":\"radio\",\"CheckboxClass\":\"checkbox\",\"UseCaptcha\":false,\"Id\":\"sys_fphp_trunk_form\"}',	CONV('0', 2, 10) + 0,	NULL,	37),
+(380,	'31f86730-8781-11e9-9db2-1062e50d1fcb',	'0afc33bd-4721-11e9-8210-1062e50d1fcb',	'InfoColumnsView',	'ac1ed318-4717-11e9-8210-1062e50d1fcb',	'159229d5-4718-11e9-8210-1062e50d1fcb',	'18d92e02-4717-11e9-8210-1062e50d1fcb',	'general',	'{\n	\"Label\" : \"#000.formInfoColumnsViewLabel#\",\n	\"Id\" : \"sys_fphp_table_InfoColumnsView[]\",\n	\"ValMessage\" : \"#000.formInfoColumnsViewValMessage#\",\n	\"Options\" : { \"Created\":\"0001\",\"Created By\":\"0010\",\"Modified\":\"0100\",\"Modified By\":\"1000\" },\"CheckboxClass\":\"checkbox-inline\",\"Break\":false\n}',	NULL,	NULL,	10);
 
 DROP TABLE IF EXISTS `sys_fphp_tablefield_validationrule`;
 CREATE TABLE `sys_fphp_tablefield_validationrule` (
@@ -938,6 +969,7 @@ INSERT INTO `sys_fphp_tablefield_validationrule` (`Id`, `UUID`, `TablefieldUUID`
 (47,	'a8597b9c-75c3-11e9-897a-54bf640e09ee',	'501aa756-6d83-11e9-b1a0-1062e50d1fcb',	'166ff021-471a-11e9-8210-1062e50d1fcb',	'true',	NULL,	NULL),
 (48,	'2b541386-75c4-11e9-897a-54bf640e09ee',	'a52dcc87-6e8b-11e9-990d-54bf640e09ee',	'166ff021-471a-11e9-8210-1062e50d1fcb',	'true',	NULL,	NULL),
 (50,	'658e6f84-762d-11e9-80e9-1062e50d1fcb',	'080104fe-762d-11e9-80e9-1062e50d1fcb',	'93d9e7af-ae78-3a07-0e93-041589e344b5',	'true',	NULL,	CONV('1', 2, 10) + 0),
+(51,	'3f20d766-7876-11e9-85bd-1062e50d1fcb',	'af9c9ec9-7875-11e9-85bd-1062e50d1fcb',	'166ff021-471a-11e9-8210-1062e50d1fcb',	'true',	'fphpByName',	NULL),
 (52,	'1749a073-588f-0351-93b1-1d574ef7fadf',	'77476afd-83cf-2b8f-fb1b-75329ca9baaf',	'166ff021-471a-11e9-8210-1062e50d1fcb',	'true',	NULL,	CONV('0', 2, 10) + 0),
 (53,	'26f383b6-5bf2-4545-dece-262609457257',	'a2fa15e2-de70-ff33-69d6-a65c1f9498e6',	'166ff021-471a-11e9-8210-1062e50d1fcb',	'true',	NULL,	CONV('0', 2, 10) + 0),
 (54,	'c712ee23-6c04-8baf-4dac-2e341771a238',	'1566fb5c-4ec7-7cc4-23b0-7179447e049e',	'166ff021-471a-11e9-8210-1062e50d1fcb',	'true',	NULL,	CONV('0', 2, 10) + 0),
@@ -1390,6 +1422,10 @@ INSERT INTO `sys_fphp_translation` (`Id`, `UUID`, `BranchId`, `LanguageCode`, `N
 (879,	'8503928d-4808-f6de-0800-00a35ac3b879',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formOldFileLabel',	'Datei:'),
 (880,	'55c24972-6f4b-a496-56f8-01dfded4238a',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formInfoColumnsLabel',	'Info-Spalten:'),
 (881,	'795d7041-01f1-2f13-49ac-e2eada072673',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formInfoColumnsValMessage',	'Bitte wählen Sie eine Einstellungs-Option für Info-Spalten aus.'),
+(900,	'f339feae-e018-9a5a-5608-7b9f9fa2ef4a',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'sortCreated',	'Erstellt'),
+(901,	'16ea58aa-9fb9-e066-43ad-5a0d51440c5c',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'sortCreatedBy',	'Erstellt von'),
+(902,	'1fb3b160-ec71-f318-8cae-91f7431fe477',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'sortModified',	'Geändert'),
+(903,	'a0116f29-cae5-fe08-9e54-4c2d031f4f74',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'sortModifiedBy',	'Geändert von'),
 (921,	'521cf62e-ca29-1ea6-5ba3-09f46d9c02ad',	45,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formNameLabel',	'Name:'),
 (922,	'aa70381b-8cc1-944b-2cd0-202cccb11e21',	45,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'sortRole',	'Rolle'),
 (923,	'a604e515-6dd9-bb41-f94e-6e8959d2ec1c',	45,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formNameValMessage',	'Bitte geben Sie einen Namen f\\\\u00fcr die Benutzergruppe an.'),
@@ -1462,6 +1498,10 @@ INSERT INTO `sys_fphp_translation` (`Id`, `UUID`, `BranchId`, `LanguageCode`, `N
 (1014,	'1869683c-c176-95f8-8846-bc71371728bf',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formCheckoutIntervalPlaceholder',	'PT30M'),
 (1015,	'd046193d-e1ff-aa86-62c5-61e5b7744976',	0,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formCheckoutIntervalValMessage',	'Bitte geben Sie ein Checkout-Intervall an.'),
 (1016,	'4fdf65a8-c6e7-6329-50ba-280d445ef19c',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'sortVersion',	'Version'),
+(1017,	'ba4ecc74-0388-b7f9-84fb-018ebbf6d558',	37,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formVersionDelimiterLabel',	'Version-Trennzeichen:'),
+(1018,	'2507fc37-fc2a-ebc7-e114-bfe094f739ac',	37,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'sortVersionDelimiter',	'Version-Trennzeichen'),
+(1019,	'f6204611-cf2e-2002-2feb-7d602758a616',	37,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formVersionDelimiterValMessage',	'Bitte geben Sie ein Version-Trennzeichen an.'),
+(1020,	'3112ac59-2680-6677-abad-44c0cc155323',	37,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'formVersionDelimiterPlaceholder',	'.'),
 (1021,	'976658fa-9577-76e6-6fba-6ae95d2c2206',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'FilesHistory',	'Dateien Historie'),
 (1022,	'e04ffb6d-0390-25d2-36bb-56717aff5a33',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'btnHistoryText',	'Historie'),
 (1023,	'4bfd8082-f00a-e5e9-8c83-a19d538d7be1',	1,	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'btnRestoreText',	'Wiederherstellen'),
@@ -1515,11 +1555,12 @@ CREATE TABLE `sys_fphp_trunk` (
   `FormKeyMinimumInterval` varchar(255) DEFAULT NULL,
   `HoneypotFields` bit(1) DEFAULT NULL,
   `CheckoutInterval` varchar(255) DEFAULT NULL,
+  `VersionDelimiter` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`Id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 
-INSERT INTO `sys_fphp_trunk` (`Id`, `UUID`, `LanguageCode`, `UUIDGuest`, `UUIDUsergroup`, `SessionIntervalUser`, `SessionIntervalGuest`, `DateTimeSqlFormat`, `DateTimeFormat`, `DateFormat`, `TimeFormat`, `CheckUniqueUUID`, `MaxLoginTrials`, `IncContentUTF8Decode`, `IncContentUTF8Encode`, `OutContentUTF8Decode`, `OutContentUTF8Encode`, `FormKey`, `FormKeyInterval`, `NavbarAdditionalClass`, `NavbarAlign`, `NavbarBrandTitle`, `NavbarMaxLevel`, `NavbarShowLoginPart`, `NavbarLoginIcon`, `NavbarSignUpIcon`, `NavbarShowLogoutPart`, `NavbarUserIcon`, `NavbarLogoutIcon`, `TempFilesLifetime`, `MaxAmountHoneypot`, `FormKeyMinimumInterval`, `HoneypotFields`, `CheckoutInterval`) VALUES
-(1,	'29fcb1b8-6cdc-11e9-b874-1062e50d1fcb',	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'8f8861d9-9c31-3303-7660-5b588ca0050f',	'55c427ab-f140-004c-8aaf-2c26155bd134',	'PT1H',	'P2D',	'Y-m-d H:i:s',	'd.m.Y H:i:s',	'd.m.Y',	'H:i:s',	CONV('0', 2, 10) + 0,	5,	CONV('1', 2, 10) + 0,	CONV('0', 2, 10) + 0,	CONV('0', 2, 10) + 0,	CONV('1', 2, 10) + 0,	CONV('1', 2, 10) + 0,	'PT10M',	'navbar-inverse',	'navbar-fixed-top',	'forestPHP Framework',	10,	CONV('1', 2, 10) + 0,	'glyphicon-log-in',	'glyphicon-user',	CONV('1', 2, 10) + 0,	'glyphicon-user',	'glyphicon-log-out',	'PT1H',	5,	'PT3S',	CONV('1', 2, 10) + 0,	NULL);
+INSERT INTO `sys_fphp_trunk` (`Id`, `UUID`, `LanguageCode`, `UUIDGuest`, `UUIDUsergroup`, `SessionIntervalUser`, `SessionIntervalGuest`, `DateTimeSqlFormat`, `DateTimeFormat`, `DateFormat`, `TimeFormat`, `CheckUniqueUUID`, `MaxLoginTrials`, `IncContentUTF8Decode`, `IncContentUTF8Encode`, `OutContentUTF8Decode`, `OutContentUTF8Encode`, `FormKey`, `FormKeyInterval`, `NavbarAdditionalClass`, `NavbarAlign`, `NavbarBrandTitle`, `NavbarMaxLevel`, `NavbarShowLoginPart`, `NavbarLoginIcon`, `NavbarSignUpIcon`, `NavbarShowLogoutPart`, `NavbarUserIcon`, `NavbarLogoutIcon`, `TempFilesLifetime`, `MaxAmountHoneypot`, `FormKeyMinimumInterval`, `HoneypotFields`, `CheckoutInterval`, `VersionDelimiter`) VALUES
+(1,	'29fcb1b8-6cdc-11e9-b874-1062e50d1fcb',	'9230337b-6cd9-11e9-b874-1062e50d1fcb',	'8f8861d9-9c31-3303-7660-5b588ca0050f',	'55c427ab-f140-004c-8aaf-2c26155bd134',	'PT1H',	'P2D',	'Y-m-d H:i:s',	'd.m.Y H:i:s',	'd.m.Y',	'H:i:s',	CONV('0', 2, 10) + 0,	5,	CONV('1', 2, 10) + 0,	CONV('0', 2, 10) + 0,	CONV('0', 2, 10) + 0,	CONV('1', 2, 10) + 0,	CONV('1', 2, 10) + 0,	'PT10M',	'navbar-inverse',	'navbar-fixed-top',	'forestPHP Framework',	10,	CONV('1', 2, 10) + 0,	'glyphicon-log-in',	'glyphicon-user',	CONV('1', 2, 10) + 0,	'glyphicon-user',	'glyphicon-log-out',	'PT1H',	5,	'PT3S',	CONV('1', 2, 10) + 0,	NULL,	'.');
 
 DROP TABLE IF EXISTS `sys_fphp_user`;
 CREATE TABLE `sys_fphp_user` (
@@ -1529,29 +1570,37 @@ CREATE TABLE `sys_fphp_user` (
   `Password` varchar(255) DEFAULT NULL,
   `Locked` bit(1) DEFAULT NULL,
   `FailLogin` int(10) DEFAULT NULL,
+  `Created` timestamp NULL DEFAULT NULL,
+  `CreatedBy` varchar(36) DEFAULT NULL,
+  `Modified` timestamp NULL DEFAULT NULL,
+  `ModifiedBy` varchar(36) DEFAULT NULL,
   `RootUser` bit(1) DEFAULT NULL,
   PRIMARY KEY (`Id`),
   UNIQUE KEY `unique` (`UUID`),
   UNIQUE KEY `User` (`User`)
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=latin1;
 
-INSERT INTO `sys_fphp_user` (`Id`, `UUID`, `User`, `Password`, `Locked`, `FailLogin`, `RootUser`) VALUES
-(2,	'8f8861d9-9c31-3303-7660-5b588ca0050f',	'Guest',	NULL,	CONV('0', 2, 10) + 0,	0,	CONV('0', 2, 10) + 0),
-(3,	'a3202977-e008-f01f-8f60-00a13dd0699b',	'Root',	'$2y$10$3S0XIV5KUtjfady.0Tr06OYreh6aqOybs6CP0gbQWR4iwcPtNuTaC',	CONV('0', 2, 10) + 0,	0,	CONV('1', 2, 10) + 0);
+INSERT INTO `sys_fphp_user` (`Id`, `UUID`, `User`, `Password`, `Locked`, `FailLogin`, `Created`, `CreatedBy`, `Modified`, `ModifiedBy`, `RootUser`) VALUES
+(2,	'8f8861d9-9c31-3303-7660-5b588ca0050f',	'Guest',	NULL,	CONV('0', 2, 10) + 0,	0,	NULL,	NULL,	'2019-05-21 06:47:47',	'8f8861d9-9c31-3303-7660-5b588ca0050f',	CONV('0', 2, 10) + 0),
+(3,	'a3202977-e008-f01f-8f60-00a13dd0699b',	'Root',	'$2y$10$3S0XIV5KUtjfady.0Tr06OYreh6aqOybs6CP0gbQWR4iwcPtNuTaC',	CONV('0', 2, 10) + 0,	0,	'2019-05-21 06:48:53',	'8f8861d9-9c31-3303-7660-5b588ca0050f',	'2019-05-21 06:48:53',	'8f8861d9-9c31-3303-7660-5b588ca0050f',	CONV('1', 2, 10) + 0);
 
 DROP TABLE IF EXISTS `sys_fphp_usergroup`;
 CREATE TABLE `sys_fphp_usergroup` (
   `Id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `UUID` varchar(36) NOT NULL,
   `Name` varchar(255) DEFAULT NULL,
+  `Created` timestamp NULL DEFAULT NULL,
+  `CreatedBy` varchar(36) DEFAULT NULL,
+  `Modified` timestamp NULL DEFAULT NULL,
+  `ModifiedBy` varchar(36) DEFAULT NULL,
   PRIMARY KEY (`Id`),
   UNIQUE KEY `UUID` (`UUID`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
 
-INSERT INTO `sys_fphp_usergroup` (`Id`, `UUID`, `Name`) VALUES
-(2,	'e52fd635-b085-8e16-1bd3-90f307457a28',	'Root'),
-(3,	'87e52fc5-72fe-b9da-d3f9-739d09acd9be',	'Guest'),
-(4,	'55c427ab-f140-004c-8aaf-2c26155bd134',	'User');
+INSERT INTO `sys_fphp_usergroup` (`Id`, `UUID`, `Name`, `Created`, `CreatedBy`, `Modified`, `ModifiedBy`) VALUES
+(2,	'e52fd635-b085-8e16-1bd3-90f307457a28',	'Root',	NULL,	NULL,	NULL,	NULL),
+(3,	'87e52fc5-72fe-b9da-d3f9-739d09acd9be',	'Guest',	NULL,	NULL,	NULL,	NULL),
+(4,	'55c427ab-f140-004c-8aaf-2c26155bd134',	'User',	'2019-05-22 08:50:37',	'a3202977-e008-f01f-8f60-00a13dd0699b',	'2019-05-22 08:50:37',	'a3202977-e008-f01f-8f60-00a13dd0699b');
 
 DROP TABLE IF EXISTS `sys_fphp_usergroup_role`;
 CREATE TABLE `sys_fphp_usergroup_role` (
@@ -1615,4 +1664,4 @@ INSERT INTO `sys_fphp_validationrule` (`Id`, `UUID`, `Name`) VALUES
 (27,	'08fd109a-37a8-b792-2e93-61e301f3b21a',	'any'),
 (28,	'93d9e7af-ae78-3a07-0e93-041589e344b5',	'fphp_onlyletters');
 
--- 2019-07-12 11:11:50
+-- 2019-07-12 11:13:55

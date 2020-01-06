@@ -48,6 +48,10 @@ class subrecordsTwig extends forestTwig {
 	private $Lookup03;
 	private $Lookup04;
 	private $Lookup05;
+	private $Created;
+	private $CreatedBy;
+	private $Modified;
+	private $ModifiedBy;
 	
 	/* Properties */
 	
@@ -98,7 +102,11 @@ class subrecordsTwig extends forestTwig {
 		$this->Lookup03 = new forestLookup(new forestLookupData('table', array('primary'), array('label')));
 		$this->Lookup04 = new forestLookup(new forestLookupData('table', array('primary'), array('label')));
 		$this->Lookup05 = new forestLookup(new forestLookupData('table', array('primary'), array('label')));
-		
+		$this->Created = new forestObject('forestDateTime');
+		$this->CreatedBy = new forestString;
+		$this->Modified = new forestObject('forestDateTime');
+		$this->ModifiedBy = new forestString;
+
 		/* forestTwig system fields */
 		$this->fphp_Table->value = 'sys_fphp_subrecords';
 		$this->fphp_Primary->value = array('Id');

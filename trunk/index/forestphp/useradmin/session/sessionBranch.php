@@ -121,5 +121,13 @@ class sessionBranch extends forestBranch {
 		protected function afterReplaceFileAction() {
 			/* $this->Twig holds current file record */
 		}
+		
+		protected function beforeRestoreFileAction() {
+			/* $this->Twig holds current file record */
+		}
+		
+		protected function afterRestoreFileAction() {
+			/* $this->Twig holds current file record */
+		}
 }
 ?>
