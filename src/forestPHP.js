@@ -1,6 +1,6 @@
 /* +--------------------------------+ */
 /* |                                | */
-/* | forestPHP V0.6.0               | */
+/* | forestPHP V0.7.0               | */
 /* |                                | */
 /* +--------------------------------+ */
 
@@ -404,4 +404,89 @@ $(function(){
 	setTimeout(function() {
         $("button[name^='sys_fphp_SubmitStandard']").attr('disabled', false);
     }, 3000);
+	
+	var fphp_flexMinWidthInt = 30;
+	var fphp_flexMinHeightInt = 30;
+	var fphp_flexMinWidth = '30';
+	var fphp_flexMinHeight = '30';
+	
+	$("div[class$='_fphpFlex']")
+		.draggable({
+			start: function( event, ui ) { $(this).css('z-index', '2'); },
+			containment: "parent",
+			snap: true,
+			grid: [ 10, 10 ],
+			opacity: 0.35
+		})
+		
+		.draggable({
+			stop: function( event, ui ) {
+				$(this).css('z-index', '1');
+				
+				if (parseInt($(this).css('top')) < 0) { $(this).css('top', '0'); }
+				if (parseInt($(this).css('left')) < 0) { $(this).css('left', '0'); }
+				
+				//$("div[id='" + $(this).attr('class').split(' ')[0] + "-properties']").text($(this).attr('class').split(' ')[0].split('_')[0] + ' - top: ' + $(this).css('top') + '; left: ' + $(this).css('left') + '; width: ' + $(this).css('width') + '; height: ' + $(this).css('height') + ';');
+				fphp_AjaxUpdateFlex($("div[id='fphpFlexContainer']").data('flexurl'), $(this).data('flexuuid'), parseInt($(this).css('top'), 10), parseInt($(this).css('left'), 10), parseInt($(this).css('width'), 10), parseInt($(this).css('height'), 10));
+			}
+		})
+
+		.resizable({
+			stop: function( event, ui ) {
+				if (parseInt($(this).css('width')) < fphp_flexMinWidthInt) { $(this).css('width', fphp_flexMinWidth); }
+				if (parseInt($(this).css('height')) < fphp_flexMinHeightInt) { $(this).css('height', fphp_flexMinHeight); }
+				
+				//$("div[id='" + $(this).attr('class').split(' ')[0] + "-properties']").text($(this).attr('class').split(' ')[0].split('_')[0] + ' - top: ' + $(this).css('top') + '; left: ' + $(this).css('left') + '; width: ' + $(this).css('width') + '; height: ' + $(this).css('height') + ';');
+				fphp_AjaxUpdateFlex($("div[id='fphpFlexContainer']").data('flexurl'), $(this).data('flexuuid'), parseInt($(this).css('top'), 10), parseInt($(this).css('left'), 10), parseInt($(this).css('width'), 10), parseInt($(this).css('height'), 10));
+			}
+		});
+	
+	$("div[class='fphpFlexContainer']")
+		.resizable({
+			stop: function( event, ui ) {
+				if (parseInt($(this).css('width')) < fphp_flexMinWidthInt) { $(this).css('width', fphp_flexMinWidth); }
+				if (parseInt($(this).css('height')) < fphp_flexMinHeightInt) { $(this).css('height', fphp_flexMinHeight); }
+				
+				$("div[id='" + $(this).attr('class').split(' ')[0] + "General']").text('fphp-Flex-Container - width: ' + $(this).css('width') + '; height: ' + $(this).css('height') + ';');
+				fphp_AjaxUpdateFlex($("div[id='fphpFlexContainer']").data('flexurl'), $(this).data('flexuuid'), 0, 0, parseInt($(this).css('width'), 10), parseInt($(this).css('height'), 10));
+			}
+		});
+	
+	function fphp_AjaxUpdateFlex(p_s_url, p_s_uuid, p_i_top, p_i_left, p_i_width, p_i_height) {
+		var o_formData = new FormData();    
+		o_formData.append('sys_fphp_flex_UUID', p_s_uuid);
+		o_formData.append('sys_fphp_flex_Top', p_i_top);
+		o_formData.append('sys_fphp_flex_Left', p_i_left);
+		o_formData.append('sys_fphp_flex_Width', p_i_width);
+		o_formData.append('sys_fphp_flex_Height', p_i_height);
+		
+		$.ajax({
+			xhr: function() {
+				var xhr = new window.XMLHttpRequest();
+				return xhr;
+			},
+			url: p_s_url,
+			method: 'POST',
+			data: o_formData,
+			contentType: false,
+			processData: false, 
+			dataType: 'text',
+			error: function(xhr){
+				alert('An error occured: ' + xhr.status + ' - ' + xhr.statusText);
+			},
+			success: function(result) {
+				if (result.indexOf('ERR-1') !== -1) {
+					alert('Error: [ERR-1] Communication error.');
+				} else if (result.indexOf('ERR-2') !== -1) {
+					alert('Error: [ERR-2] POST data incomplete. Missing primary key.');
+				} else if (result.indexOf('ERR-3') !== -1) {
+					alert('Error: [ERR-3] Cannot find record.');
+				} else if (result.indexOf('ERR-4') !== -1) {
+					alert('Error: [ERR-4] POST data incomplete. Missing values.');
+				} else if (result.indexOf('ERR-5') !== -1) {
+					alert('Error: [ERR-5] Cannot update record.');
+				}
+			}
+		});
+	}
 });

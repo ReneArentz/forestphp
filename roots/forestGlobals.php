@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.6.0 (0x1 00004)   | */
+/* | forestPHP V0.7.0 (0x1 00004)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -20,6 +20,7 @@
  * 0.4.0 beta	renatus		2019-11-14	added user dictionary and functions
  * 0.5.0 beta	renatus		2019-12-05	changed ListTables, added CheckoutInterval and Versioning to dictionary
  * 0.6.0 beta	renatus		2019-12-14	changed ListTables, added Versioning and InfoColumns to dictionary
+ * 0.7.0 beta	renatus		2020-01-02	changed ListTables, added Maintenance Mode to dictionary, added Maintenance Mode to BranchTree
  */
 
 class forestGlobals {
@@ -194,6 +195,8 @@ class forestGlobals {
 				$a_branchTree['Id'][$o_branch->Id]['Filename'] = $o_branch->Filename;
 				$a_branchTree['Id'][$o_branch->Id]['Table'] = $o_branch->Table;
 				$a_branchTree['Id'][$o_branch->Id]['PermissionInheritance'] = $o_branch->PermissionInheritance;
+				$a_branchTree['Id'][$o_branch->Id]['MaintenanceMode'] = $o_branch->MaintenanceMode;
+				$a_branchTree['Id'][$o_branch->Id]['MaintenanceModeMessage'] = $o_branch->MaintenanceModeMessage;
 				
 				/* get actions of each branch */
 				if ($o_actions->Twigs->Count() > 0) {
@@ -369,6 +372,7 @@ class forestGlobals {
 			foreach ($o_result->Twigs as $o_table) {
 				$this->Tables->value[$o_table->Name] = $o_table->UUID;
 				$this->TablesInformation->value[$o_table->UUID]['Name'] = $o_table->Name;
+				$this->TablesInformation->value[$o_table->UUID]['Identifier'] = $o_table->Identifier;
 				$this->TablesInformation->value[$o_table->UUID]['Unique'] = $o_table->Unique;
 				$this->TablesInformation->value[$o_table->UUID]['SortOrder'] = $o_table->SortOrder;
 				$this->TablesInformation->value[$o_table->UUID]['Interval'] = $o_table->Interval;

@@ -8,6 +8,7 @@ class subrecordsTwig extends forestTwig {
 	private $UUID;
 	private $HeadUUID;
 	private $JoinUUID;
+	private $Identifier;
 	private $ShortText00;
 	private $ShortText01;
 	private $ShortText02;
@@ -62,6 +63,7 @@ class subrecordsTwig extends forestTwig {
 		$this->UUID = new forestString;
 		$this->HeadUUID = new forestString;
 		$this->JoinUUID = new forestString;
+		$this->Identifier = new forestString;
 		$this->ShortText00 = new forestString;
 		$this->ShortText01 = new forestString;
 		$this->ShortText02 = new forestString;

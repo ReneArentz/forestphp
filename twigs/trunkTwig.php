@@ -32,6 +32,8 @@ class trunkTwig extends forestTwig {
 	private $NavbarShowLogoutPart;
 	private $NavbarUserIcon;
 	private $NavbarLogoutIcon;
+	private $MaintenanceMode;
+	private $MaintenanceModeMessage;
 	private $IncContentUTF8Decode;
 	private $IncContentUTF8Encode;
 	private $OutContentUTF8Decode;
@@ -73,6 +75,8 @@ class trunkTwig extends forestTwig {
 		$this->NavbarShowLogoutPart = new forestBool;
 		$this->NavbarUserIcon = new forestString;
 		$this->NavbarLogoutIcon = new forestString;
+		$this->MaintenanceMode = new forestBool;
+		$this->MaintenanceModeMessage = new forestString;
 		$this->IncContentUTF8Decode = new forestBool;
 		$this->IncContentUTF8Encode = new forestBool;
 		$this->OutContentUTF8Decode = new forestBool;
@@ -87,7 +91,7 @@ class trunkTwig extends forestTwig {
 		$this->fphp_Unique->value = array('UUID');
 		$this->fphp_SortOrder->value->Add(true, 'Id');
 		$this->fphp_Interval->value = 1;
-		$this->fphp_View->value = array('LanguageCode','DateTimeSqlFormat','DateTimeFormat','DateFormat','TimeFormat','CheckUniqueUUID','UUIDGuest','UUIDUsergroup','SessionIntervalUser','SessionIntervalGuest','MaxLoginTrials','FormKey','FormKeyInterval','FormKeyMinimumInterval','HoneypotFields','MaxAmountHoneypot','NavbarAdditionalClass','NavbarAlign','NavbarBrandTitle','NavbarMaxLevel','NavbarShowLoginPart','NavbarLoginIcon','NavbarSignUpIcon','NavbarShowLogoutPart','NavbarUserIcon','NavbarLogoutIcon','IncContentUTF8Decode','IncContentUTF8Encode','OutContentUTF8Decode','OutContentUTF8Encode','TempFilesLifetime','CheckoutInterval','VersionDelimiter');
+		$this->fphp_View->value = array('LanguageCode','DateTimeSqlFormat','DateTimeFormat','DateFormat','TimeFormat','CheckUniqueUUID','UUIDGuest','UUIDUsergroup','SessionIntervalUser','SessionIntervalGuest','MaxLoginTrials','FormKey','FormKeyInterval','FormKeyMinimumInterval','HoneypotFields','MaxAmountHoneypot','NavbarAdditionalClass','NavbarAlign','NavbarBrandTitle','NavbarMaxLevel','NavbarShowLoginPart','NavbarLoginIcon','NavbarSignUpIcon','NavbarShowLogoutPart','NavbarUserIcon','NavbarLogoutIcon','MaintenanceMode','MaintenanceModeMessage','IncContentUTF8Decode','IncContentUTF8Encode','OutContentUTF8Decode','OutContentUTF8Encode','TempFilesLifetime','CheckoutInterval','VersionDelimiter');
 		$this->fphp_FillMapping(get_object_vars($this));
 	}
 }

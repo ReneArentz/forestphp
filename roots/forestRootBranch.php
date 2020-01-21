@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.6.0 (0x1 0001F)   | */
+/* | forestPHP V0.7.0 (0x1 0001F)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -22,6 +22,7 @@
  * 0.4.0 beta	renatus		2019-11-21	added permission checks for standard root actions
  * 0.5.0 beta	renatus		2019-12-05	added checkout and checkin functionality for twigs
  * 0.6.0 beta	renatus		2019-12-12	added versioning and info columns administration
+ * 0.7.0 beta	renatus		2020-01-02	added identifier administration
  */
 
 abstract class forestRootBranch {
@@ -29,7 +30,7 @@ abstract class forestRootBranch {
 	
 	/* Fields */
 	
-	private $ForbiddenTablefieldNames = array('Id', 'UUID', 'Created', 'CreatedBy', 'Modified', 'ModifiedBy');
+	private $ForbiddenTablefieldNames = array('Id', 'UUID', 'Created', 'CreatedBy', 'Modified', 'ModifiedBy', 'Identifier');
 	private $StandardActions = array(
 		'Checkin' => 'checkin',
 		'Checkout' => 'checkout',
@@ -63,6 +64,10 @@ abstract class forestRootBranch {
 		if ($o_glob->Security->CheckUserPermission(null, 'rootMenu')) {
 			$s_rootMenu .= '<button class="btn btn-danger dropdown-toggle" type="button" data-toggle="dropdown" title="Root-Menu" style="margin-top: 8px;"><span class="glyphicon glyphicon glyphicon-wrench"></span></button>' . "\n";
 			$s_rootMenu .= '<ul class="dropdown-menu">' . "\n";
+				
+				if ($o_glob->Security->CheckUserPermission(null, 'viewIdentifier')) {
+					$s_rootMenu .= '<li><a href="' . forestLink::Link($o_glob->URL->Branch, 'viewIdentifier') . '"><span class="glyphicon glyphicon-barcode" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootViewIdentifierTitle', 1) . '</a></li>' . "\n";
+				}
 				
 				if ($o_glob->Security->CheckUserPermission(null, 'newBranch')) {
 					$s_rootMenu .= '<li><a href="' . forestLink::Link($o_glob->URL->Branch, 'newBranch') . '"><span class="glyphicon glyphicon-plus text-success" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootCreateBranchTitle', 1) . '</a></li>' . "\n";
@@ -130,6 +135,351 @@ abstract class forestRootBranch {
 	}
 	
 	
+	/* handle view identifier action */
+	protected function viewIdentifierAction() {
+		$o_glob = forestGlobals::init();
+		
+		/* get all identifier records */
+		$o_identifierTwig = new identifierTwig;
+		
+		$o_identifiers = $o_identifierTwig->GetAllRecords(true);
+		
+		/* create modal form for listing identifier records */
+		$o_glob->PostModalForm = new forestForm($o_identifierTwig);
+		$s_title = $o_glob->GetTranslation('Identifiers', 1);
+		$o_glob->PostModalForm->CreateModalForm($o_identifierTwig, $s_title, false);
+		
+		if ($o_identifiers->Twigs->Count() == 0) {
+			/* add description element to show that no files exists for sub record */
+			$o_description = new forestFormElement(forestFormElement::DESCRIPTION);
+			$o_description->Description = '<div class="alert alert-info">' . $o_glob->GetTranslation('NoRecords', 1) . '</div>';
+			$o_description->NoFormGroup = true;
+			
+			$o_glob->PostModalForm->FormElements->Add($o_description);
+		}
+
+			/* list identifiers of sub record */
+			$s_subTableHead = '';
+			$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortIdentifierName', 0) . '</th>' . "\n";
+			$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortIdentifierStart', 0) . '</th>' . "\n";
+			$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortIdentifierNext', 0) . '</th>' . "\n";
+			$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortIdentifierIncrement', 0) . '</th>' . "\n";
+			$s_subTableHead .= '<th>' . $o_glob->GetTranslation('formSubOptions', 1) . '</th>' . "\n";
+			
+			$s_subTableRows = '';
+			
+		if ($o_identifiers->Twigs->Count() > 0) {
+			foreach ($o_identifiers->Twigs as $o_identifier) {
+				$s_subTableRows .= '<tr';
+				$s_subTableRows .= '>' . "\n";
+				
+				$s_subTableRows .=  '<td>' . $o_identifier->IdentifierName . '</td>' . "\n";
+				$s_subTableRows .=  '<td>' . $o_identifier->IdentifierStart . '</td>' . "\n";
+				$s_subTableRows .=  '<td>' . $o_identifier->IdentifierNext . '</td>' . "\n";
+				$s_subTableRows .=  '<td>' . $o_identifier->IdentifierIncrement . '</td>' . "\n";
+				
+				$s_options = '<span class="btn-group">' . "\n";
+				
+				$a_parameters = $o_glob->URL->Parameters;
+				unset($a_parameters['newKey']);
+				unset($a_parameters['viewKey']);
+				unset($a_parameters['viewSubKey']);
+				unset($a_parameters['editKey']);
+				unset($a_parameters['editFileKey']);
+				unset($a_parameters['deleteKey']);
+				unset($a_parameters['editSubKey']);
+				unset($a_parameters['deleteSubKey']);
+				unset($a_parameters['deleteFileKey']);
+				unset($a_parameters['subConstraintKey']);
+				$a_parameters['editKey'] = $o_identifier->UUID;
+				
+				if ($o_glob->Security->CheckUserPermission(null, 'editIdentifier')) {
+					$s_options .=  '<a href="' . forestLink::Link($o_glob->URL->Branch, 'editIdentifier', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="glyphicon glyphicon-pencil"></span></a>' . "\n";
+				}
+				
+				$a_parameters = $o_glob->URL->Parameters;
+				unset($a_parameters['newKey']);
+				unset($a_parameters['viewKey']);
+				unset($a_parameters['viewSubKey']);
+				unset($a_parameters['editKey']);
+				unset($a_parameters['editFileKey']);
+				unset($a_parameters['deleteKey']);
+				unset($a_parameters['editSubKey']);
+				unset($a_parameters['deleteSubKey']);
+				unset($a_parameters['deleteFileKey']);
+				unset($a_parameters['subConstraintKey']);
+				$a_parameters['deleteKey'] = $o_identifier->UUID;
+				
+				if ($o_glob->Security->CheckUserPermission(null, 'deleteIdentifier')) {
+					$s_options .=  '<a href="' . forestLink::Link($o_glob->URL->Branch, 'deleteIdentifier', $a_parameters) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="glyphicon glyphicon-trash text-danger"></span></a>' . "\n";
+				}
+				
+				$s_options .= '</span>' . "\n";
+				$s_subTableRows .=  '<td>' . $s_options . '</td>' . "\n";
+				$s_subTableRows .=  '</tr>' . "\n";
+			}
+		}
+		
+		$s_newButton = '';
+		
+		if ($o_glob->Security->CheckUserPermission(null, 'newIdentifier')) {
+			$s_newButton =  '<a href="' . forestLink::Link($o_glob->URL->Branch, 'newIdentifier') . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="glyphicon glyphicon-plus text-success"></span></a>' . "\n";
+		}
+		
+		$s_subFormItemContent = new forestTemplates(forestTemplates::SUBLISTVIEWITEMCONTENT, array($s_newButton, $s_subTableHead, $s_subTableRows));
+		
+		/* add description element to show existing files for sub record */
+		/* use template to render files of a record */
+		$o_description = new forestFormElement(forestFormElement::DESCRIPTION);
+		$o_description->Description = strval(new forestTemplates(forestTemplates::SUBLISTVIEW, array($s_subFormItemContent)));
+		$o_description->NoFormGroup = true;
+		
+		$o_glob->PostModalForm->FormElements->Add($o_description);
+		
+		if (isset($this->KeepFilter)) {
+			if ($this->KeepFilter->value) {
+				if ($o_glob->Security->SessionData->Exists('last_filter')) {
+					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
+				}
+			}
+		}
+		
+		$this->SetNextAction('init');
+	}
+	
+	/* handle new identifier record action */
+	protected function newIdentifierAction() {
+		$o_glob = forestGlobals::init();
+		$o_saveTwig = $this->Twig;
+		$this->Twig = new identifierTwig;
+		$s_nextAction = 'init';
+		
+		$this->HandleFormKey($o_glob->URL->Branch . $o_glob->URL->Action . 'Form');
+		
+		if (!$o_glob->IsPost) {
+			/* add new branch record form */
+			$o_glob->PostModalForm = new forestForm($this->Twig, true);
+			$o_glob->PostModalForm->FormModalConfiguration->ModalTitle = $o_glob->GetTranslation('NewModalTitle', 1);
+			
+			/* delete BranchId-element */
+			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_identifier_IdentifierNext')) {
+				throw new forestException('Cannot delete form element with Id[sys_fphp_identifier_IdentifierNext].');
+			}
+		} else {
+			/* check posted data for new tablefield_validationrule record */
+			$this->TransferPOST_Twig();
+			
+			/* identifier characters should be only capitals */
+			$this->Twig->IdentifierStart = strtoupper($this->Twig->IdentifierStart);
+			
+			/* new identifier record has same next value like start */
+			$this->Twig->IdentifierNext = $this->Twig->IdentifierStart;
+			
+			/* test increase of next value */
+			$s_identifierNext = forestStringLib::IncreaseIdentifier($this->Twig->IdentifierNext, $this->Twig->IdentifierIncrement);
+			
+			if ($s_identifierNext == 'INVALID') {
+				throw new forestException(0x10001F13, array($this->Twig->IdentifierNext));
+			} else if ($s_identifierNext == 'OVERFLOW') {
+				throw new forestException(0x10001F14, array($this->Twig->IdentifierNext));
+			}
+			
+			/* insert record */
+			$i_result = $this->Twig->InsertRecord();
+			
+			/* evaluate result */
+			if ($i_result == -1) {
+				throw new forestException(0x10001403, array($o_glob->Temp->{'UniqueIssue'}));
+			} else if ($i_result == 0) {
+				throw new forestException(0x10001402);
+			} else if ($i_result == 1) {
+				$o_glob->SystemMessages->Add(new forestException(0x10001404));
+				$s_nextAction = 'viewIdentifier';
+			}
+		}
+		
+		if (isset($this->KeepFilter)) {
+			if ($this->KeepFilter->value) {
+				if ($o_glob->Security->SessionData->Exists('last_filter')) {
+					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
+				}
+			}
+		}
+		
+		$this->Twig = $o_saveTwig;
+		$this->SetNextAction($s_nextAction);
+	}
+	
+	/* handle edit identifier record action */
+	protected function editIdentifierAction() {
+		$o_glob = forestGlobals::init();
+		$o_saveTwig = $this->Twig;
+		$this->Twig = new identifierTwig;
+		$s_nextAction = 'init';
+		
+		$this->HandleFormKey($o_glob->URL->Branch . $o_glob->URL->Action . 'Form');
+		
+		if ($o_glob->IsPost) {
+			/* query record */
+			if (array_key_exists('sys_fphp_identifierKey', $_POST)) {
+				if (! ($this->Twig->GetRecord(array($_POST['sys_fphp_identifierKey']))) ) {
+					throw new forestException(0x10001401, array($this->Twig->fphp_Table));
+				}
+				
+				/* check posted data for tablefield_validationrule record */
+				$this->TransferPOST_Twig();
+				
+				/* identifier characters should be only capitals */
+				$this->Twig->IdentifierStart = strtoupper($this->Twig->IdentifierStart);
+				$this->Twig->IdentifierNext = strtoupper($this->Twig->IdentifierNext);
+				
+				/* test increase of start value */
+				$s_identifierStart = forestStringLib::IncreaseIdentifier($this->Twig->IdentifierStart, $this->Twig->IdentifierIncrement);
+				
+				if ($s_identifierStart == 'INVALID') {
+					throw new forestException(0x10001F13, array($this->Twig->IdentifierStart));
+				} else if ($s_identifierStart == 'OVERFLOW') {
+					throw new forestException(0x10001F14, array($this->Twig->IdentifierStart));
+				}
+				
+				/* test increase of next value */
+				$s_identifierNext = forestStringLib::IncreaseIdentifier($this->Twig->IdentifierNext, $this->Twig->IdentifierIncrement);
+				
+				if ($s_identifierNext == 'INVALID') {
+					throw new forestException(0x10001F13, array($this->Twig->IdentifierNext));
+				} else if ($s_identifierNext == 'OVERFLOW') {
+					throw new forestException(0x10001F14, array($this->Twig->IdentifierNext));
+				}
+				
+				/* edit record */
+				$i_result = $this->Twig->UpdateRecord();
+				
+				/* evaluate result */
+				if ($i_result == -1) {
+					throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+				} else if ($i_result == 0) {
+					$o_glob->SystemMessages->Add(new forestException(0x10001406));
+					$s_nextAction = 'viewIdentifier';
+				} else if ($i_result == 1) {
+					$o_glob->SystemMessages->Add(new forestException(0x10001407));
+					$s_nextAction = 'viewIdentifier';
+				}
+			}
+		} else {
+			$o_glob->Temp->Add( get($o_glob->URL->Parameters, 'editKey'), 'editKey' );
+		
+			if ( ($o_glob->Temp->Exists('editKey')) && ($o_glob->Temp->{'editKey'} != null) ) {
+				/* query record */
+				if (! ($this->Twig->GetRecord(array($o_glob->Temp->{'editKey'}))) ) {
+					throw new forestException(0x10001401, array($this->Twig->fphp_Table));
+				}
+
+				/* build modal form */
+				$o_glob->PostModalForm = new forestForm($this->Twig, true);
+				$o_glob->PostModalForm->FormModalConfiguration->ModalTitle = $o_glob->GetTranslation('EditModalTitle', 1);
+				
+				/* add tablefield record key to modal form as hidden field */
+				$o_hidden = new forestFormElement(forestFormElement::HIDDEN);
+				$o_hidden->Id = 'sys_fphp_identifierKey';
+				$o_hidden->Value = strval($this->Twig->Id);
+				
+				$o_glob->PostModalForm->FormFooterElements->Add($o_hidden);
+			}
+		}
+		
+		if (isset($this->KeepFilter)) {
+			if ($this->KeepFilter->value) {
+				if ($o_glob->Security->SessionData->Exists('last_filter')) {
+					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
+				}
+			}
+		}
+		
+		$this->Twig = $o_saveTwig;
+		$this->SetNextAction($s_nextAction);
+	}
+	
+	/* handle delete identifier record action */
+	protected function deleteIdentifierAction() {
+		$o_glob = forestGlobals::init();
+		$o_saveTwig = $this->Twig;
+		$this->Twig = new identifierTwig;
+		$s_nextAction = 'init';
+		
+		$this->HandleFormKey($o_glob->URL->Branch . $o_glob->URL->Action . 'Form');
+		
+		if (!$o_glob->IsPost) {
+			$o_glob->Temp->Add( get($o_glob->URL->Parameters, 'deleteKey'), 'deleteKey' );
+			
+			if ( ($o_glob->Temp->Exists('deleteKey')) && ($o_glob->Temp->{'deleteKey'} != null) ) {
+				if (! ($this->Twig->GetRecord(array($o_glob->Temp->{'deleteKey'}))) ) {
+					throw new forestException(0x10001401, array($this->Twig->fphp_Table));
+				}
+				
+				/* create modal confirmation form for deleting record */
+				$o_glob->PostModalForm = new forestForm($this->Twig);
+				$s_title = $o_glob->GetTranslation('DeleteModalTitle', 1);
+				$s_description = '<b>' . $o_glob->GetTranslation('DeleteModalDescriptionOne', 1) . '</b>';
+				$o_glob->PostModalForm->CreateDeleteModalForm($this->Twig, $s_title, $s_description);	
+				
+				$o_hidden = new forestFormElement(forestFormElement::HIDDEN);
+				$o_hidden->Id = 'sys_fphp_identifierKey';
+				$o_hidden->Value = strval($this->Twig->UUID);
+				$o_glob->PostModalForm->FormElements->Add($o_hidden);
+			}
+		} else {
+			if (array_key_exists('sys_fphp_identifierKey', $_POST)) {
+				if (! ($this->Twig->GetRecord(array($_POST['sys_fphp_identifierKey']))) ) {
+					throw new forestException(0x10001401, array($this->Twig->fphp_Table));
+				} else {
+					/* delete permission records linked to this action */
+					$o_tableTwig = new tableTwig;
+		
+					$a_sqlAdditionalFilter = array(array('column' => 'Identifier', 'value' => $this->Twig->UUID, 'operator' => '=', 'filterOperator' => 'AND'));
+					$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+					$o_tables = $o_tableTwig->GetAllRecords(true);
+					$o_glob->Temp->Del('SQLAdditionalFilter');
+					
+					foreach ($o_tables->Twigs as $o_table) {
+						/* clear identifier column of table record */
+						$o_table->Identifier = 'NULL';
+						
+						/* edit table record */
+						$i_result = $o_table->UpdateRecord();
+						
+						/* evaluate result */
+						if ($i_result == -1) {
+							throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+						}
+					}
+					
+					/* delete record */
+					$i_return = $this->Twig->DeleteRecord();
+					
+					/* evaluate the result */
+					if ($i_return <= 0) {
+						throw new forestException(0x10001423);
+					}
+					
+					$o_glob->SystemMessages->Add(new forestException(0x10001427));
+					$s_nextAction = 'viewIdentifier';
+				}
+			}
+		}
+		
+		if (isset($this->KeepFilter)) {
+			if ($this->KeepFilter->value) {
+				if ($o_glob->Security->SessionData->Exists('last_filter')) {
+					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
+				}
+			}
+		}
+		
+		$this->Twig = $o_saveTwig;
+		$this->SetNextAction($s_nextAction);
+	}
+
+	
 	/* handle new branch record action */
 	protected function newBranchAction() {
 		$o_glob = forestGlobals::init();
@@ -146,6 +496,16 @@ abstract class forestRootBranch {
 			/* delete NavigationOrder-element */
 			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_branch_NavigationOrder')) {
 				throw new forestException('Cannot delete form element with Id[sys_fphp_branch_NavigationOrder].');
+			}
+			
+			/* delete MaintenanceMode-element */
+			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_branch_MaintenanceMode')) {
+				throw new forestException('Cannot delete form element with Id[sys_fphp_branch_MaintenanceMode].');
+			}
+			
+			/* delete MaintenanceModeMessage-element */
+			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_branch_MaintenanceModeMessage')) {
+				throw new forestException('Cannot delete form element with Id[sys_fphp_branch_MaintenanceModeMessage].');
 			}
 		} else {
 			$o_glob->Base->{$o_glob->ActiveBase}->ManualTransaction();
@@ -1119,6 +1479,38 @@ abstract class forestRootBranch {
 			$o_hidden->Id = 'sys_fphp_table_name';
 			$o_hidden->Value = strval($o_glob->URL->Branch);
 			
+			$o_lookupIdentifier = new forestFormElement(forestFormElement::LOOKUP);
+			$o_lookupIdentifier->Label = $o_glob->GetTranslation('formIdentifierLabel', 0);
+			$o_lookupIdentifier->Id = 'sys_fphp_table_identifier';
+			$o_forestLookupData = new forestLookupData('sys_fphp_identifier', array('UUID'), array('IdentifierName','IdentifierStart'));
+			
+			/* remove used identifiers of lookup element */
+			$o_tableTwig = new tableTwig;
+
+			$o_tables = $o_tableTwig->GetAllRecords(true);
+			$a_options = $o_forestLookupData->CreateOptionsArray();
+			
+			foreach ($a_options as $s_identifierLabel => $s_identifierUUID) {
+				$b_found = false;
+				
+				foreach ($o_tables->Twigs as $o_table) {
+					if ($o_table->Identifier->PrimaryValue == $s_identifierUUID) {
+						$b_found = true;
+						break;
+					}
+				}
+				
+				if ($b_found) {
+					unset($a_options[$s_identifierLabel]);
+				}
+			}
+			
+			if (count($a_options) <= 0) {
+				$a_options = array();
+			}
+			
+			$o_lookupIdentifier->Options = $a_options;
+			
 			$o_radioInfoColumns = new forestFormElement(forestFormElement::RADIO);
 			$o_radioInfoColumns->Label = $o_glob->GetTranslation('formInfoColumnsLabel', 0);
 			$o_radioInfoColumns->Id = 'sys_fphp_table_infoColumns';
@@ -1165,6 +1557,10 @@ abstract class forestRootBranch {
 			}
 						
 			if (!$o_glob->PostModalForm->AddFormElement($o_radioInfoColumns, 'general', true)) {
+				throw new forestException('Cannot add form element to tab with id[general].');
+			}
+			
+			if (!$o_glob->PostModalForm->AddFormElement($o_lookupIdentifier, 'general', true)) {
 				throw new forestException('Cannot add form element to tab with id[general].');
 			}
 			
@@ -1248,6 +1644,7 @@ abstract class forestRootBranch {
 			}
 			
 			$o_tableTwig->Name = $_POST['sys_fphp_table_name'];
+			$o_tableTwig->Identifier = $_POST['sys_fphp_table_identifier'];
 			$o_tableTwig->InfoColumns = intval($_POST['sys_fphp_table_infoColumns']);
 			
 			if (is_array($_POST['sys_fphp_table_infoColumnsView'])) {
@@ -1331,6 +1728,18 @@ abstract class forestRootBranch {
 					
 				$o_queryCreate->Query->Columns->Add($o_columnId);	
 				$o_queryCreate->Query->Columns->Add($o_columnUUID);
+				
+				/* create identifier column if an identifier has been choosen */
+				if (issetStr($o_tableTwig->Identifier->PrimaryValue)) {
+					$o_columnIdentifier = new forestSQLColumnStructure($o_queryCreate);
+						$o_columnIdentifier->Name = 'Identifier';
+						$o_columnIdentifier->ColumnType = 'VARCHAR';
+						$o_columnIdentifier->ColumnTypeLength = 255;
+						$o_columnIdentifier->ConstraintList->Add('NOT NULL');
+						$o_columnIdentifier->ConstraintList->Add('UNIQUE');
+						
+					$o_queryCreate->Query->Columns->Add($o_columnIdentifier);
+				}
 				
 				/* create table does not return a value - maybe using show_tables can be used as extra verification */
 				$o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_queryCreate, false, false);
@@ -1800,6 +2209,11 @@ abstract class forestRootBranch {
 			$o_hidden->Value = strval($o_glob->BranchTree['Id'][$o_glob->URL->BranchId]['Table']->PrimaryValue);
 			
 			$o_glob->PostModalForm->FormFooterElements->Add($o_hidden);
+			
+			/* delete Identifier-element */
+			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_Identifier')) {
+				throw new forestException('Cannot delete form element with Id[sys_fphp_table_Identifier].');
+			}
 			
 			/* delete Unique-element */
 			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_Unique[]')) {
@@ -3007,6 +3421,9 @@ abstract class forestRootBranch {
 		
 		$s_subTableHead = '<th>' . $o_glob->GetTranslation('Table', 0) . '</th>' . "\n";
 		$s_subTableHead .= '<th>' . $o_glob->GetTranslation('View', 1) . '</th>' . "\n";
+		$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortIdentifierStart', 0) . '</th>' . "\n";
+		$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortIdentifierIncrement', 0) . '</th>' . "\n";
+		$s_subTableHead .= '<th>' . $o_glob->GetTranslation('formSubOptions', 1) . '</th>' . "\n";
 		
 		/* ************************* */
 		/* ***********ROWS********** */
@@ -3039,6 +3456,18 @@ abstract class forestRootBranch {
 			
 			$s_subTableRows .=  '<td><span>' . $s_table . ' (' . $o_glob->TablesInformation[$o_subconstraint->SubTableUUID->PrimaryValue]['Name'] . ')' . '</span></td>' . "\n";
 			$s_subTableRows .=  '<td><span>' . implode(', ', $a_view) . '</span></td>' . "\n";
+			
+			if (issetStr($o_subconstraint->IdentifierStart)) {
+				$s_subTableRows .=  '<td><span>' . $o_subconstraint->IdentifierStart . '</span></td>' . "\n";
+			} else {
+				$s_subTableRows .=  '<td><span>-</span></td>' . "\n";
+			}
+			
+			if ($o_subconstraint->IdentifierIncrement > 0) {
+				$s_subTableRows .=  '<td><span>' . $o_subconstraint->IdentifierIncrement . '</span></td>' . "\n";
+			} else {
+				$s_subTableRows .=  '<td><span>-</span></td>' . "\n";
+			}
 			
 			$s_options = '<span class="btn-group">' . "\n";
 			
@@ -3345,6 +3774,12 @@ abstract class forestRootBranch {
 		$s_sorts = '$this->fphp_SortOrder->value->Add(true, \'Id\');' . "\n\t\t";
 		$s_fieldDefinitions .= 'private $Id;' . "\n\t" . 'private $UUID;' . "\n\t";
 		$s_fields .= '$this->Id = new forestNumericString(1);' . "\n\t\t" . '$this->UUID = new forestString;' . "\n\t\t";
+		
+		if (issetStr($p_o_tableTwig->Identifier->PrimaryValue)) {
+			$s_fieldDefinitions .= 'private $Identifier;' . "\n\t";
+			$s_fields .= '$this->Identifier = new forestString;' . "\n\t\t";
+			$s_uniques .= '\'Identifier\',';
+		}
 		
 		/* handle info columns */
 		if ($p_o_tableTwig->InfoColumns == 10) {
@@ -5071,6 +5506,11 @@ abstract class forestRootBranch {
 			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_CheckoutInterval')) {
 				throw new forestException('Cannot delete form element with Id[sys_fphp_table_CheckoutInterval].');
 			}
+			
+			/* delete Identifier-element */
+			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_Identifier')) {
+				throw new forestException('Cannot delete form element with Id[sys_fphp_table_Identifier].');
+			}
 		} else {
 			$s_unique = '';
 			
@@ -5304,6 +5744,11 @@ abstract class forestRootBranch {
 				if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_CheckoutInterval')) {
 					throw new forestException('Cannot delete form element with Id[sys_fphp_table_CheckoutInterval].');
 				}
+				
+				/* delete Identifier-element */
+				if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_Identifier')) {
+					throw new forestException('Cannot delete form element with Id[sys_fphp_table_Identifier].');
+				}
 			}
 		}
 		
@@ -5505,6 +5950,11 @@ abstract class forestRootBranch {
 			/* delete CheckoutInterval-element */
 			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_CheckoutInterval')) {
 				throw new forestException('Cannot delete form element with Id[sys_fphp_table_CheckoutInterval].');
+			}
+			
+			/* delete Identifier-element */
+			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_Identifier')) {
+				throw new forestException('Cannot delete form element with Id[sys_fphp_table_Identifier].');
 			}
 		} else {
 			$s_sortOrder = '';
@@ -5740,6 +6190,11 @@ abstract class forestRootBranch {
 				if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_CheckoutInterval')) {
 					throw new forestException('Cannot delete form element with Id[sys_fphp_table_CheckoutInterval].');
 				}
+				
+				/* delete Identifier-element */
+				if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_Identifier')) {
+					throw new forestException('Cannot delete form element with Id[sys_fphp_table_Identifier].');
+				}
 			}
 		}
 		
@@ -5884,6 +6339,17 @@ abstract class forestRootBranch {
 			/* check posted data for new sub constraint record */
 			$this->TransferPOST_Twig();
 			
+			/* test increase of next value, if it is set */
+			if (issetStr($this->Twig->IdentifierStart)) {
+				$s_identifierStart = forestStringLib::IncreaseIdentifier($this->Twig->IdentifierStart, $this->Twig->IdentifierIncrement);
+				
+				if ($s_identifierStart == 'INVALID') {
+					throw new forestException(0x10001F13, array($this->Twig->IdentifierStart));
+				} else if ($s_identifierStart == 'OVERFLOW') {
+					throw new forestException(0x10001F14, array($this->Twig->IdentifierStart));
+				}
+			}
+			
 			/* add TableUUID value to record */
 			$this->Twig->TableUUID = $o_tableTwig->UUID;
 			
@@ -5959,7 +6425,44 @@ abstract class forestRootBranch {
 			if (! ($o_subTableTwig->GetRecord(array($this->Twig->SubTableUUID->PrimaryValue))) ) {
 				throw new forestException(0x10001401, array($o_subTableTwig->fphp_Table));
 			} else {
+				$s_oldIdentifierStart = $this->Twig->IdentifierStart;
+				
 				$this->TransferPOST_Twig();
+				
+				if ( ($s_oldIdentifierStart != $this->Twig->IdentifierStart) && (issetStr($this->Twig->IdentifierStart)) ) {
+					/* check if we have sub records of current sub constraint */
+					if (array_key_exists($o_saveTwig->fphp_TableUUID, $o_glob->SubConstraintsDictionary)) {
+						foreach ($o_glob->SubConstraintsDictionary[$o_saveTwig->fphp_TableUUID] as $o_subconstraint) {
+							/* look for sub constraint which matches table in forestCombination */
+							if ($o_subconstraint->UUID == $this->Twig->UUID) {
+								/* get all records of twig */
+								$o_records = $o_saveTwig->GetAllRecords(true);
+								
+								/* iterate each record */
+								foreach($o_records->Twigs as $o_record) {
+									/* query all sub records of record of found sub constraint */
+									$o_subRecords = $o_record->QuerySubRecords($o_subconstraint);
+									
+									if ($o_subRecords->Twigs->Count() > 0) {
+										/* we can only add identifier column to sub constraint, if we have no sub records, because of unique issue within the sub record dataset */
+										throw new forestException(0x10001F15);
+									}
+								}
+							}
+						}
+					}
+				}
+				
+				/* test increase of next value, if it is set */
+				if (issetStr($this->Twig->IdentifierStart)) {
+					$s_identifierStart = forestStringLib::IncreaseIdentifier($this->Twig->IdentifierStart, $this->Twig->IdentifierIncrement);
+					
+					if ($s_identifierStart == 'INVALID') {
+						throw new forestException(0x10001F13, array($this->Twig->IdentifierStart));
+					} else if ($s_identifierStart == 'OVERFLOW') {
+						throw new forestException(0x10001F14, array($this->Twig->IdentifierStart));
+					}
+				}
 				
 				/* edit record */
 				$i_result = $this->Twig->UpdateRecord();

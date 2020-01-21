@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.6.0 (0x1 00014)   | */
+/* | forestPHP V0.7.0 (0x1 00014)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -34,6 +34,7 @@
  * 0.5.0 beta	renatus		2019-12-17	added info columns
  * 0.5.0 beta	renatus		2019-12-18	added versioning
  * 0.5.0 beta	renatus		2019-12-19	added restoreFile action
+ * 0.7.0 beta	renatus		2020-01-02	added identifier display and money-format
  */
 
 abstract class forestBranch extends forestRootBranch {
@@ -1062,6 +1063,11 @@ abstract class forestBranch extends forestRootBranch {
 		$s_tableHead = '';
 		
 		/* render table head */
+		/* if identifier is configured */
+		if (issetStr($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['Identifier']->PrimaryValue)) {
+			$s_tableHead .= '<th>' . $o_glob->GetSort('Identifier')->ToString($o_glob->GetTranslation('sortIdentifier')) . '</th>' . "\n";
+		}
+		
 		foreach ($this->Twig->fphp_View as $s_columnHead) {
 			if ($o_glob->TablefieldsDictionary->Exists($this->Twig->fphp_Table . '_' . $s_columnHead)) {
 				$s_formElement = $o_glob->TablefieldsDictionary->{$this->Twig->fphp_Table . '_' . $s_columnHead}->FormElementName;
@@ -1103,6 +1109,11 @@ abstract class forestBranch extends forestRootBranch {
 				}
 				
 				$s_tableRows .= '">' . "\n";
+				
+				/* if identifier is configured */
+				if (issetStr($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['Identifier']->PrimaryValue)) {
+					$s_tableRows .=  '<td><span>' . $o_record->Identifier . '</span></td>' . "\n";
+				}
 				
 				foreach ($this->Twig->fphp_View as $s_column) {
 					if ($o_glob->TablefieldsDictionary->Exists($this->Twig->fphp_Table . '_' . $s_column)) {
@@ -1401,10 +1412,35 @@ abstract class forestBranch extends forestRootBranch {
 				if (array_key_exists('forestCombination', $a_settings)) {
 					$p_s_value = $p_o_record->CalculateCombination($a_settings['forestCombination']);
 					
+					/* check if we want to render result as money value */
+					if (array_key_exists('MoneyFormat', $a_settings)) {
+						if ($a_settings['MoneyFormat']) {
+							$p_s_value = forestStringLib::money_format('%i', $p_s_value);
+						}
+					}
 					/* check if we want to render result as date interval value */
-					if (array_key_exists('DateIntervalFormat', $a_settings)) {
+					else if (array_key_exists('DateIntervalFormat', $a_settings)) {
 						if ($a_settings['DateIntervalFormat']) {
 							$p_s_value = strval(new forestDateInterval($p_s_value));
+						}
+					}
+				}
+			}
+		} else if ( ($o_glob->TablefieldsDictionary->Exists($p_s_dictionaryKey)) && ( ($o_glob->TablefieldsDictionary->{$p_s_dictionaryKey}->SqlTypeName == 'decimal') || ($o_glob->TablefieldsDictionary->{$p_s_dictionaryKey}->SqlTypeName == 'double') ) ) {
+			/* render double and decimal value */
+			$p_s_value = $p_o_record->{$p_s_column};
+			
+			$s_JSONEncodedSettings = str_replace('&quot;', '"', $o_glob->TablefieldsDictionary->{$p_s_dictionaryKey}->JSONEncodedSettings);
+			$a_settings = json_decode($s_JSONEncodedSettings, true);
+			
+			if (!empty($a_settings)) {
+				if (array_key_exists('MoneyFormat', $a_settings)) {
+					/* check if we want to render value as money value */
+					if ($a_settings['MoneyFormat']) {
+						$p_s_value = forestStringLib::money_format('%i', $p_o_record->{$p_s_column});
+						
+						if (floatval($p_o_record->{$p_s_column}) < 0.0) {
+							$p_s_value = '<span style="color: red;">' . $p_s_value . '</span>';
 						}
 					}
 				}
@@ -1635,6 +1671,12 @@ abstract class forestBranch extends forestRootBranch {
 						<ul class="dropdown-menu" role="menu">';
 							
 							$b_columns = false;
+							
+							/* if identifier is configured */
+							if (issetStr($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['Identifier']->PrimaryValue)) {
+								$p_s_searchForm .= '<li><a href="#Identifier">' . $o_glob->GetTranslation('sortIdentifier') . '</a></li>';
+								$b_columns = true;
+							}
 							
 							foreach ($this->Twig->fphp_Mapping as $s_column) {
 								/* skip fields which are already used within filter */
@@ -1988,6 +2030,11 @@ abstract class forestBranch extends forestRootBranch {
 						
 						$s_subTableHead = '';
 						
+						/* if identifier is configured in sub constraint, render identifier column head */
+						if (issetStr($o_subconstraint->IdentifierStart)) {
+							$s_subTableHead .= '<th>' . $o_glob->GetTranslation('sortIdentifier') . '</th>' . "\n";
+						}
+						
 						/* render join column heads */
 						foreach ($a_view as $s_columnHead) {
 							$s_formElement = $o_glob->TablefieldsDictionary->{$o_tempTwig->fphp_Table . '_' . $s_columnHead}->FormElementName;
@@ -2071,6 +2118,11 @@ abstract class forestBranch extends forestRootBranch {
 							}
 							
 							$s_subTableRows .= '>' . "\n";
+							
+							/* if identifier is configured in sub constraint */
+							if (issetStr($o_subconstraint->IdentifierStart)) {
+								$s_subTableRows .=  '<td><span>' . $o_subRecord->Identifier . '</span></td>' . "\n";
+							}
 							
 							/* render join columns */
 							foreach ($a_view as $s_column) {
@@ -3155,6 +3207,30 @@ abstract class forestBranch extends forestRootBranch {
 					$this->Twig->ModifiedBy = $o_glob->Security->UserUUID;
 				}
 				
+				/* set identifier when configured */
+				if (issetStr($o_subconstraintTwig->IdentifierStart)) {
+					/* get amount of current sub records */
+					$o_subRecords = $o_headTwig->QuerySubRecords($o_subconstraintTwig);
+					
+					if ($o_subRecords->Twigs->Count() <= 0) {
+						/* first new sub record, take identifier start from sub constraint record */
+						$this->Twig->Identifier = $o_subconstraintTwig->IdentifierStart;
+					} else {
+						/* get last sub record's identifier */
+						$this->Twig->Identifier = $o_subRecords->Twigs->{($o_subRecords->Twigs->Count() - 1)}->Identifier;
+						
+						/* increase identifier */
+						$this->Twig->Identifier = forestStringLib::IncreaseIdentifier($this->Twig->Identifier, $o_subconstraintTwig->IdentifierIncrement);
+						
+						/* check identifier result */
+						if ($this->Twig->Identifier == 'INVALID') {
+							throw new forestException(0x10001F13, array($o_subRecords->Twigs->{($o_subRecords->Twigs->Count() - 1)}->Identifier));
+						} else if ($this->Twig->Identifier == 'OVERFLOW') {
+							throw new forestException(0x10001F14, array($o_subRecords->Twigs->{($o_subRecords->Twigs->Count() - 1)}->Identifier));
+						}
+					}
+				}
+				
 				if (method_exists($this, 'beforeNewSubAction')) {
 					$this->beforeNewSubAction();
 				}
@@ -3200,6 +3276,37 @@ abstract class forestBranch extends forestRootBranch {
 					$this->Twig->CreatedBy = $o_glob->Security->UserUUID;
 					$this->Twig->Modified = new forestDateTime;
 					$this->Twig->ModifiedBy = $o_glob->Security->UserUUID;
+				}
+				
+				/* set and increment identifier when configured */
+				if (issetStr($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['Identifier']->PrimaryValue)) {
+					$o_identifierTwig = new identifierTwig;
+					
+					/* get identifier record */
+					if (! ($o_identifierTwig->GetRecord(array($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['Identifier']->PrimaryValue))) ) {
+						throw new forestException(0x10001401, array($o_identifierTwig->fphp_Table));
+					}
+					
+					/* set identifier for new record */
+					$this->Twig->Identifier = $o_identifierTwig->IdentifierNext;
+					
+					/* increase identifier next */
+					$o_identifierTwig->IdentifierNext = forestStringLib::IncreaseIdentifier($o_identifierTwig->IdentifierNext, $o_identifierTwig->IdentifierIncrement);
+					
+					/* check identifier result */
+					if ($o_identifierTwig->IdentifierNext == 'INVALID') {
+						throw new forestException(0x10001F13, array($this->Twig->Identifier));
+					} else if ($o_identifierTwig->IdentifierNext == 'OVERFLOW') {
+						throw new forestException(0x10001F14, array($this->Twig->Identifier));
+					}
+					
+					/* update identifier record */
+					$i_result = $o_identifierTwig->UpdateRecord();
+					
+					/* evaluate result */
+					if ($i_result == -1) {
+						throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+					}
 				}
 				
 				if (method_exists($this, 'beforeNewAction')) {
@@ -3852,11 +3959,32 @@ abstract class forestBranch extends forestRootBranch {
 				
 				if (array_key_exists('forestCombination', $a_settings)) {
 					$s_value = $o_joinTwig->CalculateCombination($a_settings['forestCombination']);
-					
+					/* check if we want to render value as money value */
+					if (array_key_exists('MoneyFormat', $a_settings)) {
+						if ($a_settings['MoneyFormat']) {
+							$s_value = forestStringLib::money_format('%i', $s_value);
+						}
+					}
 					/* check if we want to render value as date interval value */
-					if (array_key_exists('DateIntervalFormat', $a_settings)) {
+					else if (array_key_exists('DateIntervalFormat', $a_settings)) {
 						if ($a_settings['DateIntervalFormat']) {
 							$s_value = strval(new forestDateInterval($s_value));
+						}
+					}
+				}
+			}
+			
+			/* check for money format setting */
+			if ( (!$o_joinTwig->IsEmpty()) && ($s_forestData == 'forestFloat') ) {
+				$s_JSONEncodedSettings = str_replace('&quot;', '"', $s_formElementJSONSettings);
+				$a_settings = json_decode($s_JSONEncodedSettings, true);
+				/* check if we want to render value as money value */
+				if (array_key_exists('MoneyFormat', $a_settings)) {
+					if ($a_settings['MoneyFormat']) {
+						$s_value = forestStringLib::money_format('%i', $o_joinTwig->{$s_column});
+						
+						if (floatval($o_joinTwig->{$s_column}) < 0.0) {
+							$o_formElement->Style = 'color: red;';
 						}
 					}
 				}

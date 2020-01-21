@@ -7,6 +7,7 @@ class tableTwig extends forestTwig {
 	private $Id;
 	private $UUID;
 	private $Name;
+	private $Identifier;
 	private $Unique;
 	private $SortOrder;
 	private $Interval;
@@ -25,6 +26,7 @@ class tableTwig extends forestTwig {
 		$this->Id = new forestNumericString(1);
 		$this->UUID = new forestString;
 		$this->Name = new forestString;
+		$this->Identifier = new forestLookup(new forestLookupData('sys_fphp_identifier', array('UUID'), array('IdentifierName','IdentifierStart')));
 		$this->Unique = new forestLookup(new forestLookupData('sys_fphp_tablefield', array('UUID'), array('FieldName'), array('TableUUID' => 'foo')));
 		$this->SortOrder = new forestLookup(new forestLookupData('sys_fphp_tablefield', array('UUID'), array('FieldName'), array('TableUUID' => 'foo')));
 		$this->Interval = new forestInt;

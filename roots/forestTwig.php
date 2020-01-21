@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.6.0 (0x1 0000C)   | */
+/* | forestPHP V0.7.0 (0x1 0000C)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -21,6 +21,8 @@
  * 0.1.5 alpha	renatus		2019-10-08	added caching
  * 0.1.5 alpha	renatus		2019-10-09	added forestLooukp and forestCombination
  * 0.4.0 beta	renatus		2019-11-22	do not add system table flag protection if you are root user
+ * 0.7.0 beta	renatus		2020-01-03	added identifier column as standard like id and uuid
+ * 0.7.0 beta	renatus		2020-01-03	added FILEVERSION and FILENAME commands to forestCombination
  */
 
 abstract class forestTwig {
@@ -831,6 +833,94 @@ abstract class forestTwig {
 						}
 					}
 					
+					if (forestStringLib::StartsWith($s_combination, 'FILENAME(')) { /* $s_combination starts with FILENAME */
+						$s_fileField = substr($s_combination, 9, -1);
+						
+						$b_found = false;
+						
+						/* get sub record field of forestCombination table field */
+						foreach ($o_glob->TablefieldsDictionary as $s_key => $o_tableFieldDictionaryObject) {
+							if ($o_tableFieldDictionaryObject->FieldName == $s_fileField) {
+								if ($o_tableFieldDictionaryObject->FormElementName == forestFormElement::FILE) {
+									/* check sub record field value */
+									if (issetStr($o_tableFieldDictionaryObject->SubRecordField)) {
+										/* check if field actually exists in current record */
+										if (in_array($o_tableFieldDictionaryObject->SubRecordField, $this->fphp_Mapping->value)) {
+											/* save table sub record field name */
+											$b_found = true;
+											$s_fileField = $o_tableFieldDictionaryObject->SubRecordField;
+										}
+									} else {
+										/* check if field actually exists in current record */
+										if (in_array($o_tableFieldDictionaryObject->FieldName, $this->fphp_Mapping->value)) {
+											/* save table field name */
+											$b_found = true;
+											$s_fileField = $o_tableFieldDictionaryObject->FieldName;
+										}
+									}
+								}
+							}
+						}
+						
+						if (!$b_found) {
+							return '[wrong_combination_parametera]';
+						}
+						
+						/* get file record */
+						$o_filesTwig = new filesTwig;
+						
+						if (! ($o_filesTwig->GetRecord(array($this->{$s_fileField}))) ) {
+							return '[file not found]';
+						}
+						
+						/* return file display name */
+						return $o_filesTwig->DisplayName;
+					}
+					
+					if (forestStringLib::StartsWith($s_combination, 'FILEVERSION(')) { /* $s_combination starts with FILEVERSION */
+						$s_fileField = substr($s_combination, 12, -1);
+						
+						$b_found = false;
+						
+						/* get sub record field of forestCombination table field */
+						foreach ($o_glob->TablefieldsDictionary as $s_key => $o_tableFieldDictionaryObject) {
+							if ($o_tableFieldDictionaryObject->FieldName == $s_fileField) {
+								if ($o_tableFieldDictionaryObject->FormElementName == forestFormElement::FILE) {
+									/* check sub record field value */
+									if (issetStr($o_tableFieldDictionaryObject->SubRecordField)) {
+										/* check if field actually exists in current record */
+										if (in_array($o_tableFieldDictionaryObject->SubRecordField, $this->fphp_Mapping->value)) {
+											/* save table sub record field name */
+											$b_found = true;
+											$s_fileField = $o_tableFieldDictionaryObject->SubRecordField;
+										}
+									} else {
+										/* check if field actually exists in current record */
+										if (in_array($o_tableFieldDictionaryObject->FieldName, $this->fphp_Mapping->value)) {
+											/* save table field name */
+											$b_found = true;
+											$s_fileField = $o_tableFieldDictionaryObject->FieldName;
+										}
+									}
+								}
+							}
+						}
+						
+						if (!$b_found) {
+							return '[wrong_combination_parametera]';
+						}
+						
+						/* get file record */
+						$o_filesTwig = new filesTwig;
+						
+						if (! ($o_filesTwig->GetRecord(array($this->{$s_fileField}))) ) {
+							return '[file not found]';
+						}
+						
+						/* return file version */
+						return $o_filesTwig->Major . $o_glob->Trunk->VersionDelimiter . $o_filesTwig->Minor;
+					}
+
 					if (strpos($s_combination, '$') !== false) { /* $s_combination contains $ */
 						/* this notation is used within sub records, if we are combine it with a field value of sub constaint join record */
 						$a_combinationElements = explode('$', $s_combination);
@@ -1534,8 +1624,16 @@ abstract class forestTwig {
 				$a_sqlGetAllAdditionalColumns[] = $o_columnUUID;
 			}
 			
+			/* if identifier is configured */
+			if (issetStr($o_glob->TablesInformation[$this->fphp_TableUUID->value]['Identifier']->PrimaryValue)) {
+				$o_columnIdentifier = new forestSQLColumn($o_querySelect);
+						$o_columnIdentifier->Column = 'Identifier';
+						
+				$a_sqlGetAllAdditionalColumns[] = $o_columnIdentifier;
+			}
+			
 			foreach ($this->fphp_View->value as $s_view_field) {
-				if ( ($s_view_field == 'Id') || ($s_view_field == 'UUID') || (!in_array($s_view_field, $this->fphp_Mapping->value)) ) {
+				if ( ($s_view_field == 'Id') || ($s_view_field == 'UUID') || ($s_view_field == 'Identifier') || (!in_array($s_view_field, $this->fphp_Mapping->value)) ) {
 					continue;
 				}
 				

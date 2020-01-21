@@ -16,6 +16,8 @@ class branchTwig extends forestTwig {
 	private $Filter;
 	private $KeepFilter;
 	private $PermissionInheritance;
+	private $MaintenanceMode;
+	private $MaintenanceModeMessage;
 	
 	/* Properties */
 	
@@ -34,6 +36,8 @@ class branchTwig extends forestTwig {
 		$this->Filter = new forestBool;
 		$this->KeepFilter = new forestBool;
 		$this->PermissionInheritance = new forestBool;
+		$this->MaintenanceMode = new forestBool;
+		$this->MaintenanceModeMessage = new forestString;
 		
 		/* forestTwig system fields */
 		$this->fphp_Table->value = 'sys_fphp_branch';
@@ -42,7 +46,7 @@ class branchTwig extends forestTwig {
 		$this->fphp_SortOrder->value->Add(true, 'ParentBranch');
 		$this->fphp_SortOrder->value->Add(true, 'NavigationOrder');
 		$this->fphp_Interval->value = 50;
-		$this->fphp_View->value = array('Name', 'Title', 'Navigation', 'NavigationOrder', 'Table', 'StandardView', 'Filter', 'KeepFilter', 'PermissionInheritance');
+		$this->fphp_View->value = array('Name', 'Title', 'Navigation', 'NavigationOrder', 'Table', 'StandardView', 'Filter', 'KeepFilter', 'PermissionInheritance', 'MaintenanceMode', 'MaintenanceModeMessage');
 		$this->fphp_FillMapping(get_object_vars($this));
 	}
 }

@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.6.0 (0x1 00016)   | */
+/* | forestPHP V0.7.0 (0x1 00016)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -18,6 +18,7 @@
  * 0.1.4 alpha	renatus		2019-09-23	added file, dropzone and richtext
  * 0.1.5 alpha	renatus		2019-10-04	added forestLookup and Captcha
  * 0.5.0 beta	renatus		2019-12-04	added auto checkin element
+ * 0.7.0 beta	renatus		2020-01-03	added mondey-format property to general input attributes
  */
 
 class forestFormElement {
@@ -277,6 +278,7 @@ abstract class forestFormGeneralAttributes {
 	protected $DescriptionClass;
 	protected $Disabled;
 	protected $Id;
+	protected $MoneyFormat;
 	protected $Name;
 	protected $AutoFocus;
 	protected $Required;
@@ -300,6 +302,7 @@ abstract class forestFormGeneralAttributes {
 		$this->DescriptionClass = new forestString;
 		$this->Disabled = new forestBool;
 		$this->Id = new forestString;
+		$this->MoneyFormat = new forestBool;
 		$this->Name = new forestString;
 		$this->AutoFocus = new forestBool;
 		$this->Required = new forestBool;

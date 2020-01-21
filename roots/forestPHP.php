@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.6.0 (0x1 00001)   | */
+/* | forestPHP V0.7.0 (0x1 00001)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -17,6 +17,7 @@
  * 0.1.4 alpha	renatus		2019-09-26	added fphp_upload and fphp_upload_delete to fast-processing actions
  * 0.1.5 alpha	renatus		2019-10-09	added fphp_captcha and fphp_imageThumbnail to fast-processing actions
  * 0.4.0 beta	renatus		2019-11-20	added permission checks, user and guest access
+ * 0.7.0 beta	renatus		2020-01-02	added Maintenance Mode
  */
 
 class forestPHP {
@@ -75,6 +76,22 @@ class forestPHP {
 				
 				$o_glob->Security->init($b_write_security_debug);
 				$o_glob->Security->ListUserPermissions();
+				
+				/* handle maintenance mode, except for root user */
+				if (!$o_glob->Security->RootUser) {
+					/* maintenance mode on trunk level */
+					if ($o_glob->Trunk->MaintenanceMode) {
+						if ( !( ($o_glob->URL->BranchId == 1) && ( (!issetStr($o_glob->URL->Action)) ||($o_glob->URL->Action == 'init') || ($o_glob->URL->Action == 'login') || ($o_glob->URL->Action == 'logout') ) ) ) {
+							throw new Exception($o_glob->Trunk->MaintenanceModeMessage);
+						}
+					}
+					/* maintenance mode on branch level */
+					else if ($o_glob->BranchTree['Id'][$o_glob->URL->BranchId]['MaintenanceMode']) {
+						if ( !( ($o_glob->URL->BranchId == 1) && ( (!issetStr($o_glob->URL->Action)) ||($o_glob->URL->Action == 'init') || ($o_glob->URL->Action == 'login') || ($o_glob->URL->Action == 'logout') ) ) ) {
+							throw new Exception($o_glob->BranchTree['Id'][$o_glob->URL->BranchId]['MaintenanceModeMessage']);
+						}
+					}
+				}
 				
 				if (!$o_glob->FastProcessing) {
 					$o_glob->ListTranslations();

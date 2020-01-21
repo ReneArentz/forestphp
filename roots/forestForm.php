@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.6.0 (0x1 00015)   | */
+/* | forestPHP V0.7.0 (0x1 00015)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -21,6 +21,8 @@
  * 0.5.0 beta	renatus		2019-12-02	added honeypot fields functionality
  * 0.5.0 beta	renatus		2019-12-04	added auto checkin question
  * 0.6.0 beta	renatus		2019-12-18	added info columns in readonly mode
+ * 0.7.0 beta	renatus		2020-01-02	added identifier in readonly mode
+ * 0.7.0 beta	renatus		2020-01-03	added money-format display
  */
 
 class forestForm {
@@ -159,6 +161,23 @@ class forestForm {
 								}
 							}
 						}
+					}
+				}
+			}
+			
+			/* render identifier - readonly */
+			if ($this->FormObject->value->ReadonlyAll) {
+				/* if identifier is configured */
+				if (issetStr($o_glob->TablesInformation[$p_o_twig->fphp_TableUUID]['Identifier']->PrimaryValue)) {
+					$o_formElement = new forestFormElement(forestFormElement::TEXT);
+					$o_formElement->Id = 'readonly_' . $p_o_twig->fphp_Table . 'Identifier';
+					$o_formElement->Label = $o_glob->GetTranslation('sortIdentifier') . ':';
+					$o_formElement->Value = $p_o_twig->{'Identifier'};
+					
+					if ($o_firstTab != null) {
+						$o_firstTab->FormElements->Add($o_formElement);
+					} else {
+						$this->FormElements->value->Add($o_formElement);
 					}
 				}
 			}
@@ -302,10 +321,32 @@ class forestForm {
 						if (array_key_exists('forestCombination', $a_settings)) {
 							$s_value = $p_o_twig->CalculateCombination($a_settings['forestCombination']);
 							
+							/* check if we want to render value as money value */
+							if (array_key_exists('MoneyFormat', $a_settings)) {
+								if ($a_settings['MoneyFormat']) {
+									$s_value = forestStringLib::money_format('%i', $s_value);
+								}
+							}
 							/* check if we want to render value as date interval value */
-							if ( (array_key_exists('DateIntervalFormat', $a_settings)) && ($this->FormObject->value->ReadonlyAll) ) {
+							else if ( (array_key_exists('DateIntervalFormat', $a_settings)) && ($this->FormObject->value->ReadonlyAll) ) {
 								if ($a_settings['DateIntervalFormat']) {
 									$s_value = strval(new forestDateInterval($s_value));
+								}
+							}
+						}
+					}
+					
+					/* check for money format setting */
+					if ( (!$p_o_twig->IsEmpty()) && ($s_forestdataName == 'forestFloat') && ($this->FormObject->value->ReadonlyAll) ) {
+						$s_JSONEncodedSettings = str_replace('&quot;', '"', $s_formElementJSONSettings);
+						$a_settings = json_decode($s_JSONEncodedSettings, true);
+						/* check if we want to render value as money value */
+						if (array_key_exists('MoneyFormat', $a_settings)) {
+							if ($a_settings['MoneyFormat']) {
+								$s_value = forestStringLib::money_format('%i', $p_o_twig->{$o_tableField->FieldName});
+								
+								if (floatval($p_o_twig->{$o_tableField->FieldName}) < 0.0) {
+									$o_formElement->Style = 'color: red;';
 								}
 							}
 						}
