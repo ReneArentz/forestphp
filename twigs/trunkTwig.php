@@ -41,6 +41,9 @@ class trunkTwig extends forestTwig {
 	private $TempFilesLifetime;
 	private $CheckoutInterval;
 	private $VersionDelimiter;
+	private $LogNew;
+	private $LogEdit;
+	private $LogDelete;
 	
 	/* Properties */
 	
@@ -84,6 +87,9 @@ class trunkTwig extends forestTwig {
 		$this->TempFilesLifetime = new forestString;
 		$this->CheckoutInterval = new forestString;
 		$this->VersionDelimiter = new forestString;
+		$this->LogNew = new forestBool;
+		$this->LogEdit = new forestBool;
+		$this->LogDelete = new forestBool;
 		
 		/* forestTwig system fields */
 		$this->fphp_Table->value = 'sys_fphp_trunk';
@@ -91,7 +97,7 @@ class trunkTwig extends forestTwig {
 		$this->fphp_Unique->value = array('UUID');
 		$this->fphp_SortOrder->value->Add(true, 'Id');
 		$this->fphp_Interval->value = 1;
-		$this->fphp_View->value = array('LanguageCode','DateTimeSqlFormat','DateTimeFormat','DateFormat','TimeFormat','CheckUniqueUUID','UUIDGuest','UUIDUsergroup','SessionIntervalUser','SessionIntervalGuest','MaxLoginTrials','FormKey','FormKeyInterval','FormKeyMinimumInterval','HoneypotFields','MaxAmountHoneypot','NavbarAdditionalClass','NavbarAlign','NavbarBrandTitle','NavbarMaxLevel','NavbarShowLoginPart','NavbarLoginIcon','NavbarSignUpIcon','NavbarShowLogoutPart','NavbarUserIcon','NavbarLogoutIcon','MaintenanceMode','MaintenanceModeMessage','IncContentUTF8Decode','IncContentUTF8Encode','OutContentUTF8Decode','OutContentUTF8Encode','TempFilesLifetime','CheckoutInterval','VersionDelimiter');
+		$this->fphp_View->value = array('LanguageCode','DateTimeSqlFormat','DateTimeFormat','DateFormat','TimeFormat','CheckUniqueUUID','UUIDGuest','UUIDUsergroup','SessionIntervalUser','SessionIntervalGuest','MaxLoginTrials','FormKey','FormKeyInterval','FormKeyMinimumInterval','HoneypotFields','MaxAmountHoneypot','NavbarAdditionalClass','NavbarAlign','NavbarBrandTitle','NavbarMaxLevel','NavbarShowLoginPart','NavbarLoginIcon','NavbarSignUpIcon','NavbarShowLogoutPart','NavbarUserIcon','NavbarLogoutIcon','MaintenanceMode','MaintenanceModeMessage','IncContentUTF8Decode','IncContentUTF8Encode','OutContentUTF8Decode','OutContentUTF8Encode','TempFilesLifetime','CheckoutInterval','VersionDelimiter','LogNew','LogEdit','LogDelete');
 		$this->fphp_FillMapping(get_object_vars($this));
 	}
 }

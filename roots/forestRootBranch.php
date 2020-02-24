@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.7.0 (0x1 0001F)   | */
+/* | forestPHP V0.8.0 (0x1 0001F)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -23,6 +23,7 @@
  * 0.5.0 beta	renatus		2019-12-05	added checkout and checkin functionality for twigs
  * 0.6.0 beta	renatus		2019-12-12	added versioning and info columns administration
  * 0.7.0 beta	renatus		2020-01-02	added identifier administration
+ * 0.7.0 beta	renatus		2020-01-16	added fphp_flex functionality and create log entry
  */
 
 abstract class forestRootBranch {
@@ -36,10 +37,12 @@ abstract class forestRootBranch {
 		'Checkout' => 'checkout',
 		'Delete' => 'delete',
 		'Edit' => 'edit',
+		'Edit Flex' => 'editFlex',
 		'fphp Captcha' => 'fphp_captcha',
 		'fphp Image Thumbnail' => 'fphp_imageThumbnail',
 		'fphp Upload' => 'fphp_upload',
 		'fphp Upload Delete' => 'fphp_upload_delete',
+		'fphp Update Flex' => 'fphp_updateFlex',
 		'Read' => 'init',
 		'Move Down' => 'moveDown',
 		'Move Up' => 'moveUp',
@@ -49,6 +52,7 @@ abstract class forestRootBranch {
 		'View' => 'view',
 		'View Files' => 'viewFiles',
 		'View Files History' => 'viewFilesHistory',
+		'View Flex' => 'viewFlex',
 	);
 	
 	/* Properties */
@@ -111,6 +115,10 @@ abstract class forestRootBranch {
 							
 							if ($o_glob->Security->CheckUserPermission(null, 'deleteTwig')) {
 								$s_rootMenu .= '<li><a href="' . forestLink::Link($o_glob->URL->Branch, 'deleteTwig') . '"><span class="glyphicon glyphicon-trash text-danger" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootDeleteTwigTitle', 1) . '</a></li>' . "\n";
+							}
+							
+							if ($o_glob->Security->CheckUserPermission(null, 'editFlex')) {
+								$s_rootMenu .= '<li><a href="' . forestLink::Link($o_glob->URL->Branch, 'editFlex') . '"><span class="glyphicon glyphicon-edit" style="margin-right: 5px"></span> ' . $o_glob->GetTranslation('rootEditFlexTitle', 1) . '</a></li>' . "\n";
 							}
 						}
 					$s_rootMenu .= '</ul>' . "\n";
@@ -2637,6 +2645,8 @@ abstract class forestRootBranch {
 			
 			/* delete record */
 			$this->executeDeleteRecord($o_record);
+			
+			$this->CreateLogEntry('record deleted by twig truncate', $o_record);
 		}
 	}
 	
@@ -2803,6 +2813,24 @@ abstract class forestRootBranch {
 				
 				/* delete tablefield record */
 				$i_return = $o_tablefield->DeleteRecord();
+			
+				/* evaluate the result */
+				if ($i_return <= 0) {
+					throw new forestException(0x10001423);
+				}
+			}
+			
+			/* delete flex records */
+			$o_flexTwig = new flexTwig;
+			
+			$a_sqlAdditionalFilter = array(array('column' => 'TableUUID', 'value' => $this->Twig->UUID, 'operator' => '=', 'filterOperator' => 'AND'));
+			$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+			$o_flexs = $o_flexTwig->GetAllRecords(true);
+			$o_glob->Temp->Del('SQLAdditionalFilter');
+			
+			foreach ($o_flexs->Twigs as $o_flex) {
+				/* delete flex record */
+				$i_return = $o_flex->DeleteRecord();
 			
 				/* evaluate the result */
 				if ($i_return <= 0) {
@@ -4387,6 +4415,24 @@ abstract class forestRootBranch {
 				}
 			}
 			
+			/* if exists update flex record, but only if field name has changed */
+			if ($s_oldFieldName != $this->Twig->FieldName) {
+				$o_flexTwig = new flexTwig;
+				
+				if ($o_flexTwig->GetRecordPrimary(array($this->Twig->TableUUID, $s_oldFieldName), array('TableUUID', 'FieldName'))) {
+					/* set new field name */
+					$o_flexTwig->FieldName = $this->Twig->FieldName;
+					
+					/* edit record */
+					$i_result = $o_flexTwig->UpdateRecord();
+					
+					/* evaluate result */
+					if ($i_result == -1) {
+						throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+					}
+				}
+			}
+			
 			/* edit record */
 			$i_result = $this->Twig->UpdateRecord();
 			
@@ -4601,6 +4647,19 @@ abstract class forestRootBranch {
 					/* delete tablefield validationrule record */
 					$i_return = $o_tablefield_validationrule->DeleteRecord();
 				
+					/* evaluate the result */
+					if ($i_return <= 0) {
+						throw new forestException(0x10001423);
+					}
+				}
+				
+				/* delete flex record */
+				$o_flexTwig = new flexTwig;
+				
+				if ($o_flexTwig->GetRecordPrimary(array($this->Twig->TableUUID, $this->Twig->FieldName), array('TableUUID', 'FieldName'))) {
+					/* delete record */
+					$i_return = $o_flexTwig->DeleteRecord();
+					
 					/* evaluate the result */
 					if ($i_return <= 0) {
 						throw new forestException(0x10001423);

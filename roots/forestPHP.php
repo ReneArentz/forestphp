@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.7.0 (0x1 00001)   | */
+/* | forestPHP V0.8.0 (0x1 00001)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -18,6 +18,7 @@
  * 0.1.5 alpha	renatus		2019-10-09	added fphp_captcha and fphp_imageThumbnail to fast-processing actions
  * 0.4.0 beta	renatus		2019-11-20	added permission checks, user and guest access
  * 0.7.0 beta	renatus		2020-01-02	added Maintenance Mode
+ * 0.8.0 beta	renatus		2020-01-16	added fphp_flex functionality and log entry on permission denied message
  */
 
 class forestPHP {
@@ -53,7 +54,7 @@ class forestPHP {
 				}
 				
 				/* these actions are using fast processing, which means minimum execution of fphp system functions */
-				if (($o_glob->URL->Action == 'fphp_upload') || ($o_glob->URL->Action == 'fphp_upload_delete') || ($o_glob->URL->Action == 'fphp_captcha') || ($o_glob->URL->Action == 'fphp_imageThumbnail')) {
+				if (($o_glob->URL->Action == 'fphp_upload') || ($o_glob->URL->Action == 'fphp_upload_delete') || ($o_glob->URL->Action == 'fphp_captcha') || ($o_glob->URL->Action == 'fphp_imageThumbnail') || ($o_glob->URL->Action == 'fphp_updateFlexAction')) {
 					$o_glob->FastProcessing = true;
 				}
 				
@@ -168,6 +169,18 @@ class forestPHP {
 				/* do something if session was just created */
 			} else if (($o_glob->Security->GuestAccess) || ($o_glob->Security->UserAccess)) {
 				if (!$o_glob->Security->CheckUserPermission()) {
+					$o_logTwig = new logTwig;
+		
+					$o_logTwig->Branch = $o_glob->URL->Branch;
+					$o_logTwig->Action = $o_glob->URL->Action;
+					$o_logTwig->Session = $o_glob->Security->SessionUUID;
+					$o_logTwig->Event = 'permission denied';
+					$o_logTwig->Created = new forestDateTime;
+					$o_logTwig->CreatedBy = $o_glob->Security->UserUUID;
+					
+					/* insert record */
+					$i_result = $o_logTwig->InsertRecord();
+		
 					throw new forestException(0x10000100);
 				}
 				
@@ -243,6 +256,8 @@ class forestPHP {
 								echo $o_glob->Templates->{$o_glob->URL->Branch . 'ListView'};
 							} else if ($o_glob->Templates->Exists($o_glob->URL->Branch . 'View')) {
 								echo $o_glob->Templates->{$o_glob->URL->Branch . 'View'};
+							} else if ($o_glob->Templates->Exists($o_glob->URL->Branch . 'FlexView')) {
+								echo $o_glob->Templates->{$o_glob->URL->Branch . 'FlexView'};
 							}
 						}
 						

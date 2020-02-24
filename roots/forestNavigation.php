@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.7.0 (0x1 00018)   | */
+/* | forestPHP V0.8.0 (0x1 00018)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -16,6 +16,7 @@
  * 0.2.0 beta	renatus		2019-10-24	added RootMenu to navigation
  * 0.4.0 beta	renatus		2019-11-14	added login an logout part
  * 0.4.0 beta	renatus		2019-11-14	added permission check for navigation nodes
+ * 0.8.0 beta	renatus		2020-01-18	activated account link in logout part
  */
 
 class forestNavigation {
@@ -85,7 +86,7 @@ class forestNavigation {
 		/* generate nav links */
 		$this->NavbarLoginLink = new forestString(forestLink::Link($o_glob->URL->Branch, 'login'));
 		$this->NavbarSignUpLink = new forestString(forestLink::Link($o_glob->URL->Branch, 'signUp'));
-		$this->NavbarUserLink = new forestString('./');
+		$this->NavbarUserLink = new forestString(forestLink::Link('account'));
 		$this->NavbarLogoutLink = new forestString(forestLink::Link($o_glob->URL->Branch, 'logout'));
 		
 		/* load navbar settings from trunk record */
@@ -257,7 +258,7 @@ class forestNavigation {
 						}
 					} else if ($this->NavbarShowLogoutPart->value) {
 						if ( (issetStr($this->NavbarUserLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarUserIcon->value)) && (issetStr($this->NavbarUserTitle->value)) ) {
-							/* $s_navigation .= '<li><a href="' . $this->NavbarUserLink->value . '"><span class="' . $this->NavbarIconClass->value . ' glyphicon ' . $this->NavbarUserIcon->value . '"></span> ' . $this->NavbarUserTitle->value . '</a></li>'; */
+							$s_navigation .= '<li><a href="' . $this->NavbarUserLink->value . '"><span class="' . $this->NavbarIconClass->value . ' glyphicon ' . $this->NavbarUserIcon->value . '"></span> ' . $this->NavbarUserTitle->value . '</a></li>';
 						}
 						
 						if ( (issetStr($this->NavbarLogoutLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarLogoutIcon->value)) && (issetStr($this->NavbarLogoutTitle->value)) ) {

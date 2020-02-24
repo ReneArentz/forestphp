@@ -23,6 +23,18 @@ class translationBranch extends forestBranch {
 			$this->GenerateView();
 		} else if ($this->StandardView == forestBranch::LIST) {
 			$this->GenerateListView();
+		} else if ($this->StandardView == forestBranch::FLEX) {
+			if ( ($o_glob->Security->SessionData->Exists('lastView')) && ($o_glob->URL->LastBranchId == $o_glob->URL->BranchId) ) {
+				if ($o_glob->Security->SessionData->{'lastView'} == forestBranch::LIST) {
+					$this->GenerateView();
+				} else if ($o_glob->Security->SessionData->{'lastView'} == forestBranch::DETAIL) {
+					$this->GenerateListView();
+				} else {
+					$this->GenerateFlexView();
+				}
+			} else {
+				$this->GenerateFlexView();
+			}
 		}
 	}
 	
@@ -37,6 +49,14 @@ class translationBranch extends forestBranch {
 		protected function afterViewAction() {
 			/* $this->Twig holds current record */
 		}
+	
+	protected function viewFlexAction() {
+		$this->GenerateFlexView();
+	}
+	
+	protected function editFlexAction() {
+		$this->EditFlexView();
+	}
 	
 		protected function beforeNewAction() {
 			/* $this->Twig holds current record */

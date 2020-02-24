@@ -1,5 +1,5 @@
 <?php
-class forestdataBranch extends forestBranch {
+class accountBranch extends forestBranch {
 	use forestData;
 	
 	/* Fields */
@@ -9,18 +9,21 @@ class forestdataBranch extends forestBranch {
 	/* Methods */
 	
 	protected function initBranch() {
-		$this->Filter->value = true;
-		$this->StandardView = forestBranch::LIST;
+		$this->Filter->value = false;
+		$this->StandardView = forestBranch::DETAIL;
 		$this->KeepFilter->value = false;
 		
-		$this->Twig = new forestdataTwig();
+		$this->Twig = new accountTwig();
 	}
 	
 	protected function init() {
 		$o_glob = forestGlobals::init();
 		
 		if ($this->StandardView == forestBranch::DETAIL) {
+			$a_sqlAdditionalFilter = array(array('column' => 'UUID', 'value' => $o_glob->Security->UserUUID, 'operator' => '=', 'filterOperator' => 'AND'));
+			$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
 			$this->GenerateView();
+			$o_glob->Temp->Del('SQLAdditionalFilter');
 		} else if ($this->StandardView == forestBranch::LIST) {
 			$this->GenerateListView();
 		} else if ($this->StandardView == forestBranch::FLEX) {
@@ -80,6 +83,24 @@ class forestdataBranch extends forestBranch {
 		
 		protected function beforeEditAction() {
 			/* $this->Twig holds current record */
+			
+			$o_glob = forestGlobals::init();
+			
+			/* get user record */
+			$o_userTwig = new userTwig;
+			
+			if (!$o_userTwig->GetRecord(array($o_glob->Security->UserUUID))) {
+				throw new forestException(0x1000142E);
+			}
+			
+			/* verify old password */
+			if (!array_key_exists('sys_fphp_account_OldPassword', $_POST)) {
+				throw new forestException(0x1000142E);
+			}
+			
+			if (!password_verify($_POST['sys_fphp_account_OldPassword'], $o_userTwig->Password)) {
+				throw new forestException(0x1000142E);
+			}
 		}
 			
 			protected function beforeEditSubAction() {
@@ -96,6 +117,35 @@ class forestdataBranch extends forestBranch {
 	
 		protected function afterEditAction() {
 			/* $this->Twig holds current record */
+			
+			$o_glob = forestGlobals::init();
+			
+			/* get user record */
+			$o_userTwig = new userTwig;
+			
+			if (!$o_userTwig->GetRecord(array($o_glob->Security->UserUUID))) {
+				throw new forestException(0x1000142E);
+			}
+			
+			/* check if new password was send */
+			if ( (array_key_exists('sys_fphp_account_Password', $_POST)) && (array_key_exists('sys_fphp_account_PasswordEqual', $_POST)) ) {
+				if ($_POST['sys_fphp_account_Password'] == $_POST['sys_fphp_account_PasswordEqual']) {
+					if (!empty($_POST['sys_fphp_account_PasswordEqual'])) {
+						/* update user password */
+						$o_userTwig->Password = password_hash(strval($_POST['sys_fphp_account_PasswordEqual']), PASSWORD_DEFAULT);
+						
+						/* edit user recrod */
+						$i_result = $o_userTwig->UpdateRecord();
+						
+						/* evaluate result */
+						if ($i_result == -1) {
+							throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+						} else if ($i_result == 1) {
+							$o_glob->SystemMessages->Add(new forestException(0x10001440));
+						}
+					}
+				}
+			}
 		}
 		
 		protected function beforeDeleteAction() {

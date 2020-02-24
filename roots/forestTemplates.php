@@ -16,6 +16,7 @@
  * 0.1.4 alpha	renatus		2019-09-28	added sublistview
  * 0.2.0 beta	renatus		2019-10-20	added create-new-branch and create-new-twig
  * 0.6.0 beta	renatus		2019-12-20	added restoreFile additional actions for create-new-branch-with-twig
+ * 0.8.0 beta	renatus		2020-01-18	added fphp_flex functionality
  */
 
 class forestTemplates {
@@ -32,6 +33,14 @@ class forestTemplates {
 	const VIEW = 'view';
 	const VIEWOPTIONSTOP = 'viewoptionstop';
 	const VIEWOPTIONSDOWN = 'viewoptionsdown';
+	
+	const FLEXVIEW = 'flexview';
+	const FLEXVIEWTOP = 'flexviewtop';
+	const FLEXVIEWDOWN = 'flexviewdown';
+	const FLEXVIEWGENERALELEMENT = 'flexviewgeneralelement';
+	const FLEXVIEWELEMENT = 'flexviewelement';
+	const FLEXVIEWGENERALELEMENTREADONLY = 'flexviewgeneralelementreadonly';
+	const FLEXVIEWELEMENTREADONLY = 'flexviewelementreadonly';
 	
 	const SUBLISTVIEW = 'sublistview';
 	const SUBLISTVIEWITEM = 'sublistviewitem';
@@ -149,6 +158,64 @@ EOF;
 	</div>
 EOF;
 
+	const FLEXVIEWTXT = <<< EOF
+	%0
+	%1
+	%2
+EOF;
+
+	const FLEXVIEWTOPTXT = <<< EOF
+	<div style="margin-bottom: 10px;">
+		<div class="row">
+			<div class="col-sm-4">
+				%0
+			</div>
+			<div class="col-sm-8 text-right">
+				%1
+			</div>
+		</div>
+		<div class="row row-eq-height" style="margin-top: 10px;">
+			<div class="col-sm-4">
+				%2
+			</div>
+			<div class="col-sm-8 row-eq-height-vertical-center">
+				<div class="filter-terms">
+				%3
+				</div>
+			</div>
+		</div>
+	</div>
+EOF;
+
+	const FLEXVIEWDOWNTXT = <<< EOF
+	<div>
+		<div class="row">
+			<div class="col-sm-4">
+				%0
+			</div>
+			<div class="col-sm-8 text-right">
+				%1
+			</div>
+		</div>
+	</div>
+EOF;
+
+	const FLEXVIEWGENERALELEMENTTXT = <<< EOF
+	<div id="fphpFlexContainer" class="fphpFlexContainer" data-flexUUID="%0" data-flexURL="%1" style="width: %2px; height: %3px;">
+EOF;
+
+	const FLEXVIEWELEMENTTXT = <<< EOF
+	<div id="%0_fphpFlex" class="%0_fphpFlex" data-flexUUID="%1" style="width: %2px; height: %3px; top: %4px; left: %5px;">%6</div>
+EOF;
+
+	const FLEXVIEWGENERALELEMENTREADONLYTXT = <<< EOF
+	<div id="fphpFlexContainer_readonly" class="fphpFlexContainer_readonly" data-flexUUID="%0" data-flexURL="%1" style="height: %3px;">
+EOF;
+
+	const FLEXVIEWELEMENTREADONLYTXT = <<< EOF
+	<div id="%0_fphpFlex_readonly" class="%0_fphpFlex_readonly" data-flexUUID="%1" style="width: %2px; height: %3px; top: %4px; left: %5px;">%6</div>
+EOF;
+
 	const SUBLISTVIEWTXT = <<< EOF
 <div class="panel-group" id="accordion">
 	%0
@@ -230,6 +297,18 @@ class %0Branch extends forestBranch {
 			\$this->GenerateView();
 		} else if (\$this->StandardView == forestBranch::LIST) {
 			\$this->GenerateListView();
+		} else if (\$this->StandardView == forestBranch::FLEX) {
+			if ( (\$o_glob->Security->SessionData->Exists('lastView')) && (\$o_glob->URL->LastBranchId == \$o_glob->URL->BranchId) ) {
+				if (\$o_glob->Security->SessionData->{'lastView'} == forestBranch::LIST) {
+					\$this->GenerateView();
+				} else if (\$o_glob->Security->SessionData->{'lastView'} == forestBranch::DETAIL) {
+					\$this->GenerateListView();
+				} else {
+					\$this->GenerateFlexView();
+				}
+			} else {
+				\$this->GenerateFlexView();
+			}
 		}
 	}
 	
@@ -244,6 +323,14 @@ class %0Branch extends forestBranch {
 		protected function afterViewAction() {
 			/* \$this->Twig holds current record */
 		}
+	
+	protected function viewFlexAction() {
+		\$this->GenerateFlexView();
+	}
+	
+	protected function editFlexAction() {
+		\$this->EditFlexView();
+	}
 	
 		protected function beforeNewAction() {
 			/* \$this->Twig holds current record */
@@ -405,6 +492,28 @@ EOF;
 			break;
 			case self::VIEWOPTIONSDOWN:
 				$this->Type->value = self::VIEWOPTIONSDOWN;
+			break;
+			
+			case self::FLEXVIEW:
+				$this->Type->value = self::FLEXVIEW;
+			break;
+			case self::FLEXVIEWTOP:
+				$this->Type->value = self::FLEXVIEWTOP;
+			break;
+			case self::FLEXVIEWDOWN:
+				$this->Type->value = self::FLEXVIEWDOWN;
+			break;
+			case self::FLEXVIEWGENERALELEMENT:
+				$this->Type->value = self::FLEXVIEWGENERALELEMENT;
+			break;
+			case self::FLEXVIEWELEMENT:
+				$this->Type->value = self::FLEXVIEWELEMENT;
+			break;
+			case self::FLEXVIEWGENERALELEMENTREADONLY:
+				$this->Type->value = self::FLEXVIEWGENERALELEMENTREADONLY;
+			break;
+			case self::FLEXVIEWELEMENTREADONLY:
+				$this->Type->value = self::FLEXVIEWELEMENTREADONLY;
 			break;
 			
 			case self::SUBLISTVIEW:

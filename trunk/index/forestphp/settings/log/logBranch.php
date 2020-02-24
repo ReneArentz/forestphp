@@ -1,5 +1,5 @@
 <?php
-class forestdataBranch extends forestBranch {
+class logBranch extends forestBranch {
 	use forestData;
 	
 	/* Fields */
@@ -13,7 +13,7 @@ class forestdataBranch extends forestBranch {
 		$this->StandardView = forestBranch::LIST;
 		$this->KeepFilter->value = false;
 		
-		$this->Twig = new forestdataTwig();
+		$this->Twig = new logTwig();
 	}
 	
 	protected function init() {
@@ -51,11 +51,11 @@ class forestdataBranch extends forestBranch {
 		}
 	
 	protected function viewFlexAction() {
-		$this->GenerateFlexView();
+		throw new forestException(0x10000100);
 	}
 	
 	protected function editFlexAction() {
-		$this->EditFlexView();
+		throw new forestException(0x10000100);
 	}
 	
 		protected function beforeNewAction() {
@@ -67,7 +67,7 @@ class forestdataBranch extends forestBranch {
 			}
 	
 	protected function newAction() {
-		$this->NewRecord();
+		throw new forestException(0x10000100);
 	}
 	
 			protected function afterNewSubAction() {
@@ -87,7 +87,7 @@ class forestdataBranch extends forestBranch {
 			}
 	
 	protected function editAction() {
-		$this->EditRecord();
+		throw new forestException(0x10000100);
 	}
 	
 			protected function afterEditSubAction() {
@@ -111,7 +111,7 @@ class forestdataBranch extends forestBranch {
 				}
 		
 	protected function deleteAction() {
-		$this->DeleteRecord();
+		throw new forestException(0x10000100);
 	}
 				
 				protected function afterDeleteFileAction() {
@@ -127,11 +127,11 @@ class forestdataBranch extends forestBranch {
 		}
 		
 	protected function moveUpAction() {
-		$this->MoveUpRecord();
+		throw new forestException(0x10000100);
 	}
 	
 	protected function moveDownAction() {
-		$this->MoveDownRecord();
+		throw new forestException(0x10000100);
 	}
 	
 		protected function beforeReplaceFileAction() {

@@ -26,6 +26,9 @@ forestPHP framework will be released under the **GPLv3 license** and the **MIT l
 
 ## Releases
 
+### 0.8.0 (beta)
+New features: fPHP Flex, Implementation of Logs, Account settings. *02/2020*
+
 ### 0.7.0 (beta)
 New features: Identifier Administration, Maintenance Mode, Money-Format, forestCombination FILENAME + FILEVERSION. *01/2020*
 

@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.7.0 (0x1 00006)   | */
+/* | forestPHP V0.8.0 (0x1 00006)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -18,6 +18,7 @@
  * 0.4.0 beta	renatus		2019-11-11	added enhanced user administration functionalities
  * 0.4.0 beta	renatus		2019-11-12	distinguish between guest and user
  * 0.4.0 beta	renatus		2019-11-13	added ListUserPermissions and CheckUserPermission functions
+ * 0.8.0 beta	renatus		2020-01-17	added account record access in init() to overwrite language settings
  */
 
 class forestSecurity {
@@ -199,6 +200,17 @@ class forestSecurity {
 				
 				if ($o_userTwig->RootUser) {
 					$this->RootUser->value = true;
+				}
+			}
+			
+			/* if exists, overwrite language-code settings from account settings */
+			$o_accountTwig = new accountTwig();
+			
+			if ($o_accountTwig->GetRecord(array($this->UserUUID->value))) {
+				if ($p_b_debug) { echo '#23__account record found;read LanguageCode<br />'; }
+				
+				if (issetStr($o_accountTwig->LanguageCode->PrimaryValue)) {
+					$o_glob->Trunk->LanguageCode = $o_accountTwig->LanguageCode;
 				}
 			}
 		}

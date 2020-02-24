@@ -1,7 +1,7 @@
 <?php
 /* +--------------------------------+ */
 /* |				    | */
-/* | forestPHP V0.7.0 (0x1 00014)   | */
+/* | forestPHP V0.8.0 (0x1 00014)   | */
 /* |				    | */
 /* +--------------------------------+ */
 
@@ -35,6 +35,9 @@
  * 0.5.0 beta	renatus		2019-12-18	added versioning
  * 0.5.0 beta	renatus		2019-12-19	added restoreFile action
  * 0.7.0 beta	renatus		2020-01-02	added identifier display and money-format
+ * 0.8.0 beta	renatus		2020-01-14	added fphp_flex functionality and actions
+ * 0.8.0 beta	renatus		2020-01-16	added log functionality
+ * 0.8.0 beta	renatus		2020-01-17	added account record creation on sign in action
  */
 
 abstract class forestBranch extends forestRootBranch {
@@ -44,6 +47,7 @@ abstract class forestBranch extends forestRootBranch {
 	
 	const LIST = 'list';
 	const DETAIL = 'detail';
+	const FLEX = 'flex';
 	
 	protected $Twig;
 	protected $NextAction;
@@ -514,6 +518,54 @@ abstract class forestBranch extends forestRootBranch {
 		}
 	}
 	
+	/* help function to create a new entry in the log */
+	protected function CreateLogEntry($p_s_message = null, forestTwig $p_o_twig = null) {
+		$o_glob = forestGlobals::init();
+		
+		$a_newActions = array('new','signUp');
+		$a_editActions = array('checkin','checkout','edit','editFlex','moveDown','moveUp','replaceFile','restoreFile','login','logout');
+		$a_deleteActions = array('delete','truncateTwig');
+		
+		/* check if we activated trunk setting to log new actions */
+		if ( (in_array($o_glob->URL->Action, $a_newActions)) && (!$o_glob->Trunk->LogNew) ) {
+			return;
+		}
+		
+		/* check if we activated trunk setting to log edit actions */
+		if ( (in_array($o_glob->URL->Action, $a_editActions)) && (!$o_glob->Trunk->LogEdit) ) {
+			return;
+		}
+
+		/* check if we activated trunk setting to log delete actions */
+		if ( (in_array($o_glob->URL->Action, $a_deleteActions)) && (!$o_glob->Trunk->LogDelete) ) {
+			return;
+		}
+		
+		$o_logTwig = new logTwig;
+		
+		$o_logTwig->Branch = $o_glob->URL->Branch;
+		$o_logTwig->Action = $o_glob->URL->Action;
+		$o_logTwig->Session = $o_glob->Security->SessionUUID;
+		
+		$s_message = '';
+		
+		if ($p_s_message != null) {
+			$s_message .= $p_s_message . "\n";
+		}
+		
+		if ($p_o_twig != null) {
+			$s_message .= $p_o_twig->ShowFields(false) . "\n";
+		}
+		
+		$o_logTwig->Event = $s_message;
+		
+		$o_logTwig->Created = new forestDateTime;
+		$o_logTwig->CreatedBy = $o_glob->Security->UserUUID;
+		
+		/* insert record */
+		$i_result = $o_logTwig->InsertRecord();
+	}
+	
 	
 	/* generates landing page */
 	protected function GenerateLandingPage() {
@@ -625,6 +677,9 @@ abstract class forestBranch extends forestRootBranch {
 						
 						if ($o_userTwig->FailLogin >= $o_glob->Trunk->MaxLoginTrials) {
 							$o_userTwig->Locked = true;
+							$this->CreateLogEntry('lock user', $o_userTwig);
+						} else {
+							$this->CreateLogEntry('user failed login', $o_userTwig);
 						}
 						
 						/* edit user recrod */
@@ -646,6 +701,7 @@ abstract class forestBranch extends forestRootBranch {
 			} else {
 				/* check locked status */
 				if ($o_userTwig->Locked) {
+					$this->CreateLogEntry('user locked after login', $o_userTwig);
 					throw new forestException(0x1000142F);
 				}
 				
@@ -659,6 +715,23 @@ abstract class forestBranch extends forestRootBranch {
 					throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
 				}
 				
+				/* update last login in account record */
+				$o_accountTwig = new accountTwig;
+			
+				if (!$o_accountTwig->GetRecord(array($o_userTwig->UUID))) {
+					throw new forestException(0x10001402, array($o_accountTwig->fphp_Table));
+				}
+				
+				$o_accountTwig->LastLogin = new forestDateTime;
+				
+				/* edit account recrod */
+				$i_result = $o_accountTwig->UpdateRecord();
+				
+				/* evaluate result */
+				if ($i_result == -1) {
+					throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+				}
+				
 				/* set security state to user */
 				$o_glob->Security->SessionData->Add(forestSecurity::SessionStatusUser, 'session_status');
 				$o_glob->Temp->Add($o_userTwig->UUID, 'fphp_UserUUID');
@@ -666,6 +739,8 @@ abstract class forestBranch extends forestRootBranch {
 				
 				/* system message login successful */
 				$o_glob->SystemMessages->Add(new forestException(0x10001430));
+				
+				$this->CreateLogEntry('user logged in', $o_userTwig);
 				
 				/* check if we have target elements for automatic forwarding */
 				if (array_key_exists('sys_fphp_targetBranch', $_POST)) {
@@ -718,6 +793,7 @@ abstract class forestBranch extends forestRootBranch {
 	/* handle logout action */
 	protected function logoutAction() {
 		$o_glob = forestGlobals::Init();
+		$this->CreateLogEntry('user logged out: ' . $o_glob->GetUserNameByUUID($o_glob->Security->UserUUID));
 		$o_glob->Security->Logout();
 		
 		header('Location: ./');
@@ -859,10 +935,14 @@ abstract class forestBranch extends forestRootBranch {
 					
 					/* evaluate result */
 					if ($i_result == -1) {
+						$this->CreateLogEntry('user already exists', $o_userTwig);
 						throw new forestException(0x10001431, array($_POST['sys_fphp_signUp_Username']));
 					} else if ($i_result == 0) {
+						$this->CreateLogEntry('could not create user', $o_userTwig);
 						throw new forestException(0x10001402);
 					}
+					
+					$this->CreateLogEntry('new user signed in', $o_userTwig);
 					
 					/* add user to standard usergroup */
 					$o_usergroup_userTwig = new usergroup_userTwig;
@@ -876,6 +956,34 @@ abstract class forestBranch extends forestRootBranch {
 					if ($i_result == -1) {
 						throw new forestException(0x10001403, array($o_glob->Temp->{'UniqueIssue'}));
 					} else if ($i_result == 0) {
+						throw new forestException(0x10001402);
+					}
+					
+					/* create account record */
+					$o_accountTwig = new accountTwig;
+					$i_id = 1;
+					
+					/* get new account id */
+					if ($o_accountTwig->GetLastRecord()) {
+						$i_id = $o_accountTwig->Id + 1;
+					}
+					
+					$o_accountTwig = new accountTwig;
+					$o_accountTwig->Id = $i_id;
+					$o_accountTwig->UUID = $o_userTwig->UUID;
+					$o_accountTwig->Mail = strval($_POST['sys_fphp_signUp_Email']);
+					$o_accountTwig->LanguageCode = $o_glob->Trunk->LanguageCode->PrimaryValue;
+					$o_accountTwig->Joined = new forestDateTime;
+					
+					/* insert user record */
+					$i_result = $o_accountTwig->InsertRecord(true);
+					
+					/* evaluate result */
+					if ($i_result == -1) {
+						$this->CreateLogEntry('account already exists', $o_accountTwig);
+						throw new forestException(0x10001403, array($o_glob->Temp->{'UniqueIssue'}));
+					} else if ($i_result == 0) {
+						$this->CreateLogEntry('could not create account', $o_accountTwig);
 						throw new forestException(0x10001402);
 					}
 					
@@ -1770,6 +1878,227 @@ abstract class forestBranch extends forestRootBranch {
 		}
 	}
 	
+	
+	/* generates flex view */
+	protected function GenerateFlexView() {
+		$o_glob = forestGlobals::init();
+		
+		$o_options = '<div class="btn-group">' . "\n";
+		
+		/* list link */
+		if ($o_glob->Security->CheckUserPermission(null, 'view')) {
+			$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, (($this->OriginalView == forestBranch::LIST) ? null : 'view')) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="glyphicon glyphicon-th-list text-info"></span></a>' . "\n";
+		}
+
+		$o_options .= '</div>' . "\n";
+		
+		/* get all records with limit settings */
+		$o_records = $this->Twig->GetAllViewRecords();
+		$o_glob->BackupLimit();
+		
+		$o_flexViewElements = '';
+		
+		/* render table rows as flex elements */
+		if ($o_records->Twigs->Count() > 0) {
+			$o_flexTwig = new flexTwig;
+			$o_generalFlexTwig = new flexTwig;
+			
+			/* get twig general flex record */
+			if (!$o_generalFlexTwig->GetRecordPrimary(array($this->Twig->fphp_TableUUID, 'NULL'), array('TableUUID', 'FieldName'))) {
+				throw new forestException(0x10001401, array($o_generalFlexTwig->fphp_Table));
+			}
+			
+			/* create general flex element */
+			$o_flexViewGeneralElement = new forestTemplates(forestTemplates::FLEXVIEWGENERALELEMENTREADONLY, array( $o_generalFlexTwig->UUID, forestLink::Link($o_glob->URL->Branch, 'fphp_updateFlex'), $o_generalFlexTwig->Width, $o_generalFlexTwig->Height ));
+			
+			foreach ($o_records->Twigs as $o_record) {
+				/* add general flex element */
+				$o_flexViewElements .= $o_flexViewGeneralElement;
+				
+				foreach ($o_record->fphp_View as $s_column) {
+					if ( ($s_column == 'Id') || ($s_column == 'UUID') ) {
+						continue;
+					}
+					
+					if ($o_glob->TablefieldsDictionary->Exists($o_record->fphp_Table . '_' . $s_column)) {
+						$s_formElement = $o_glob->TablefieldsDictionary->{$o_record->fphp_Table . '_' . $s_column}->FormElementName;
+						$s_forestData = $o_glob->TablefieldsDictionary->{$o_record->fphp_Table . '_' . $s_column}->ForestDataName;
+					} else {
+						if ( ($s_column == 'Created') || ($s_column == 'Modified') ) {
+							$s_formElement = forestFormElement::DATETIMELOCAL;
+							$s_forestData = 'forestObject(\'forestDateTime\')';
+						} else if ( ($s_column == 'CreatedBy') || ($s_column == 'ModifiedBy') ) {
+							$s_formElement = forestFormElement::TEXT;
+							$s_forestData = 'forestString';
+						}
+					}
+					
+					/* do not render elements like FORM, PASSWORD, CAPTCHA and DROPZONE */
+					if ( ($s_formElement == forestFormElement::FORM) || ($s_formElement == forestFormElement::PASSWORD) || ($s_formElement == forestFormElement::CAPTCHA) || ($s_formElement == forestFormElement::DROPZONE) ) {
+						continue;
+					}
+					
+					if (!$o_flexTwig->GetRecordPrimary(array($o_record->fphp_TableUUID, $s_column), array('TableUUID', 'FieldName'))) {
+						throw new forestException(0x10001401, array($o_flexTwig->fphp_Table));
+					}
+					
+					$s_value = '';
+					/* render value */
+					$this->ListViewRenderColumnValue($s_value, $s_formElement, $s_column, $o_record, $o_record->fphp_Table . '_' . $s_column);
+					
+					/* creat flex element */
+					$o_flexViewElements .= new forestTemplates(forestTemplates::FLEXVIEWELEMENTREADONLY, array( $s_column, $o_flexTwig->UUID, $o_flexTwig->Width, $o_flexTwig->Height, $o_flexTwig->Top, $o_flexTwig->Left, $s_value ));
+				}
+				
+				/* close general flex element */
+				$o_flexViewElements .= '</div>';
+			}
+		} else {
+			/* no records found */
+			$o_glob->SystemMessages->Add(new forestException(0x10001400));
+		}
+		
+		/* create search form */
+		$s_searchForm = '';
+		$s_searchTerms = '';
+		$this->RenderSearchForm($s_searchForm, $s_searchTerms);
+		
+		$o_glob->RestoreLimit();
+		$o_glob->Security->SessionData->Add(forestBranch::FLEX, 'lastView');
+		
+		/* create flex view top and down elements */
+		$o_flexViewTop = new forestTemplates(forestTemplates::FLEXVIEWTOP, array( $o_options, strval($o_glob->Limit), $s_searchForm, $s_searchTerms ));
+		$o_flexViewDown = new forestTemplates(forestTemplates::FLEXVIEWDOWN, array( $o_options, strval($o_glob->Limit) ));
+		
+		/* use template to render general flex view */
+		$o_glob->Templates->Add(new forestTemplates(forestTemplates::FLEXVIEW, array($o_flexViewTop, $o_flexViewElements, $o_flexViewDown)), $o_glob->URL->Branch . 'FlexView');
+	}
+	
+	/* handle edit flex view action */
+	protected function EditFlexView() {
+		$o_glob = forestGlobals::init();
+		
+		/* get first record */
+		if (!$this->Twig->GetFirstRecord()) {
+			/* no records found */
+			$o_glob->SystemMessages->Add(new forestException(0x10001400));
+		} else {
+			$o_record = $this->Twig;
+			
+			$o_flexTwig = new flexTwig;
+			$o_generalFlexTwig = new flexTwig;
+			
+			/* get twig general flex record */
+			if (!$o_generalFlexTwig->GetRecordPrimary(array($this->Twig->fphp_TableUUID, 'NULL'), array('TableUUID', 'FieldName'))) {
+				/* create new general flex record for current twig table */
+				$o_generalFlexTwig->TableUUID = $o_record->fphp_TableUUID;
+				$o_generalFlexTwig->FieldName = 'NULL';
+				$o_generalFlexTwig->Top = 0;
+				$o_generalFlexTwig->Left = 0;
+				$o_generalFlexTwig->Width = 300;
+				$o_generalFlexTwig->Height = 500;
+				
+				/* insert record */
+				$i_result = $o_generalFlexTwig->InsertRecord();
+				
+				/* evaluate result */
+				if ($i_result == -1) {
+					$this->CreateLogEntry('could not create new record - unique issue - ' . $o_glob->Temp->{'UniqueIssue'}, $o_generalFlexTwig);
+					throw new forestException(0x10001403, array($o_glob->Temp->{'UniqueIssue'}));
+				} else if ($i_result == 0) {
+					$this->CreateLogEntry('could not create new record', $o_generalFlexTwig);
+					throw new forestException(0x10001402);
+				}
+				
+				$this->CreateLogEntry('new record created', $o_generalFlexTwig);
+			}
+			
+			/* create general flex element */
+			$o_flexViewGeneralElement = new forestTemplates(forestTemplates::FLEXVIEWGENERALELEMENT, array( $o_generalFlexTwig->UUID, forestLink::Link($o_glob->URL->Branch, 'fphp_updateFlex'), $o_generalFlexTwig->Width, $o_generalFlexTwig->Height ));
+			
+			$o_flexViewElements = '';
+			
+			/* add general flex element info line */
+			$o_flexViewElements .= '<div id="fphpFlexContainerGeneral">fphp-Flex-Container - width: ' . $o_generalFlexTwig->Width . 'px; height: ' . $o_generalFlexTwig->Height . 'px;</div>' . "\n" . '<hr>' . "\n";
+			
+			/* render first row as flex element */
+			/* add general flex element */
+			$o_flexViewElements .= $o_flexViewGeneralElement;
+			
+			foreach ($o_record->fphp_View as $s_column) {
+				if ( ($s_column == 'Id') || ($s_column == 'UUID') ) {
+					continue;
+				}
+				
+				$s_formElement = '';
+				
+				if ($o_glob->TablefieldsDictionary->Exists($o_record->fphp_Table . '_' . $s_column)) {
+					$s_formElement = $o_glob->TablefieldsDictionary->{$o_record->fphp_Table . '_' . $s_column}->FormElementName;
+				} else {
+					if ( ($s_column == 'Created') || ($s_column == 'Modified') ) {
+						$s_formElement = forestFormElement::DATETIMELOCAL;
+					} else if ( ($s_column == 'CreatedBy') || ($s_column == 'ModifiedBy') ) {
+						$s_formElement = forestFormElement::TEXT;
+					}
+				}
+				
+				/* do not render elements like FORM, PASSWORD, CAPTCHA and DROPZONE */
+				if ( ($s_formElement == forestFormElement::FORM) || ($s_formElement == forestFormElement::PASSWORD) || ($s_formElement == forestFormElement::CAPTCHA) || ($s_formElement == forestFormElement::DROPZONE) ) {
+					continue;
+				}
+				
+				if (!$o_flexTwig->GetRecordPrimary(array($o_record->fphp_TableUUID, $s_column), array('TableUUID', 'FieldName'))) {
+					/* create new flex record */
+					$o_flexTwig->TableUUID = $o_record->fphp_TableUUID;
+					$o_flexTwig->FieldName = $s_column;
+					$o_flexTwig->Top = 10;
+					$o_flexTwig->Left = 10;
+					$o_flexTwig->Width = 150;
+					$o_flexTwig->Height = 150;
+					
+					/* insert record */
+					$i_result = $o_flexTwig->InsertRecord();
+					
+					/* evaluate result */
+					if ($i_result == -1) {
+						$this->CreateLogEntry('could not create new record - unique issue - ' . $o_glob->Temp->{'UniqueIssue'}, $o_flexTwig);
+						throw new forestException(0x10001403, array($o_glob->Temp->{'UniqueIssue'}));
+					} else if ($i_result == 0) {
+						$this->CreateLogEntry('could not create new record', $o_flexTwig);
+						throw new forestException(0x10001402);
+					}
+					
+					$this->CreateLogEntry('new record created', $o_flexTwig);
+				}
+				
+				$s_value = '-';
+				/* render value */
+				$this->ListViewRenderColumnValue($s_value, $s_formElement, $s_column, $o_record, $o_record->fphp_Table . '_' . $s_column);
+				
+				/* creat flex element */
+				$o_flexViewElements .= new forestTemplates(forestTemplates::FLEXVIEWELEMENT, array( $s_column, $o_flexTwig->UUID, $o_flexTwig->Width, $o_flexTwig->Height, $o_flexTwig->Top, $o_flexTwig->Left, $s_value ));
+			}
+			
+			/* close general flex element */
+			$o_flexViewElements .= '</div>';
+			
+			$o_options = '<div class="btn-group">' . "\n";
+		
+			/* back link */
+			$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnBack', 1) . '"><span class="glyphicon glyphicon-th-large text-info"></span></a>' . "\n";
+			
+			$o_options .= '</div>' . "\n";
+			
+			/* create flex view top and down elements */
+			$o_flexViewTop = new forestTemplates(forestTemplates::FLEXVIEWTOP, array( $o_options, '', '', '' ));
+			$o_flexViewDown = new forestTemplates(forestTemplates::FLEXVIEWDOWN, array( $o_options, '' ));
+			
+			/* use template to render general flex view */
+			$o_glob->Templates->Add(new forestTemplates(forestTemplates::FLEXVIEW, array($o_flexViewTop, $o_flexViewElements, '<br>' . $o_flexViewDown)), $o_glob->URL->Branch . 'FlexView');
+		}
+	}
+	
+	
 	/* generates detail view */
 	protected function GenerateView() {
 		$o_glob = forestGlobals::init();
@@ -1897,7 +2226,7 @@ abstract class forestBranch extends forestRootBranch {
 			
 			/* list link */
 			if ($o_glob->Security->CheckUserPermission(null, 'view')) {
-				$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, (($this->OriginalView == forestBranch::LIST) ? null : 'view')) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="glyphicon glyphicon-th-list text-info"></span></a>' . "\n";
+				$o_options .= '<a href="' . forestLink::Link($o_glob->URL->Branch, ((($this->OriginalView == forestBranch::LIST) || ($this->OriginalView == forestBranch::FLEX)) ? null : 'view')) . '" class="btn btn-default" title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="glyphicon glyphicon-th-list text-info"></span></a>' . "\n";
 			}
 
 			$o_options .= '</div>' . "\n";
@@ -3245,11 +3574,14 @@ abstract class forestBranch extends forestRootBranch {
 				/* evaluate result */
 				if ($i_result == -1) {
 					$this->UndoFilesEntries();
+					$this->CreateLogEntry('could not create new sub record - unique issue - ' . $o_glob->Temp->{'UniqueIssue'}, $this->Twig);
 					throw new forestException(0x10001403, array($o_glob->Temp->{'UniqueIssue'}));
 				} else if ($i_result == 0) {
 					$this->UndoFilesEntries();
+					$this->CreateLogEntry('could not create new sub record', $this->Twig);
 					throw new forestException(0x10001402);
 				} else if ($i_result == 1) {
+					$this->CreateLogEntry('new sub record created', $this->Twig);
 					$o_glob->SystemMessages->Add(new forestException(0x10001404));
 				}
 				
@@ -3323,11 +3655,14 @@ abstract class forestBranch extends forestRootBranch {
 				/* evaluate result */
 				if ($i_result == -1) {
 					$this->UndoFilesEntries();
+					$this->CreateLogEntry('could not create new record - unique issue - ' . $o_glob->Temp->{'UniqueIssue'}, $this->Twig);
 					throw new forestException(0x10001403, array($o_glob->Temp->{'UniqueIssue'}));
 				} else if ($i_result == 0) {
 					$this->UndoFilesEntries();
+					$this->CreateLogEntry('could not create new record', $this->Twig);
 					throw new forestException(0x10001402);
 				} else if ($i_result == 1) {
+					$this->CreateLogEntry('new record created', $this->Twig);
 					$o_glob->SystemMessages->Add(new forestException(0x10001404));
 					
 				}
@@ -3622,6 +3957,8 @@ abstract class forestBranch extends forestRootBranch {
 					}
 				}
 				
+				$this->CreateLogEntry('sub record before edit', $this->Twig);
+				
 				$this->TransferPOST_Twig();
 				
 				/* set values for info columns when configured */
@@ -3649,10 +3986,12 @@ abstract class forestBranch extends forestRootBranch {
 				/* evaluate result */
 				if ($i_result == -1) {
 					$this->UndoFilesEntries();
+					$this->CreateLogEntry('could not edit sub record - unique issue - ' . $o_glob->Temp->{'UniqueIssue'}, $this->Twig);
 					throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
 				} else if ($i_result == 0) {
 					$o_glob->SystemMessages->Add(new forestException(0x10001406));
 				} else if ($i_result == 1) {
+					$this->CreateLogEntry('sub record edited', $this->Twig);
 					$o_glob->SystemMessages->Add(new forestException(0x10001407));
 				}
 				
@@ -3682,6 +4021,8 @@ abstract class forestBranch extends forestRootBranch {
 					}
 				}
 				
+				$this->CreateLogEntry('record before edit', $this->Twig);
+				
 				$this->TransferPOST_Twig();
 				
 				/* set values for info columns when configured */
@@ -3709,10 +4050,12 @@ abstract class forestBranch extends forestRootBranch {
 				/* evaluate result */
 				if ($i_result == -1) {
 					$this->UndoFilesEntries();
+					$this->CreateLogEntry('could not edit record - unique issue - ' . $o_glob->Temp->{'UniqueIssue'}, $this->Twig);
 					throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
 				} else if ($i_result == 0) {
 					$o_glob->SystemMessages->Add(new forestException(0x10001406));
 				} else if ($i_result == 1) {
+					$this->CreateLogEntry('record edited', $this->Twig);
 					$o_glob->SystemMessages->Add(new forestException(0x10001407));
 				}
 				
@@ -5042,8 +5385,10 @@ abstract class forestBranch extends forestRootBranch {
 					
 					/* evaluate result */
 					if ($i_result == -1) {
+						$this->CreateLogEntry('could not save old version of file - unique issue - ' . $o_glob->Temp->{'UniqueIssue'}, $o_oldFile);
 						throw new forestException(0x10001403, array($o_glob->Temp->{'UniqueIssue'}));
 					} else if ($i_result == 0) {
+						$this->CreateLogEntry('could not save old version of file', $o_oldFile);
 						throw new forestException(0x10001402);
 					}
 				}
@@ -5078,11 +5423,14 @@ abstract class forestBranch extends forestRootBranch {
 				
 				/* evaluate result */
 				if ($i_result == -1) {
+					$this->CreateLogEntry('could not replace file - unique issue - ' . $o_glob->Temp->{'UniqueIssue'}, $this->Twig);
 					throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
 				} else if ($i_result == 1) {
 					if (method_exists($this, 'afterReplaceFileAction')) {
 						$this->afterReplaceFileAction();
 					}
+					
+					$this->CreateLogEntry('file has been replaced', $this->Twig);
 					
 					$o_glob->SystemMessages->Add(new forestException(0x1000143C));
 					
@@ -5314,11 +5662,14 @@ abstract class forestBranch extends forestRootBranch {
 				
 				/* evaluate result */
 				if ($i_result == -1) {
+					$this->CreateLogEntry('could not restore old file - unique issue - ' . $o_glob->Temp->{'UniqueIssue'}, $o_rootFile);
 					throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
 				} else if ($i_result == 1) {
 					if (method_exists($this, 'afterRestoreFileAction')) {
 						$this->afterRestoreFileAction();
 					}
+					
+					$this->CreateLogEntry('file has been restored', $o_rootFile);
 					
 					$o_glob->SystemMessages->Add(new forestException(0x1000143D));
 				}
@@ -5477,10 +5828,13 @@ abstract class forestBranch extends forestRootBranch {
 							
 							/* evaluate result */
 							if ($i_result == -1) {
+								$this->CreateLogEntry('could not checkout record - unique issue - ' . $o_glob->Temp->{'UniqueIssue'}, $o_newCheckoutTwig);
 								throw new forestException(0x10001403, array($o_glob->Temp->{'UniqueIssue'}));
 							} else if ($i_result == 0) {
+								$this->CreateLogEntry('could not checkout record', $o_newCheckoutTwig);
 								throw new forestException(0x10001402);
 							} else if ($i_result == 1) {
+								$this->CreateLogEntry('record has been checked out', $o_newCheckoutTwig);
 								$i_checkoutDone++;
 							}
 						}
@@ -5617,7 +5971,10 @@ abstract class forestBranch extends forestRootBranch {
 					
 				/* evaluate the result */
 				if ($i_return > 0) {
+					$this->CreateLogEntry('record checked in', $o_checkoutTwig);
 					$p_i_checkinDone++;
+				} else {
+					$this->CreateLogEntry('could not checkin record', $o_checkoutTwig);
 				}
 				
 				/* if checked in element is a record */
@@ -5911,6 +6268,8 @@ abstract class forestBranch extends forestRootBranch {
 					/* delete record */
 					$this->executeDeleteRecord($this->Twig);
 					
+					$this->CreateLogEntry('record deleted', $this->Twig);
+					
 					if (method_exists($this, 'afterDeleteAction')) {
 						$this->afterDeleteAction();
 					}
@@ -5952,6 +6311,8 @@ abstract class forestBranch extends forestRootBranch {
 				
 				/* delete sub record */
 				$this->executeDeleteSubRecord($o_subrecordsTwig);
+				
+				$this->CreateLogEntry('sub record deleted', $o_subrecordsTwig);
 				
 				if (method_exists($this, 'afterDeleteSubAction')) {
 					$this->afterDeleteSubAction();
@@ -6008,6 +6369,8 @@ abstract class forestBranch extends forestRootBranch {
 				
 				/* delete file record */
 				$this->executeDeleteFileRecord($o_filesTwig, true, true);
+				
+				$this->CreateLogEntry('file record deleted', $o_filesTwig);
 				
 				if (method_exists($this, 'afterDeleteFileAction')) {
 					$this->afterDeleteFileAction();
@@ -6330,6 +6693,8 @@ abstract class forestBranch extends forestRootBranch {
 										$o_currentRecord->UpdateRecord();
 										$o_glob->Temp->Del('SQLUpdateColumns');
 										
+										$this->CreateLogEntry('record moved up', $o_currentRecord);
+										
 										$o_glob->SystemMessages->Add(new forestException(0x1000142B));
 									}
 								}
@@ -6434,6 +6799,8 @@ abstract class forestBranch extends forestRootBranch {
 										$o_glob->Temp->Add(array($o_sortColumn->FieldName), 'SQLUpdateColumns');
 										$o_currentRecord->UpdateRecord();
 										$o_glob->Temp->Del('SQLUpdateColumns');
+										
+										$this->CreateLogEntry('record moved down', $o_currentRecord);
 										
 										$o_glob->SystemMessages->Add(new forestException(0x1000142C));
 									}
@@ -6694,6 +7061,47 @@ abstract class forestBranch extends forestRootBranch {
 			header('Content-type: image/png');
 			imagepng($o_virtual_image);
 			imagedestroy($o_virtual_image);
+		}
+		
+		exit;
+	}
+
+	/* function to update flex settings for a record element or general container */
+	protected function fphp_updateFlexAction() {
+		ob_clean();
+		
+		if (empty($_POST) && isset($_SERVER['REQUEST_METHOD']) && strtolower($_SERVER['REQUEST_METHOD']) == 'post') {
+			echo 'ERR-1';
+		} else {
+			if (isset($_POST['sys_fphp_flex_UUID'])) {
+				$o_glob = forestGlobals::init();
+				$o_flexTwig = new flexTwig;
+				
+				if ($o_flexTwig->GetRecord(array($_POST['sys_fphp_flex_UUID']))) { 
+					if ( (isset($_POST['sys_fphp_flex_Top'])) && (isset($_POST['sys_fphp_flex_Left'])) && (isset($_POST['sys_fphp_flex_Width'])) && (isset($_POST['sys_fphp_flex_Height'])) ) {
+						$o_flexTwig->Top = intval($_POST['sys_fphp_flex_Top']);
+						$o_flexTwig->Left = intval($_POST['sys_fphp_flex_Left']);
+						$o_flexTwig->Width = intval($_POST['sys_fphp_flex_Width']);
+						$o_flexTwig->Height = intval($_POST['sys_fphp_flex_Height']);
+						
+						/* edit recrod */
+						$i_result = $o_flexTwig->UpdateRecord();
+						
+						/* evaluate result */
+						if ($i_result == -1) {
+							echo 'ERR-5';
+						}
+						
+						echo 'INF-1';
+					} else {
+						echo 'ERR-4';
+					}
+				} else {
+					echo 'ERR-3';
+				}
+			} else {
+				echo 'ERR-2';
+			}
 		}
 		
 		exit;
