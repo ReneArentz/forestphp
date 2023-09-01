@@ -1,6 +1,10 @@
 <?php
+
+namespace fPHP\Branches;
+use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+
 class settingsBranch extends forestBranch {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	

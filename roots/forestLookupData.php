@@ -1,22 +1,30 @@
 <?php
-/* +--------------------------------+ */
-/* |				    | */
-/* | forestPHP V0.8.0 (0x1 0000F)   | */
-/* |				    | */
-/* +--------------------------------+ */
-
-/*
- * + Description +
+/**
  * class to capsulate lookup result data
  * storing these objects in a global dictionary will reduce database record access for one session
  *
- * + Version Log +
- * Version	Developer	Date		Comment
- * 0.1.0 alpha	renatus		2019-10-02	added to framework
+ * @category    forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestphp.de>
+ * @copyright   (c) 2019 forestPHP Framework
+ * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
+ * @license     https://opensource.org/licenses/MIT MIT License
+ * @version     0.9.0 beta
+ * @link        http://www.forestphp.de/
+ * @object-id   0x1 0000F
+ * @since       File available since Release 0.1.5 alpha
+ * @deprecated  -
+ *
+ * @version log Version		Developer	Date		Comment
+ * 		0.1.5 alpha	renatus		2019-10-02	added to framework
  */
 
+namespace fPHP\Helper;
+
+use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \fPHP\Roots\forestException as forestException;
+
 class forestLookupData {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -31,6 +39,21 @@ class forestLookupData {
 		
 	/* Methods */
 	
+	/**
+	 * constructor of forestLookupData class
+	 *
+	 * @param string $p_s_table  name of table
+	 * @param array $p_a_primary  primary key fields
+	 * @param array $p_a_label  tablefields which will be shown if lookup will be read an isset
+	 * @param array $p_a_filter  filter commands - syntax: 'FieldName' => 'FieldValue' or '!1FieldName' => 'FieldValue', '!2FieldName' => 'FieldValue', '!3FieldName' => 'FieldValue'
+	 * @param string $p_s_concat  conat string how the label fields will be glued together
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct($p_s_table, array $p_a_primary, array $p_a_label, array $p_a_filter = array(), $p_s_concat = ' - ') {
 		/* some construct parameters must have a value */
 		if (empty($p_s_table)) {
@@ -54,9 +77,20 @@ class forestLookupData {
 		$this->Concat = new forestString($p_s_concat);
 	}
 	
+	/**
+	 * function call to overwrite lookup data
+	 *
+	 * @param string $p_s_functionName  name of function
+	 * @param array $p_a_arguments  argument object which must be of type forestLookupData
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __call($p_s_functionName, $p_a_arguments) {
 		/* function call to overwrite lookup data */
-		if ( ($p_s_functionName == 'SetLookupData') && (is_a($p_a_arguments[0], 'forestLookupData')) ) {
+		if ( ($p_s_functionName == 'SetLookupData') && (is_a($p_a_arguments[0], '\\fPHP\Helper\\forestLookupData')) ) {
 			$this->Table->value = $p_a_arguments[0]->Table->value;
 			$this->Primary->value = $p_a_arguments[0]->Primary->value;
 			$this->Label->value = $p_a_arguments[0]->Label->value;
@@ -64,8 +98,18 @@ class forestLookupData {
 		}
 	}
 	
+	/**
+	 * return field values of label fields in settings with concat string setting
+	 * result wiill be stored in global dictionary, so that it must not be queried again
+	 *
+	 * @return string
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		$s_foo = '';
 		
@@ -77,15 +121,15 @@ class forestLookupData {
 				$s_foo = $o_glob->LookupResultsDictionary->{$this->Table->value . '_' . implode('_', explode(';', $this->PrimaryValue->value))};
 			} else {
 				/* get table */
-				$o_tableTwig = new tableTwig;
+				$o_tableTwig = new \fPHP\Twigs\tableTwig;
 				
 				/* get table record */
 				if (!($o_tableTwig->GetRecordPrimary(array($this->Table->value), array('Name')))) {
 					$s_foo = 'table_not_found';
 				} else {
 					/* create twig object by table record */
-					$s_twigName = $o_tableTwig->Name . 'Twig';
-					forestStringLib::RemoveTablePrefix($s_twigName);
+					$s_twigName = '\\fPHP\\Twigs\\' . $o_tableTwig->Name . 'Twig';
+					\fPHP\Helper\forestStringLib::RemoveTablePrefix($s_twigName);
 					$o_twig = new $s_twigName;
 					
 					/* query record based on twig object and stored primary values */
@@ -111,14 +155,22 @@ class forestLookupData {
 		return $s_foo;
 	}
 	
-	/* this function is important to use lookup data with web select control or other option based controls */
+	/**
+	 * this function is important to use lookup data with web select control or other option based controls
+	 *
+	 * @return array  options array with syntax array('label fields with concat string setting' => 'primary key'
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function CreateOptionsArray() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		$a_options = array();
 		
 		/* get table */
-		$o_tableTwig = new tableTwig;
+		$o_tableTwig = new \fPHP\Twigs\tableTwig;
 		
 		/* get table record */
 		if (!($o_tableTwig->GetRecordPrimary(array($this->Table->value), array('Name')))) {
@@ -126,8 +178,8 @@ class forestLookupData {
 		}
 		
 		/* create twig object by table record */
-		$s_twigName = $o_tableTwig->Name . 'Twig';
-		forestStringLib::RemoveTablePrefix($s_twigName);
+		$s_twigName = '\\fPHP\\Twigs\\' . $o_tableTwig->Name . 'Twig';
+		\fPHP\Helper\forestStringLib::RemoveTablePrefix($s_twigName);
 		$o_twig = new $s_twigName;
 		
 		/* create filter */
@@ -139,7 +191,7 @@ class forestLookupData {
 				$s_operator = '=';
 				$s_filterOperator = 'AND';
 				
-				if (forestStringLib::StartsWith($s_field, '!')) {
+				if (\fPHP\Helper\forestStringLib::StartsWith($s_field, '!')) {
 					$s_field = substr($s_field, 2);
 					$s_operator = '<>';
 					$s_filterOperator = 'AND';
@@ -172,13 +224,25 @@ class forestLookupData {
 					$s_option_key = $o_record->Id;
 				}
 				
+				$b_standard_columns_found = false;
+				
 				/* get label of queried record to display lookup value; multiple labels possible */
 				for ($i = 0; $i < count($this->Label->value); $i++) {
+					/* do not allow to display standard columns in lookup */
+					if (in_array($this->Label->value[$i], array('Created', 'CreatedBy', 'Modified', 'ModifiedBy', 'Identifier'))) {
+						$b_standard_columns_found = true;
+						continue;
+					}
+					
 					$s_option .= $o_record->{$this->Label->value[$i]};
 					
 					if ($i < (count($this->Label->value) - 1)) {
 						$s_option .= $this->Concat->value;
 					}
+				}
+				
+				if ($b_standard_columns_found) {
+					$s_option = substr($s_option, 0, (strlen($s_option) - strlen($this->Concat->value)));
 				}
 				
 				/* add record label and record primary key to array which will be returned by this function */

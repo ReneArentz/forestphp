@@ -1,26 +1,35 @@
 <?php
-/* +--------------------------------+ */
-/* |				    | */
-/* | forestPHP V0.8.0 (0x1 0000A)   | */
-/* |				    | */
-/* +--------------------------------+ */
-
-/*
- * + Description +
+/**
  * class collection for generating one SQL-Query in an object-oriented way
  * this helps for object-oriented access on database-tables
  * for more information please read the documentation
  *
- * + Version Log +
- * Version	Developer	Date		Comment
- * 0.1.0 alpha	renatus		2019-08-04	first build
- * 0.1.1 alpha	renatus		2019-08-10	added trunk and forestDateTime functionality
- * 0.1.5 alpha	renatus		2019-10-10	added forestLookup functionality
- * 0.2.0 beta	renatus		2019-10-15	added data definition language functionality
+ * @category    forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestphp.de>
+ * @copyright   (c) 2019 forestPHP Framework
+ * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
+ * @license     https://opensource.org/licenses/MIT MIT License
+ * @version     0.9.0 beta
+ * @link        http://www.forestphp.de/
+ * @object-id   0x1 0000A
+ * @since       File available since Release 0.1.0 alpha
+ * @deprecated  -
+ *
+ * @version log Version		Developer	Date		Comment
+ * 		0.1.0 alpha	renatus		2019-08-04	first build
+ * 		0.1.1 alpha	renatus		2019-08-10	added trunk and forestDateTime functionality
+ * 		0.1.5 alpha	renatus		2019-10-10	added forestLookup functionality
+ * 		0.2.0 beta	renatus		2019-10-15	added data definition language functionality
  */
 
+namespace fPHP\Base;
+
+use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \fPHP\Helper\forestObjectList;
+use \fPHP\Roots\forestException as forestException;
+
 class forestSQLQuery {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -43,6 +52,19 @@ class forestSQLQuery {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestSQLQuery class, set query parameters like base-gateway, type and table
+	 *
+	 * @param string $p_s_baseGateway  base-gateway constant
+	 * @param string $p_s_type  type of sql query - SELECT, INSERT, UPDATE, DELETE, TRUNCATE, CREATE, DROP, ALTER
+	 * @param string $p_s_table  table name
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct(string $p_s_baseGateway, string $p_s_type, string $p_s_table) {
 		/* take over construct parameters */
 		$this->BaseGateway = new forestString($p_s_baseGateway, false);
@@ -52,7 +74,7 @@ class forestSQLQuery {
 		/* check base gateway parameter */
         switch ($this->BaseGateway->value) {
 			case forestBase::MariaSQL:
-				break;
+			break;
 			default:
 				throw new forestException('Invalid BaseGateway[%0]', array($this->BaseGateway->value));
 			break;
@@ -90,10 +112,57 @@ class forestSQLQuery {
 		}
 	}
 	
-	function __toString() {
-		return '' . $this->Query->value;
+	/**
+	 * __toString function returning created sql query as string value
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
+	public function __toString() {
+		return strval($this->Query->value);
 	}
 	
+	/**
+	 * function to get sql query object
+	 *
+	 * @return forestSQLQueryAbstract or forestString
+	 *
+	 * @access public
+	 * @static no
+	 */
+	public function GetQuery() {
+		return $this->Query->value;
+	}
+	
+	/**
+	 * function to set sql query as string value manually
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
+	public function SetQuery($p_s_queryString) {
+		$this->Query = new forestString($p_s_queryString);
+	}
+	
+	/**
+	 * transpose general column type to base-gateway defined column type and further information for query execution
+	 *
+	 * @param string $p_s_baseGateway  base-gateway constant
+	 * @param string $p_s_sqlType  type of sql column, based on values in table sys_fphp_sqltype
+	 * @param string $p_s_columnType  transposed column type, passed by reference
+	 * @param integer $p_i_columnLength  transposed column length, passed by reference
+	 * @param integer $p_i_columnDecimalLength  transposed column decimal length, passed by reference
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static yes
+	 */
 	public static function ColumnTypeAllocation(string $p_s_baseGateway, string $p_s_sqlType, &$p_s_columnType, &$p_i_columnLength, &$p_i_columnDecimalLength) {
 		/* check base gateway parameter */
         switch ($p_s_baseGateway) {
@@ -106,6 +175,7 @@ class forestSQLQuery {
 		
 		/* check sql type parameter */
 		 switch ($p_s_sqlType) {
+			case 'text [36]':
 			case 'text [255]':
 			case 'text':
 			case 'integer [small]':
@@ -125,6 +195,10 @@ class forestSQLQuery {
 		$a_allocation = array();
 		
 		/* forestBase::MariaSQL */
+		$a_allocation[forestBase::MariaSQL]['text [36]']['columnType'] = 'VARCHAR';
+		$a_allocation[forestBase::MariaSQL]['text [36]']['columnLength'] = 36;
+		$a_allocation[forestBase::MariaSQL]['text [36]']['decimalLength'] = null;
+		
 		$a_allocation[forestBase::MariaSQL]['text [255]']['columnType'] = 'VARCHAR';
 		$a_allocation[forestBase::MariaSQL]['text [255]']['columnLength'] = 255;
 		$a_allocation[forestBase::MariaSQL]['text [255]']['decimalLength'] = null;
@@ -170,10 +244,63 @@ class forestSQLQuery {
 		$p_i_columnLength = $a_allocation[$p_s_baseGateway][$p_s_sqlType]['columnLength'];
 		$p_i_columnDecimalLength = $a_allocation[$p_s_baseGateway][$p_s_sqlType]['decimalLength'];
 	}
+	
+	/**
+	 * transpose general constraint type to base-gateway defined constraint type and further information for query execution
+	 *
+	 * @param string $p_s_baseGateway  base-gateway constant
+	 * @param string $p_s_constraintType  constraint type of sql column
+	 * @param string $p_s_outConstraintType  transposed constraint type, passed by reference
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static yes
+	 */
+	public static function ConstraintTypeAllocation(string $p_s_baseGateway, string $p_s_constraintType, &$p_s_outConstraintType) {
+		/* check base gateway parameter */
+        switch ($p_s_baseGateway) {
+			case forestBase::MariaSQL:
+				break;
+			default:
+				throw new forestException('Invalid BaseGateway[%0]', array($p_s_baseGateway));
+			break;
+		}
+		
+		/* check sql type parameter */
+		 switch ($p_s_constraintType) {
+			case 'NULL':
+			case 'NOT NULL':
+			case 'UNIQUE':
+			case 'PRIMARY KEY':
+			case 'DEFAULT':
+			case 'INDEX':
+			case 'AUTO_INCREMENT':
+				break;
+			default:
+				throw new forestException('Invalid SqlType[%0]', array($p_s_constraintType));
+			break;
+		}
+		
+		$a_allocation = array();
+		
+		/* forestBase::MariaSQL */
+		$a_allocation[forestBase::MariaSQL]['NULL']['constraintType'] = 'NULL';
+		$a_allocation[forestBase::MariaSQL]['NOT NULL']['constraintType'] = 'NOT NULL';
+		$a_allocation[forestBase::MariaSQL]['UNIQUE']['constraintType'] = 'UNIQUE';
+		$a_allocation[forestBase::MariaSQL]['PRIMARY KEY']['constraintType'] = 'PRIMARY KEY';
+		$a_allocation[forestBase::MariaSQL]['DEFAULT']['constraintType'] = 'DEFAULT';
+		$a_allocation[forestBase::MariaSQL]['INDEX']['constraintType'] = 'INDEX';
+		$a_allocation[forestBase::MariaSQL]['AUTO_INCREMENT']['constraintType'] = 'AUTO_INCREMENT';
+		
+		/* get constraint type of allocation matrix */
+		$p_s_outConstraintType = $a_allocation[$p_s_baseGateway][$p_s_constraintType]['constraintType'];
+	}
 }
 
 abstract class forestSQLQueryAbstract {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -195,6 +322,17 @@ abstract class forestSQLQueryAbstract {
 		
 	/* Methods */
 	
+	/**
+	 * constructor of forestSQLQueryAbstract abstract class, set general parameters like information of the main query class and other arrays for query creation
+	 *
+	 * @param forestSQLQuery $p_o_sqlQuery  query object of forestSQLQuery class, thus you are forced to use this class only over an instance of forestSQLQuery
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct(forestSQLQuery $p_o_sqlQuery) {
 		$this->BaseGateway = new forestString($p_o_sqlQuery->BaseGateway, false);
 		$this->SqlType = new forestString($p_o_sqlQuery->SqlType, false);
@@ -205,13 +343,13 @@ abstract class forestSQLQueryAbstract {
 		$this->FilterOperators = new forestArray(array('AND', 'OR', 'XOR'), false);
 		$this->JoinTypes = new forestArray(array('INNER JOIN', 'NATURAL JOIN', 'CROSS JOIN', 'OUTER JOIN', 'LEFT OUTER JOIN', 'RIGHT OUTER JOIN', 'FULL OUTER JOIN'), false);
 		$this->SqlAggregations = new forestArray(array('AVG', 'COUNT', 'MAX', 'MIN', 'SUM'), false);
-		$this->SqlConstraints = new forestArray(array('NULL', 'NOT NULL', 'UNIQUE', 'PRIMARY KEY', 'DEFAULT', 'INDEX', 'AUTO_INCREMENT', 'SIGNED', 'UNSIGNED'), false);
 		$this->SqlIndexConstraints = new forestArray(array('UNIQUE', 'PRIMARY KEY', 'INDEX'), false);
 		$this->AlterOperations = new forestArray(array('ADD', 'CHANGE', 'DROP'), false);
 		
 		switch ($this->BaseGateway->value) {
 			case forestBase::MariaSQL:
 				$this->SqlColumnTypes = new forestArray(array('VARCHAR', 'TEXT', 'SMALLINT', 'INT', 'BIGINT', 'TIMESTAMP', 'TIME', 'DOUBLE', 'DECIMAL', 'BIT'), false);
+				$this->SqlConstraints = new forestArray(array('NULL', 'NOT NULL', 'UNIQUE', 'PRIMARY KEY', 'DEFAULT', 'INDEX', 'AUTO_INCREMENT', 'SIGNED', 'UNSIGNED'), false);
 			break;
 			default:
 				throw new forestException('BaseGateway[%0] not implemented', array($this->BaseGateway->value));
@@ -219,19 +357,37 @@ abstract class forestSQLQueryAbstract {
 		}
 	}
 	
-	/* important parsing function, pretending SQL-Injection */
+	/**
+	 * important parsing function, pretending SQL-Injection, formatting date values, etc
+	 *
+	 * @param string $p_s_value  value of a sql field/column
+	 *
+	 * @return string  returning checked and edited sql field/column value
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function ParseValue($p_s_value) {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
+		$b_isDateTime = false;
+		$b_isEmptyDateTime = false;
 		
 		if (is_null($p_s_value)) {
 			$p_s_value = '';
 		}
 		
-		if (is_a($p_s_value, 'forestDateTime')) {
+		if (is_a($p_s_value, '\\fPHP\Helper\\forestDateTime')) {
+			$b_isDateTime = true;
+			
+			if ($p_s_value->EmptyDate) {
+				$b_isEmptyDateTime = $p_s_value->EmptyDate;
+			}
+			
 			$p_s_value = $p_s_value->ToString();
 		}
 		
-		if (is_a($p_s_value, 'forestLookupData')) {
+		if (is_a($p_s_value, '\\fPHP\Helper\\forestLookupData')) {
 			$p_s_value = $p_s_value->PrimaryValue;
 		}
 		
@@ -244,13 +400,13 @@ abstract class forestSQLQueryAbstract {
 				$p_s_value = str_replace('\\', '\\\\', $p_s_value);
 			}
 			
-			/* date conversion for sql query [dd.MM.yyyy] / [dd.MM.yyyy hh:mm:ss] */
+			/* date conversion for sql query [dd.MM.yyyy] / [dd.MM.yyyy hh:mm:ss] / [yyyy.MM.dd hh:mm:ss] */
 			switch ($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway) {
 				case forestBase::MariaSQL:
 					if (preg_match('/^ ((0[1-9])|(1[0-9])|2[0-9]|(3[0-1])) \. ((0[1-9])|(1[0-2])) \. (\d){4} $/x', $p_s_value)) {
 						$s_foo = explode('.', $p_s_value);
 						$p_s_value = $s_foo[2] . '-' . $s_foo[1] . '-' . $s_foo[0];
-					} else if (preg_match('/^ ((0[1-9])|(1[0-9])|2[0-9]|(3[0-1])) \. ((0[1-9])|(1[0-2])) \. (\d){4} \s (0[0-9]|1[0-9]|2[0-3]) : ([0-5][0-9]) : ([0-5][0-9]) $/x', $p_s_value)) {
+					} else if (preg_match('/^ ((0[1-9])|(1[0-9])|2[0-9]|(3[0-1])) \. ((0[1-9])|(1[0-2])) \. (\d){4} (\s|T) (0[0-9]|1[0-9]|2[0-3]) : ([0-5][0-9]) : ([0-5][0-9]) $/x', $p_s_value)) {
 						$s_foo  = explode(' ', $p_s_value);
 						$s_foo2 = explode('.', $s_foo[0]);
 						$p_s_value = $s_foo2[2] . '-' . $s_foo2[1] . '-' . $s_foo2[0] . ' ' . $s_foo[1];
@@ -284,6 +440,10 @@ abstract class forestSQLQueryAbstract {
 				/* surround value with single quotes */
 				$p_s_value = "'" . $p_s_value . "'";
 			}
+			
+			if ( ($b_isDateTime) && (!$b_isEmptyDateTime) ) {
+				/* nothing to do */
+			}
 		}
 		
 		return $p_s_value;
@@ -291,7 +451,7 @@ abstract class forestSQLQueryAbstract {
 }
 
 class forestSQLSelect extends forestSQLQueryAbstract {
-	use forestData;
+	use \fPHP\Roots\forestData;
 
 	/* Fields */
 	
@@ -308,6 +468,17 @@ class forestSQLSelect extends forestSQLQueryAbstract {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestSQLSelect class
+	 *
+	 * @param forestSQLQuery $p_o_sqlQuery  query object of forestSQLQuery class, thus you are forced to use this class only over an instance of forestSQLQuery
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct(forestSQLQuery $p_o_sqlQuery) {
 		parent::__construct($p_o_sqlQuery);
 		
@@ -321,7 +492,16 @@ class forestSQLSelect extends forestSQLQueryAbstract {
 		$this->Limit = new forestObject(new forestSQLLimit($p_o_sqlQuery), false);
 	}
 	
-	function __toString() {
+	/**
+	 * generates the sql query as string value
+	 *
+	 * @return string  sql query
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function __toString() {
 		$s_foo = '';
 		
 		if ($this->Columns->value->Count() == 0) {
@@ -401,7 +581,7 @@ class forestSQLSelect extends forestSQLQueryAbstract {
 }
 
 class forestSQLInsert extends forestSQLQueryAbstract {
-	use forestData;
+	use \fPHP\Roots\forestData;
 
 	/* Fields */
 	
@@ -411,13 +591,33 @@ class forestSQLInsert extends forestSQLQueryAbstract {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestSQLInsert class
+	 *
+	 * @param forestSQLQuery $p_o_sqlQuery  query object of forestSQLQuery class, thus you are forced to use this class only over an instance of forestSQLQuery
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct(forestSQLQuery $p_o_sqlQuery) {
 		parent::__construct($p_o_sqlQuery);
 		
 		$this->ColumnValues = new forestObject(new forestObjectList('forestSQLColumnValue'), false);
 	}
 	
-	function __toString() {
+	/**
+	 * generates the sql query as string value
+	 *
+	 * @return string  sql query
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function __toString() {
 		$s_foo = '';
 		
 		if ($this->ColumnValues->value->Count() == 0) {
@@ -441,7 +641,7 @@ class forestSQLInsert extends forestSQLQueryAbstract {
 					}
 					
 					$s_foo2 .= $o_columnValue->Value->scalar;
-						
+					
 					if ($s_key != $s_lastKey) {
 						$s_foo1 .= ', ';
 						$s_foo2 .= ', ';
@@ -463,7 +663,7 @@ class forestSQLInsert extends forestSQLQueryAbstract {
 }
 
 class forestSQLUpdate extends forestSQLQueryAbstract {
-	use forestData;
+	use \fPHP\Roots\forestData;
 
 	/* Fields */
 	
@@ -474,6 +674,17 @@ class forestSQLUpdate extends forestSQLQueryAbstract {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestSQLUpdate class
+	 *
+	 * @param forestSQLQuery $p_o_sqlQuery  query object of forestSQLQuery class, thus you are forced to use this class only over an instance of forestSQLQuery
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct(forestSQLQuery $p_o_sqlQuery) {
 		parent::__construct($p_o_sqlQuery);
 		
@@ -481,7 +692,16 @@ class forestSQLUpdate extends forestSQLQueryAbstract {
 		$this->Where = new forestObject(new forestObjectList('forestSQLWhere'), false);
 	}
 	
-	function __toString() {
+	/**
+	 * generates the sql query as string value
+	 *
+	 * @return string  sql query
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function __toString() {
 		$s_foo = '';
 		
 		if ($this->ColumnValues->value->Count() == 0) {
@@ -526,7 +746,7 @@ class forestSQLUpdate extends forestSQLQueryAbstract {
 }
 
 class forestSQLDelete extends forestSQLQueryAbstract {
-	use forestData;
+	use \fPHP\Roots\forestData;
 
 	/* Fields */
 	
@@ -536,13 +756,33 @@ class forestSQLDelete extends forestSQLQueryAbstract {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestSQLDelete class
+	 *
+	 * @param forestSQLQuery $p_o_sqlQuery  query object of forestSQLQuery class, thus you are forced to use this class only over an instance of forestSQLQuery
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct(forestSQLQuery $p_o_sqlQuery) {
 		parent::__construct($p_o_sqlQuery);
 		
 		$this->Where = new forestObject(new forestObjectList('forestSQLWhere'), false);
 	}
 	
-	function __toString() {
+	/**
+	 * generates the sql query as string value
+	 *
+	 * @return string  sql query
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function __toString() {
 		$s_foo = '';
 		
 		switch ($this->BaseGateway->value) {
@@ -567,7 +807,7 @@ class forestSQLDelete extends forestSQLQueryAbstract {
 }
 
 class forestSQLTruncate extends forestSQLQueryAbstract {
-	use forestData;
+	use \fPHP\Roots\forestData;
 
 	/* Fields */
 	
@@ -575,11 +815,31 @@ class forestSQLTruncate extends forestSQLQueryAbstract {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestSQLTruncate class
+	 *
+	 * @param forestSQLQuery $p_o_sqlQuery  query object of forestSQLQuery class, thus you are forced to use this class only over an instance of forestSQLQuery
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct(forestSQLQuery $p_o_sqlQuery) {
 		parent::__construct($p_o_sqlQuery);
 	}
 	
-	function __toString() {
+	/**
+	 * generates the sql query as string value
+	 *
+	 * @return string  sql query
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function __toString() {
 		$s_foo = '';
 		
 		switch ($this->BaseGateway->value) {
@@ -596,7 +856,7 @@ class forestSQLTruncate extends forestSQLQueryAbstract {
 }
 
 class forestSQLCreate extends forestSQLQueryAbstract {
-	use forestData;
+	use \fPHP\Roots\forestData;
 
 	/* Fields */
 	
@@ -606,13 +866,33 @@ class forestSQLCreate extends forestSQLQueryAbstract {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestSQLCreate class
+	 *
+	 * @param forestSQLQuery $p_o_sqlQuery  query object of forestSQLQuery class, thus you are forced to use this class only over an instance of forestSQLQuery
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct(forestSQLQuery $p_o_sqlQuery) {
 		parent::__construct($p_o_sqlQuery);
 		
 		$this->Columns = new forestObject(new forestObjectList('forestSQLColumnStructure'), false);
 	}
 	
-	function __toString() {
+	/**
+	 * generates the sql query as string value
+	 *
+	 * @return string  sql query
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function __toString() {
 		$s_foo = '';
 		
 		switch ($this->BaseGateway->value) {
@@ -646,7 +926,7 @@ class forestSQLCreate extends forestSQLQueryAbstract {
 }
 
 class forestSQLDrop extends forestSQLQueryAbstract {
-	use forestData;
+	use \fPHP\Roots\forestData;
 
 	/* Fields */
 	
@@ -654,11 +934,31 @@ class forestSQLDrop extends forestSQLQueryAbstract {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestSQLDrop class
+	 *
+	 * @param forestSQLQuery $p_o_sqlQuery  query object of forestSQLQuery class, thus you are forced to use this class only over an instance of forestSQLQuery
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct(forestSQLQuery $p_o_sqlQuery) {
 		parent::__construct($p_o_sqlQuery);
 	}
 	
-	function __toString() {
+	/**
+	 * generates the sql query as string value
+	 *
+	 * @return string  sql query
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function __toString() {
 		$s_foo = '';
 		
 		switch ($this->BaseGateway->value) {
@@ -675,7 +975,7 @@ class forestSQLDrop extends forestSQLQueryAbstract {
 }
 
 class forestSQLAlter extends forestSQLQueryAbstract {
-	use forestData;
+	use \fPHP\Roots\forestData;
 
 	/* Fields */
 	
@@ -686,6 +986,17 @@ class forestSQLAlter extends forestSQLQueryAbstract {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestSQLAlter class
+	 *
+	 * @param forestSQLQuery $p_o_sqlQuery  query object of forestSQLQuery class, thus you are forced to use this class only over an instance of forestSQLQuery
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct(forestSQLQuery $p_o_sqlQuery) {
 		parent::__construct($p_o_sqlQuery);
 		
@@ -693,12 +1004,21 @@ class forestSQLAlter extends forestSQLQueryAbstract {
 		$this->Constraints = new forestObject(new forestObjectList('forestSQLConstraint'), false);
 	}
 	
-	function __toString() {
+	/**
+	 * generates the sql query as string value
+	 *
+	 * @return string  sql query
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function __toString() {
 		$s_foo = '';
 		
 		switch ($this->BaseGateway->value) {
 			case forestBase::MariaSQL:
-				$s_foo = 'ALTER TABLE ' . '`' . $this->Table->value . '` ';
+				$s_foo = 'ALTER TABLE ' . '`' . $this->Table->value . '`' . ' ';
 				
 				if ( ($this->Columns->value->Count() <= 0) && ($this->Constraints->value->Count() <= 0) ) {
 					throw new forestException('Columns and Constraints object lists are empty');
@@ -736,7 +1056,7 @@ class forestSQLAlter extends forestSQLQueryAbstract {
 }
 
 class forestSQLColumn extends forestSQLQueryAbstract {
-	use forestData;
+	use \fPHP\Roots\forestData;
 
 	/* Fields */
 	
@@ -748,6 +1068,17 @@ class forestSQLColumn extends forestSQLQueryAbstract {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestSQLColumn class
+	 *
+	 * @param forestSQLQuery $p_o_sqlQuery  query object of forestSQLQuery class, thus you are forced to use this class only over an instance of forestSQLQuery
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct(forestSQLQuery $p_o_sqlQuery) {
 		parent::__construct($p_o_sqlQuery);
 		
@@ -756,7 +1087,16 @@ class forestSQLColumn extends forestSQLQueryAbstract {
 		$this->SqlAggregation = new forestList($this->SqlAggregations->value);
 	}
 	
-	function __toString() {
+	/**
+	 * generates the sql query column as string value
+	 *
+	 * @return string  sql query column
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function __toString() {
 		$s_foo = '';
 		
 		switch ($this->BaseGateway->value) {
@@ -815,7 +1155,7 @@ class forestSQLColumn extends forestSQLQueryAbstract {
 }
 
 class forestSQLJoin extends forestSQLQueryAbstract {
-	use forestData;
+	use \fPHP\Roots\forestData;
 
 	/* Fields */
 	
@@ -826,6 +1166,17 @@ class forestSQLJoin extends forestSQLQueryAbstract {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestSQLJoin class
+	 *
+	 * @param forestSQLQuery $p_o_sqlQuery  query object of forestSQLQuery class, thus you are forced to use this class only over an instance of forestSQLQuery
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct(forestSQLQuery $p_o_sqlQuery) {
 		parent::__construct($p_o_sqlQuery);
 		
@@ -833,7 +1184,16 @@ class forestSQLJoin extends forestSQLQueryAbstract {
 		$this->Relations = new forestObject(new forestObjectList('forestSQLRelation'), false);
 	}
 	
-	function __toString() {
+	/**
+	 * generates the sql query join clause as string value
+	 *
+	 * @return string  sql query join clause
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function __toString() {
 		$s_foo = '';
 		
 		if ($this->Relations->value->Count() == 0) {
@@ -872,7 +1232,7 @@ class forestSQLJoin extends forestSQLQueryAbstract {
 }
 
 class forestSQLRelation extends forestSQLQueryAbstract {
-	use forestData;
+	use \fPHP\Roots\forestData;
 
 	/* Fields */
 	
@@ -887,6 +1247,17 @@ class forestSQLRelation extends forestSQLQueryAbstract {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestSQLRelation class
+	 *
+	 * @param forestSQLQuery $p_o_sqlQuery  query object of forestSQLQuery class, thus you are forced to use this class only over an instance of forestSQLQuery
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct(forestSQLQuery $p_o_sqlQuery) {
 		parent::__construct($p_o_sqlQuery);
 		
@@ -898,7 +1269,16 @@ class forestSQLRelation extends forestSQLQueryAbstract {
 		$this->BracketEnd = new forestBool;
 	}
 	
-	function __toString() {
+	/**
+	 * generates the sql query relation clause as string value
+	 *
+	 * @return string  sql query relation clause
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function __toString() {
 		$s_foo = '';
 		
 		switch ($this->BaseGateway->value) {
@@ -939,7 +1319,7 @@ class forestSQLRelation extends forestSQLQueryAbstract {
 }
 
 class forestSQLWhere extends forestSQLQueryAbstract {
-	use forestData;
+	use \fPHP\Roots\forestData;
 
 	/* Fields */
 	
@@ -954,6 +1334,17 @@ class forestSQLWhere extends forestSQLQueryAbstract {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestSQLWhere class
+	 *
+	 * @param forestSQLQuery $p_o_sqlQuery  query object of forestSQLQuery class, thus you are forced to use this class only over an instance of forestSQLQuery
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct(forestSQLQuery $p_o_sqlQuery) {
 		parent::__construct($p_o_sqlQuery);
 		
@@ -965,7 +1356,16 @@ class forestSQLWhere extends forestSQLQueryAbstract {
 		$this->BracketEnd = new forestBool;
 	}
 	
-	function __toString() {
+	/**
+	 * generates the sql query where clause as string value
+	 *
+	 * @return string  sql query where clause
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function __toString() {
 		$s_foo = '';
 		
 		switch ($this->BaseGateway->value) {
@@ -1006,7 +1406,7 @@ class forestSQLWhere extends forestSQLQueryAbstract {
 }
 
 class forestSQLOrderBy extends forestSQLQueryAbstract {
-	use forestData;
+	use \fPHP\Roots\forestData;
 
 	/* Fields */
 	
@@ -1015,6 +1415,17 @@ class forestSQLOrderBy extends forestSQLQueryAbstract {
 	
 	/* Properties */
 	
+	/**
+	 * function to add a sql column to order clause
+	 *
+	 * @param forestSQLColumn $p_o_value  instace of forestSQLColumn
+	 * @param bool $p_b_direction  true - ascending, false - descending
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function AddColumn(forestSQLColumn $p_o_value, $p_b_direction = true) {
 		$this->Columns->value->Add($p_o_value);
 		$this->Directions->value[] = $p_b_direction;
@@ -1022,6 +1433,17 @@ class forestSQLOrderBy extends forestSQLQueryAbstract {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestSQLOrderBy class
+	 *
+	 * @param forestSQLQuery $p_o_sqlQuery  query object of forestSQLQuery class, thus you are forced to use this class only over an instance of forestSQLQuery
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct(forestSQLQuery $p_o_sqlQuery) {
 		parent::__construct($p_o_sqlQuery);
 		
@@ -1030,7 +1452,16 @@ class forestSQLOrderBy extends forestSQLQueryAbstract {
 		
 	}
 	
-	function __toString() {
+	/**
+	 * generates the sql query order by clause as string value
+	 *
+	 * @return string  sql query order by clause
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function __toString() {
 		$s_foo = '';
 		
 		switch ($this->BaseGateway->value) {
@@ -1080,7 +1511,7 @@ class forestSQLOrderBy extends forestSQLQueryAbstract {
 }	
 
 class forestSQLLimit extends forestSQLQueryAbstract {
-	use forestData;
+	use \fPHP\Roots\forestData;
 
 	/* Fields */
 	
@@ -1091,6 +1522,17 @@ class forestSQLLimit extends forestSQLQueryAbstract {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestSQLLimit class
+	 *
+	 * @param forestSQLQuery $p_o_sqlQuery  query object of forestSQLQuery class, thus you are forced to use this class only over an instance of forestSQLQuery
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct(forestSQLQuery $p_o_sqlQuery) {
 		parent::__construct($p_o_sqlQuery);
 		
@@ -1098,7 +1540,16 @@ class forestSQLLimit extends forestSQLQueryAbstract {
 		$this->Interval = new forestInt;
 	}
 	
-	function __toString() {
+	/**
+	 * generates the sql query limit clause as string value
+	 *
+	 * @return string  sql query limit clause
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function __toString() {
 		$s_foo = '';
 		
 		switch ($this->BaseGateway->value) {
@@ -1127,7 +1578,7 @@ class forestSQLLimit extends forestSQLQueryAbstract {
 }
 
 class forestSQLColumnValue extends forestSQLQueryAbstract {
-	use forestData;
+	use \fPHP\Roots\forestData;
 
 	/* Fields */
 	
@@ -1138,6 +1589,17 @@ class forestSQLColumnValue extends forestSQLQueryAbstract {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestSQLColumnValue class
+	 *
+	 * @param forestSQLQuery $p_o_sqlQuery  query object of forestSQLQuery class, thus you are forced to use this class only over an instance of forestSQLQuery
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct(forestSQLQuery $p_o_sqlQuery) {
 		parent::__construct($p_o_sqlQuery);
 		
@@ -1147,7 +1609,7 @@ class forestSQLColumnValue extends forestSQLQueryAbstract {
 }
 
 class forestSQLColumnStructure extends forestSQLQueryAbstract {
-	use forestData;
+	use \fPHP\Roots\forestData;
 
 	/* Fields */
 	
@@ -1164,6 +1626,17 @@ class forestSQLColumnStructure extends forestSQLQueryAbstract {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestSQLColumnStructure class
+	 *
+	 * @param forestSQLQuery $p_o_sqlQuery  query object of forestSQLQuery class, thus you are forced to use this class only over an instance of forestSQLQuery
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct(forestSQLQuery $p_o_sqlQuery) {
 		parent::__construct($p_o_sqlQuery);
 		
@@ -1177,7 +1650,16 @@ class forestSQLColumnStructure extends forestSQLQueryAbstract {
 		$this->AlterOperation = new forestList($this->AlterOperations->value);
 	}
 	
-	function __toString() {
+	/**
+	 * generates the sql query column structure as string value
+	 *
+	 * @return string  sql query column structure
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function __toString() {
 		$s_foo = '';
 		
 		switch ($this->BaseGateway->value) {
@@ -1187,13 +1669,16 @@ class forestSQLColumnStructure extends forestSQLQueryAbstract {
 					case forestSQLQuery::DROP:
 					case forestSQLQuery::ALTER:
 						if ($this->AlterOperation->value == 'DROP') {
-							$s_foo .= 'DROP `' . $this->Name->value . '`';
+							$s_foo .= 'DROP ' . '`' . $this->Name->value . '`';
 						} else {
 							if ($this->AlterOperation->value == 'ADD') {
 								$this->NewName->value = $this->Name->value;
-								$s_foo .= 'ADD ';
+								
+								if ($this->SqlType->value == forestSQLQuery::ALTER) {
+									$s_foo .= 'ADD ';
+								}
 							} else if ($this->AlterOperation->value == 'CHANGE') {
-								$s_foo .= 'CHANGE `' . $this->Name->value . '` ';
+								$s_foo .= 'CHANGE ' . '`' . $this->Name->value . '`' . ' ';
 							} else {
 								$this->NewName->value = $this->Name->value;
 							}
@@ -1254,7 +1739,7 @@ class forestSQLColumnStructure extends forestSQLQueryAbstract {
 }
 
 class forestSQLConstraint extends forestSQLQueryAbstract {
-	use forestData;
+	use \fPHP\Roots\forestData;
 
 	/* Fields */
 	
@@ -1268,6 +1753,17 @@ class forestSQLConstraint extends forestSQLQueryAbstract {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestSQLConstraint class
+	 *
+	 * @param forestSQLQuery $p_o_sqlQuery  query object of forestSQLQuery class, thus you are forced to use this class only over an instance of forestSQLQuery
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct(forestSQLQuery $p_o_sqlQuery) {
 		parent::__construct($p_o_sqlQuery);
 		
@@ -1278,7 +1774,16 @@ class forestSQLConstraint extends forestSQLQueryAbstract {
 		$this->Columns = new forestObject(new forestObjectList('forestString'), false);
 	}
 	
-	function __toString() {
+	/**
+	 * generates the sql query constraint as string value
+	 *
+	 * @return string  sql query constraint
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function __toString() {
 		$s_foo = '';
 		
 		switch ($this->BaseGateway->value) {

@@ -1,23 +1,31 @@
 <?php
-/* +--------------------------------+ */
-/* |				    | */
-/* | forestPHP V0.8.0 (0x1 00005)   | */
-/* |				    | */
-/* +--------------------------------+ */
-
-/*
- * + Description +
+/**
  * class holding specific url information based on an arranged url-format
  * for more information about the arranged url-format, see the documentation
  *
- * + Version Log +
- * Version	Developer	Date		Comment
- * 0.1.0 alpha	renatus		2019-08-04	first build
- * 0.1.2 alpha	renatus		2019-08-26	added parameter identification for sort and limit
+ * @category    forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestphp.de>
+ * @copyright   (c) 2019 forestPHP Framework
+ * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
+ * @license     https://opensource.org/licenses/MIT MIT License
+ * @version     0.9.0 beta
+ * @link        http://www.forestphp.de/
+ * @object-id   0x1 00005
+ * @since       File available since Release 0.1.0 alpha
+ * @deprecated  -
+ *
+ * @version log Version		Developer	Date		Comment
+ * 		0.1.0 alpha	renatus		2019-08-04	first build
+ * 		0.1.2 alpha	renatus		2019-08-26	added parameter identification for sort and limit
  */
 
+namespace fPHP\Roots;
+
+use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \fPHP\Roots\forestException as forestException;
+
 class forestURL {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -63,8 +71,18 @@ class forestURL {
         $this->HandleUrl($p_b_show);
 	}
 	
-	/* important function to read the information in url's arranged format */
-	/* first parameter controls rendering some url information receiving from arranged url-format on screen */
+	/**
+	 * important function to read the information in url's arranged format
+	 * first parameter controls rendering some url information receiving from arranged url-format on screen
+	 *
+	 * @param bool $p_b_show  flag to show debug information
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	private function HandleUrl($p_b_show = false) {
 		if (strpos($_SERVER['REQUEST_URI'], '.php?/') !== false) {
 			/* split url in two parts */
@@ -174,9 +192,19 @@ class forestURL {
 		}
 	}
 	
-	/* retrieving detail information out of database based on information read out of url */
+	/**
+	 * retrieving detail information out of database based on information read out of url
+	 *
+	 * @param bool $p_b_show  flag to show debug information
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function RetrieveInformationByURL($p_b_show = false) {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (issetStr($this->Branch->value)) {
 			/* check if branch really exists */
@@ -217,7 +245,7 @@ class forestURL {
 					
 					/* exception paramater-format to recognize sort-fields */
 					if ($s_key[0] == '_') {
-						$o_glob->Sorts->Add(new forestSort(substr($s_key, 1), ( ($s_value == 'true') ? true : false ) ), substr($s_key, 1));
+						$o_glob->Sorts->Add(new \fPHP\Branches\forestSort(substr($s_key, 1), ( ($s_value == 'true') ? true : false ) ), substr($s_key, 1));
 					}
 					
 					/* exception paramater-format for paging */

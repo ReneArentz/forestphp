@@ -1,51 +1,90 @@
-/* +--------------------------------+ */
-/* |                                | */
-/* | forestPHP V0.8.0               | */
-/* |                                | */
-/* +--------------------------------+ */
-
-/*
- * + Description +
- * standard js file of fphp framework
+/**
+ * main javascript file for all client interaction with the fPHP-Framework
  *
- * + Version Log +
- * Version	Developer	Date		Comment
- * 0.1.0 alpha	renatus		2019-08-04	first build
- * 0.1.1 alpha	renatus		2019-08-14	added functionality for navigation and modal-call
- * 0.1.2 alpha	renatus		2019-08-25	added functionality for list view
- * 0.1.5 alpha	renatus		2019-10-07	added functionality for moveUp and moveDown
- * 0.5.0 beta 	renatus		2019-11-25	added functionality for checkin and checkout
- * 0.6.0 beta 	renatus		2019-12-10	added timeout submit button functionality
- * 0.8.0 beta 	renatus		2020-01-10	added functionality for fphp_flex
+ * @category    forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestphp.de>
+ * @copyright   (c) 2019 forestPHP Framework
+ * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
+ * @license     https://opensource.org/licenses/MIT MIT License
+ * @version     0.9.0 beta
+ * @link        http://www.forestphp.de/
+ * @object-id   0x2 00001
+ * @since       File available since Release 0.1.0 alpha
+ * @deprecated  -
+ *
+ * @version log Version     Developer   Date        Comment
+ *              0.1.0 alpha	renatus     2019-08-04	first build
+ *              0.1.1 alpha	renatus     2019-08-14	added functionality for navigation and modal-call
+ *              0.1.2 alpha	renatus		  2019-08-25	added functionality for list view
+ *              0.1.5 alpha	renatus		  2019-10-07	added functionality for moveUp and moveDown
+ *              0.5.0 beta 	renatus		  2019-11-25	added functionality for checkin and checkout
+ *              0.6.0 beta 	renatus		  2019-12-10	added timeout submit button functionality
+ *              0.8.0 beta 	renatus		  2020-01-10	added functionality for fphp_flex
+ *              0.9.0 beta 	renatus		  2020-01-27	changes for bootstrap 4 and navigation sidebar + curtain
  */
-
 $(function(){
-	$('.dropdown .fphp_menu_dropdown').on("click", function(p_o_event){
-		if ($(this).find('span').hasClass('glyphicon-menu-down')) {
-			$(this).find('span').removeClass('glyphicon-menu-down');
-			$(this).find('span').addClass('glyphicon-menu-up');
-		} else if ($(this).find('span').hasClass('glyphicon-menu-up')) {
-			$(this).find('span').removeClass('glyphicon-menu-up');
-			$(this).find('span').addClass('glyphicon-menu-down');
+	/* ********************************** */
+	/* *********** NAVIGATION *********** */
+	/* ********************************** */
+	/* toggle caret icon in fphp navbar */
+	$('.dropdown a.dropdown-menu-item').on('click', function(e) {
+		/* toggle caret icon */
+		if ($(this).find('span').hasClass('fa-caret-down')) {
+			$(this).find('span').removeClass('fa-caret-down');
+			$(this).find('span').addClass('fa-caret-up');
+		} else if ($(this).find('span').hasClass('fa-caret-up')) {
+			$(this).find('span').removeClass('fa-caret-up');
+			$(this).find('span').addClass('fa-caret-down');
 		}
-	});
-	
-	$('.dropdown-submenu .fphp_menu_dropdown').on("click", function(p_o_event){
-		$(this).next('ul').toggle();
 		
+		/* reset caret icon on dropdown on same level in fphp navbar */
 		$(this).parent().siblings().each(function() {
-			$(this).find('ul').css("display", "none");
-			
-			if ($(this).find('ul').parent().find('span').hasClass('glyphicon-menu-up')) {
-				$(this).find('ul').parent().find('span').removeClass('glyphicon-menu-up');
-				$(this).find('ul').parent().find('span').addClass('glyphicon-menu-down');
+			if ($(this).find('a.dropdown-menu-item').find('span').hasClass('fa-caret-up')) {
+				$(this).find('a.dropdown-menu-item').find('span').removeClass('fa-caret-up');
+				$(this).find('a.dropdown-menu-item').find('span').addClass('fa-caret-down');
 			}
 		});
-		
-		p_o_event.stopPropagation();
-		p_o_event.preventDefault();
 	});
 	
+	/* toggle submenu in fphp navbar */
+	$('.dropdown-menu a.dropdown-submenu-item').on('click', function(e) {
+		/* close submenu of other dropdown if it is shown */
+		if (!$(this).parent().next().hasClass('show')) {
+			$(this).parents('.dropdown-menu').first().find('.show').removeClass('show');
+		}
+		
+		/* query current submenu and toggle show state */
+		var $subMenu = $(this).parent().next('.dropdown-menu');
+		$subMenu.toggleClass('show');
+
+		$(this).parents('li.nav-item.dropdown.show').on('hidden.bs.dropdown', function(e) {
+			$('.dropdown-submenu .show').removeClass('show');
+		});
+	
+		/* toggle caret icon */
+		if ($(this).find('span').hasClass('fa-caret-down')) {
+			$(this).find('span').removeClass('fa-caret-down');
+			$(this).find('span').addClass('fa-caret-up');
+		} else if ($(this).find('span').hasClass('fa-caret-up')) {
+			$(this).find('span').removeClass('fa-caret-up');
+			$(this).find('span').addClass('fa-caret-down');
+		}
+		
+		/* reset caret icon on dropdown on same level in fphp navbar */
+		$(this).parent().parent().siblings().each(function() {
+			if ($(this).find('a.dropdown-submenu-item').find('span').hasClass('fa-caret-up')) {
+				$(this).find('a.dropdown-submenu-item').find('span').removeClass('fa-caret-up');
+				$(this).find('a.dropdown-submenu-item').find('span').addClass('fa-caret-down');
+			}
+		});
+
+		return false;
+	});
+
+	/* ********************************** */
+	/* ************** MODAL ************* */
+	/* ********************************** */	
+	/* help function to call modal, e.g. if you press a button */
 	$('.modal-call').each(function() {
 		if ($(this).data('modal-call') !== undefined) {
 			$(this).on('click', function() {
@@ -54,7 +93,16 @@ $(function(){
 		}
 	});
 	
+	/* standard timeout function for all standard submit buttons in forestPHP */
+	setTimeout(function() {
+        $("button[name^='sys_fphp_SubmitStandard']").attr('disabled', false);
+    }, 3000);
+	
+	/* ********************************** */
+	/* ******* forestPHP-ListView ******* */
+	/* ********************************** */
 	$('.select-modal-call-add-column').each(function() {
+		/* gather columns we want to add to our list view */
 		if ($(this).data('columns') !== undefined) {
 			$(this).on('change', function() {
 				var s_columns = '';
@@ -70,6 +118,7 @@ $(function(){
 		}
 	});
 	
+	/* execute add columns request, by taking the gathered columns data nad create a valid url string as form action */
 	$('.button-modal-call-add-column').each(function() {
 		$(this).on('click', function() {
 			//console.log($('form#' + $(this).data('form_id')).find('.select-modal-call-add-column').data('columns'));
@@ -110,6 +159,7 @@ $(function(){
 		});
 	});
 	
+	/* execute edit request with selected records from list view */
 	$('.a-button-edit-record').each(function() {
 		$(this).on('click', function(p_o_event) {
 			var s_href= $(this).attr('href');
@@ -128,6 +178,7 @@ $(function(){
 		});
 	});
 	
+	/* execute delete request with selected records from list view */
 	$('.a-button-delete-record').each(function() {
 		$(this).on('click', function(p_o_event) {
 			var s_href= $(this).attr('href');
@@ -146,6 +197,7 @@ $(function(){
 		});
 	});
 	
+	/* execute view request with selected record from list view */
 	$('.a-button-view-record').each(function() {
 		$(this).on('click', function(p_o_event) {
 			var s_href= $(this).attr('href');
@@ -164,6 +216,7 @@ $(function(){
 		});
 	});
 	
+	/* execute moveUp request with selected record from list view */
 	$('.a-button-moveUp-record').each(function() {
 		$(this).on('click', function(p_o_event) {
 			var s_href= $(this).attr('href');
@@ -182,6 +235,7 @@ $(function(){
 		});
 	});
 	
+	/* execute moveDown request with selected record from list view */
 	$('.a-button-moveDown-record').each(function() {
 		$(this).on('click', function(p_o_event) {
 			var s_href= $(this).attr('href');
@@ -200,6 +254,7 @@ $(function(){
 		});
 	});
 	
+	/* execute checkout request with selected records from list view */
 	$('.a-button-checkout-record').each(function() {
 		$(this).on('click', function(p_o_event) {
 			var s_href= $(this).attr('href');
@@ -218,6 +273,7 @@ $(function(){
 		});
 	});
 	
+	/* execute checkin request with selected records from list view */
 	$('.a-button-checkin-record').each(function() {
 		$(this).on('click', function(p_o_event) {
 			var s_href= $(this).attr('href');
@@ -236,6 +292,7 @@ $(function(){
 		});
 	});
 	
+	/* exchange filter dropdown title with selected filter term of dropdown for further search action */
 	$('.filter-panel .dropdown-menu').find('a').click(function(p_o_event) {
 		p_o_event.preventDefault();
 		
@@ -247,6 +304,7 @@ $(function(){
 		}
 	});
 	
+	/* add filter term column to hidden element and execute submit to delete filter term from list view */
 	$('.filter-terms').find('a').click(function(p_o_event) {
 		p_o_event.preventDefault();
 		var s_deleteFilterColumn = $(this).attr('href').replace('#', '');
@@ -254,6 +312,7 @@ $(function(){
 		$('.input-group #filterSubmit').click();
 	});
 	
+	/* jquery ui selectable feature, to selecet multiple records in a list view */
 	$('.table-selectable > tbody').selectable({
 		filter: 'tr',
 		cancel: 'a,span',
@@ -268,7 +327,7 @@ $(function(){
 				$('tbody#' + s_uniqueSelect).data('fphp_uuids', '');
 			}	
 		},
-		selected: function(p_o_event, p_o_ui) {
+		selected: function(p_o_event, p_o_ui) { /* add record uuid to uuid container for later use */
 			if ($(p_o_ui.selected).hasClass('save-selected')) {
 				$(p_o_ui.selected).removeClass('save-selected');
 				$(p_o_ui.selected).removeClass('ui-selected');
@@ -294,7 +353,7 @@ $(function(){
 				//console.log('selected: ' + $('tbody#' + s_uniqueSelect + 'ListView').data('fphp_uuids'));
 			}
 		},
-		unselected: function(p_o_event, p_o_ui) {
+		unselected: function(p_o_event, p_o_ui) { /* remove record uuid from uuid container for later use */
 			if ($(p_o_ui.unselected).hasClass('save-selected')) {
 				$(p_o_ui.unselected).addClass('save-selected');
 				$(p_o_ui.unselected).addClass('ui-selected');
@@ -320,7 +379,7 @@ $(function(){
 			
 			//console.log('unselected: ' + $('tbody#' + s_uniqueSelect + 'ListView').data('fphp_uuids'));
 		},
-		unselecting: function (p_o_event, p_o_ui) {
+		unselecting: function (p_o_event, p_o_ui) { /* handle selection classes */
 			if ($(p_o_ui.unselecting).hasClass('save-selected')) {
 				$(p_o_ui.unselecting).addClass('ui-selected');
 				$(p_o_ui.unselecting).addClass('save-selected');
@@ -329,7 +388,7 @@ $(function(){
 				$(p_o_ui.unselecting).removeClass('save-selected');
 			}
 		},
-		stop: function (p_o_event, p_o_ui) {
+		stop: function (p_o_event, p_o_ui) { /* update actions of list view based on record selection */
 			var s_uniqueSelect = $(p_o_event.target).attr('id');
 			var s_uuid_container = $('tbody#' + s_uniqueSelect).data('fphp_uuids');
 			
@@ -338,6 +397,7 @@ $(function(){
 			s_uniqueSelect = s_uniqueSelect.replace('ListView', '');
 			
 			if (s_uuid_container != '') {
+				/* if at least one record is selected, activate edit and delete action */
 				$('a#' + s_uniqueSelect + 'Edit').removeClass('disabled');
 				$('a#' + s_uniqueSelect + 'Delete').removeClass('disabled');
 				
@@ -345,17 +405,20 @@ $(function(){
 				a_uuid_container.pop();
 				
 				if (a_uuid_container.length == 1) {
+					/* following actions are activated if one record is selected */
 					$('a#' + s_uniqueSelect + 'View').removeClass('disabled');
 					$('a#' + s_uniqueSelect + 'MoveUp').removeClass('disabled');
 					$('a#' + s_uniqueSelect + 'MoveDown').removeClass('disabled');
 					$('a#' + s_uniqueSelect + 'Checkout').removeClass('disabled');
 					$('a#' + s_uniqueSelect + 'Checkin').removeClass('disabled');
 				} else {
+					/* following actions are deactivated if more than one record are selected */
 					$('a#' + s_uniqueSelect + 'View').addClass('disabled');
 					$('a#' + s_uniqueSelect + 'MoveUp').addClass('disabled');
 					$('a#' + s_uniqueSelect + 'MoveDown').addClass('disabled');
 				}
 			} else {
+				/* following actions are deactivated by standard if no record is selected */
 				$('a#' + s_uniqueSelect + 'Edit').addClass('disabled');
 				$('a#' + s_uniqueSelect + 'Delete').addClass('disabled');
 				$('a#' + s_uniqueSelect + 'View').addClass('disabled');
@@ -367,9 +430,13 @@ $(function(){
 		}
 	});
 	
+	/* ********************************** */
+	/* ********* forestPHP-View ********* */
+	/* ********************************** */
 	var b_isCtrl = false;
 	var b_isShift = false;
 	
+	/* handle keyboard paging in view mode */
 	$(document).on('keyup', function(p_o_event) {
 		if(p_o_event.which == 17) {
 			b_isCtrl = false;
@@ -380,6 +447,8 @@ $(function(){
 		}
 	});
 	
+	/* if you press SHIFT + PAGEDOWN you will increase page in view mode */
+	/* if you press SHIFT + PAGEUP you will decrease page in view mode */
 	$(document).on('keydown', function(p_o_event) {
 		if(p_o_event.which == 17) {
 			b_isCtrl = true; 
@@ -402,15 +471,16 @@ $(function(){
 		}
 	});
 	
-	setTimeout(function() {
-        $("button[name^='sys_fphp_SubmitStandard']").attr('disabled', false);
-    }, 3000);
 	
+	/* ********************************** */
+	/* ********* forestPHP-Flex ********* */
+	/* ********************************** */
 	var fphp_flexMinWidthInt = 30;
 	var fphp_flexMinHeightInt = 30;
 	var fphp_flexMinWidth = '30';
 	var fphp_flexMinHeight = '30';
 	
+	/* handle draggable and resizable actions in fPHP-Flex Container */
 	$("div[class$='_fphpFlex']")
 		.draggable({
 			start: function( event, ui ) { $(this).css('z-index', '2'); },
@@ -453,6 +523,7 @@ $(function(){
 			}
 		});
 	
+	/* save postion and size data into database for flex-elements with ajax request */
 	function fphp_AjaxUpdateFlex(p_s_url, p_s_uuid, p_i_top, p_i_left, p_i_width, p_i_height) {
 		var o_formData = new FormData();    
 		o_formData.append('sys_fphp_flex_UUID', p_s_uuid);
@@ -491,3 +562,57 @@ $(function(){
 		});
 	}
 });
+
+/* ********************************** */
+/* * NAVIGATION SIDEBAR+FULL SCREEN * */
+/* ********************************** */
+var fphp_navsidebarState = 0;
+
+/* toggle fphp navigation sidebar */
+function fphp_toggleNavsidebar() {
+	if (fphp_navsidebarState == 0) {
+		document.getElementById("fphp_navsidebarId").style.width = "300px";
+		document.getElementById("fphp_navoverlayId").style.display = "block";
+		fphp_navsidebarState = 1;
+	} else {
+		document.getElementById("fphp_navsidebarId").style.width = "0";
+		document.getElementById("fphp_navoverlayId").style.display = "none";
+		fphp_navsidebarState = 0;
+	}
+}
+
+var fphp_navfullscreenState = 0;
+
+/* toggle fphp navigation full screen */
+function fphp_toggleNavfullscreen(i_mode) {
+	if (i_mode == 1) {
+		/* no slide */
+		if (fphp_navfullscreenState == 0) {
+			document.getElementById("fphp_navfullscreenId").style.display = "block";
+			fphp_navfullscreenState = 1;
+		} else {
+			document.getElementById("fphp_navfullscreenId").style.display = "none";
+			fphp_navfullscreenState = 0;
+		}
+	} else if (i_mode == 10) {
+		/* slide from left */
+		if (fphp_navfullscreenState == 0) {
+			document.getElementById("fphp_navfullscreenId").style.width = "100%";
+			fphp_navfullscreenState = 1;
+		} else {
+			document.getElementById("fphp_navfullscreenId").style.width = "0";
+			fphp_navfullscreenState = 0;
+		}
+	} else if (i_mode == 100) {
+		/* slide from top */
+		if (fphp_navfullscreenState == 0) {
+			document.getElementById("fphp_navfullscreenId").style.height = "100%";
+			document.getElementById("fphp_navfullscreenId").style.marginTop = "55px";
+			fphp_navfullscreenState = 1;
+		} else {
+			document.getElementById("fphp_navfullscreenId").style.height = "0";
+			document.getElementById("fphp_navfullscreenId").style.marginTop = "0";
+			fphp_navfullscreenState = 0;
+		}
+	}
+}

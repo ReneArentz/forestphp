@@ -1,30 +1,40 @@
 <?php
-/* +--------------------------------+ */
-/* |				    | */
-/* | forestPHP V0.8.0 (0x1 00004)   | */
-/* |				    | */
-/* +--------------------------------+ */
-
-/*
- * + Description +
+/**
  * singleton class for temporary values and communication
  * between different classes and build-steps in the script collection
  *
- * + Version Log +
- * Version	Developer	Date		Comment
- * 0.1.0 alpha	renatus		2019-08-04	first build
- * 0.1.1 alpha	renatus		2019-08-07	added trunk, templates, form and tables functionality
- * 0.1.2 alpha	renatus		2019-08-07	added sort, filter and limit functionality
- * 0.1.5 alpha	renatus		2019-10-10	added lookup and sub-constraint dictionary
- * 0.2.0 beta	renatus		2019-10-25	added RootMenu
- * 0.4.0 beta	renatus		2019-11-14	added user dictionary and functions
- * 0.5.0 beta	renatus		2019-12-05	changed ListTables, added CheckoutInterval and Versioning to dictionary
- * 0.6.0 beta	renatus		2019-12-14	changed ListTables, added Versioning and InfoColumns to dictionary
- * 0.7.0 beta	renatus		2020-01-02	changed ListTables, added Maintenance Mode to dictionary, added Maintenance Mode to BranchTree
+ * @category    forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestphp.de>
+ * @copyright   (c) 2019 forestPHP Framework
+ * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
+ * @license     https://opensource.org/licenses/MIT MIT License
+ * @version     0.9.0 beta
+ * @link        http://www.forestphp.de/
+ * @object-id   0x1 00004
+ * @since       File available since Release 0.1.0 alpha
+ * @deprecated  -
+ *
+ * @version log Version		Developer	Date		Comment
+ * 		0.1.0 alpha	renatus		2019-08-04	first build
+ * 		0.1.1 alpha	renatus		2019-08-07	added trunk, templates, form and tables functionality
+ * 		0.1.2 alpha	renatus		2019-08-07	added sort, filter and limit functionality
+ * 		0.1.5 alpha	renatus		2019-10-10	added lookup and sub-constraint dictionary
+ * 		0.2.0 beta	renatus		2019-10-25	added RootMenu
+ * 		0.4.0 beta	renatus		2019-11-14	added user dictionary and functions
+ * 		0.5.0 beta	renatus		2019-12-05	changed ListTables, added CheckoutInterval and Versioning to dictionary
+ * 		0.6.0 beta	renatus		2019-12-14	changed ListTables, added Versioning and InfoColumns to dictionary
+ * 		0.7.0 beta	renatus		2020-01-02	changed ListTables, added Maintenance Mode to dictionary, added Maintenance Mode to BranchTree
+ * 		0.9.0 beta	renatus		2020-01-28	rearranged order of global functions
  */
 
+namespace fPHP\Roots;
+
+use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \fPHP\Helper\forestObjectList;
+use \fPHP\Roots\forestException as forestException;
+
 class forestGlobals {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -41,15 +51,12 @@ class forestGlobals {
 	private $Temp;
 	private $BackupTemp;
 	private $SystemMessages;
-	private $TwigLists;
 	private $Templates;
 	private $Sorts;
 	private $BackupSorts;
 	private $Limit;
 	private $BackupLimit;
 	private $AddHiddenColumns;
-	private $ActionForm;
-	private $FilterForm;
 	private $PostModalForm;
 	private $Leaf;
 	private $Navigation;
@@ -72,12 +79,20 @@ class forestGlobals {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestGlobals class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		global $b_write_url_info;
 		global $b_write_security_debug;
 		
-		$this->URL = new forestObject(new forestURL($b_write_url_info), false); // bool parameter controls rendering some url information receiving from arranged url-format on screen
-		$this->Security = new forestObject(new forestSecurity($b_write_security_debug), false);
+		$this->URL = new forestObject(new \fPHP\Roots\forestURL($b_write_url_info), false); // bool parameter controls rendering some url information receiving from arranged url-format on screen
+		$this->Security = new forestObject(new \fPHP\Security\forestSecurity($b_write_security_debug), false);
 		$this->Base = new forestObject(new forestObjectList('forestBase'), false);
 		$this->ActiveBase = new forestString;
 		$this->IsPost = new forestBool(false);
@@ -86,18 +101,15 @@ class forestGlobals {
 		$this->Temp = new forestObject(new forestObjectList('stdClass'), false);
 		$this->BackupTemp = null;
 		$this->SystemMessages = new forestObject(new forestObjectList('forestException'), false);
-		$this->TwigLists = new forestObject(new forestObjectList('forestTwigList'), false);
 		$this->Templates = new forestObject(new forestObjectList('forestTemplates'), false);
 		$this->Sorts = new forestObject(new forestObjectList('forestSort'), false);
 		$this->BackupSorts = null;
-		$this->Limit = new forestObject(new forestLimit, false);
+		$this->Limit = new forestObject(new \fPHP\Branches\forestLimit, false);
 		$this->BackupLimit = null;
 		$this->AddHiddenColumns = new forestObject(new forestObjectList('stdClass'), false);
-		$this->ActionForm = new forestObject('forestForm');
-		$this->FilterForm = new forestObject('forestForm');
 		$this->PostModalForm = new forestObject('forestForm');
 		$this->Leaf = new forestString;
-		$this->Navigation = new forestObject(new forestNavigation, false);
+		$this->Navigation = new forestObject(new \fPHP\Branches\forestNavigation, false);
 		$this->RootMenu = new forestString;
 		$this->BranchTree = new forestArray;
 		$this->Translations = new forestArray;
@@ -114,7 +126,14 @@ class forestGlobals {
 		$this->TabIndex = new forestInt(100);
 	}
 	
-	/* method to create singleton object */
+	/**
+	 * method to create singleton object
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static yes
+	 */
 	public static function init() {
         if (!isset(self::$o_instance)) {
             $s_selfclass = __CLASS__;
@@ -124,61 +143,147 @@ class forestGlobals {
 		return self::$o_instance;
     }
 		
-	function __clone() {
+	/**
+	 * prevent cloning singleton object
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function __clone() {
 		/* cloning forestGlobals is not allowed */
         throw new forestException('Cannot clone forestGlobals');
 	}
 	
+	/**
+	 * get forestSort object stored in global list by key
+	 *
+	 * @param string $p_s_key  index of forestSort object
+	 *
+	 * @return forestSort
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function GetSort($p_s_key) {
 		/* get single sort element by key */
 		if ($this->Sorts->value->Exists($p_s_key)) {
 			return $this->Sorts->value->{$p_s_key};
 		} else {
-			$foo = new forestSort($p_s_key, false);
+			$foo = new \fPHP\Branches\forestSort($p_s_key, false);
 			$foo->Temp = true;
 			return $foo;
 		}
 	}
 	
+	/**
+	 * backup forestSort object list
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function BackupSorts() {
 		$this->BackupSorts = $this->Sorts->value;
 		$this->Sorts = new forestObject(new forestObjectList('forestSort'), false);
 	}
 	
+	/**
+	 * restore forestSort object list
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function RestoreSorts() {
 		$this->Sorts->value = $this->BackupSorts;
 	}
 	
+	/**
+	 * backup forestLimit object list
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function BackupLimit() {
 		$this->BackupLimit = $this->Limit->value;
-		$this->Limit = new forestObject(new forestLimit, false);
+		$this->Limit = new forestObject(new \fPHP\Branches\forestLimit, false);
 	}
 	
+	/**
+	 * restore forestLimit object list
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function RestoreLimit() {
 		$this->Limit->value = $this->BackupLimit;
 	}
 	
+	/**
+	 * backup stdclass object list
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function BackupTemp() {
 		$this->BackupTemp = $this->Temp->value;
 		$this->Temp = new forestObject(new forestObjectList('stdClass'), false);
 	}
 	
+	/**
+	 * restore stdclass object list
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function RestoreTemp() {
 		$this->Temp->value = $this->BackupTemp;
 	}
 	
+	/**
+	 * return tab index integer value for form elements and increase the value right after this call
+	 *
+	 * @return integer
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function GetTabIndex() {
 		return $this->TabIndex->value++;
 	}
 	
-	/* build a tree of the branch-structure which is often used by functions and navigation processes */
+	/**
+	 * build a tree of the branch-structure which is often used by functions and navigation processes
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function BuildBranchTree() {
+		global $b_write_debug_globals;
+		
 		/* get all actions */
-		$o_actionTwig = new actionTwig;
+		$o_actionTwig = new \fPHP\Twigs\actionTwig;
 		$o_actions = $o_actionTwig->GetAllRecords(true);
 		
 		/* get all branches */
-		$o_branchTwig = new branchTwig;
+		$o_branchTwig = new \fPHP\Twigs\branchTwig;
 		$o_branches = $o_branchTwig->GetAllRecords(true);
 		
 		$a_branchTree = array();
@@ -220,14 +325,29 @@ class forestGlobals {
 			}
 		}
 		
-		/*echo '<pre>';
-		print_r($a_branchTree);
-		echo '</pre>';*/
+		if ($b_write_debug_globals) {
+			echo '<pre>BuildBranchTree';
+			print_r($a_branchTree);
+			echo '</pre>';
+		}
 		
 		$this->BranchTree->value = $a_branchTree;
 	}
 	
-	/* this method is very important to get access to other classes which are not in the current url directory */
+	/**
+	 * this method is very important to get access to other classes which are not in the current url directory
+	 * after this method has been called you can try to call a class which is in the parameter's branch url directory
+	 *
+	 * @param string $p_s_branch  name of branch
+	 * @param string $p_s_action  name of action
+	 * @param array $p_a_parameters  parameters array object
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function SetVirtualTarget($p_s_branch, $p_s_action = null, $p_a_parameters = null) {
 		/* check if branch and action parameter really exists in branch tree */
 		if (is_int($p_s_branch)) {
@@ -280,12 +400,28 @@ class forestGlobals {
 		echo '</pre>';*/
 	}
 	
-	/* load all translations from database */
+	/**
+	 * load all translations from database
+	 * thus it is not necessary to query always the database for each label, text, etc.
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function ListTranslations() {
-		$o_translationTwig = new translationTwig;
+		global $b_write_debug_globals;
+		
+		$o_translationTwig = new \fPHP\Twigs\translationTwig;
 		
 		/* read all translations records */
-		$a_sqlAdditionalFilter = array(array('column' => 'LanguageCode', 'value' => $this->Trunk->value->LanguageCode, 'operator' => '=', 'filterOperator' => 'AND'));
+		$a_sqlAdditionalFilter = array(
+			array('column' => 'LanguageCode', 'value' => $this->Trunk->value->LanguageCode, 'operator' => '=', 'filterOperator' => 'AND')/*,
+			array('column' => 'BranchId', 'value' => $this->URL->value->BranchId, 'operator' => '=', 'filterOperator' => 'AND'),
+			array('column' => 'BranchId', 'value' => 0, 'operator' => '=', 'filterOperator' => 'OR'),
+			array('column' => 'BranchId', 'value' => 1, 'operator' => '=', 'filterOperator' => 'OR')*/
+		);
 		$this->Temp->value->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
 		$o_result = $o_translationTwig->GetAllRecords(true);
 		$this->Temp->value->Del('SQLAdditionalFilter');
@@ -299,31 +435,25 @@ class forestGlobals {
 		
 		$this->URL->value->BranchTitle = $this->GetTranslation($this->BranchTree->value['Id'][$this->URL->value->BranchId]['Title'], 1);
 		
-		/*echo '<pre>';
-		print_r($this->Translations->value);
-		echo '</pre>';*/
-	}
-	
-	/* load all user names from database */
-	public function ListUserNames() {
-		$o_userTwig = new userTwig;
-		
-		/* read all user records */
-		$o_result = $o_userTwig->GetAllRecords(true);
-		
-		/* put translation records into global 3 dimensional array */
-		if ($o_result->Twigs->Count() > 0) {
-			foreach ($o_result->Twigs as $o_user) {
-				$this->UsersDictionary->value[$o_user->UUID] = $o_user->User;
-			}
+		if ($b_write_debug_globals) {
+			echo '<pre>ListTranslations';
+			print_r($this->Translations->value);
+			echo '</pre>';
 		}
-		
-		/*echo '<pre>';
-		print_r($this->UsersDictionary->value);
-		echo '</pre>';*/
 	}
 	
-	/* get a translation by name */
+	/**
+	 * get a translation by name
+	 *
+	 * @param string $p_s_name  key name of translation
+	 * @param integer $p_i_branch_id  id of branch
+	 *
+	 * @return string  translation string or NO_CAPTION
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function GetTranslation($p_s_name, $p_i_branch_id = null) {
 		if (is_null($p_s_name)) {
 			throw new forestException('Please use name parameter for GetTranslation function.');
@@ -360,9 +490,69 @@ class forestGlobals {
 		return 'NO_CAPTION';
 	}
 	
-	/* load all table records from database */
+	/**
+	 * load all user names from database, after that user names can be called by uuid with function GetUserNameByUUID
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function ListUserNames() {
+		global $b_write_debug_globals;
+		
+		$o_userTwig = new \fPHP\Twigs\userTwig;
+		
+		/* read all user records */
+		$o_result = $o_userTwig->GetAllRecords(true);
+		
+		/* put translation records into global 3 dimensional array */
+		if ($o_result->Twigs->Count() > 0) {
+			foreach ($o_result->Twigs as $o_user) {
+				$this->UsersDictionary->value[$o_user->UUID] = $o_user->User;
+			}
+		}
+		
+		if ($b_write_debug_globals) {
+			echo '<pre>ListUserNames';
+			print_r($this->UsersDictionary->value);
+			echo '</pre>';
+		}
+	}
+	
+	/**
+	 * fast access to a user name in global dictionary by user uuid
+	 *
+	 * @return string  user name or empty '-' string
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function GetUserNameByUUID($p_s_uuid) {
+		if (array_key_exists($p_s_uuid, $this->UsersDictionary->value)) {
+			return $this->UsersDictionary->value[$p_s_uuid];
+		} else {
+			return '-';
+		}
+	}
+	
+	/**
+	 * load all table records from database
+	 * load all table records with tablefields from database
+	 * query all sub-constraints from database
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function ListTables() {
-		$o_tableTwig = new tableTwig;
+		global $b_write_debug_globals;
+		
+		$o_tableTwig = new \fPHP\Twigs\tableTwig;
 		
 		/* query all table records */
 		$o_result = $o_tableTwig->GetAllRecords(true);
@@ -385,19 +575,21 @@ class forestGlobals {
 			}
 		}
 		
-		/*echo '<pre>';
-		print_r($this->Tables->value);
-		echo '</pre>';*/
-		
-		/*echo '<pre>';
-		print_r($this->TablesInformation->value);
-		echo '</pre>';*/
+		if ($b_write_debug_globals) {
+			echo '<pre>Tables';
+			print_r($this->Tables->value);
+			echo '</pre>';
+			
+			echo '<pre>TablesInformation';
+			print_r($this->TablesInformation->value);
+			echo '</pre>';
+		}
 		
 		/* query tables with table fields by using distinct on table-uuid column */
-		$o_querySelect = new forestSQLQuery($this->Base->value->{$this->ActiveBase->value}->BaseGateway, forestSQLQuery::SELECT, 'sys_fphp_tablefield');
+		$o_querySelect = new \fPHP\Base\forestSQLQuery($this->Base->value->{$this->ActiveBase->value}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, 'sys_fphp_tablefield');
 		$o_querySelect->Query->Distinct = true;
 		
-			$column_A = new forestSQLColumn($o_querySelect);
+			$column_A = new \fPHP\Base\forestSQLColumn($o_querySelect);
 				$column_A->Column = 'TableUUID';
 		
 		$o_querySelect->Query->Columns->Add($column_A);
@@ -411,12 +603,14 @@ class forestGlobals {
 			}
 		}
 		
-		/*echo '<pre>';
-		print_r($this->TablesWithTablefields->value);
-		echo '</pre>';*/
+		if ($b_write_debug_globals) {
+			echo '<pre>TablesWithTablefields';
+			print_r($this->TablesWithTablefields->value);
+			echo '</pre>';
+		}
 		
 		/* query all sub-constraints */
-		$o_subconstraintTwig = new subconstraintTwig;
+		$o_subconstraintTwig = new \fPHP\Twigs\subconstraintTwig;
 		$o_subconstraints = $o_subconstraintTwig->GetAllRecords(true);
 		
 		/* put sub constraint records into array, key uuid */
@@ -426,12 +620,22 @@ class forestGlobals {
 			}
 		}
 		
-		/*echo '<pre>';
-		print_r($this->SubConstraintsDictionary->value);
-		echo '</pre>';*/
+		if ($b_write_debug_globals) {
+			echo '<pre>SubConstraintsDictionary';
+			print_r($this->SubConstraintsDictionary->value);
+			echo '</pre>';
+		}
 	}
 	
-	/* fast access to a tablefield entry in global dictionary by tablefield uuid */
+	/**
+	 * fast access to a tablefield entry in global dictionary by tablefield uuid
+	 *
+	 * @return forestTAbleFieldProperties  fPHP-class with many information to a tablefield
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function GetTablefieldsDictionaryByUUID($p_s_uuid) {
 		$o_return = null;
 		
@@ -442,15 +646,6 @@ class forestGlobals {
 		}
 		
 		return $o_return;
-	}
-
-	/* fast access to a user name in global dictionary by user uuid */
-	public function GetUserNameByUUID($p_s_uuid) {
-		if (array_key_exists($p_s_uuid, $this->UsersDictionary->value)) {
-			return $this->UsersDictionary->value[$p_s_uuid];
-		} else {
-			return '-';
-		}
 	}
 }
 ?>

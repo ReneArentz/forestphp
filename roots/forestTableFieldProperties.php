@@ -1,22 +1,29 @@
 <?php
-/* +--------------------------------+ */
-/* |				    | */
-/* | forestPHP V0.8.0 (0x1 0000E)   | */
-/* |				    | */
-/* +--------------------------------+ */
-
-/*
- * + Description +
+/**
  * class to capsulate data about table fields
  * storing these objects in a global dictionary will reduce database record access for one session
  *
- * + Version Log +
- * Version	Developer	Date		Comment
- * 0.1.1 alpha	renatus		2019-08-15	added to framework
+ * @category    forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestphp.de>
+ * @copyright   (c) 2019 forestPHP Framework
+ * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
+ * @license     https://opensource.org/licenses/MIT MIT License
+ * @version     0.9.0 beta
+ * @link        http://www.forestphp.de/
+ * @object-id   0x1 0000E
+ * @since       File available since Release 0.1.1 alpha
+ * @deprecated  -
+ *
+ * @version log Version		Developer	Date		Comment
+ * 		0.1.1 alpha	renatus		2019-08-15	added to framework
  */
 
+namespace fPHP\Twigs;
+
+use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+
 class forestTableFieldProperties {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -43,6 +50,16 @@ class forestTableFieldProperties {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestTableFieldProperties class, holding all information of a sql column/field
+	 *
+	 * @param parameters based on the sql columns/fields of sys_fphp_tablefield table
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct(
 		$p_s_uuid,
 		$p_s_tableUUID,

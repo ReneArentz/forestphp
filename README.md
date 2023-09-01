@@ -26,6 +26,9 @@ forestPHP framework will be released under the **GPLv3 license** and the **MIT l
 
 ## Releases
 
+### 0.9.0 (beta)
+New features: Upgrade to Bootstrap 4, Navigation Sidebar + Full-screen, Implementation of PHP namespaces, Completion of English Translation, Restructure of comments in forestPHP Source Code
+
 ### 0.8.0 (beta)
 New features: fPHP Flex, Implementation of Logs, Account settings. *02/2020*
 

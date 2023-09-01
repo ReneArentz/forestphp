@@ -1,32 +1,44 @@
 <?php
-/* +--------------------------------+ */
-/* |				    | */
-/* | forestPHP V0.8.0 (0x1 0000C)   | */
-/* |				    | */
-/* +--------------------------------+ */
-
-/*
- * + Description +
+/**
  * abstract class for all twig objects, one twig represents a table in a database
  * all necessary methods to read or manipulate data are implemented in this class
  * and can be used with every twig-object that stays for one table in the database
  *
- * + Version Log +
- * Version	Developer	Date		Comment
- * 0.1.0 alpha	renatus		2019-08-04	first build
- * 0.1.1 alpha	renatus		2019-08-10	added tablefield caching
- * 0.1.2 alpha	renatus		2019-08-27	added sort and limit
- * 0.1.5 alpha	renatus		2019-10-04	added sub-records
- * 0.1.5 alpha	renatus		2019-10-06	added sub-constraint
- * 0.1.5 alpha	renatus		2019-10-08	added caching
- * 0.1.5 alpha	renatus		2019-10-09	added forestLooukp and forestCombination
- * 0.4.0 beta	renatus		2019-11-22	do not add system table flag protection if you are root user
- * 0.7.0 beta	renatus		2020-01-03	added identifier column as standard like id and uuid
- * 0.7.0 beta	renatus		2020-01-03	added FILEVERSION and FILENAME commands to forestCombination
+ * this abstract class also can hold one record at a time
+ *
+ * @category    forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestphp.de>
+ * @copyright   (c) 2019 forestPHP Framework
+ * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
+ * @license     https://opensource.org/licenses/MIT MIT License
+ * @version     0.9.0 beta
+ * @link        http://www.forestphp.de/
+ * @object-id   0x1 0000C
+ * @since       File available since Release 0.1.0 alpha
+ * @deprecated  -
+ *
+ * @version log Version		Developer	Date		Comment
+ * 		0.1.0 alpha	renatus		2019-08-04	first build
+ * 		0.1.1 alpha	renatus		2019-08-10	added tablefield caching
+ * 		0.1.2 alpha	renatus		2019-08-27	added sort and limit
+ * 		0.1.5 alpha	renatus		2019-10-04	added sub-records
+ * 		0.1.5 alpha	renatus		2019-10-06	added sub-constraint
+ * 		0.1.5 alpha	renatus		2019-10-08	added caching
+ * 		0.1.5 alpha	renatus		2019-10-09	added forestLooukp and forestCombination
+ * 		0.4.0 beta	renatus		2019-11-22	do not add system table flag protection if you are root user
+ * 		0.7.0 beta	renatus		2020-01-03	added identifier column as standard like id and uuid
+ * 		0.7.0 beta	renatus		2020-01-03	added FILEVERSION and FILENAME commands to forestCombination
+ * 		0.9.0 beta	renatus		2020-01-29	optimized ImplementFilter for search on filename
  */
 
+namespace fPHP\Twigs;
+
+use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \fPHP\Helper\forestObjectList;
+use \fPHP\Roots\forestException as forestException;
+
 abstract class forestTwig {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -47,7 +59,19 @@ abstract class forestTwig {
 	
 	/* Methods */
 	
-	public function __construct($p_a_record = array(), $p_s_resultType = forestBase::ASSOC) {
+	/**
+	 * constructor of forestTwig class, creating a twig object representing a table with all its information and a table record
+	 *
+	 * @param array $p_a_record  raw dataset of a record as an array
+	 * @param integer $p_i_resultType  standard ASSOC - ASSOC, NUM, BOTH, OBJ, LAZY
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function __construct($p_a_record = array(), $p_i_resultType = \fPHP\Base\forestBase::ASSOC) {
 		$this->fphp_Table = new forestString;
 		$this->fphp_TableUUID = new forestString;
 		$this->fphp_Primary = new forestArray;
@@ -61,7 +85,7 @@ abstract class forestTwig {
 		$this->fphp_RecordImage = new forestObject(new forestObjectList('stdClass'), false, false);
 		$this->fphp_SubRecords = new forestObject(new forestObjectList('forestTwigList'), false, false);
 		
-		$o_glob = forestGlobals::Init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!is_array($p_a_record)) {
 			throw new forestException('Parameter record is not an array');
@@ -73,7 +97,7 @@ abstract class forestTwig {
 			throw new forestException('Twig needs a table value');
 		}
 		
-		if ( (forestStringLib::StartsWith($this->fphp_Table->value, 'sys_fphp_')) && (!$o_glob->Security->RootUser) ) {
+		if ( (\fPHP\Helper\forestStringLib::StartsWith($this->fphp_Table->value, 'sys_fphp_')) && (!$o_glob->Security->RootUser) ) {
 			$this->fphp_SystemTable->value = true;
 		}
 		
@@ -124,9 +148,10 @@ abstract class forestTwig {
 			}
 		}
 		
-		if (count($this->fphp_View->value) == 0) {
+		/* this check is deprecated, but maybe necessary for future changes */
+		/*if (count($this->fphp_View->value) == 0) {
 			throw new forestException('View values are missing table[%0]', array($this->fphp_Table->value));
-		}
+		}*/
 		
 		foreach ($this->fphp_View->value as $s_view_field) {
 			if ( (!in_array($s_view_field, $this->fphp_Mapping->value)) && (!$o_glob->FastProcessing) ) {
@@ -138,12 +163,13 @@ abstract class forestTwig {
 		
 		/* load record data into class fields */
 		/* difference between numeric or named index of record data */
-		switch ($p_s_resultType) {
-			case forestBase::ASSOC:
-			case forestBase::BOTH:
+		switch ($p_i_resultType) {
+			case \fPHP\Base\forestBase::ASSOC:
+			case \fPHP\Base\forestBase::BOTH:
 				foreach($p_a_record as $s_key => $s_value) {
 					if (!in_array($s_key, $this->fphp_Mapping->value)) {
-						throw new forestException('Field[%0] does not exists in mapping', array($s_key, implode(',', $this->fphp_Mapping->value)));
+						/* throw new forestException('Field[%0] does not exists in mapping', array($s_key, implode(',', $this->fphp_Mapping->value))); */
+						continue;
 					}
 					
 					if (is_string($s_value)) {
@@ -161,7 +187,7 @@ abstract class forestTwig {
 					}
 				}
 			break;
-			case forestBase::NUM:
+			case \fPHP\Base\forestBase::NUM:
 				if (count($p_a_record) != count($this->fphp_Mapping->value)) {
 					throw new forestException('Record fields and mapping fields are not of the same amount');
 				}
@@ -186,16 +212,25 @@ abstract class forestTwig {
 				}
 			break;
 			default:
-				throw new forestException('Result type[%0] not implemented', array($p_s_resultType));
+				throw new forestException('Result type[%0] not implemented', array($p_i_resultType));
 			break;
 		}
 	}
 	
+	/* every class which inherits forestTwig must implement init-function */
 	abstract protected function init();
 	
-	/* cache table fields properties entries in dictionary in forestGlobals */
+	/**
+	 * cache table fields properties entries in dictionary in forestGlobals
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access private
+	 * @static no
+	 */
 	private function CacheTableFieldsProperties() {
-		$o_glob = forestGlobals::Init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (in_array($this->fphp_TableUUID->value, $o_glob->TablesWithTablefieldsCached)) {
 			return;
@@ -214,7 +249,7 @@ abstract class forestTwig {
 		
 		if (in_array($this->fphp_TableUUID->value, $o_glob->TablesWithTablefields)) {
 			/* look for tablefields of current twig */
-			$o_tablefieldTwig = new tablefieldTwig;
+			$o_tablefieldTwig = new \fPHP\Twigs\tablefieldTwig;
 			$a_sqlAdditionalFilter = array(array('column' => 'TableUUID', 'value' => $this->fphp_TableUUID->value, 'operator' => '=', 'filterOperator' => 'AND'));
 			$o_glob->BackupTemp();
 			$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
@@ -233,7 +268,7 @@ abstract class forestTwig {
 							print_r($o_result);
 							echo '</pre>';*/
 							
-							$o_tableFieldProperties = new forestTableFieldProperties(
+							$o_tableFieldProperties = new \fPHP\Twigs\forestTableFieldProperties(
 								$o_result['TableFieldUUID'],
 								$this->fphp_TableUUID->value,
 								$o_result['FieldName'],
@@ -262,7 +297,7 @@ abstract class forestTwig {
 				foreach ($o_glob->SubConstraintsDictionary[$this->fphp_TableUUID->value] as $o_subconstraint) {
 					if (in_array($o_subconstraint->UUID, $o_glob->TablesWithTablefields)) {
 						/* look for tablefields of subconstraint */
-						$o_tablefieldTwig = new tablefieldTwig;
+						$o_tablefieldTwig = new \fPHP\Twigs\tablefieldTwig;
 						$a_sqlAdditionalFilter = array(array('column' => 'TableUUID', 'value' => $o_subconstraint->UUID, 'operator' => '=', 'filterOperator' => 'AND'));
 						$o_glob->BackupTemp();
 						$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
@@ -283,7 +318,7 @@ abstract class forestTwig {
 										print_r($o_result);
 										echo '</pre>';*/
 										
-										$o_tableFieldProperties = new forestTableFieldProperties(
+										$o_tableFieldProperties = new \fPHP\Twigs\forestTableFieldProperties(
 											$o_result['TableFieldUUID'],
 											$o_subconstraint->UUID,
 											$o_result['FieldName'],
@@ -322,7 +357,7 @@ abstract class forestTwig {
 							print_r($o_result);
 							echo '</pre>';*/
 							
-							$o_tableFieldProperties = new forestTableFieldProperties(
+							$o_tableFieldProperties = new \fPHP\Twigs\forestTableFieldProperties(
 								$o_result['TableFieldUUID'],
 								$this->fphp_TableUUID->value,
 								$o_result['FieldName'],
@@ -348,67 +383,78 @@ abstract class forestTwig {
 		}
 	}
 	
-	/* execute sql query to get field properties */
+	/**
+	 * execute sql query to get table field properties
+	 *
+	 * @param string $p_s_tableUUID  table uuid
+	 * @param string $p_s_field  field name
+	 *
+	 * @return array  raw record data or null if no properties could be found
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static yes
+	 */
 	public static function QueryFieldProperties($p_s_tableUUID, $p_s_field) {
-		$o_glob = forestGlobals::Init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
-		$o_querySelect = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::SELECT, 'sys_fphp_tablefield');
+		$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, 'sys_fphp_tablefield');
 				
-			$column_A = new forestSQLColumn($o_querySelect);
+			$column_A = new \fPHP\Base\forestSQLColumn($o_querySelect);
 				$column_A->Column = 'FieldName';
 			
-			$column_B = new forestSQLColumn($o_querySelect);
+			$column_B = new \fPHP\Base\forestSQLColumn($o_querySelect);
 				$column_B->Column = 'UUID';
 				$column_B->Name = 'TableFieldUUID';
 			
-			$column_C = new forestSQLColumn($o_querySelect);
+			$column_C = new \fPHP\Base\forestSQLColumn($o_querySelect);
 				$column_C->Column = 'TabId';
 				$column_C->Name = 'TableFieldTabId';
 				
-			$column_D = new forestSQLColumn($o_querySelect);
+			$column_D = new \fPHP\Base\forestSQLColumn($o_querySelect);
 				$column_D->Column = 'JSONEncodedSettings';
 				$column_D->Name = 'TableFieldJSONEncodedSettings';
 			
-			$column_E = new forestSQLColumn($o_querySelect);
+			$column_E = new \fPHP\Base\forestSQLColumn($o_querySelect);
 				$column_E->Column = 'FooterElement';
 				$column_E->Name = 'TableFieldFooterElement';
 			
-			$column_T = new forestSQLColumn($o_querySelect);
+			$column_T = new \fPHP\Base\forestSQLColumn($o_querySelect);
 				$column_T->Column = 'SubRecordField';
 				$column_T->Name = 'TableFieldSubRecordField';
 				
-			$column_U = new forestSQLColumn($o_querySelect);
-				$column_U->Column = 'SubRecordField';
+			$column_U = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$column_U->Column = 'Order';
 				$column_U->Name = 'TableFieldOrder';
 			
-			$column_F = new forestSQLColumn($o_querySelect);
+			$column_F = new \fPHP\Base\forestSQLColumn($o_querySelect);
 				$column_F->Column = 'FormElementUUID';
 				$column_F->Name = 'FormElementUUID';
 			
-			$column_G = new forestSQLColumn($o_querySelect);
+			$column_G = new \fPHP\Base\forestSQLColumn($o_querySelect);
 				$column_G->Table = 'sys_fphp_formelement';
 				$column_G->Column = 'Name';
 				$column_G->Name = 'FormElementName';
 			
-			$column_H = new forestSQLColumn($o_querySelect);
+			$column_H = new \fPHP\Base\forestSQLColumn($o_querySelect);
 				$column_H->Table = 'sys_fphp_formelement';
 				$column_H->Column = 'JSONEncodedSettings';
 				$column_H->Name = 'FormElementJSONEncodedSettings';
 				
-			$column_I = new forestSQLColumn($o_querySelect);
+			$column_I = new \fPHP\Base\forestSQLColumn($o_querySelect);
 				$column_I->Column = 'SqlTypeUUID';
 				$column_I->Name = 'SqlTypeUUID';
 			
-			$column_J = new forestSQLColumn($o_querySelect);
+			$column_J = new \fPHP\Base\forestSQLColumn($o_querySelect);
 				$column_J->Table = 'sys_fphp_sqltype';
 				$column_J->Column = 'Name';
 				$column_J->Name = 'SqlTypeName';
 			
-			$column_K = new forestSQLColumn($o_querySelect);
+			$column_K = new \fPHP\Base\forestSQLColumn($o_querySelect);
 				$column_K->Column = 'ForestDataUUID';
 				$column_K->Name = 'ForestDataUUID';
 			
-			$column_L = new forestSQLColumn($o_querySelect);
+			$column_L = new \fPHP\Base\forestSQLColumn($o_querySelect);
 				$column_L->Table = 'sys_fphp_forestdata';
 				$column_L->Column = 'Name';
 				$column_L->Name = 'ForestDataName';
@@ -428,16 +474,16 @@ abstract class forestTwig {
 		$o_querySelect->Query->Columns->Add($column_K);
 		$o_querySelect->Query->Columns->Add($column_L);
 		/* join with form element table */
-		$join_A = new forestSQLJoin($o_querySelect);
+		$join_A = new \fPHP\Base\forestSQLJoin($o_querySelect);
 		$join_A->JoinType = 'INNER JOIN';
 		$join_A->Table = 'sys_fphp_formelement';
 			
-			$relation_A = new forestSQLRelation($o_querySelect);
+			$relation_A = new \fPHP\Base\forestSQLRelation($o_querySelect);
 			
-				$column_M = new forestSQLColumn($o_querySelect);
+				$column_M = new \fPHP\Base\forestSQLColumn($o_querySelect);
 					$column_M->Column = 'FormElementUUID';
 				
-				$column_N = new forestSQLColumn($o_querySelect);
+				$column_N = new \fPHP\Base\forestSQLColumn($o_querySelect);
 					$column_N->Table = $join_A->Table;
 					$column_N->Column = 'UUID';
 			
@@ -447,16 +493,16 @@ abstract class forestTwig {
 		
 		$join_A->Relations->Add($relation_A);
 		/* left join with sqltype table */
-		$join_B = new forestSQLJoin($o_querySelect);
+		$join_B = new \fPHP\Base\forestSQLJoin($o_querySelect);
 		$join_B->JoinType = 'LEFT OUTER JOIN';
 		$join_B->Table = 'sys_fphp_sqltype';
 		
-			$relation_B = new forestSQLRelation($o_querySelect);
+			$relation_B = new \fPHP\Base\forestSQLRelation($o_querySelect);
 			
-			$column_O = new forestSQLColumn($o_querySelect);
+			$column_O = new \fPHP\Base\forestSQLColumn($o_querySelect);
 				$column_O->Column = 'SqlTypeUUID';
 				
-			$column_P = new forestSQLColumn($o_querySelect);
+			$column_P = new \fPHP\Base\forestSQLColumn($o_querySelect);
 				$column_P->Table = $join_B->Table;
 				$column_P->Column = 'UUID';
 			
@@ -466,16 +512,16 @@ abstract class forestTwig {
 		
 		$join_B->Relations->Add($relation_B);
 		/* left join with forestdata table */
-		$join_C = new forestSQLJoin($o_querySelect);
+		$join_C = new \fPHP\Base\forestSQLJoin($o_querySelect);
 		$join_C->JoinType = 'LEFT OUTER JOIN';
 		$join_C->Table = 'sys_fphp_forestdata';
 		
-			$relation_C = new forestSQLRelation($o_querySelect);
+			$relation_C = new \fPHP\Base\forestSQLRelation($o_querySelect);
 			
-			$column_Q = new forestSQLColumn($o_querySelect);
+			$column_Q = new \fPHP\Base\forestSQLColumn($o_querySelect);
 				$column_Q->Column = 'ForestDataUUID';
 			
-			$column_R = new forestSQLColumn($o_querySelect);
+			$column_R = new \fPHP\Base\forestSQLColumn($o_querySelect);
 				$column_R->Table = $join_C->Table;
 				$column_R->Column = 'UUID';
 			
@@ -489,16 +535,16 @@ abstract class forestTwig {
 		$o_querySelect->Query->Joins->Add($join_B);
 		$o_querySelect->Query->Joins->Add($join_C);
 		
-		$column_S = new forestSQLColumn($o_querySelect);
+		$column_S = new \fPHP\Base\forestSQLColumn($o_querySelect);
 			$column_S->Column = 'TableUUID';
 		
 		/* filter by table-uuid and field-name */
-		$where_A = new forestSQLWhere($o_querySelect);
+		$where_A = new \fPHP\Base\forestSQLWhere($o_querySelect);
 			$where_A->Column = $column_S;
 			$where_A->Value = $where_A->ParseValue($p_s_tableUUID);
 			$where_A->Operator = '=';
 			
-		$where_B = new forestSQLWhere($o_querySelect);
+		$where_B = new \fPHP\Base\forestSQLWhere($o_querySelect);
 			$where_B->Column = $column_A;
 			$where_B->Value = $where_A->ParseValue($p_s_field);
 			$where_B->Operator = '=';
@@ -517,9 +563,20 @@ abstract class forestTwig {
 		return $o_result[0];
 	}
 	
-	/* query sub records of a sub constraint */
-	public function QuerySubRecords(subconstraintTwig $p_o_subconstraint, $p_b_overwrite = false) {
-		$o_glob = forestGlobals::init();
+	/**
+	 * query sub records of a sub constraint
+	 *
+	 * @param subconstraintTwig $p_o_subconstraint  sub constraint record
+	 * @param bool $p_b_overwrite  flag to overwrite information in global cache, standard false
+	 *
+	 * @return forestTwigList  record list of sub records
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function QuerySubRecords(\fPHP\Twigs\subconstraintTwig $p_o_subconstraint, $p_b_overwrite = false) {
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!$p_b_overwrite) {
 			/* look for subrecord twig list with sub constraint uuid and return it */
@@ -529,25 +586,25 @@ abstract class forestTwig {
 		}
 		
 		/* get all subrecords, based on twig uuid - inner join with joinuuid on subtable */
-		$o_subrecordsTwig = new subrecordsTwig;
+		$o_subrecordsTwig = new \fPHP\Twigs\subrecordsTwig;
 		$s_joinTable = array_search($p_o_subconstraint->SubTableUUID->PrimaryValue, $o_glob->Tables);
 		$a_sqlAdditionalFilter = array(array('column' => 'HeadUUID', 'value' => $this->UUID, 'operator' => '=', 'filterOperator' => 'AND'));
 		$o_glob->BackupTemp();
 		$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
 		
-		$o_querySelect = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::SELECT, $o_subrecordsTwig->fphp_Table->value);
+		$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, $o_subrecordsTwig->fphp_Table->value);
 		
 		/* add join with sub constraint table */
-		$join_A = new forestSQLJoin($o_querySelect);
+		$join_A = new \fPHP\Base\forestSQLJoin($o_querySelect);
 		$join_A->JoinType = 'INNER JOIN';
 		$join_A->Table = $s_joinTable;
 			
-			$relation_A = new forestSQLRelation($o_querySelect);
+			$relation_A = new \fPHP\Base\forestSQLRelation($o_querySelect);
 			
-				$column_A = new forestSQLColumn($o_querySelect);
+				$column_A = new \fPHP\Base\forestSQLColumn($o_querySelect);
 					$column_A->Column = 'JoinUUID';
 				
-				$column_B = new forestSQLColumn($o_querySelect);
+				$column_B = new \fPHP\Base\forestSQLColumn($o_querySelect);
 					$column_B->Table = $join_A->Table;
 					$column_B->Column = 'UUID';
 			
@@ -560,14 +617,14 @@ abstract class forestTwig {
 		$o_glob->Temp->Add($join_A, 'SQLAdditionalJoin');
 		
 		$s_tempTable = $s_joinTable;
-		forestStringLib::RemoveTablePrefix($s_tempTable);
-		$s_foo = $s_tempTable . 'Twig';
+		\fPHP\Helper\forestStringLib::RemoveTablePrefix($s_tempTable);
+		$s_foo = '\\fPHP\\Twigs\\' . $s_tempTable . 'Twig';
 		$o_tempTwig = new $s_foo;
 		$a_additionalColumns = array();
 		
 		/* add all subrecords table columns */
 		foreach($o_subrecordsTwig->fphp_Mapping->value as $s_column) {
-			$column = new forestSQLColumn($o_querySelect);
+			$column = new \fPHP\Base\forestSQLColumn($o_querySelect);
 				$column->Column = $s_column;
 			
 			$a_additionalColumns[] = $column;
@@ -576,9 +633,9 @@ abstract class forestTwig {
 		/* add columns of sub constraint table */
 		foreach($o_tempTwig->fphp_Mapping->value as $s_column) {
 			if ( ($s_column != 'Id') && ($s_column != 'UUID') ) {
-				$o_querySelect = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::SELECT, $o_tempTwig->fphp_Table->value);
+				$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, $o_tempTwig->fphp_Table->value);
 				
-				$column = new forestSQLColumn($o_querySelect);
+				$column = new \fPHP\Base\forestSQLColumn($o_querySelect);
 					$column->Column = $s_column;
 					$column->Name = $s_tempTable . '$' . $s_column;
 				
@@ -602,11 +659,20 @@ abstract class forestTwig {
 		return $o_subRecords;
 	}
 	
-	/* fill Mapping array from forestTwig instance */
+	/**
+	 * fill Mapping array from forestTwig instance
+	 *
+	 * @param array $p_a_object_vars  list of class variables
+	 *
+	 * @return null
+	 *
+	 * @access protected
+	 * @static no
+	 */
 	protected function fphp_FillMapping(array $p_a_object_vars) {
 		foreach ($p_a_object_vars as $s_key => $s_value) {
 			/* do not add fphp system fields of forestTwig class */
-			if (forestStringLib::StartsWith($s_key, 'fphp_')) {
+			if (\fPHP\Helper\forestStringLib::StartsWith($s_key, 'fphp_')) {
 				continue;
 			}
 			
@@ -621,9 +687,18 @@ abstract class forestTwig {
 	}
 	
 	
-	/* general method to get property field value, for sub records as well as for combination fields */
+	/**
+	 * general method to get property field value, for sub records as well as for combination fields
+	 *
+	 * @param string $p_s_name  sql column/field name
+	 *
+	 * @return object  value behind sql column/field name of holded record
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function GetFieldValue($p_s_name) {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		$o_value = null;
 		
 		foreach ($o_glob->TablefieldsDictionary as $o_tableFieldProperties) {
@@ -656,9 +731,19 @@ abstract class forestTwig {
 		return $o_value;
 	}
 	
-	/* general method to set property field value, for sub records as well */
+	/**
+	 * general method to set property field value, for sub records as well
+	 *
+	 * @param string $p_s_name  sql column/field name
+	 * @param object $p_o_value  object value for sql column/field
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function SetFieldValue($p_s_name, $p_o_value) {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		foreach ($o_glob->TablefieldsDictionary as $o_tableFieldProperties) {
 			/* load json settings to compare name parameter with id setting */
@@ -679,9 +764,18 @@ abstract class forestTwig {
 		}
 	}
 	
-	/* if twig object is not empty, field value will be restored using record image */
+	/**
+	 * if twig object is not empty, field value will be restored using record image
+	 *
+	 * @param string $p_s_name  sql column/field name
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function RestoreFieldValue($p_s_name) {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!$this->IsEmpty()) {
 			foreach ($o_glob->TablefieldsDictionary as $o_tableFieldProperties) {
@@ -704,9 +798,19 @@ abstract class forestTwig {
 		}
 	}
 	
-	/* calculate forestCombination field */
+	/**
+	 * calculate value behind forestCombination field
+	 *
+	 * @param string $p_s_forestCombination  forestCombination command
+	 *
+	 * @return object  value behind forestCombination field, usually a string value
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function CalculateCombination($p_s_forestCombination) {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		$o_result = '';
 		
 		/* get logical operators like '+','-','*','/' and '.' */
@@ -741,11 +845,11 @@ abstract class forestTwig {
 					$o_field = null;
 					$b_countCommand = false;
 					
-					if (forestStringLib::StartsWith($s_combination, 'CNT(')) {
+					if (\fPHP\Helper\forestStringLib::StartsWith($s_combination, 'CNT(')) {
 						$b_countCommand = true;
 					}
 					
-					if ( (forestStringLib::StartsWith($s_combination, 'SUM(')) || ($b_countCommand) ) { /* $s_combination starts with SUM( or CNT( */
+					if ( (\fPHP\Helper\forestStringLib::StartsWith($s_combination, 'SUM(')) || ($b_countCommand) ) { /* $s_combination starts with SUM( or CNT( */
 						$s_combination = substr($s_combination, 4, -1);
 						
 						/* forestCombination SUM field must start with table declaration, separated with $ from table field */
@@ -775,7 +879,7 @@ abstract class forestTwig {
 										return strval($o_subRecords->Twigs->Count());
 									}
 									
-									$o_subrecordsTwig = new subrecordsTwig;
+									$o_subrecordsTwig = new \fPHP\Twigs\subrecordsTwig;
 									$b_found = false;
 									$s_forestCombination = null;
 									
@@ -833,7 +937,7 @@ abstract class forestTwig {
 						}
 					}
 					
-					if (forestStringLib::StartsWith($s_combination, 'FILENAME(')) { /* $s_combination starts with FILENAME */
+					if (\fPHP\Helper\forestStringLib::StartsWith($s_combination, 'FILENAME(')) { /* $s_combination starts with FILENAME */
 						$s_fileField = substr($s_combination, 9, -1);
 						
 						$b_found = false;
@@ -841,7 +945,7 @@ abstract class forestTwig {
 						/* get sub record field of forestCombination table field */
 						foreach ($o_glob->TablefieldsDictionary as $s_key => $o_tableFieldDictionaryObject) {
 							if ($o_tableFieldDictionaryObject->FieldName == $s_fileField) {
-								if ($o_tableFieldDictionaryObject->FormElementName == forestFormElement::FILE) {
+								if ($o_tableFieldDictionaryObject->FormElementName == \fPHP\Forms\forestFormElement::FILE) {
 									/* check sub record field value */
 									if (issetStr($o_tableFieldDictionaryObject->SubRecordField)) {
 										/* check if field actually exists in current record */
@@ -867,7 +971,7 @@ abstract class forestTwig {
 						}
 						
 						/* get file record */
-						$o_filesTwig = new filesTwig;
+						$o_filesTwig = new \fPHP\Twigs\filesTwig;
 						
 						if (! ($o_filesTwig->GetRecord(array($this->{$s_fileField}))) ) {
 							return '[file not found]';
@@ -877,7 +981,7 @@ abstract class forestTwig {
 						return $o_filesTwig->DisplayName;
 					}
 					
-					if (forestStringLib::StartsWith($s_combination, 'FILEVERSION(')) { /* $s_combination starts with FILEVERSION */
+					if (\fPHP\Helper\forestStringLib::StartsWith($s_combination, 'FILEVERSION(')) { /* $s_combination starts with FILEVERSION */
 						$s_fileField = substr($s_combination, 12, -1);
 						
 						$b_found = false;
@@ -885,7 +989,7 @@ abstract class forestTwig {
 						/* get sub record field of forestCombination table field */
 						foreach ($o_glob->TablefieldsDictionary as $s_key => $o_tableFieldDictionaryObject) {
 							if ($o_tableFieldDictionaryObject->FieldName == $s_fileField) {
-								if ($o_tableFieldDictionaryObject->FormElementName == forestFormElement::FILE) {
+								if ($o_tableFieldDictionaryObject->FormElementName == \fPHP\Forms\forestFormElement::FILE) {
 									/* check sub record field value */
 									if (issetStr($o_tableFieldDictionaryObject->SubRecordField)) {
 										/* check if field actually exists in current record */
@@ -911,7 +1015,7 @@ abstract class forestTwig {
 						}
 						
 						/* get file record */
-						$o_filesTwig = new filesTwig;
+						$o_filesTwig = new \fPHP\Twigs\filesTwig;
 						
 						if (! ($o_filesTwig->GetRecord(array($this->{$s_fileField}))) ) {
 							return '[file not found]';
@@ -932,8 +1036,8 @@ abstract class forestTwig {
 							return '[wrong_combination_parameter]';
 						} else {
 							/* create join table twig object */
-							forestStringLib::RemoveTablePrefix($s_joinTable);
-							$s_foo = $s_joinTable . 'Twig';
+							\fPHP\Helper\forestStringLib::RemoveTablePrefix($s_joinTable);
+							$s_foo = '\\fPHP\\Twigs\\' . $s_joinTable . 'Twig';
 							$o_tempTwig = new $s_foo;
 							
 							if (!in_array($s_combination, $o_tempTwig->fphp_Mapping->value)) {
@@ -947,16 +1051,16 @@ abstract class forestTwig {
 								}
 							}
 						}
-					} else if ( (forestStringLib::StartsWith($s_combination, '#')) && (forestStringLib::EndsWith($s_combination, '#')) ) { /* check if constant value is part of forestCombination */
+					} else if ( (\fPHP\Helper\forestStringLib::StartsWith($s_combination, '#')) && (\fPHP\Helper\forestStringLib::EndsWith($s_combination, '#')) ) { /* check if constant value is part of forestCombination */
 						/* it is possible to use constant values within forestCombination syntax */
 						$s_combination = substr($s_combination, 1, -1);
 						
-						if ( (forestStringLib::StartsWith($s_combination, 'int(')) || (forestStringLib::StartsWith($s_combination, 'INT(')) ) {
+						if ( (\fPHP\Helper\forestStringLib::StartsWith($s_combination, 'int(')) || (\fPHP\Helper\forestStringLib::StartsWith($s_combination, 'INT(')) ) {
 							/* constant value with integer conversion */
 							$s_combination = substr($s_combination, 4, -1);
 							$s_combination = str_replace(',', '.', $s_combination);
 							$o_field = intval($s_combination);
-						} else if ( (forestStringLib::StartsWith($s_combination, 'dbl(')) || (forestStringLib::StartsWith($s_combination, 'DBL(')) ) {
+						} else if ( (\fPHP\Helper\forestStringLib::StartsWith($s_combination, 'dbl(')) || (\fPHP\Helper\forestStringLib::StartsWith($s_combination, 'DBL(')) ) {
 							/* constant value with float conversion */
 							$s_combination = substr($s_combination, 4, -1);
 							$s_combination = str_replace(',', '.', $s_combination);
@@ -1021,32 +1125,42 @@ abstract class forestTwig {
 	}
 	
 	
-	/* get record with values of primary key */
+	/**
+	 * get record with values of primary key
+	 *
+	 * @param array $p_a_primaryValues  primary key values for where clause
+	 *
+	 * @return bool  true - record found and values loaded into fields, false - record could not be found
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function GetRecord(array $p_a_primaryValues) {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (count($p_a_primaryValues) != count($this->fphp_Primary->value)) {
 			throw new forestException('Primary input values[%0] and primary fields[%1] are not of the same amount', array(count($p_a_primaryValues), count($this->fphp_Primary->value)));
 		}
 		
 		/* create select query */
-		$o_querySelect = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::SELECT, $this->fphp_Table->value);
+		$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, $this->fphp_Table->value);
 			
-		$o_column = new forestSQLColumn($o_querySelect);
+		$o_column = new \fPHP\Base\forestSQLColumn($o_querySelect);
 			$o_column->Column = '*';
 			
 		$o_querySelect->Query->Columns->Add($o_column);
 		
 		/* if parameter array only has one value, record structure has column UUID and parameter value pattern matches a UUID */
 		if ( (count($p_a_primaryValues) == 1) && ($this->fphp_HasUUID->value) && (preg_match('/^ (([0-9])|([a-f])){8} \- (([0-9])|([a-f])){4} \- (([0-9])|([a-f])){4} \- (([0-9])|([a-f])){4} \- (([0-9])|([a-f])){12} $/x', $p_a_primaryValues[0])) ) {
-			$o_column = new forestSQLColumn($o_querySelect);
+			$o_column = new \fPHP\Base\forestSQLColumn($o_querySelect);
 				$o_column->Column = 'UUID';
 			
 			if ( ($this->fphp_Primary->value[0] != 'Id') && ($this->fphp_Primary->value[0] != 'UUID') ) {
 				$o_column->Column = $this->fphp_Primary->value[0];
 			}
 			
-			$o_where = new forestSQLWhere($o_querySelect);
+			$o_where = new \fPHP\Base\forestSQLWhere($o_querySelect);
 				$o_where->Column = $o_column;
 				$o_where->Value = $o_where->ParseValue($p_a_primaryValues[0]);
 				$o_where->Operator = '=';
@@ -1055,10 +1169,10 @@ abstract class forestTwig {
 		} else {
 			/* go with primary key */
 			for ($i = 0; $i < count($this->fphp_Primary->value); $i++) {
-				$o_column = new forestSQLColumn($o_querySelect);
+				$o_column = new \fPHP\Base\forestSQLColumn($o_querySelect);
 					$o_column->Column = $this->fphp_Primary->value[$i];
 				
-				$o_where = new forestSQLWhere($o_querySelect);
+				$o_where = new \fPHP\Base\forestSQLWhere($o_querySelect);
 					$o_where->Column = $o_column;
 					$o_where->Value = $o_where->ParseValue($p_a_primaryValues[$i]);
 				
@@ -1093,8 +1207,18 @@ abstract class forestTwig {
 		return true;
 	}
 	
-	/* fill fields from other twig object */
-	private function fphp_FillFieldsFromOtherTwigObject($p_o_twig) {
+	/**
+	 * fill fields from other twig object
+	 *
+	 * @param forestTwig $p_o_twig  object of forestTwig instance
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access private
+	 * @static no
+	 */
+	private function fphp_FillFieldsFromOtherTwigObject(\fPHP\Twigs\forestTwig $p_o_twig) {
 		if (!is_object($p_o_twig)) {
 			throw new forestException('Parameter is not an object');
 		}
@@ -1109,12 +1233,30 @@ abstract class forestTwig {
 		}
 	}
 	
-	/* determine if current twig object is empty */
+	/**
+	 * determine if current twig object is empty
+	 *
+	 * @return bool  true - record is not empty, false - record is empty
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function IsEmpty() {
 		return ($this->fphp_RecordImage->value->Count() <= 0);
 	}
 	
-	/* gets record with values of temporary other primary key */
+	/**
+	 * gets record with values of temporary other primary key
+	 *
+	 * @param array $p_a_primaryValues  primary key values for where clause
+	 * @param array $p_a_primaryKeys  primary key names for where clause
+	 *
+	 * @return bool  true - record found and values loaded into fields, false - record could not be found
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function GetRecordPrimary(array $p_a_primaryValues, array $p_a_primaryKeys) {
 		$a_bkp_primary = $this->fphp_Primary->value;
 		$this->fphp_Primary->value = $p_a_primaryKeys;
@@ -1126,7 +1268,18 @@ abstract class forestTwig {
 		return $b_ret;
 	}
 	
-	/* showing all data fields of current twig object for log purposes */
+	/**
+	 * showing all data fields of current twig object for log purposes
+	 *
+	 * @param bool $p_b_showViewFields  true - show fields in view object list, false - show fields in mapping object list
+	 * @param bool $p_b_printBreak  true - print html-br-tag within return value, false - do not print html-br-tag within return value
+	 *
+	 * @return string  record fields with values
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function ShowFields($p_b_showViewFields = true, $p_b_printBreak = false) {
 		$s_foo = '';
 		$s_break = '';
@@ -1160,14 +1313,22 @@ abstract class forestTwig {
 		return $s_foo;
 	}
 	
-	/* get first record */
+	/**
+	 * get first record of table
+	 *
+	 * @return bool  true - record found and values loaded into fields, false - record could not be found
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function GetFirstRecord() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		/* create select query */
-		$o_querySelect = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::SELECT, $this->fphp_Table->value);
+		$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, $this->fphp_Table->value);
 			
-		$o_column = new forestSQLColumn($o_querySelect);
+		$o_column = new \fPHP\Base\forestSQLColumn($o_querySelect);
 			$o_column->Column = '*';
 				
 		$o_querySelect->Query->Columns->Add($o_column);
@@ -1177,7 +1338,7 @@ abstract class forestTwig {
 		
 		/* set order into select query */
 		foreach($this->fphp_SortOrder->value as $s_sortColumn => $b_sortDirection) {
-			$o_column = new forestSQLColumn($o_querySelect);
+			$o_column = new \fPHP\Base\forestSQLColumn($o_querySelect);
 				$o_column->Column = $s_sortColumn;
 				
 			$o_querySelect->Query->OrderBy->AddColumn($o_column, $b_sortDirection);
@@ -1204,14 +1365,22 @@ abstract class forestTwig {
 		return true;
 	}
 	
-	/* get last record */
+	/**
+	 * get last record of table
+	 *
+	 * @return bool  true - record found and values loaded into fields, false - record could not be found
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function GetLastRecord() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		/* create select query */
-		$o_querySelect = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::SELECT, $this->fphp_Table->value);
+		$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, $this->fphp_Table->value);
 			
-		$o_column = new forestSQLColumn($o_querySelect);
+		$o_column = new \fPHP\Base\forestSQLColumn($o_querySelect);
 			$o_column->Column = '*';
 				
 		$o_querySelect->Query->Columns->Add($o_column);
@@ -1221,7 +1390,7 @@ abstract class forestTwig {
 		
 		/* set order into select query with reversed direction */
 		foreach($this->fphp_SortOrder->value as $s_sortColumn => $b_sortDirection) {
-			$o_column = new forestSQLColumn($o_querySelect);
+			$o_column = new \fPHP\Base\forestSQLColumn($o_querySelect);
 				$o_column->Column = $s_sortColumn;
 			
 			if ($b_sortDirection) {
@@ -1254,9 +1423,21 @@ abstract class forestTwig {
 		return true;
 	}
 	
-	/* get count of another table or same table */
+	/**
+	 * get amount of records of current table or another table
+	 *
+	 * @param string $p_s_table  name of table, optional
+	 * @param bool $p_b_unlimited  true - use filter and limit settings, false - ignore filter and limit settings
+	 * @param bool $p_b_updateLimitAmount  true - update global limit amount value, false - do not update global limit amount value
+	 *
+	 * @return integer  amount of records
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function GetCount($p_s_table = null, $p_b_unlimited = false, $p_b_updateLimitAmount = false) {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		$s_table = $this->fphp_Table->value;
 		
@@ -1265,9 +1446,9 @@ abstract class forestTwig {
 		}
 		
 		/* create query for amount of records */
-		$o_querySelect = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::SELECT, $s_table);
+		$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, $s_table);
 			
-		$o_column = new forestSQLColumn($o_querySelect);
+		$o_column = new \fPHP\Base\forestSQLColumn($o_querySelect);
 			$o_column->Column = '*';
 			$o_column->SqlAggregation = 'COUNT';
 			$o_column->Name = 'AmountRecords';
@@ -1304,13 +1485,24 @@ abstract class forestTwig {
 	}
 	
 	
-	/* implement filter values of session parameter array */
-	private function ImplementFilter(forestSQLQuery &$p_o_query, $p_b_unlimited) {
-		$o_glob = forestGlobals::init();
+	/**
+	 * implement filter values of session parameter array
+	 *
+	 * @param forestSQLQuery $p_o_query  sql query for adding filter clauses
+	 * @param bool $p_b_unlimited  true - use filter and limit settings, false - ignore filter and limit settings
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access private
+	 * @static no
+	 */
+	private function ImplementFilter(\fPHP\Base\forestSQLQuery &$p_o_query, $p_b_unlimited) {
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		$a_session_filter = array();
 		
 		/* check if we have a select query object as parameter */
-		if ($p_o_query->SqlType != forestSQLQuery::SELECT) {
+		if ($p_o_query->SqlType != \fPHP\Base\forestSQLQuery::SELECT) {
 			throw new forestException('Invalid SqlType[%0]. Only SqlType[SELECT] allowed', array($p_o_query->SqlType));
 		}
 		
@@ -1346,10 +1538,10 @@ abstract class forestTwig {
 					/* generate where clause for each column we have */
 					foreach ($this->fphp_Mapping->value as $s_column) {
 						if ( ($s_column != 'Id') && ($s_column != 'UUID') ) {
-							$o_columnFoo = new forestSQLColumn($p_o_query);
+							$o_columnFoo = new \fPHP\Base\forestSQLColumn($p_o_query);
 								$o_columnFoo->Column = $s_column;
 							
-							$o_where = new forestSQLWhere($p_o_query);
+							$o_where = new \fPHP\Base\forestSQLWhere($p_o_query);
 								$o_where->Column = $o_columnFoo;
 								$o_where->Value = $o_where->ParseValue('%' . $s_filterValue . '%');
 								$o_where->Operator = 'LIKE';
@@ -1365,17 +1557,85 @@ abstract class forestTwig {
 					}
 				} else {
 					/* split the filter in its necessary form to implement it in the query */
-					$a_clauses = forestStringLib::SplitFilter($s_filterValue);
+					$a_clauses = \fPHP\Helper\forestStringLib::SplitFilter($s_filterValue);
+					
+					/* check if filter column is of type FILE */
+					$b_found_file = false;
+					$a_file_uuids = array();
+					
+					if ($o_glob->TablefieldsDictionary->Exists($this->fphp_Table->value . '_' . $s_column)) {
+						if ($o_glob->TablefieldsDictionary->{$this->fphp_Table->value . '_' . $s_column}->FormElementName == \fPHP\Forms\forestFormElement::FILE) {
+							/* select uuid on table files filtered on displayname */
+							$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, 'sys_fphp_files');
+				
+								$column_A = new \fPHP\Base\forestSQLColumn($o_querySelect);
+									$column_A->Column = 'UUID';
+								
+								$column_B = new \fPHP\Base\forestSQLColumn($o_querySelect);
+									$column_B->Column = 'DisplayName';
+								
+								$column_C = new \fPHP\Base\forestSQLColumn($o_querySelect);
+									$column_C->Column = 'BranchId';
+								
+							$o_querySelect->Query->Columns->Add($column_A);
+							
+							$s_lastfilterOperatorFiles = null;
+							
+							foreach ($a_clauses as $a_clause) {
+								$o_where = new \fPHP\Base\forestSQLWhere($o_querySelect);
+									$o_where->Column = $column_B;
+									$o_where->Value = $o_where->ParseValue($a_clause[1]);
+									$o_where->Operator = $a_clause[0];
+									
+									$s_filterOperator = $s_lastfilterOperatorFiles;
+									
+									/* remind last filter operator for next where clause */
+									if (array_key_exists(2, $a_clause)) {
+										if ($a_clause[2] == '&') {
+											$s_lastfilterOperatorFiles = 'AND';
+										} else if ($a_clause[2] == '|') {
+											$s_lastfilterOperatorFiles = 'OR';
+										}
+									} else {
+										$s_lastfilterOperatorFiles = 'AND';
+									}
+									
+									if (!is_null($s_filterOperator)) {
+										$o_where->FilterOperator = $s_filterOperator;
+									}
+									
+								$o_querySelect->Query->Where->Add($o_where);
+							}
+							
+							$o_where = new \fPHP\Base\forestSQLWhere($o_querySelect);
+								$o_where->Column = $column_C;
+								$o_where->Value = $o_where->ParseValue($o_glob->URL->BranchId);
+								$o_where->Operator = '=';
+								$o_where->FilterOperator = 'AND';
+								
+							$o_querySelect->Query->Where->Add($o_where);
+							
+							$o_result = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect);
+							
+							if ($o_result->Twigs->Count() > 0) {
+								$b_found_file = true;
+								
+								foreach ($o_result->Twigs as $o_file) {
+									$a_file_uuids[] = '\'' .  $o_file->UUID . '\'';
+								}
+							}
+						}
+					}
 					
 					/* create column object for the where clause */
 					if (strpos($s_column, '.') !== false) {
 						$a_columnInfo = explode('.', $s_column);
 						
-						$o_columnFoo = new forestSQLColumn($p_o_query);
+						$o_columnFoo = new \fPHP\Base\forestSQLColumn($p_o_query);
 							$o_columnFoo->Table = $a_columnInfo[0];
 							$o_columnFoo->Column = $a_columnInfo[1];
 					} else {
-						$o_columnFoo = new forestSQLColumn($p_o_query);
+						$o_columnFoo = new \fPHP\Base\forestSQLColumn($p_o_query);
 							$o_columnFoo->Column = $s_column;
 					}
 					
@@ -1386,12 +1646,40 @@ abstract class forestTwig {
 						$s_lastfilterOperator = 'AND';
 					}
 					
-					foreach($a_clauses as $a_clause) {
-						$o_where = new forestSQLWhere($p_o_query);
-							$o_where->Column = $o_columnFoo;
-							$o_where->Value = $o_where->ParseValue($a_clause[1]);
-							$o_where->Operator = $a_clause[0];
+					if (!$b_found_file) {
+						foreach ($a_clauses as $a_clause) {
+							$o_where = new \fPHP\Base\forestSQLWhere($p_o_query);
+								$o_where->Column = $o_columnFoo;
+								$o_where->Value = $o_where->ParseValue($a_clause[1]);
+								$o_where->Operator = $a_clause[0];
+								
+								
+								$s_filterOperator = $s_lastfilterOperator;
+								
+								/* remind last filter operator for next where clause */
+								if (array_key_exists(2, $a_clause)) {
+									if ($a_clause[2] == '&') {
+										$s_lastfilterOperator = 'AND';
+									} else if ($a_clause[2] == '|') {
+										$s_lastfilterOperator = 'OR';
+									}
+								} else {
+									$s_lastfilterOperator = 'AND';
+								}
+								
+								if (!is_null($s_filterOperator)) {
+									$o_where->FilterOperator = $s_filterOperator;
+								}
+								
+							$p_o_query->Query->Where->Add($o_where);
 							
+							$b_initWhere = true;
+						}
+					} else {
+						$o_where = new \fPHP\Base\forestSQLWhere($p_o_query);
+							$o_where->Column = $o_columnFoo;
+							$o_where->Value = '(' . implode(',', $a_file_uuids) . ')';
+							$o_where->Operator = 'IN';
 							
 							$s_filterOperator = $s_lastfilterOperator;
 							
@@ -1421,9 +1709,20 @@ abstract class forestTwig {
 		$this->ImplementAdditionalSQLFilter($p_o_query, $b_initWhere);
 	}
 	
-	/* function to implement additional sql filter */
-	private function ImplementAdditionalSQLFilter(forestSQLQuery &$p_o_query, &$p_b_initWhere = false) {
-		$o_glob = forestGlobals::init();
+	/**
+	 * implement filter values of session parameter array
+	 *
+	 * @param forestSQLQuery $p_o_query  sql query for adding filter clauses
+	 * @param bool $p_b_initWhere  true - where clause already exists in sql query, false - no where clause in sql query
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access private
+	 * @static no
+	 */
+	private function ImplementAdditionalSQLFilter(\fPHP\Base\forestSQLQuery &$p_o_query, &$p_b_initWhere = false) {
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		/* if we have the special case that we use SQLAdditionalFilter, instead of session filter, */
 		/* we call them of global temp and implement them in the query */
@@ -1452,15 +1751,15 @@ abstract class forestTwig {
 				if (strpos($a_filter['column'], '.') !== false) {
 					$a_columnInfo = explode('.', $a_filter['column']);
 					
-					$o_columnFoo = new forestSQLColumn($p_o_query);
+					$o_columnFoo = new \fPHP\Base\forestSQLColumn($p_o_query);
 						$o_columnFoo->Table = $a_columnInfo[0];
 						$o_columnFoo->Column = $a_columnInfo[1];
 				} else {
-					$o_columnFoo = new forestSQLColumn($p_o_query);
+					$o_columnFoo = new \fPHP\Base\forestSQLColumn($p_o_query);
 						$o_columnFoo->Column = $a_filter['column'];
 				}
 				
-				$o_where = new forestSQLWhere($p_o_query);
+				$o_where = new \fPHP\Base\forestSQLWhere($p_o_query);
 					$o_where->Column = $o_columnFoo;
 					$o_where->Value = $o_where->ParseValue($a_filter['value']);
 					$o_where->Operator = $a_filter['operator'];
@@ -1479,15 +1778,25 @@ abstract class forestTwig {
 		}
 	}
 	
-	/* get all records, depending on filter and limit parameters */
+	/**
+	 * get all records, depending on filter and limit parameters
+	 *
+	 * @param bool $p_b_unlimited  true - use filter and limit settings, false - ignore filter and limit settings
+	 *
+	 * @return result of function forestBase->FetchQuery
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function GetAllRecords($p_b_unlimited = false) {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		/* calculate amount of records */
 		$i_amount_records = $this->GetCount(null, $p_b_unlimited, true);
 		
 		/* create select query */
-		$o_querySelect = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::SELECT, $this->fphp_Table->value);
+		$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, $this->fphp_Table->value);
 		
 		/* adding optional columns for the query if they are set */
 		if ($o_glob->Temp->Exists('SQLGetAllAdditionalColumns')) {
@@ -1496,7 +1805,7 @@ abstract class forestTwig {
 			}
 		} else {
 			/* we want to query all columns */
-			$o_column = new forestSQLColumn($o_querySelect);
+			$o_column = new \fPHP\Base\forestSQLColumn($o_querySelect);
 				$o_column->Column = '*';
 				
 			$o_querySelect->Query->Columns->Add($o_column);
@@ -1519,7 +1828,7 @@ abstract class forestTwig {
 					continue;
 				}
 				
-				$o_column = new forestSQLColumn($o_querySelect);
+				$o_column = new \fPHP\Base\forestSQLColumn($o_querySelect);
 					$o_column->Column = $o_sort->Column;
 				
 				$o_querySelect->Query->OrderBy->AddColumn($o_column, $o_sort->Direction);
@@ -1532,7 +1841,7 @@ abstract class forestTwig {
 					continue;
 				}
 				
-				$o_column = new forestSQLColumn($o_querySelect);
+				$o_column = new \fPHP\Base\forestSQLColumn($o_querySelect);
 					$o_column->Column = $s_sortColumn;
 					
 				$o_querySelect->Query->OrderBy->AddColumn($o_column, $b_sortDirection);
@@ -1545,7 +1854,7 @@ abstract class forestTwig {
 					continue;
 				}
 				
-				$o_column = new forestSQLColumn($o_querySelect);
+				$o_column = new \fPHP\Base\forestSQLColumn($o_querySelect);
 					$o_column->Column = $s_sortColumn;
 					
 				$o_querySelect->Query->OrderBy->AddColumn($o_column, $b_sortDirection);
@@ -1575,12 +1884,22 @@ abstract class forestTwig {
 		return $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect);
 	}
 	
-	/* get records based on view columns, depending on filter and limit parameters */
+	/**
+	 * get records based on view columns, depending on filter and limit parameters
+	 *
+	 * @param bool $p_b_unlimited  true - use filter and limit settings, false - ignore filter and limit settings
+	 *
+	 * @return result of function this->GetAllRecords
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function GetAllViewRecords($p_b_unlimited = false) {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		/* create select query */
-		$o_querySelect = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::SELECT, $this->fphp_Table->value);
+		$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, $this->fphp_Table->value);
 		
 		if ($o_glob->AddHiddenColumns->Count() > 0) {
 			foreach ($o_glob->AddHiddenColumns as $s_hidden_field) {
@@ -1611,14 +1930,14 @@ abstract class forestTwig {
 			$a_sqlGetAllAdditionalColumns = array();
 			
 			if (in_array('Id', $this->fphp_Mapping->value)) {
-				$o_columnId = new forestSQLColumn($o_querySelect);
+				$o_columnId = new \fPHP\Base\forestSQLColumn($o_querySelect);
 					$o_columnId->Column = 'Id';
 							
 				$a_sqlGetAllAdditionalColumns[] = $o_columnId;
 			}
 			
 			if ($this->fphp_HasUUID->value) {
-				$o_columnUUID = new forestSQLColumn($o_querySelect);
+				$o_columnUUID = new \fPHP\Base\forestSQLColumn($o_querySelect);
 						$o_columnUUID->Column = 'UUID';
 						
 				$a_sqlGetAllAdditionalColumns[] = $o_columnUUID;
@@ -1626,7 +1945,7 @@ abstract class forestTwig {
 			
 			/* if identifier is configured */
 			if (issetStr($o_glob->TablesInformation[$this->fphp_TableUUID->value]['Identifier']->PrimaryValue)) {
-				$o_columnIdentifier = new forestSQLColumn($o_querySelect);
+				$o_columnIdentifier = new \fPHP\Base\forestSQLColumn($o_querySelect);
 						$o_columnIdentifier->Column = 'Identifier';
 						
 				$a_sqlGetAllAdditionalColumns[] = $o_columnIdentifier;
@@ -1637,7 +1956,7 @@ abstract class forestTwig {
 					continue;
 				}
 				
-				$o_columnFoo = new forestSQLColumn($o_querySelect);
+				$o_columnFoo = new \fPHP\Base\forestSQLColumn($o_querySelect);
 						$o_columnFoo->Column = $s_view_field;
 						
 				$a_sqlGetAllAdditionalColumns[] = $o_columnFoo;
@@ -1658,9 +1977,19 @@ abstract class forestTwig {
 	}
 	
 	
-	/* insert record into table, primary key fields optional */
-	public function InsertRecord($p_b_withPrimary = false) {
-		$o_glob = forestGlobals::init();
+	/**
+	 * insert record into table, with primary key fields optional
+	 *
+	 * @param bool $p_b_withPrimary  true - assume and set values for primary key, false - keep primary key values unchanged or let them handle by dbms
+	 *
+	 * @return integer  -1 - unique issue, 0 - could not create record, 1 - record creation successful
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function InsertRecord($p_b_withPrimary = false, $p_b_full = false) {
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		/* check uniqueness */
 		if ($this->CheckUniquenessInsert($p_b_withPrimary) > 0) {
@@ -1668,11 +1997,17 @@ abstract class forestTwig {
 		}
 		
 		/* create insert query */
-		$o_queryInsert = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::INSERT, $this->fphp_Table->value);
+		$o_queryInsert = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::INSERT, $this->fphp_Table->value);
 		
 		/* read out twig fields to get values for insert query */
 		foreach ($this->fphp_Mapping->value as $s_field) {
-			if ((!in_array($s_field, $this->fphp_Primary->value)) || ($p_b_withPrimary)) {
+			if ($p_b_full) {
+				$o_columnValue = new \fPHP\Base\forestSQLColumnValue($o_queryInsert);
+					$o_columnValue->Column = $s_field;
+					$o_columnValue->Value = $o_columnValue->ParseValue($this->{$s_field});
+					
+				$o_queryInsert->Query->ColumnValues->Add($o_columnValue);
+			} else if ((!in_array($s_field, $this->fphp_Primary->value)) || ($p_b_withPrimary)) {
 				/* set new UUID automatically */
 				if ($s_field == 'UUID') {
 					/* if not UUID has been already set */
@@ -1681,12 +2016,16 @@ abstract class forestTwig {
 					}
 				}
 				
-				$o_columnValue = new forestSQLColumnValue($o_queryInsert);
+				$o_columnValue = new \fPHP\Base\forestSQLColumnValue($o_queryInsert);
 					$o_columnValue->Column = $s_field;
 					$o_columnValue->Value = $o_columnValue->ParseValue($this->{$s_field});
-				
+					
 				$o_queryInsert->Query->ColumnValues->Add($o_columnValue);
 			}
+		}
+		
+		if ( (in_array('Id', $this->fphp_Mapping->value)) && (in_array('Id', $this->fphp_Primary->value)) && (!$p_b_withPrimary) ) {
+			$o_glob->Temp->Add(true, 'MongoDBIdAutoIncrement');
 		}
 		
 		$i_return = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_queryInsert);
@@ -1698,9 +2037,19 @@ abstract class forestTwig {
 		return $i_return;
 	}
 	
-	/* check uniqueness of twig object within table for insert query */
+	/**
+	 * check uniqueness of twig object within table for insert query
+	 *
+	 * @param bool $p_b_withPrimary  true - check values for primary key as well, false - ignore primary key values
+	 *
+	 * @return integer  >0 - unique issue, <=0 - no unique issue
+	 *
+	 * @throws forestException if error occurs
+	 * @access private
+	 * @static no
+	 */
 	private function CheckUniquenessInsert($p_b_withPrimary = false) {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		$i_return = 0;
 		
@@ -1769,9 +2118,17 @@ abstract class forestTwig {
 		return $i_return;
 	}
 	
-	/* get unused uuid of table for insert query */
+	/**
+	 * get unused uuid of table for insert query
+	 *
+	 * @return string  valid uuid
+	 *
+	 * @throws forestException if error occurs
+	 * @access private
+	 * @static no
+	 */
 	private function GetUUID() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		/* generate new uuid */
 		$s_uuid = $o_glob->Security->GenUUID();
@@ -1784,18 +2141,18 @@ abstract class forestTwig {
 		
 			do {
 				/* create select query for counting records with generated uuid to see if a record already exists with that uuid */
-				$o_querySelect = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::SELECT, $this->fphp_Table->value);
-					$o_column = new forestSQLColumn($o_querySelect);
+				$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, $this->fphp_Table->value);
+					$o_column = new \fPHP\Base\forestSQLColumn($o_querySelect);
 						$o_column->Column = 'UUID';
 						$o_column->Name = 'UUID';
 						$o_column->SqlAggregation = 'COUNT';
 					
 					$o_querySelect->Query->Columns->Add($o_column);
 					
-					$o_column = new forestSQLColumn($o_querySelect);
+					$o_column = new \fPHP\Base\forestSQLColumn($o_querySelect);
 						$o_column->Column = 'UUID';
 				
-					$o_where = new forestSQLWhere($o_querySelect);
+					$o_where = new \fPHP\Base\forestSQLWhere($o_querySelect);
 						$o_where->Column = $o_column;
 						$o_where->Value = $s_uuid;
 						$o_where->Operator = '=';
@@ -1821,9 +2178,19 @@ abstract class forestTwig {
 	}
 	
 	
-	/* update record in table, you cannot modify primary key, modify unique fields optional */
+	/**
+	 * update record in table, you cannot modify primary key, with modify of unique fields optional
+	 *
+	 * @param bool $p_b_modifyUnique  true - assume and set values for unique fields, false - keep unique key fields unchanged or let them handle by dbms
+	 *
+	 * @return integer  -1 - unique issue, 0 - could not update record, 1 - record update successful
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function UpdateRecord($p_b_modifyUnique = true) {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		$b_field_has_changed = false;
 		$a_columns = array();
 		
@@ -1859,12 +2226,12 @@ abstract class forestTwig {
 		}
 		
 		/* create update query */
-		$o_queryUpdate = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::UPDATE, $this->fphp_Table->value);
+		$o_queryUpdate = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::UPDATE, $this->fphp_Table->value);
 		
 		/* read out twig fields to get values for insert query */
 		foreach ($a_columns as $s_field) {
 			if ( (!in_array($s_field, $this->fphp_Primary->value)) && ( ($p_b_modifyUnique) || (!in_array($s_field, $this->fphp_Unique->value)) ) ) {
-				$o_columnValue = new forestSQLColumnValue($o_queryUpdate);
+				$o_columnValue = new \fPHP\Base\forestSQLColumnValue($o_queryUpdate);
 					$o_columnValue->Column = $s_field;
 					$o_columnValue->Value = $o_columnValue->ParseValue($this->{$s_field});
 				
@@ -1874,10 +2241,10 @@ abstract class forestTwig {
 			
 		/* if twig object use uuid, use it as update filter */
 		if ($this->fphp_HasUUID->value) {
-			$o_column = new forestSQLColumn($o_queryUpdate);
+			$o_column = new \fPHP\Base\forestSQLColumn($o_queryUpdate);
 				$o_column->Column = 'UUID';
 			
-			$o_where = new forestSQLWhere($o_queryUpdate);
+			$o_where = new \fPHP\Base\forestSQLWhere($o_queryUpdate);
 				$o_where->Column = $o_column;
 				$o_where->Value = $o_where->ParseValue($this->{'UUID'});
 				$o_where->Operator = '=';
@@ -1888,10 +2255,10 @@ abstract class forestTwig {
 			
 			/* else take primary key fields for the update filter */
 			foreach ($this->fphp_Primary->value as $s_primary) {
-				$o_column = new forestSQLColumn($o_queryUpdate);
+				$o_column = new \fPHP\Base\forestSQLColumn($o_queryUpdate);
 				$o_column->Column = $s_primary;
 			
-				$o_where = new forestSQLWhere($o_queryUpdate);
+				$o_where = new \fPHP\Base\forestSQLWhere($o_queryUpdate);
 					$o_where->Column = $o_column;
 					$o_where->Value = $o_where->ParseValue($this->{$s_primary});
 					$o_where->Operator = '=';
@@ -1909,9 +2276,17 @@ abstract class forestTwig {
 		return $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_queryUpdate);
 	}
 	
-	/* check uniqueness of twig object within table for update query */
-	private function CheckUniquenessUpdate($p_b_withPrimary = false) {
-		$o_glob = forestGlobals::init();
+	/**
+	 * check uniqueness of twig object within table for update query, with detection if primary key has changed
+	 *
+	 * @return integer  >0 - unique issue, <=0 - no unique issue
+	 *
+	 * @throws forestException if error occurs
+	 * @access private
+	 * @static no
+	 */
+	private function CheckUniquenessUpdate() {
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		$i_return = 0;
 		$b_primaryKeyChanged = false;
@@ -2052,19 +2427,27 @@ abstract class forestTwig {
 	}
 	
 	
-	/* delete record in table */
+	/**
+	 * delete record in table
+	 *
+	 * @return integer  0 - could not delete record, 1 - record deletion successful
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function DeleteRecord() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		/* create delete query */
-		$o_queryDelete = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::DELETE, $this->fphp_Table->value);
-			
+		$o_queryDelete = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::DELETE, $this->fphp_Table->value);
+		
 		if ($this->fphp_HasUUID->value) {
 			/* if twig object use uuid, use it as update filter */
-			$o_column = new forestSQLColumn($o_queryDelete);
+			$o_column = new \fPHP\Base\forestSQLColumn($o_queryDelete);
 				$o_column->Column = 'UUID';
 			
-			$o_where = new forestSQLWhere($o_queryDelete);
+			$o_where = new \fPHP\Base\forestSQLWhere($o_queryDelete);
 				$o_where->Column = $o_column;
 				$o_where->Value = $o_where->ParseValue($this->{'UUID'});
 				$o_where->Operator = '=';
@@ -2075,10 +2458,10 @@ abstract class forestTwig {
 			
 			/* else take primary key fields for the update filter */
 			foreach ($this->fphp_Primary->value as $s_primary) {
-				$o_column = new forestSQLColumn($o_queryDelete);
+				$o_column = new \fPHP\Base\forestSQLColumn($o_queryDelete);
 				$o_column->Column = $s_primary;
 			
-				$o_where = new forestSQLWhere($o_queryDelete);
+				$o_where = new \fPHP\Base\forestSQLWhere($o_queryDelete);
 					$o_where->Column = $o_column;
 					$o_where->Value = $o_where->ParseValue($this->{$s_primary});
 					$o_where->Operator = '=';
@@ -2097,12 +2480,20 @@ abstract class forestTwig {
 	}
 	
 	
-	/* truncates table */
+	/**
+	 * truncate table
+	 *
+	 * @return integer  0 - could not truncate table, 1 - truncate of table successful
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function TruncateTable() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		/* create truncate query */
-		$o_queryTruncate = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::TRUNCATE, $this->fphp_Table->value);
+		$o_queryTruncate = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::TRUNCATE, $this->fphp_Table->value);
 		
 		return $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_queryTruncate);
 	}

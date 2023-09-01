@@ -1,6 +1,10 @@
 <?php
+
+namespace fPHP\Branches;
+use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+
 class logBranch extends forestBranch {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -13,11 +17,11 @@ class logBranch extends forestBranch {
 		$this->StandardView = forestBranch::LIST;
 		$this->KeepFilter->value = false;
 		
-		$this->Twig = new logTwig();
+		$this->Twig = new \fPHP\Twigs\logTwig();
 	}
 	
 	protected function init() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if ($this->StandardView == forestBranch::DETAIL) {
 			$this->GenerateView();
@@ -51,11 +55,11 @@ class logBranch extends forestBranch {
 		}
 	
 	protected function viewFlexAction() {
-		throw new forestException(0x10000100);
+		throw new \fPHP\Roots\forestException(0x10000100);
 	}
 	
 	protected function editFlexAction() {
-		throw new forestException(0x10000100);
+		throw new \fPHP\Roots\forestException(0x10000100);
 	}
 	
 		protected function beforeNewAction() {
@@ -67,7 +71,7 @@ class logBranch extends forestBranch {
 			}
 	
 	protected function newAction() {
-		throw new forestException(0x10000100);
+		throw new \fPHP\Roots\forestException(0x10000100);
 	}
 	
 			protected function afterNewSubAction() {
@@ -87,7 +91,7 @@ class logBranch extends forestBranch {
 			}
 	
 	protected function editAction() {
-		throw new forestException(0x10000100);
+		throw new \fPHP\Roots\forestException(0x10000100);
 	}
 	
 			protected function afterEditSubAction() {
@@ -111,7 +115,7 @@ class logBranch extends forestBranch {
 				}
 		
 	protected function deleteAction() {
-		throw new forestException(0x10000100);
+		throw new \fPHP\Roots\forestException(0x10000100);
 	}
 				
 				protected function afterDeleteFileAction() {
@@ -127,11 +131,11 @@ class logBranch extends forestBranch {
 		}
 		
 	protected function moveUpAction() {
-		throw new forestException(0x10000100);
+		throw new \fPHP\Roots\forestException(0x10000100);
 	}
 	
 	protected function moveDownAction() {
-		throw new forestException(0x10000100);
+		throw new \fPHP\Roots\forestException(0x10000100);
 	}
 	
 		protected function beforeReplaceFileAction() {

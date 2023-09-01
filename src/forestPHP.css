@@ -1,59 +1,46 @@
-/* +--------------------------------+ */
-/* |                                | */
-/* | forestPHP V0.8.0               | */
-/* |                                | */
-/* +--------------------------------+ */
-
-/*
- * + Description +
- * standard css file of fphp framework
+/**
+ * main css file for all styles deviating from bootstrap standard
  *
- * + Version Log +
- * Version	Developer	Date		Comment
- * 0.1.0 alpha	renatus		2019-08-04	first build
- * 0.1.1 alpha	renatus		2019-08-14	added styles for modal, navigation, form and landing page
- * 0.1.2 alpha	renatus		2019-08-25	added styles for btn-groups and list view
- * 0.1.4 alpha	renatus		2019-09-19	added styles for dropzone and richtext
- * 0.8.0 beta	renatus		2020-01-08	added styles for fphp_flex
+ * @category    forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestphp.de>
+ * @copyright   (c) 2019 forestPHP Framework
+ * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
+ * @license     https://opensource.org/licenses/MIT MIT License
+ * @version     0.9.0 beta
+ * @link        http://www.forestphp.de/
+ * @object-id   0x2 00000
+ * @since       File available since Release 0.1.0 alpha
+ * @deprecated  -
+ *
+ * @version log Version		Developer	Date		Comment
+ * 		0.1.0 alpha	renatus		2019-08-04	first build
+ * 		0.1.1 alpha	renatus		2019-08-14	added styles for modal, navigation, form and landing page
+ * 		0.1.2 alpha	renatus		2019-08-25	added styles for btn-groups and list view
+ * 		0.1.4 alpha	renatus		2019-09-19	added styles for dropzone and richtext
+ *		0.8.0 beta	renatus		2020-01-08	added styles for fphp_flex
+ *		0.9.0 beta	renatus		2020-01-27	changes for bootstrap 4
  */
+/* ********************************** */
+/* ************** BODY ************** */
+/* ********************************** */
+body {
+	padding-top: 70px;
+	background: #ffffff;
+}
 
 /* ********************************** */
 /* ********* MODAL SETTINGS ********* */
 /* ********************************** */
-@media (min-width: 767px) {
-	.modal-xl {
-		width: 90%;
-		max-width: 1200px;
-	}
-}
-
-.modal-header, .modal-header > .close {
+.modal-header {
 	padding: 10px 20px;
-	background-color: #5cb85c;
-	color:white !important;
-	text-align: center;
-	font-size: 24px;
-}
-
-.modal-header > .close {
-	font-size: 30px;
 }
 
 .modal-body {
 	padding: 40px 50px;
 }
 
-.modal-footer {
-	background-color: #f9f9f9;
-}
-
 .tab-content {
 	margin-top: 10px;
-}
-
-.tab-required {
-	margin-top: 10px;
-	display: none;
 }
 
 /* ********************************** */
@@ -63,36 +50,108 @@
 	position: relative;
 }
 
+.dropdown-submenu a::after {
+	transform: rotate(-90deg);
+	position: absolute;
+	right: 6px;
+	top: .8em;
+}
+
 .dropdown-submenu .dropdown-menu {
 	top: 0;
 	left: 100%;
-	margin-top: -1px;
+	margin-left: .1rem;
+	margin-right: .1rem;
 }
 
-.nav > li > a, .dropdown-menu > li > a {
+.dropdown-submenu-item {
+	margin-left: 0.75em;
+	padding: 0em 1em;
+}
+
+.dropdown-menu-item-title {	
 	display: inline-flex;
 }
-
-.dropdown-menu > li > a {
-	padding: 3px 8px;
+	
+.dropdown-menu-item {
+	display: inline-flex;
+	margin: 0em 0.35em;
+	width: 1em;
 }
 
 .fphp_nav_icon {
 	margin-right: 5px;
 }
 
-@media screen and (min-width: 768px) {
-	.dropdown, .dropdown-submenu {
-		display: inline-flex !important;
-	}
+/* ********************************** */
+/* * NAVIGATION SIDEBAR+FULL SCREEN * */
+/* ********************************** */
+.fphp_navsidebar, .fphp_navfullscreen, .fphp_navfullscreen-slide-top, .fphp_navfullscreen-no-slide {
+	height: 100%;
+	width: 0;
+	position: fixed;
+	z-index: 100;
+	top: 0;
+	left: 0;
+	background-color: #111;
+	overflow-x: hidden;
+	transition: 0.5s;
+	margin-top: 55px;
+	overflow-y: auto;
 }
 
-.navbar-fixed-top {
-	margin-bottom: 10px !important;
+.fphp_navfullscreen, .fphp_navfullscreen-slide-top, .fphp_navfullscreen-no-slide {
+	text-align: center;
 }
 
-.navbar-fixed-bottom {
-	margin-top: 10px !important;
+.fphp_navfullscreen-slide-top {
+	height: 0;
+	width: 100%;
+	margin-top: 0;
+}
+
+.fphp_navfullscreen-no-slide {
+	height: 100%;
+	width: 100%;
+	display: none;
+}
+
+.fphp_navsidebar a, .fphp_navfullscreen a, .fphp_navfullscreen-slide-top a, .fphp_navfullscreen-no-slide a {
+	padding: 8px 8px 8px 32px;
+	text-decoration: none;
+	font-size: 25px;
+	color: #818181;
+	display: block;
+	transition: 0.3s;
+}
+
+.fphp_navsidebar a.active, .fphp_navfullscreen a.active, .fphp_navfullscreen-slide-top a.active, .fphp_navfullscreen-no-slide a.active {
+	padding: 8px 8px 8px 32px;
+	text-decoration: none;
+	font-size: 25px;
+	color: #fff;
+	display: block;
+	transition: 0.3s;
+}
+
+@media screen and (max-height: 450px) {
+	.fphp_navsidebar, .fphp_navfullscreen, .fphp_navfullscreen-slide-top, .fphp_navfullscreen-no-slide {padding-top: 15px;}
+	.fphp_navsidebar a, .fphp_navfullscreen a, .fphp_navfullscreen-slide-top a, .fphp_navfullscreen-no-slide a {font-size: 18px;}
+	.fphp_navsidebar a.active, .fphp_navfullscreen a.active, .fphp_navfullscreen-slide-top a.active, .fphp_navfullscreen-no-slide a.active {font-size: 18px;}
+}
+
+.fphp_navoverlay {
+	position: fixed;
+	display: none;
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0,0,0,0.5);
+	z-index: 99;
+	cursor: pointer;
 }
 
 /* ********************************** */
@@ -108,18 +167,17 @@
 	text-align: center;
 	margin:1px;
 	display: inline-block;
-	background-color: #555;
+	background-color: #343a40;
 	float:left;
 	line-height: 125px;
 	font-size: 26px;
 	padding: 12px;
-	color: white;
+	color: rgba(255,255,255,.75);
 	text-decoration: none;
 }
 
 .fphp_tile:hover {
-	background-color: #4CAF50;
-	color: white;
+	color: rgba(255,255,255,.5);
 	text-decoration: none;
 }
 
@@ -137,74 +195,11 @@
 	}
 }
 
-
 /* ********************************** */
 /* ******* BTN GROUP ACTIONS ******** */
 /* ********************************** */
-/* adding this css decleration will fix any issues with table cells wrapping button groups. */
-.btn-group {
-	display: flex;
-}
-
-.btn-group {
-	margin-bottom: 5px;
-}
-
-/* DROPDOWNBOX ITEMS AFTER EACH OTHER IF SOME CLASS IS DEFINED...AND IF NOT MOBILE VIEW... */
-@media (min-width: 768px) {
-	.dropdown-menu .dropdown-fphp-collapse {
-		display: inline;
-		left: inherit;
-		top: inherit;
-		position: relative;
-		margin: inherit;
-		padding: inherit;
-		border: inherit;
-		font-size: inherit;
-		font-weight: inherit;
-		color: inherit;
-		background-color: inherit;
-		-webkit-box-shadow: inherit;
-		box-shadow: inherit;
-	}
-
-		.dropdown-menu .dropdown-fphp-collapse > li {
-			display: block;
-			float: left;
-		}
-
-			.dropdown-menu .dropdown-fphp-collapse > li > a {
-				/* bnt */
-				display: inline-block;
-				padding: 6px 12px;
-				margin-bottom: 0;
-				font-size: 14px;
-				font-weight: normal;
-				line-height: 1.42857143;
-				text-align: center;
-				white-space: nowrap;
-				vertical-align: middle;
-				cursor: pointer;
-				-webkit-user-select: none;
-				-moz-user-select: none;
-				-ms-user-select: none;
-				user-select: none;
-				background-image: none;
-				border: 1px solid transparent;
-				border-radius: 4px;
-				/* btn default */
-				color: #333;
-				background-color: #fff;
-				border-color: #ccc;
-			}
-
-	.btn-group .dropdown-toggle {
-		display: none;
-	}
-
-	.btn-group.open .dropdown-toggle {
-		display: none;
-	}
+.btn-actions-collapse > a {
+	width: 100%;
 }
 
 /* ********************************** */
@@ -234,55 +229,6 @@ input[type="file"]
 /* ********************************** */
 .ui-selectable > .ui-selected {
 	background-color: rgba(0, 0, 0, 0.075);
-}
-
-.row-eq-height {
-	display: -webkit-box;
-	display: -webkit-flex;
-	display: -ms-flexbox;
-	display: flex;
-}
-
-.row-eq-height-vertical-center {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-}
-
-.row-eq-height-vertical-bottom {
-	display: flex;
-	flex-direction: column;
-	justify-content: flex-end;
-}
-
-.tag {
-	font-size: 14px;
-	padding: .3em .4em .4em;
-	margin: 0 .1em;
-}
-
-.tag a {
-	color: #bbb;
-	cursor: pointer;
-	opacity: 0.6;
-}
-
-.tag a:hover {
-	opacity: 1.0
-}
-
-.tag .remove {
-	vertical-align: bottom;
-	top: 0;
-}
-
-.tag a {
-	margin: 0 0 0 .3em;
-}
-
-.tag a .glyphicon-white {
-	color: #fff;
-	margin-bottom: 2px;
 }
 
 /* ********************************** */
@@ -331,6 +277,7 @@ div[id$="_fphpFlex_readonly"] {
 }
 
 #dropzone, [id$="_Dropzone"] {
+	background: #fff;
 	padding: 15px;
 	text-align: center;
 	cursor: pointer;
@@ -344,10 +291,6 @@ div[id$="_fphpFlex_readonly"] {
 
 #dropzoneListContainer {
 	padding: 5px;
-}
-
-#dropzoneList {
-	
 }
 
 /* ********************************** */
@@ -367,95 +310,10 @@ div[id^="fphp_richtext-editor"], div[id*="DivRichtext"] {
 	outline: none;
 }
 
-/* ********************************** */
-/* **** forestPHP-Radio/Checkbox **** */
-/* ********************************** */
-/* the container */
-.checkbox-container, .radio-container {
-  padding-left: 15px;
-  padding-bottom: 5px;
-  cursor: pointer;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
+.btn-toolbar .btn-group {
+	margin-right: 5px;
 }
 
-.checkbox-inline.checkbox-container, .radio-inline.radio-container {
-	padding-left: 30px;
-}
-
-/* hide the browsers default checkbox */
-.checkbox-container input, .radio-container input {
-  position: absolute;
-  opacity: 0;
-  cursor: pointer;
-  height: 0;
-  width: 0;
-}
-
-/* create a custom checkbox */
-.checkbox-checkmark {
-  position: absolute;
-  top: 5px;
-  left: 0;
-  height: 25px;
-  width: 25px;
-  background-color: #eee;
-}
-
-/* create a custom radio button */
-.radio-checkmark {
-  position: absolute;
-  top: 5px;
-  left: 0;
-  height: 25px;
-  width: 25px;
-  background-color: #eee;
-  border-radius: 50%;
-}
-
-/* on mouse-over, add a grey background color */
-.checkbox-container:hover input ~ .checkbox-checkmark, .radio-container:hover input ~ .radio-checkmark {
-  background-color: #ccc;
-}
-
-/* when the checkbox is checked, add a blue background */
-.checkbox-container input:checked ~ .checkbox-checkmark, .radio-container input:checked ~ .radio-checkmark {
-  background-color: #2196F3;
-}
-
-/* create the checkmark/indicator (hidden when not checked) */
-.checkbox-checkmark:after, .radio-checkmark:after {
-  content: "";
-  position: absolute;
-  display: none;
-}
-
-/* show the checkmark when checked */
-.checkbox-container input:checked ~ .checkbox-checkmark:after, .radio-container input:checked ~ .radio-checkmark:after {
-  display: block;
-}
-
-/* style the checkmark/indicator */
-.checkbox-container .checkbox-checkmark:after {
-  left: 9px;
-  top: 3px;
-  width: 8px;
-  height: 15px;
-  border: solid white;
-  border-width: 0 4px 4px 0;
-  -webkit-transform: rotate(45deg);
-  -ms-transform: rotate(45deg);
-  transform: rotate(45deg);
-}
-
-/* style the indicator (dot/circle) */
-.radio-container .radio-checkmark:after {
-  top: 7px;
-  left: 7px;
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  background: white;
+.btn-toolbar .btn-group .btn {
+	border: 1px solid #ccc;
 }

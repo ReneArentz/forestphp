@@ -1,6 +1,11 @@
 <?php
+
+namespace fPHP\Twigs;
+use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \fPHP\Helper\forestLookupData;
+
 class trunkTwig extends forestTwig {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -44,6 +49,12 @@ class trunkTwig extends forestTwig {
 	private $LogNew;
 	private $LogEdit;
 	private $LogDelete;
+	private $Navmode;
+	private $NavTextColor;
+	private $NavTextActiveColor;
+	private $NavBackgroundColor;
+	private $NavCurtain;
+	private $LogRecord;
 	
 	/* Properties */
 	
@@ -90,6 +101,12 @@ class trunkTwig extends forestTwig {
 		$this->LogNew = new forestBool;
 		$this->LogEdit = new forestBool;
 		$this->LogDelete = new forestBool;
+		$this->Navmode = new forestInt;
+		$this->NavTextColor = new forestString;
+		$this->NavTextActiveColor = new forestString;
+		$this->NavBackgroundColor = new forestString;
+		$this->NavCurtain = new forestInt;
+		$this->LogRecord = new forestBool;
 		
 		/* forestTwig system fields */
 		$this->fphp_Table->value = 'sys_fphp_trunk';
@@ -97,7 +114,7 @@ class trunkTwig extends forestTwig {
 		$this->fphp_Unique->value = array('UUID');
 		$this->fphp_SortOrder->value->Add(true, 'Id');
 		$this->fphp_Interval->value = 1;
-		$this->fphp_View->value = array('LanguageCode','DateTimeSqlFormat','DateTimeFormat','DateFormat','TimeFormat','CheckUniqueUUID','UUIDGuest','UUIDUsergroup','SessionIntervalUser','SessionIntervalGuest','MaxLoginTrials','FormKey','FormKeyInterval','FormKeyMinimumInterval','HoneypotFields','MaxAmountHoneypot','NavbarAdditionalClass','NavbarAlign','NavbarBrandTitle','NavbarMaxLevel','NavbarShowLoginPart','NavbarLoginIcon','NavbarSignUpIcon','NavbarShowLogoutPart','NavbarUserIcon','NavbarLogoutIcon','MaintenanceMode','MaintenanceModeMessage','IncContentUTF8Decode','IncContentUTF8Encode','OutContentUTF8Decode','OutContentUTF8Encode','TempFilesLifetime','CheckoutInterval','VersionDelimiter','LogNew','LogEdit','LogDelete');
+		$this->fphp_View->value = array('LanguageCode','DateTimeSqlFormat','DateTimeFormat','DateFormat','TimeFormat','CheckUniqueUUID','UUIDGuest','UUIDUsergroup','SessionIntervalUser','SessionIntervalGuest','MaxLoginTrials','FormKey','FormKeyInterval','FormKeyMinimumInterval','HoneypotFields','MaxAmountHoneypot','NavbarAdditionalClass','NavbarAlign','NavbarBrandTitle','NavbarMaxLevel','NavbarShowLoginPart','NavbarLoginIcon','NavbarSignUpIcon','NavbarShowLogoutPart','NavbarUserIcon','NavbarLogoutIcon','MaintenanceMode','MaintenanceModeMessage','IncContentUTF8Decode','IncContentUTF8Encode','OutContentUTF8Decode','OutContentUTF8Encode','TempFilesLifetime','CheckoutInterval','VersionDelimiter','LogNew','LogEdit','LogDelete','Navmode','NavTextColor','NavTextActiveColor','NavBackgroundColor');
 		$this->fphp_FillMapping(get_object_vars($this));
 	}
 }

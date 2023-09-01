@@ -1,26 +1,35 @@
 <?php
-/* +--------------------------------+ */
-/* |				    | */
-/* | forestPHP V0.7.0 (0x1 0001B)   | */
-/* |				    | */
-/* +--------------------------------+ */
-
-/*
- * + Description +
+/**
  * template class using to print standard data elements
  *
- * + Version Log +
- * Version	Developer	Date		Comment
- * 0.1.1 alpha	renatus		2019-08-15	added to framework
- * 0.1.2 alpha	renatus		2019-08-25	added listview and view
- * 0.1.4 alpha	renatus		2019-09-28	added sublistview
- * 0.2.0 beta	renatus		2019-10-20	added create-new-branch and create-new-twig
- * 0.6.0 beta	renatus		2019-12-20	added restoreFile additional actions for create-new-branch-with-twig
- * 0.8.0 beta	renatus		2020-01-18	added fphp_flex functionality
+ * @category    forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestphp.de>
+ * @copyright   (c) 2019 forestPHP Framework
+ * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
+ * @license     https://opensource.org/licenses/MIT MIT License
+ * @version     0.9.0 beta
+ * @link        http://www.forestphp.de/
+ * @object-id   0x1 0001B
+ * @since       File available since Release 0.1.1 alpha
+ * @deprecated  -
+ *
+ * @version log Version		Developer	Date		Comment
+ * 		0.1.1 alpha	renatus		2019-08-15	added to framework
+ * 		0.1.2 alpha	renatus		2019-08-25	added listview and view
+ * 		0.1.4 alpha	renatus		2019-09-28	added sublistview
+ * 		0.2.0 beta	renatus		2019-10-20	added create-new-branch and create-new-twig
+ * 		0.6.0 beta	renatus		2019-12-20	added restoreFile additional actions for create-new-branch-with-twig
+ * 		0.8.0 beta	renatus		2020-01-18	added fphp_flex functionality
+ * 		0.9.0 beta	renatus		2020-01-30	changes for bootstrap 4
  */
 
+namespace fPHP\Branches;
+
+use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \fPHP\Roots\forestException as forestException;
+
 class forestTemplates {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 
@@ -74,24 +83,26 @@ EOF;
 	%4
 EOF;
 
-	const LISTVIEWOPTIONSTOPTXT = <<< EOF
-	<div style="margin-bottom: 10px;">
+const LISTVIEWOPTIONSTOPTXT = <<< EOF
+	<div class="mb-2">
 		<div class="row">
 			<div class="col-sm-4">
 				%0
 			</div>
-			<div class="col-sm-8 text-right">
-				%1
+			<div class="col-sm-8">
+				<div class="float-right">
+					%1
+				</div>
 			</div>
 		</div>
 		
-		<div class="row row-eq-height" style="margin-top: 10px;">
+		<div class="row mt-2">
 			<div class="col-sm-4">
 				%2
 			</div>
-			<div class="col-sm-8 row-eq-height-vertical-center">
-				<div class="filter-terms">
-				%3
+			<div class="col-sm-8">
+				<div class="filter-terms text-center">
+					%3
 				</div>
 			</div>
 		</div>
@@ -100,13 +111,15 @@ EOF;
 EOF;
 
 	const LISTVIEWOPTIONSDOWNTXT = <<< EOF
-	<div>
+	<div class="mt-2">
 		<div class="row">
 			<div class="col-sm-4">
 				%0
 			</div>
-			<div class="col-sm-8 text-right">
-				%1
+			<div class="col-sm-8">
+				<div class="float-right">
+					%1
+				</div>
 			</div>
 		</div>
 	</div>
@@ -118,27 +131,28 @@ EOF;
 	%2
 	%3
 	%4
-	%5
 EOF;
 
 	const VIEWOPTIONSTOPTXT = <<< EOF
-	<div style="margin-bottom: 10px;">
+	<div class="mb-2">
 		<div class="row">
 			<div class="col-sm-4">
 				%0
 			</div>
-			<div class="col-sm-8 text-right">
-				%1
+			<div class="col-sm-8">
+				<div class="float-right">
+					%1
+				</div>
 			</div>
 		</div>
 		
-		<div class="row row-eq-height" style="margin-top: 10px;">
+		<div class="row mt-2">
 			<div class="col-sm-4">
 				%2
 			</div>
-			<div class="col-sm-8 row-eq-height-vertical-center">
-				<div class="filter-terms">
-				%3
+			<div class="col-sm-8">
+				<div class="filter-terms text-center">
+					%3
 				</div>
 			</div>
 		</div>
@@ -146,13 +160,15 @@ EOF;
 EOF;
 
 	const VIEWOPTIONSDOWNTXT = <<< EOF
-	<div>
+	<div class="mt-2">
 		<div class="row">
 			<div class="col-sm-4">
 				%0
 			</div>
-			<div class="col-sm-8 text-right">
-				%1
+			<div class="col-sm-8">
+				<div class="float-right">
+					%1
+				</div>
 			</div>
 		</div>
 	</div>
@@ -165,22 +181,24 @@ EOF;
 EOF;
 
 	const FLEXVIEWTOPTXT = <<< EOF
-	<div style="margin-bottom: 10px;">
+	<div class="mb-2">
 		<div class="row">
 			<div class="col-sm-4">
 				%0
 			</div>
-			<div class="col-sm-8 text-right">
-				%1
+			<div class="col-sm-8">
+				<div class="float-right">
+					%1
+				</div>
 			</div>
 		</div>
-		<div class="row row-eq-height" style="margin-top: 10px;">
+		<div class="mt-2">
 			<div class="col-sm-4">
 				%2
 			</div>
-			<div class="col-sm-8 row-eq-height-vertical-center">
-				<div class="filter-terms">
-				%3
+			<div class="col-sm-8">
+				<div class="filter-terms text-center">
+					%3
 				</div>
 			</div>
 		</div>
@@ -188,13 +206,15 @@ EOF;
 EOF;
 
 	const FLEXVIEWDOWNTXT = <<< EOF
-	<div>
+	<div class="mt-2">
 		<div class="row">
 			<div class="col-sm-4">
 				%0
 			</div>
-			<div class="col-sm-8 text-right">
-				%1
+			<div class="col-sm-8">
+				<div class="float-right">
+					%1
+				</div>
 			</div>
 		</div>
 	</div>
@@ -217,26 +237,30 @@ EOF;
 EOF;
 
 	const SUBLISTVIEWTXT = <<< EOF
-<div class="panel-group" id="accordion">
+<div id="accordion">
 	%0
-</div> 
+</div>
 EOF;
 
 	const SUBLISTVIEWITEMTXT = <<< EOF
-	<div class="panel panel-default">
-		<div class="panel-heading"><a data-toggle="collapse" data-parent="#accordion" href="#%0">
-			<h4 class="panel-title">%1</h4>
-		</a></div>
-		<div id="%0" class="panel-collapse collapse%2"><div class="panel-body">
-			%3
-		</div></div>
+	<div class="card">
+		<div class="card-header">
+			<a class="card-link" data-toggle="collapse" href="#%0">
+				<h5>%1</h5>
+			</a>
+		</div>
+		<div id="%0" class="collapse%2" data-parent="#accordion">
+			<div class="card-body">
+				%3
+			</div>
+		</div>
 	</div>
 EOF;
 
 	const SUBLISTVIEWITEMCONTENTTXT = <<< EOF
 	%0
 	<div class="table-responsive">
-		<table class="table table-hover table-condensed">
+		<table class="table table-hover table-sm">
 			<thead>
 				<tr>
 				%1
@@ -251,8 +275,12 @@ EOF;
 
 	const CREATENEWBRANCHTXT = <<< EOF
 <?php
+
+namespace fPHP\\Branches;
+use \\fPHP\\Roots\\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+
 class %0Branch extends forestBranch {
-	use forestData;
+	use \\fPHP\\Roots\\forestData;
 	
 	/* Fields */
 	
@@ -273,8 +301,12 @@ EOF;
 
 	const CREATENEWBRANCHWITHTWIGTXT = <<< EOF
 <?php
+
+namespace fPHP\\Branches;
+use \\fPHP\\Roots\\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+
 class %0Branch extends forestBranch {
-	use forestData;
+	use \\fPHP\Roots\\forestData;
 	
 	/* Fields */
 	
@@ -287,11 +319,11 @@ class %0Branch extends forestBranch {
 		\$this->StandardView = %3;
 		\$this->KeepFilter->value = %4;
 		
-		\$this->Twig = new %1Twig();
+		\$this->Twig = new \\fPHP\\Twigs\\%1Twig();
 	}
 	
 	protected function init() {
-		\$o_glob = forestGlobals::init();
+		\$o_glob = \\fPHP\\Roots\\forestGlobals::init();
 		
 		if (\$this->StandardView == forestBranch::DETAIL) {
 			\$this->GenerateView();
@@ -429,8 +461,13 @@ EOF;
 
 	const CREATENEWTWIGTXT = <<< EOF
 <?php
+
+namespace fPHP\Twigs;
+use \\fPHP\\Roots\\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \\fPHP\\Helper\\forestLookupData;
+
 class %0Twig extends forestTwig {
-	use forestData;
+	use \\fPHP\\Roots\\forestData;
 	
 	/* Fields */
 	
@@ -454,13 +491,32 @@ class %0Twig extends forestTwig {
 EOF;
 
 	/* Properties */
-	 
+	
+	/**
+	 * access to forestTemplate type value
+	 *
+	 * @return string  forestTemplate type
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getType() {
 		return $this->Type->value;
 	}
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestTemplates class
+	 *
+	 * @param string $p_s_type  string value as constant pointer to desired template
+	 * @param array $p_a_placeHolders  array list of values which should be inserted into the template
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct($p_s_type, $p_a_placeHolders = null) {
 		$this->Type = new forestString($p_s_type, false);
 		$this->PlaceHolders = new forestArray;
@@ -541,14 +597,22 @@ EOF;
 			break;
 		}
 	}
-		
+	
+	/**
+	 * render method to print forestTemplate with values which should be inserted into template's content by sprintf2 helper function, usually dynamic values
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
 		$s_foo = '';
 		$s_pointer = strtoupper($this->Type->value) . 'TXT';
-		$s_foo .= constant('forestTemplates::' . $s_pointer);
+		$s_foo .= constant('\fPHP\Branches\forestTemplates::' . $s_pointer);
 		
 		if (count($this->PlaceHolders->value) > 0) {
-			$s_foo = forestStringLib::sprintf2($s_foo, $this->PlaceHolders->value);
+			$s_foo = \fPHP\Helper\forestStringLib::sprintf2($s_foo, $this->PlaceHolders->value);
 		}
 		
 		return $s_foo;

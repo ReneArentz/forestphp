@@ -1,6 +1,10 @@
 <?php
+
+namespace fPHP\Branches;
+use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+
 class accountBranch extends forestBranch {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -13,11 +17,11 @@ class accountBranch extends forestBranch {
 		$this->StandardView = forestBranch::DETAIL;
 		$this->KeepFilter->value = false;
 		
-		$this->Twig = new accountTwig();
+		$this->Twig = new \fPHP\Twigs\accountTwig();
 	}
 	
 	protected function init() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if ($this->StandardView == forestBranch::DETAIL) {
 			$a_sqlAdditionalFilter = array(array('column' => 'UUID', 'value' => $o_glob->Security->UserUUID, 'operator' => '=', 'filterOperator' => 'AND'));
@@ -84,10 +88,10 @@ class accountBranch extends forestBranch {
 		protected function beforeEditAction() {
 			/* $this->Twig holds current record */
 			
-			$o_glob = forestGlobals::init();
+			$o_glob = \fPHP\Roots\forestGlobals::init();
 			
 			/* get user record */
-			$o_userTwig = new userTwig;
+			$o_userTwig = new \fPHP\Twigs\userTwig;
 			
 			if (!$o_userTwig->GetRecord(array($o_glob->Security->UserUUID))) {
 				throw new forestException(0x1000142E);
@@ -118,10 +122,10 @@ class accountBranch extends forestBranch {
 		protected function afterEditAction() {
 			/* $this->Twig holds current record */
 			
-			$o_glob = forestGlobals::init();
+			$o_glob = \fPHP\Roots\forestGlobals::init();
 			
 			/* get user record */
-			$o_userTwig = new userTwig;
+			$o_userTwig = new \fPHP\Twigs\userTwig;
 			
 			if (!$o_userTwig->GetRecord(array($o_glob->Security->UserUUID))) {
 				throw new forestException(0x1000142E);

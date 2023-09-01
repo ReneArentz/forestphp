@@ -1,32 +1,43 @@
 <?php
-/* +--------------------------------+ */
-/* |				    | */
-/* | forestPHP V0.8.0 (0x1 00015)   | */
-/* |				    | */
-/* +--------------------------------+ */
-
-/*
- * + Description +
+/**
  * class-collection for all necessary form data and settings
  * multiple tabs are possible for rendering, also modal form view is supported
  * most settings are based on json encoded strings stored in configuration files or in database records
  *
- * + Version Log +
- * Version	Developer	Date		Comment
- * 0.1.1 alpha	renatus		2019-08-09	added to framework
- * 0.1.3 alpha	renatus		2019-09-06	added formkey and validationrules
- * 0.1.4 alpha	renatus		2019-09-23	added dropzone and richtext
- * 0.1.5 alpha	renatus		2019-10-04	added forestLookup
- * 0.1.5 alpha	renatus		2019-10-05	added forestCombination and Captcha
- * 0.5.0 beta	renatus		2019-12-02	added honeypot fields functionality
- * 0.5.0 beta	renatus		2019-12-04	added auto checkin question
- * 0.6.0 beta	renatus		2019-12-18	added info columns in readonly mode
- * 0.7.0 beta	renatus		2020-01-02	added identifier in readonly mode
- * 0.7.0 beta	renatus		2020-01-03	added money-format display
+ * @category    forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestphp.de>
+ * @copyright   (c) 2019 forestPHP Framework
+ * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
+ * @license     https://opensource.org/licenses/MIT MIT License
+ * @version     0.9.0 beta
+ * @link        http://www.forestphp.de/
+ * @object-id   0x1 00015
+ * @since       File available since Release 0.1.1 alpha
+ * @deprecated  -
+ *
+ * @version log Version		Developer	Date		Comment
+ * 		0.1.1 alpha	renatus		2019-08-09	added to framework
+ * 		0.1.3 alpha	renatus		2019-09-06	added formkey and validationrules
+ * 		0.1.4 alpha	renatus		2019-09-23	added dropzone and richtext
+ * 		0.1.5 alpha	renatus		2019-10-04	added forestLookup
+ * 		0.1.5 alpha	renatus		2019-10-05	added forestCombination and Captcha
+ * 		0.5.0 beta	renatus		2019-12-02	added honeypot fields functionality
+ * 		0.5.0 beta	renatus		2019-12-04	added auto checkin question
+ * 		0.6.0 beta	renatus		2019-12-18	added info columns in readonly mode
+ * 		0.7.0 beta	renatus		2020-01-02	added identifier in readonly mode
+ * 		0.7.0 beta	renatus		2020-01-03	added money-format display
+ * 		0.9.0 beta	renatus		2020-01-27	added checkout message in readonly mode
+ * 		0.9.0 beta	renatus		2020-01-29	changes for bootstrap 4
  */
 
+namespace fPHP\Forms;
+
+use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \fPHP\Helper\forestObjectList;
+use \fPHP\Roots\forestException as forestException;
+
 class forestForm {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -39,29 +50,45 @@ class forestForm {
 	private $FormTabConfiguration;
 	private $FormTabs;
 	private $FormModalSubForm;
+	private $CheckoutMessage;
 	private $FormFooterElements;
 	
 	/* Properties */
 	
 	/* Methods */
 	
-	public function __construct(forestTwig $p_o_twig, $p_b_automatic = false, $p_b_readonly = false, $p_b_printFooter = true) {
+	/**
+	 * constructor of forestForm class
+	 *
+	 * @param forestTwig $p_o_twig  forestTwig object to get tablefields and information to render the form for each tablefield
+	 * @param bool $p_b_automatic  true - create a new forestForm object and generate form elements by twig object automtically, false - only create a new forestForm object
+	 * @param bool $p_b_readonly  true - indicates that the form is in readonly mode, false - normal form
+	 * @param bool $p_b_printFooter  true - indicates that the form has a footer, false - form has no footer
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function __construct(\fPHP\Twigs\forestTwig $p_o_twig, $p_b_automatic = false, $p_b_readonly = false, $p_b_printFooter = true) {
 		$this->Automatic = new forestBool($p_b_automatic);
 		$this->Readonly = new forestBool($p_b_readonly);
 		$this->PrintFooter = new forestBool($p_b_printFooter);
-		$this->FormObject = new forestObject(new forestFormElement(forestFormElement::FORM), false);
+		$this->FormObject = new forestObject(new forestFormElement(\fPHP\Forms\forestFormElement::FORM), false);
 		$this->FormElements = new forestObject(new forestObjectList('forestFormElement'), false);
 		$this->FormModalConfiguration = new forestObject(new forestModalConfiguration, false);
 		$this->FormTabConfiguration = new forestObject(new forestTabConfiguration, false);
 		$this->FormTabs = new forestObject(new forestObjectList('forestFormTab'), false);
 		$this->FormModalSubForm = new forestString;
+		$this->CheckoutMessage = new forestString;
 		$this->FormFooterElements = new forestObject(new forestObjectList('forestFormElement'), false);
 		
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if ($p_b_automatic) {
 			/* get table */
-			$o_tableTwig = new tableTwig;
+			$o_tableTwig = new \fPHP\Twigs\tableTwig;
 			
 			/* query table record */
 			if (!($o_tableTwig->GetRecordPrimary(array($p_o_twig->fphp_Table), array('Name')))) {
@@ -69,14 +96,14 @@ class forestForm {
 			}
 			
 			/* get formobject element */
-			$o_formelementTwig = new formelementTwig;
+			$o_formelementTwig = new \fPHP\Twigs\formelementTwig;
 			
 			/* look in tablefields for formobject, if not get the standard by formelementuuid */
-			if (!($o_formelementTwig->GetRecordPrimary(array(forestFormElement::FORM), array('Name')))) {
+			if (!($o_formelementTwig->GetRecordPrimary(array(\fPHP\Forms\forestFormElement::FORM), array('Name')))) {
 				throw new forestException(0x10001401, array($o_formelementTwig->fphp_Table));
 			}
 		
-			$o_tablefieldTwig = new tablefieldTwig;
+			$o_tablefieldTwig = new \fPHP\Twigs\tablefieldTwig;
 			
 			if (!($o_tablefieldTwig->GetRecordPrimary(array($o_tableTwig->UUID, $o_formelementTwig->UUID), array('TableUUID', 'FormElementUUID')))) {
 				/* no tablefield for table, take standard */
@@ -89,13 +116,15 @@ class forestForm {
 			{
 				"FormTabConfiguration": {
 					"Tab" : true,
-					"TabMenuClass" : "nav nav-tabs",
+					"TabMenuClass" : "nav nav-tabs nav-justified",
+					"TabLiClass" : "nav-item",
+					"TabAClass" : "nav-link",
 					"TabActiveClass" : "active",
 					"TabToggle" : "tab",
 					"TabContentClass" : "tab-content",
 					"TabFooterClass" : "tab-footer",
-					"TabElementClass" : "tab-pane fade",
-					"TabElementActiveClass" : "tab-pane fade in active",
+					"TabElementClass" : "container tab-pane fade",
+					"TabElementActiveClass" : "container tab-pane active",
 					"TabsInfo" : [
 						{"TabId" : "general", "TabTitle" : "General"}
 					]
@@ -105,31 +134,37 @@ class forestForm {
 					"Modal" : true,
 					"ModalClass" : "modal fade",
 					"ModalId" : "myModal",
-					"ModalTitle" : "<h4>Modal Form HTML Validation</h4>",
-					"ModalRole" : "dialog",
-					"ModalDialogClass" : "modal-dialog modal-lg",
+					"ModalTitle" : "Modal Form HTML Validation",
+					"ModalTitleClass" : "modal-title w-100",
+					"ModalRole" : "NULL",
+					"ModalDialogClass" : "modal-dialog modal-xl",
 					"ModalDialogContentClass" : "modal-content",
-					"ModalHeaderClass" : "modal-header",
-					"ModalHeaderCloseClass" : "close",
+					"ModalHeaderClass" : "modal-header bg-dark text-light text-center",
+					"ModalHeaderCloseClass" : "close text-light",
 					"ModalHeaderDismissClass" : "modal",
 					"ModalHeaderCloseContent" : "&times;",
-					"ModalBodyClass" : "modal-body",
-					"ModalFooterClass" : "modal-footer"
+					"ModalBodyClass" : "modal-body bg-light",
+					"ModalFooterClass" : "modal-footer bg-dark text-light"
 				},
 				
 				"Class" : "form-horizontal",
-				"FormGroupClass" : "form-group",
-				"LabelClass" : "col-sm-3 control-label",
+				"FormGroupClass" : "form-group row",
+				"LabelClass" : "col-sm-3 col-form-label",
 				"FormElementClass" : "col-sm-9",
 				"ClassAll" : "form-control",
-				"RadioClass" : "radio",
-				"CheckboxClass" : "checkbox"
+				"RadioClass" : "custom-control custom-radio",
+				"CheckboxClass" : "custom-control custom-checkbox"
 			}
 			';*/
 			
 			/* create formobject(check $this->Readonly->value), modal object and maybe tab objects */
 			$this->FormObject->value->loadJSON($s_formObjectJSONsettings);
 			$this->FormObject->value->ReadonlyAll = $this->Readonly->value;
+			
+			/* add _readonly string to FormObject->Id, because of conflict with modal forms in detail view */
+			if ($this->FormObject->value->ReadonlyAll) {
+				$this->FormObject->value->Id = 'readonly_' . $this->FormObject->value->Id;
+			}
 			
 			$this->FormModalConfiguration->value->loadJSON($s_formObjectJSONsettings);
 			
@@ -141,7 +176,7 @@ class forestForm {
 			$this->FormTabConfiguration->value->loadJSON($s_formObjectJSONsettings);
 			
 			/* get TabsInfo and create tab array */
-			forestFormElement::JSONSettingsMultilanguage($s_formObjectJSONsettings);
+			\fPHP\Forms\forestFormElement::JSONSettingsMultilanguage($s_formObjectJSONsettings);
 			$a_jsonSettings = json_decode($s_formObjectJSONsettings, true);
 			$a_tabsInfo = array();
 			$o_firstTab = null;
@@ -153,7 +188,7 @@ class forestForm {
 					if ($a_jsonSettings['FormTabConfiguration']['Tab']) {
 						if (array_key_exists('TabsInfo', $a_jsonSettings['FormTabConfiguration'])) {
 							foreach ($a_jsonSettings['FormTabConfiguration']['TabsInfo'] as $a_tab) {
-								$a_tabsInfo[$a_tab['TabId']] = new forestFormTab($a_tab['TabId'], $a_tab['TabTitle']);
+								$a_tabsInfo[$a_tab['TabId']] = new \fPHP\Forms\forestFormTab($a_tab['TabId'], $a_tab['TabTitle']);
 								$o_lastTab = $a_tabsInfo[$a_tab['TabId']];
 								
 								if ($o_firstTab == null) {
@@ -169,7 +204,7 @@ class forestForm {
 			if ($this->FormObject->value->ReadonlyAll) {
 				/* if identifier is configured */
 				if (issetStr($o_glob->TablesInformation[$p_o_twig->fphp_TableUUID]['Identifier']->PrimaryValue)) {
-					$o_formElement = new forestFormElement(forestFormElement::TEXT);
+					$o_formElement = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::TEXT);
 					$o_formElement->Id = 'readonly_' . $p_o_twig->fphp_Table . 'Identifier';
 					$o_formElement->Label = $o_glob->GetTranslation('sortIdentifier') . ':';
 					$o_formElement->Value = $p_o_twig->{'Identifier'};
@@ -183,7 +218,7 @@ class forestForm {
 			}
 			
 			/* get tablefields and iterate them */
-			$a_sqlAdditionalFilter = array(array('column' => 'TableUUID', 'value' => $o_tableTwig->UUID, 'operator' => '=', 'filterOperator' => 'AND'), array('column' => 'FieldName', 'value' => forestFormElement::FORM, 'operator' => '<>', 'filterOperator' => 'AND'));
+			$a_sqlAdditionalFilter = array(array('column' => 'TableUUID', 'value' => $o_tableTwig->UUID, 'operator' => '=', 'filterOperator' => 'AND'), array('column' => 'FieldName', 'value' => \fPHP\Forms\forestFormElement::FORM, 'operator' => '<>', 'filterOperator' => 'AND'));
 			$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
 			$o_tableFields = $o_tablefieldTwig->GetAllRecords(true);
 			$o_glob->Temp->Del('SQLAdditionalFilter');
@@ -193,7 +228,7 @@ class forestForm {
 				
 				/* query forestdata name, if UUID is set */
 				if (issetStr($o_tableField->ForestDataUUID->PrimaryValue)) {
-					$o_forestDataTwig = new forestdataTwig;
+					$o_forestDataTwig = new \fPHP\Twigs\forestdataTwig;
 					
 					if (! ($o_forestDataTwig->GetRecord(array($o_tableField->ForestDataUUID->PrimaryValue))) ) {
 						throw new forestException(0x10001401, array($o_forestDataTwig->fphp_Table));
@@ -243,7 +278,7 @@ class forestForm {
 				if (!($o_formelementTwig->GetRecord(array($o_tableField->FormElementUUID->PrimaryValue)))) {
 					continue;
 				} else {
-					$o_formElement = new forestFormElement($o_formelementTwig->Name);
+					$o_formElement = new \fPHP\Forms\forestFormElement($o_formelementTwig->Name);
 					$o_formElement->loadJSON($s_formElementJSONSettings);
 					
 					/* add _readonly string to $formElement->Id, because of conflict with modal forms in detail view */
@@ -258,14 +293,14 @@ class forestForm {
 					/* set form id, uploader and deleter for dropzone element */
 					if ($o_formElement->getType() == forestformElement::DROPZONE) {
 						$o_formElement->FormId = $this->FormObject->value->Id;
-						$o_formElement->URIFileUploader = forestLink::Link($o_glob->URL->Branch, 'fphp_upload');
-						$o_formElement->URIFileDeleter = forestLink::Link($o_glob->URL->Branch, 'fphp_upload_delete');
+						$o_formElement->URIFileUploader = \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'fphp_upload');
+						$o_formElement->URIFileDeleter = \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'fphp_upload_delete');
 					}
 					
 					if (property_exists($p_o_twig, $o_tableField->FieldName)) {
 						/* create options array for lookup field */
 						if (is_object($p_o_twig->{$o_tableField->FieldName})) {
-							if (is_a($p_o_twig->{$o_tableField->FieldName}, 'forestLookupData')) {
+							if (is_a($p_o_twig->{$o_tableField->FieldName}, '\\fPHP\Helper\\forestLookupData')) {
 								$o_formElement->Options = $p_o_twig->{$o_tableField->FieldName}->CreateOptionsArray();
 							}
 						}
@@ -281,21 +316,21 @@ class forestForm {
 					/* get value for form element, based on parameter twig record */
 					if ((!$p_o_twig->IsEmpty()) && (property_exists($p_o_twig, $o_tableField->FieldName))) {
 						/* maybe other casts necessary depending on sqltype info */
-						if (is_a($p_o_twig->{$o_tableField->FieldName}, 'forestDateTime')) {
-							if ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == forestFormElement::DATETIMELOCAL) {
+						if (is_a($p_o_twig->{$o_tableField->FieldName}, '\\fPHP\Helper\\forestDateTime')) {
+							if ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == \fPHP\Forms\forestFormElement::DATETIMELOCAL) {
 								$s_value = $p_o_twig->{$o_tableField->FieldName}->ToString('Y-m-d\TH:i:s');
-							} else if ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == forestFormElement::DATE) {
+							} else if ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == \fPHP\Forms\forestFormElement::DATE) {
 								$s_value = $p_o_twig->{$o_tableField->FieldName}->ToString('Y-m-d');
-							} else if ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == forestFormElement::MONTH) {
+							} else if ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == \fPHP\Forms\forestFormElement::MONTH) {
 								$s_value = $p_o_twig->{$o_tableField->FieldName}->ToString('Y-m');
-							} else if ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == forestFormElement::TIME) {
+							} else if ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == \fPHP\Forms\forestFormElement::TIME) {
 								$s_value = $p_o_twig->{$o_tableField->FieldName}->ToString('H:i:s');
-							} else if ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == forestFormElement::WEEK) {
+							} else if ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == \fPHP\Forms\forestFormElement::WEEK) {
 								$s_value = $p_o_twig->{$o_tableField->FieldName}->ToString('Y-\WW');
 							} else {
 								$s_value = $p_o_twig->{$o_tableField->FieldName}->ToString();
 							}
-						} else if (is_a($p_o_twig->{$o_tableField->FieldName}, 'forestLookupData')) {
+						} else if (is_a($p_o_twig->{$o_tableField->FieldName}, '\\fPHP\Helper\\forestLookupData')) {
 							$s_value = $p_o_twig->{$o_tableField->FieldName}->PrimaryValue;
 						} else {
 							$s_value = strval($p_o_twig->{$o_tableField->FieldName});
@@ -303,10 +338,11 @@ class forestForm {
 							if ($this->FormObject->value->ReadonlyAll) {
 								$s_JSONEncodedSettings = str_replace('&quot;', '"', $s_formElementJSONSettings);
 								$a_settings = json_decode($s_JSONEncodedSettings, true);
+								
 								/* check if we want to render value as date interval value */
 								if (array_key_exists('DateIntervalFormat', $a_settings)) {
 									if ($a_settings['DateIntervalFormat']) {
-										$s_value = strval(new forestDateInterval($s_value));
+										$s_value = strval(new \fPHP\Helper\forestDateInterval($s_value));
 									}
 								}
 							}
@@ -324,13 +360,13 @@ class forestForm {
 							/* check if we want to render value as money value */
 							if (array_key_exists('MoneyFormat', $a_settings)) {
 								if ($a_settings['MoneyFormat']) {
-									$s_value = forestStringLib::money_format('%i', $s_value);
+									$s_value = \fPHP\Helper\forestStringLib::money_format('%i', $s_value);
 								}
 							}
 							/* check if we want to render value as date interval value */
 							else if ( (array_key_exists('DateIntervalFormat', $a_settings)) && ($this->FormObject->value->ReadonlyAll) ) {
 								if ($a_settings['DateIntervalFormat']) {
-									$s_value = strval(new forestDateInterval($s_value));
+									$s_value = strval(new \fPHP\Helper\forestDateInterval($s_value));
 								}
 							}
 						}
@@ -340,10 +376,11 @@ class forestForm {
 					if ( (!$p_o_twig->IsEmpty()) && ($s_forestdataName == 'forestFloat') && ($this->FormObject->value->ReadonlyAll) ) {
 						$s_JSONEncodedSettings = str_replace('&quot;', '"', $s_formElementJSONSettings);
 						$a_settings = json_decode($s_JSONEncodedSettings, true);
+						
 						/* check if we want to render value as money value */
 						if (array_key_exists('MoneyFormat', $a_settings)) {
 							if ($a_settings['MoneyFormat']) {
-								$s_value = forestStringLib::money_format('%i', $p_o_twig->{$o_tableField->FieldName});
+								$s_value = \fPHP\Helper\forestStringLib::money_format('%i', $p_o_twig->{$o_tableField->FieldName});
 								
 								if (floatval($p_o_twig->{$o_tableField->FieldName}) < 0.0) {
 									$o_formElement->Style = 'color: red;';
@@ -375,23 +412,23 @@ class forestForm {
 					/* if we have not read only mode */
 					if (!$this->FormObject->value->ReadonlyAll) {
 						/* get validation rules of tablefield and iterate them */
-						$o_querySelect = new forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, forestSQLQuery::SELECT, 'sys_fphp_tablefield_validationrule');
+						$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, 'sys_fphp_tablefield_validationrule');
 						
-						$column_A = new forestSQLColumn($o_querySelect);
+						$column_A = new \fPHP\Base\forestSQLColumn($o_querySelect);
 							$column_A->Column = '*';
 						
 						$o_querySelect->Query->Columns->Add($column_A);
 						
-						$join_A = new forestSQLJoin($o_querySelect);
+						$join_A = new \fPHP\Base\forestSQLJoin($o_querySelect);
 							$join_A->JoinType = 'INNER JOIN';
 							$join_A->Table = 'sys_fphp_validationrule';
 
-						$relation_A = new forestSQLRelation($o_querySelect);
+						$relation_A = new \fPHP\Base\forestSQLRelation($o_querySelect);
 						
-						$column_B = new forestSQLColumn($o_querySelect);
+						$column_B = new \fPHP\Base\forestSQLColumn($o_querySelect);
 							$column_B->Column = 'ValidationruleUUID';
 							
-						$column_C = new forestSQLColumn($o_querySelect);
+						$column_C = new \fPHP\Base\forestSQLColumn($o_querySelect);
 							$column_C->Column = 'UUID';
 							$column_C->Table = $join_A->Table;
 						
@@ -403,10 +440,10 @@ class forestForm {
 							
 						$o_querySelect->Query->Joins->Add($join_A);
 						
-						$column_D = new forestSQLColumn($o_querySelect);
+						$column_D = new \fPHP\Base\forestSQLColumn($o_querySelect);
 							$column_D->Column = 'TablefieldUUID';
 						
-						$where_A = new forestSQLWhere($o_querySelect);
+						$where_A = new \fPHP\Base\forestSQLWhere($o_querySelect);
 							$where_A->Column = $column_D;
 							$where_A->Value = $where_A->ParseValue($o_tableField->UUID);
 							$where_A->Operator = '=';
@@ -423,7 +460,12 @@ class forestForm {
 							$s_param02 = ( ((empty($o_row['ValidationRuleParam02'])) || ($o_row['ValidationRuleParam02'] == 'NULL')) ? null : $o_row['ValidationRuleParam02'] );
 							$s_autoRequired = ( (($o_row['ValidationRuleRequired'] == 1)) ? 'true' : 'false' );
 							
-							$this->FormObject->value->ValRules->Add(new forestFormValidationRule($p_o_twig->fphp_Table . '_' . $o_tableField->FieldName, $o_row['Name'], $s_param01, $s_param02, $s_autoRequired));
+							$this->FormObject->value->ValRules->Add(new \fPHP\Forms\forestFormValidationRule($p_o_twig->fphp_Table . '_' . $o_tableField->FieldName, $o_row['Name'], $s_param01, $s_param02, $s_autoRequired));
+							
+							/* set required setting for form element */
+							if ( ($o_row['Name'] == 'required') || ($s_autoRequired == 'true') ) {
+								$o_formElement->Required = true;
+							}
 						}
 					}
 				}
@@ -435,7 +477,7 @@ class forestForm {
 				$i_infoColumns = $o_glob->TablesInformation[$p_o_twig->fphp_TableUUID]['InfoColumns'];
 				
 				if ($i_infoColumns == 10) {
-					$o_formElement = new forestFormElement(forestFormElement::DATETIMELOCAL);
+					$o_formElement = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::DATETIMELOCAL);
 					$o_formElement->Id = 'readonly_' . $p_o_twig->fphp_Table . 'Created';
 					$o_formElement->Label = $o_glob->GetTranslation('sortCreated') . ':';
 					if (strval($p_o_twig->{'Created'}) != 'NULL') {
@@ -448,7 +490,7 @@ class forestForm {
 						$this->FormElements->value->Add($o_formElement);
 					}
 					
-					$o_formElement = new forestFormElement(forestFormElement::TEXT);
+					$o_formElement = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::TEXT);
 					$o_formElement->Id = 'readonly_' . $p_o_twig->fphp_Table . 'CreatedBy';
 					$o_formElement->Label = $o_glob->GetTranslation('sortCreatedBy') . ':';
 					$o_formElement->Value = $o_glob->GetUserNameByUUID($p_o_twig->{'CreatedBy'});
@@ -459,7 +501,7 @@ class forestForm {
 						$this->FormElements->value->Add($o_formElement);
 					}
 				} else if ($i_infoColumns == 100) {
-					$o_formElement = new forestFormElement(forestFormElement::DATETIMELOCAL);
+					$o_formElement = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::DATETIMELOCAL);
 					$o_formElement->Id = 'readonly_' . $p_o_twig->fphp_Table . 'Modified';
 					$o_formElement->Label = $o_glob->GetTranslation('sortModified') . ':';
 					if (strval($p_o_twig->{'Modified'}) != 'NULL') {
@@ -472,7 +514,7 @@ class forestForm {
 						$this->FormElements->value->Add($o_formElement);
 					}
 					
-					$o_formElement = new forestFormElement(forestFormElement::TEXT);
+					$o_formElement = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::TEXT);
 					$o_formElement->Id = 'readonly_' . $p_o_twig->fphp_Table . 'ModifiedBy';
 					$o_formElement->Label = $o_glob->GetTranslation('sortModifiedBy') . ':';
 					$o_formElement->Value = $o_glob->GetUserNameByUUID($p_o_twig->{'ModifiedBy'});
@@ -483,7 +525,7 @@ class forestForm {
 						$this->FormElements->value->Add($o_formElement);
 					}
 				} else if ($i_infoColumns == 1000) {
-					$o_formElement = new forestFormElement(forestFormElement::DATETIMELOCAL);
+					$o_formElement = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::DATETIMELOCAL);
 					$o_formElement->Id = 'readonly_' . $p_o_twig->fphp_Table . 'Created';
 					$o_formElement->Label = $o_glob->GetTranslation('sortCreated') . ':';
 					if (strval($p_o_twig->{'Created'}) != 'NULL') {
@@ -496,7 +538,7 @@ class forestForm {
 						$this->FormElements->value->Add($o_formElement);
 					}
 					
-					$o_formElement = new forestFormElement(forestFormElement::TEXT);
+					$o_formElement = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::TEXT);
 					$o_formElement->Id = 'readonly_' . $p_o_twig->fphp_Table . 'CreatedBy';
 					$o_formElement->Label = $o_glob->GetTranslation('sortCreatedBy') . ':';
 					$o_formElement->Value = $o_glob->GetUserNameByUUID($p_o_twig->{'CreatedBy'});
@@ -507,7 +549,7 @@ class forestForm {
 						$this->FormElements->value->Add($o_formElement);
 					}
 					
-					$o_formElement = new forestFormElement(forestFormElement::DATETIMELOCAL);
+					$o_formElement = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::DATETIMELOCAL);
 					$o_formElement->Id = 'readonly_' . $p_o_twig->fphp_Table . 'Modified';
 					$o_formElement->Label = $o_glob->GetTranslation('sortModified') . ':';
 					if (strval($p_o_twig->{'Modified'}) != 'NULL') {
@@ -520,7 +562,7 @@ class forestForm {
 						$this->FormElements->value->Add($o_formElement);
 					}
 					
-					$o_formElement = new forestFormElement(forestFormElement::TEXT);
+					$o_formElement = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::TEXT);
 					$o_formElement->Id = 'readonly_' . $p_o_twig->fphp_Table . 'ModifiedBy';
 					$o_formElement->Label = $o_glob->GetTranslation('sortModifiedBy') . ':';
 					$o_formElement->Value = $o_glob->GetUserNameByUUID($p_o_twig->{'ModifiedBy'});
@@ -534,14 +576,14 @@ class forestForm {
 			}
 			
 			/* add auto checkin form element if current record is checked out */
-			if ( ($p_o_twig->fphp_HasUUID) && (!$p_o_twig->IsEmpty()) && (($o_checkoutTwig = new checkoutTwig)->GetRecordPrimary(array($p_o_twig->UUID), array('ForeignUUID'))) && (!$this->FormObject->value->ReadonlyAll) ) {
+			if ( ($p_o_twig->fphp_HasUUID) && (!$p_o_twig->IsEmpty()) && (($o_checkoutTwig = new \fPHP\Twigs\checkoutTwig)->GetRecordPrimary(array($p_o_twig->UUID), array('ForeignUUID'))) && (!$this->FormObject->value->ReadonlyAll) ) {
 				/* query auto checkin form element */
-				if (!($o_formelementTwig->GetRecordPrimary(array(forestFormElement::AUTOCHECKIN), array('Name')))) {
+				if (!($o_formelementTwig->GetRecordPrimary(array(\fPHP\Forms\forestFormElement::AUTOCHECKIN), array('Name')))) {
 					throw new forestException(0x10001401, array($o_formelementTwig->fphp_Table));
 				}
 				
 				/* create captcha form element and adjust settings */
-				$o_formElement = new forestFormElement(forestFormElement::AUTOCHECKIN);
+				$o_formElement = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::AUTOCHECKIN);
 				$o_formElement->loadJSON($o_formelementTwig->JSONEncodedSettings);
 				$o_formElement->Id = $p_o_twig->fphp_Table . '_AutocheckinStandard';
 				
@@ -553,18 +595,23 @@ class forestForm {
 				}
 			}
 			
+			/* add checkout message in readonly mode if current record is checked out */
+			if ( ($p_o_twig->fphp_HasUUID) && (!$p_o_twig->IsEmpty()) && (($o_checkoutTwig = new \fPHP\Twigs\checkoutTwig)->GetRecordPrimary(array($p_o_twig->UUID), array('ForeignUUID'))) && ($this->FormObject->value->ReadonlyAll) ) {
+				$this->CheckoutMessage->value = '<div class="alert alert-warning">' . \fPHP\Helper\forestStringLib::sprintf2($o_glob->GetTranslation('messageCheckoutText', 1), array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID), $o_checkoutTwig->Timestamp)) . '</div>';
+			}
+			
 			/* if we are using a captcha element and we have not read only mode */
 			if ( ($this->FormObject->value->UseCaptcha) && (!$this->FormObject->value->ReadonlyAll) ) {
 				/* query captcha form element */
-				if (!($o_formelementTwig->GetRecordPrimary(array(forestFormElement::CAPTCHA), array('Name')))) {
+				if (!($o_formelementTwig->GetRecordPrimary(array(\fPHP\Forms\forestFormElement::CAPTCHA), array('Name')))) {
 					throw new forestException(0x10001401, array($o_formelementTwig->fphp_Table));
 				}
 				
 				/* create captcha form element and adjust settings */
-				$o_formElement = new forestFormElement(forestFormElement::CAPTCHA);
+				$o_formElement = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::CAPTCHA);
 				$o_formElement->loadJSON($o_formelementTwig->JSONEncodedSettings);
 				$o_formElement->Id = $p_o_twig->fphp_Table . '_Captcha';
-				$this->FormObject->value->ValRules->Add(new forestFormValidationRule($p_o_twig->fphp_Table . '_Captcha', 'required', 'true', 'NULL', 'false'));
+				$this->FormObject->value->ValRules->Add(new \fPHP\Forms\forestFormValidationRule($p_o_twig->fphp_Table . '_Captcha', 'required', 'true', 'NULL', 'false'));
 				
 				/* usually it will be added to the last tab or to form element object list */
 				if ($o_lastTab != null) {
@@ -576,21 +623,8 @@ class forestForm {
 			
 			/* print footer flag */
 			if ($this->PrintFooter->value) {
-				/* if modal, add standard cancel to footer */
+				/* if modal, add standard submit + cancel to footer */
 				if ($this->FormModalConfiguration->value->Modal) {
-					/* query cancel form element */
-					if (!($o_formelementTwig->GetRecordPrimary(array('cancel'), array('Name')))) {
-						throw new forestException(0x10001401, array($o_formelementTwig->fphp_Table));
-					}
-					
-					/* create cancel form element and adjust settings */
-					$o_cancel = new forestFormElement(forestFormElement::BUTTON);
-					$o_cancel->loadJSON($o_formelementTwig->JSONEncodedSettings);
-					$o_cancel->ButtonText = htmlspecialchars_decode($o_cancel->ButtonText, ( ENT_QUOTES | ENT_HTML5 ));
-					$o_cancel->Id = $o_cancel->Id . '_' . substr($o_glob->Security->GenRandomHash(), 0, 4);
-					
-					$this->FormFooterElements->value->Add($o_cancel);
-					
 					if (!$this->FormObject->value->ReadonlyAll) {
 						/* query and add standard submit to footer, if we do not have readonly all flag */
 						if (!($o_formelementTwig->GetRecordPrimary(array('submit'), array('Name')))) {
@@ -598,13 +632,26 @@ class forestForm {
 						}
 						
 						/* create submit form element and adjust settings */
-						$o_submit = new forestFormElement(forestFormElement::BUTTON);
+						$o_submit = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::BUTTON);
 						$o_submit->loadJSON($o_formelementTwig->JSONEncodedSettings);
 						$o_submit->ButtonText = htmlspecialchars_decode($o_submit->ButtonText);
 						$o_submit->Id = $o_submit->Id . '_' . substr($o_glob->Security->GenRandomHash(), 0, 4);
 						
 						$this->FormFooterElements->value->Add($o_submit);
 					}
+					
+					/* query cancel form element */
+					if (!($o_formelementTwig->GetRecordPrimary(array('cancel'), array('Name')))) {
+						throw new forestException(0x10001401, array($o_formelementTwig->fphp_Table));
+					}
+					
+					/* create cancel form element and adjust settings */
+					$o_cancel = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::BUTTON);
+					$o_cancel->loadJSON($o_formelementTwig->JSONEncodedSettings);
+					$o_cancel->ButtonText = htmlspecialchars_decode($o_cancel->ButtonText, ( ENT_QUOTES | ENT_HTML5 ));
+					$o_cancel->Id = $o_cancel->Id . '_' . substr($o_glob->Security->GenRandomHash(), 0, 4);
+					
+					$this->FormFooterElements->value->Add($o_cancel);
 				}
 			}
 			
@@ -733,8 +780,8 @@ class forestForm {
 				"FormTarget" : "NULL",
 				"FormNoValidate" : false,
 				
-				"Break" : true,
-				"RadioClass" : "NULL"
+				"RadioClass" : "NULL",
+				"RadioLabelClass" : "NULL"
 			}
 			';*/
 			
@@ -781,8 +828,8 @@ class forestForm {
 				"FormTarget" : "NULL",
 				"FormNoValidate" : false,
 				
-				"Break" : true,
-				"CheckboxClass" : "NULL"
+				"CheckboxClass" : "NULL",
+				"CheckboxLabelClass" : "NULL"
 			}
 			';*/
 			
@@ -895,6 +942,15 @@ class forestForm {
 		}
 	}
 
+	/**
+	 * render the complete form with all its settings
+	 *
+	 * @return string
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
 		/* check if we have elements of type FILE or DROPZONE */
 		if ($this->CheckUploadElementConfigured()) {
@@ -908,7 +964,14 @@ class forestForm {
 			$this->FormModalConfiguration->value->CheckIsset();
 			
 			$s_foo .= '<!-- Modal with tabs -->' . "\n";
-			$s_foo .= '	<div class="' . $this->FormModalConfiguration->value->ModalClass . '" id="' . $this->FormModalConfiguration->value->ModalId . '" role="' . $this->FormModalConfiguration->value->ModalRole . '">' . "\n";
+			$s_foo .= '	<div class="' . $this->FormModalConfiguration->value->ModalClass . '" id="' . $this->FormModalConfiguration->value->ModalId . '"';
+			
+			if (issetStr($this->FormModalConfiguration->value->ModalRole)) {
+				$s_foo .= ' role="' . $this->FormModalConfiguration->value->ModalRole . '"';
+			}
+			
+			$s_foo .= '>' . "\n";
+			
 			$s_foo .= '		<div class="' . $this->FormModalConfiguration->value->ModalDialogClass . '">' . "\n";
 
 			$s_foo .= '			<!-- Modal content-->' . "\n";
@@ -918,12 +981,19 @@ class forestForm {
 		/* render form object */
 		$s_foo .= strval($this->FormObject->value);
 		
+		/* render modal header */
 		if ($this->FormModalConfiguration->value->Modal) {
 			$s_foo .= '<div class="' . $this->FormModalConfiguration->value->ModalHeaderClass . '">' . "\n";
-			$s_foo .= '	<button type="button" class="' . $this->FormModalConfiguration->value->ModalHeaderCloseClass . '" data-dismiss="' . $this->FormModalConfiguration->value->ModalHeaderDismissClass . '">' . $this->FormModalConfiguration->value->ModalHeaderCloseContent . '</button>' . "\n";
-			$s_foo .= '	' . $this->FormModalConfiguration->value->ModalTitle . '' . "\n";
+			$s_foo .= '<h4 class=' . $this->FormModalConfiguration->value->ModalTitleClass . '>' . $this->FormModalConfiguration->value->ModalTitle . '</h4>' . "\n";
+			$s_foo .= '	<button type="button" class="' . $this->FormModalConfiguration->value->ModalHeaderCloseClass . '" data-dismiss="' . $this->FormModalConfiguration->value->ModalHeaderDismissClass . '">' . htmlspecialchars_decode($this->FormModalConfiguration->value->ModalHeaderCloseContent, ENT_HTML5) . '</button>' . "\n";
+			
 			$s_foo .= '</div>' . "\n";
 			$s_foo .= '<div class="' . $this->FormModalConfiguration->value->ModalBodyClass . '">' . "\n";
+		}
+		
+		/* render checkout message */
+		if (issetStr($this->CheckoutMessage->value)) {
+			$s_foo .= $this->CheckoutMessage->value . "\n";
 		}
 		
 		/* render tabs */
@@ -945,7 +1015,9 @@ class forestForm {
 			$this->PrintFormElements($this->FormElements->value, $s_foo);
 		}
 		
+		/* render modal footer */
 		if ($this->FormModalConfiguration->value->Modal) {
+			/* append sub form elements */
 			if (issetStr($this->FormModalSubForm->value)) {
 				$s_foo .= '<div>' . $this->FormModalSubForm->value . '</div>' . "\n";
 			}
@@ -962,28 +1034,45 @@ class forestForm {
 		/* render validation rules */
 		$this->PrintValRules($s_foo);
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 	
-	public function CreateModalForm(forestTwig $p_o_twig, $p_s_title, $p_b_showSubmit = true) {
-		$o_glob = forestGlobals::init();
+	/**
+	 * create standard modal form elements, by loading standard form formElement, submit and cancel button
+	 *
+	 * @param forestTwig $p_o_twig
+	 * @param string $p_s_title  title of form
+	 * @param bool $p_b_showSubmit  true - create submit button, false - do not create submit button
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function CreateModalForm(\fPHP\Twigs\forestTwig $p_o_twig, $p_s_title, $p_b_showSubmit = true) {
+		if ($this->Automatic->value) {
+			throw new forestException('Form has been already generated automatically.');
+		}
+		
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		/* get table */
-		$o_tableTwig = new tableTwig;
+		$o_tableTwig = new \fPHP\Twigs\tableTwig;
 		
 		/* query table record */
 		if (!($o_tableTwig->GetRecordPrimary(array($p_o_twig->fphp_Table), array('Name')))) {
 			throw new forestException(0x10001401, array($o_tableTwig->fphp_Table));
 		}
 		
-		$o_formelementTwig = new formelementTwig;
+		$o_formelementTwig = new \fPHP\Twigs\formelementTwig;
 		
 		/* look in tablefields for formobject, if not get the standard by formelementuuid */
 		if (!($o_formelementTwig->GetRecordPrimary(array('form'), array('Name')))) {
 			throw new forestException(0x10001401, array($o_formelementTwig->fphp_Table));
 		}
 		
-		$o_tablefieldTwig = new tablefieldTwig;
+		$o_tablefieldTwig = new \fPHP\Twigs\tablefieldTwig;
 		$s_formObjectJSONsettings = '';
 		
 		if (!($o_tablefieldTwig->GetRecordPrimary(array($o_tableTwig->UUID, $o_formelementTwig->UUID), array('TableUUID', 'FormElementUUID')))) {
@@ -1002,27 +1091,27 @@ class forestForm {
 		$this->FormModalConfiguration->value->ModalTitle = $p_s_title;
 		$this->FormTabConfiguration->value->Tab = false;
 		
-		/* create standard cancel button to modal footer */
-		if (!($o_formelementTwig->GetRecordPrimary(array('cancel'), array('Name')))) {
-			throw new forestException(0x10001401, array($o_formelementTwig->fphp_Table));
-		}
-		
-		$o_cancel = new forestFormElement(forestFormElement::BUTTON);
-		$o_cancel->loadJSON($o_formelementTwig->JSONEncodedSettings);
-		$o_cancel->ButtonText = htmlspecialchars_decode($o_cancel->ButtonText);
-		$this->FormFooterElements->value->Add($o_cancel);
-		
 		/* create standard submit button to modal footer */
 		if ($p_b_showSubmit) {
 			if (!($o_formelementTwig->GetRecordPrimary(array('submit'), array('Name')))) {
 				throw new forestException(0x10001401, array($o_formelementTwig->fphp_Table));
 			}
 			
-			$o_button = new forestFormElement(forestFormElement::BUTTON);
+			$o_button = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::BUTTON);
 			$o_button->loadJSON($o_formelementTwig->JSONEncodedSettings);
 			$o_button->ButtonText = htmlspecialchars_decode($o_button->ButtonText);
 			$this->FormFooterElements->value->Add($o_button);
 		}
+		
+		/* create standard cancel button to modal footer */
+		if (!($o_formelementTwig->GetRecordPrimary(array('cancel'), array('Name')))) {
+			throw new forestException(0x10001401, array($o_formelementTwig->fphp_Table));
+		}
+		
+		$o_cancel = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::BUTTON);
+		$o_cancel->loadJSON($o_formelementTwig->JSONEncodedSettings);
+		$o_cancel->ButtonText = htmlspecialchars_decode($o_cancel->ButtonText);
+		$this->FormFooterElements->value->Add($o_cancel);
 		
 		/* add form key as hash as hidden field in form footer */
 		$this->AddFormKey();
@@ -1034,25 +1123,42 @@ class forestForm {
 		$this->Automatic->value = true;
 	}
 	
-	public function CreateDeleteModalForm(forestTwig $p_o_twig, $p_s_title, $p_s_description) {
-		$o_glob = forestGlobals::init();
+	/**
+	 * create standard delete modal form elements, by loading standard form formElement, submit and cancel button
+	 *
+	 * @param forestTwig $p_o_twig
+	 * @param string $p_s_title  title of form
+	 * @param string $p_s_description  description for delete form
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function CreateDeleteModalForm(\fPHP\Twigs\forestTwig $p_o_twig, $p_s_title, $p_s_description) {
+		if ($this->Automatic->value) {
+			throw new forestException('Form has been already generated automatically.');
+		}
+		
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		/* get table */
-		$o_tableTwig = new tableTwig;
+		$o_tableTwig = new \fPHP\Twigs\tableTwig;
 		
 		/* query table record */
 		if (!($o_tableTwig->GetRecordPrimary(array($p_o_twig->fphp_Table), array('Name')))) {
 			throw new forestException(0x10001401, array($o_tableTwig->fphp_Table));
 		}
 		
-		$o_formelementTwig = new formelementTwig;
+		$o_formelementTwig = new \fPHP\Twigs\formelementTwig;
 		
 		/* look in tablefields for formobject, if not get the standard by formelementuuid */
 		if (!($o_formelementTwig->GetRecordPrimary(array('form'), array('Name')))) {
 			throw new forestException(0x10001401, array($o_formelementTwig->fphp_Table));
 		}
 		
-		$o_tablefieldTwig = new tablefieldTwig;
+		$o_tablefieldTwig = new \fPHP\Twigs\tablefieldTwig;
 		$s_formObjectJSONsettings = '';
 		
 		if (!($o_tablefieldTwig->GetRecordPrimary(array($o_tableTwig->UUID, $o_formelementTwig->UUID), array('TableUUID', 'FormElementUUID')))) {
@@ -1072,31 +1178,31 @@ class forestForm {
 		$this->FormTabConfiguration->value->Tab = false;
 		
 		/* create and add description to modal form */
-		$o_description = new forestFormElement(forestFormElement::DESCRIPTION);
+		$o_description = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::DESCRIPTION);
 		$o_description->Description = $p_s_description;
 		$o_description->NoFormGroup = true;
 		
 		$this->FormElements->value->Add($o_description);
-		
-		/* create standard no button to modal footer */
-		if (!($o_formelementTwig->GetRecordPrimary(array('no'), array('Name')))) {
-			throw new forestException(0x10001401, array($o_formelementTwig->fphp_Table));
-		}
-		
-		$o_cancel = new forestFormElement(forestFormElement::BUTTON);
-		$o_cancel->loadJSON($o_formelementTwig->JSONEncodedSettings);
-		$o_cancel->ButtonText = htmlspecialchars_decode($o_cancel->ButtonText);
-		$this->FormFooterElements->value->Add($o_cancel);
 		
 		/* create standard yes button to modal footer */
 		if (!($o_formelementTwig->GetRecordPrimary(array('yes'), array('Name')))) {
 			throw new forestException(0x10001401, array($o_formelementTwig->fphp_Table));
 		}
 		
-		$o_button = new forestFormElement(forestFormElement::BUTTON);
+		$o_button = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::BUTTON);
 		$o_button->loadJSON($o_formelementTwig->JSONEncodedSettings);
 		$o_button->ButtonText = htmlspecialchars_decode($o_button->ButtonText);
 		$this->FormFooterElements->value->Add($o_button);
+		
+		/* create standard no button to modal footer */
+		if (!($o_formelementTwig->GetRecordPrimary(array('no'), array('Name')))) {
+			throw new forestException(0x10001401, array($o_formelementTwig->fphp_Table));
+		}
+		
+		$o_cancel = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::BUTTON);
+		$o_cancel->loadJSON($o_formelementTwig->JSONEncodedSettings);
+		$o_cancel->ButtonText = htmlspecialchars_decode($o_cancel->ButtonText);
+		$this->FormFooterElements->value->Add($o_cancel);
 		
 		/* add form key as hash as hidden field in form footer */
 		$this->AddFormKey();
@@ -1108,12 +1214,20 @@ class forestForm {
 		$this->Automatic->value = true;
 	}
 	
+	/**
+	 * add hidden form key field to form footer elements
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function AddFormKey() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		/* add form key as hash as hidden field in form footer */
 		if ( ($o_glob->Trunk->FormKey) && ($o_glob->Security->SessionData->Exists('formkey')) ) {
-			$o_hidden = new forestFormElement(forestFormElement::HIDDEN);
+			$o_hidden = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::HIDDEN);
 			$o_hidden->Id = 'sys_fphp_formkeyHash';
 			$o_hidden->Value = password_hash($o_glob->Security->SessionData->{'formkey'}, PASSWORD_DEFAULT);
 			
@@ -1121,8 +1235,18 @@ class forestForm {
 		}
 	}
 
-	public function AddHoneypotFields(forestTwig $p_o_twig) {
-		$o_glob = forestGlobals::init();
+	/**
+	 * add hidden honeypot fields to form footer elements
+	 *
+	 * @param forestTwig $p_o_twig
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
+	public function AddHoneypotFields(\fPHP\Twigs\forestTwig $p_o_twig) {
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if ( ($o_glob->Trunk->HoneypotFields) && ($o_glob->Trunk->MaxAmountHoneypot > 0) ) {
 			$a_memory = array();
@@ -1141,7 +1265,7 @@ class forestForm {
 				
 				$a_memory[] = $s_hiddenId;
 				
-				$o_hiddenText = new forestFormElement(forestFormElement::TEXT);
+				$o_hiddenText = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::TEXT);
 				$o_hiddenText->Id = $s_hiddenId;
 				$o_hiddenText->NoDisplay = true;
 				
@@ -1153,6 +1277,16 @@ class forestForm {
 		}
 	}
 
+	/**
+	 * get form element by form element id
+	 *
+	 * @param string $p_s_formId
+	 *
+	 * @return forestFormElement
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function GetFormElementByFormId($p_s_formId) {
 		$o_return = null;
 		
@@ -1184,7 +1318,17 @@ class forestForm {
 		
 		return $o_return;
 	}
-
+	
+	/**
+	 * delete form element by form element id
+	 *
+	 * @param string $p_s_formId
+	 *
+	 * @return bool  true - form element has been deleted, false - form element has been not found
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function DeleteFormElementByFormId($p_s_formId) {
 		$b_return = false;
 		$s_listKey = null;
@@ -1223,7 +1367,19 @@ class forestForm {
 		return $b_return;
 	}
 	
-	public function AddFormElement(forestFormElement $p_o_formElement, $p_s_tabId = 'general', $p_b_first = false) {
+	/**
+	 * add form element to form
+	 *
+	 * @param forestFormElement $p_o_formElement
+	 * @param string $p_s_tabId  indicated on which tab the form element should be added
+	 * @param bool $p_b_first  true - add as first element, false - just add to form element list
+	 *
+	 * @return bool  true - form element has been added, false - form element has been not added
+	 *
+	 * @access public
+	 * @static no
+	 */
+	public function AddFormElement(\fPHP\Forms\forestFormElement $p_o_formElement, $p_s_tabId = 'general', $p_b_first = false) {
 		$b_return = false;
 		
 		if ($p_s_tabId == null) {
@@ -1245,12 +1401,20 @@ class forestForm {
 		return $b_return;
 	}
 	
+	/**
+	 * checks if a form has form elements with upload functionality like FILE or DROPZONE
+	 *
+	 * @return bool  true - form contains upload form elements, false - form does not contain upload form elements
+	 *
+	 * @access private
+	 * @static no
+	 */
 	private function CheckUploadElementConfigured() {
 		if ($this->FormTabConfiguration->value->Tab) {
 			if ($this->FormTabs->value->Count() > 0) {
 				foreach ($this->FormTabs->value as $o_tabElement) {
 					foreach ($o_tabElement->FormElements as $o_formElement) {
-						if ( ($o_formElement->getType() == forestFormElement::FILE) || ($o_formElement->getType() == forestFormElement::DROPZONE) ) {
+						if ( ($o_formElement->getType() == \fPHP\Forms\forestFormElement::FILE) || ($o_formElement->getType() == \fPHP\Forms\forestFormElement::DROPZONE) ) {
 							return true;
 						}
 					}
@@ -1259,7 +1423,7 @@ class forestForm {
 		}
 		
 		foreach ($this->FormElements->value as $o_formElement) {
-			if ( ($o_formElement->getType() == forestFormElement::FILE) || ($o_formElement->getType() == forestFormElement::DROPZONE) ) {
+			if ( ($o_formElement->getType() == \fPHP\Forms\forestFormElement::FILE) || ($o_formElement->getType() == \fPHP\Forms\forestFormElement::DROPZONE) ) {
 				return true;
 			}
 		}
@@ -1267,6 +1431,18 @@ class forestForm {
 		return false;
 	}
 	
+	/**
+	 * render forest form tab elements
+	 *
+	 * @param forestObjectList('forestFormTab') $p_ol_tabElements
+	 * @param string $p_s_tabId  indicated on which tab the form element should be added
+	 * @param string $p_s_foo  form string which contains all html form elements, passed by reference
+	 *
+	 * @return null
+	 *
+	 * @access private
+	 * @static no
+	 */
 	private function PrintTabElements($p_ol_tabElements, &$p_s_foo) {
 		$b_first = true;
 		$p_s_foo .= '<ul class="' . $this->FormTabConfiguration->value->TabMenuClass . '">' . "\n";
@@ -1283,10 +1459,10 @@ class forestForm {
 				$o_tabElement->CheckIsset();
 				
 				if ($b_first) {
-					$p_s_foo .= '<li class="' . $this->FormTabConfiguration->value->TabActiveClass . '"><a data-toggle="' . $this->FormTabConfiguration->value->TabToggle . '" href="#' . $s_tabIdPrefix . $o_tabElement->TabId . '">' . $o_tabElement->TabTitle . '</a></li>' . "\n";
+					$p_s_foo .= '<li class="' . $this->FormTabConfiguration->value->TabLiClass . '"><a data-toggle="' . $this->FormTabConfiguration->value->TabToggle . '" href="#' . $s_tabIdPrefix . $o_tabElement->TabId . '" class="' . $this->FormTabConfiguration->value->TabAClass . ' ' . $this->FormTabConfiguration->value->TabActiveClass . '">' . $o_tabElement->TabTitle . '</a></li>' . "\n";
 					$b_first = false;
 				} else {
-					$p_s_foo .= '<li><a data-toggle="' . $this->FormTabConfiguration->value->TabToggle . '" href="#' . $s_tabIdPrefix . $o_tabElement->TabId . '">' . $o_tabElement->TabTitle . '</a></li>' . "\n";
+					$p_s_foo .= '<li class="' . $this->FormTabConfiguration->value->TabLiClass . '"><a data-toggle="' . $this->FormTabConfiguration->value->TabToggle . '" href="#' . $s_tabIdPrefix . $o_tabElement->TabId . '" class="' . $this->FormTabConfiguration->value->TabAClass . '">' . $o_tabElement->TabTitle . '</a></li>' . "\n";
 				}
 			}
 		}
@@ -1316,6 +1492,17 @@ class forestForm {
 		$p_s_foo .= '</div>' . "\n";
 	}
 	
+	/**
+	 * render forest form form elements
+	 *
+	 * @param forestObjectList('forestFormElement') $p_ol_formElements
+	 * @param string $p_s_foo  form string which contains all html form elements, passed by reference
+	 *
+	 * @return null
+	 *
+	 * @access private
+	 * @static no
+	 */
 	private function PrintFormElements($p_ol_formElements, &$p_s_foo) {
 		foreach ($p_ol_formElements as $o_formElement) {
 			/* overwrite Form Group Class if it is not set */
@@ -1340,7 +1527,7 @@ class forestForm {
 			}
 			
 			/* overwrite Class if it is not set */
-			if ( ($o_formElement->getType() != forestFormElement::RADIO) && ($o_formElement->getType() != forestFormElement::CHECKBOX) && ($o_formElement->getType() != forestFormElement::DESCRIPTION) ) {
+			if ( ($o_formElement->getType() != \fPHP\Forms\forestFormElement::RADIO) && ($o_formElement->getType() != \fPHP\Forms\forestFormElement::CHECKBOX) && ($o_formElement->getType() != \fPHP\Forms\forestFormElement::SELECT) && ($o_formElement->getType() != \fPHP\Forms\forestFormElement::LOOKUP) && ($o_formElement->getType() != \fPHP\Forms\forestFormElement::DESCRIPTION) ) {
 				if (issetStr($this->FormObject->value->ClassAll)) {
 					if (!issetStr($o_formElement->Class)) {
 						$o_formElement->Class = $this->FormObject->value->ClassAll;
@@ -1350,37 +1537,70 @@ class forestForm {
 			
 			/* set required flag for all form elements */
 			if ($this->FormObject->value->RequiredAll) {
-				if ($o_formElement->getType() != forestFormElement::CHECKBOX) {
+				if ($o_formElement->getType() != \fPHP\Forms\forestFormElement::CHECKBOX) {
 					$o_formElement->Required = true;
 				}
 			}
 			
 			/* set readonly flag for all form elements */
 			if ($this->FormObject->value->ReadonlyAll) {
-				if ( ($o_formElement->getType() != forestFormElement::SELECT) && ($o_formElement->getType() != forestFormElement::LOOKUP) && ($o_formElement->getType() != forestFormElement::COLOR) && ($o_formElement->getType() != forestFormElement::DROPZONE) && ($o_formElement->getType() != forestFormElement::RICHTEXT) && ($o_formElement->getType() != forestFormElement::DESCRIPTION) ) {
+				if ( ($o_formElement->getType() != \fPHP\Forms\forestFormElement::SELECT) && ($o_formElement->getType() != \fPHP\Forms\forestFormElement::LOOKUP) && ($o_formElement->getType() != \fPHP\Forms\forestFormElement::COLOR) && ($o_formElement->getType() != \fPHP\Forms\forestFormElement::DROPZONE) && ($o_formElement->getType() != \fPHP\Forms\forestFormElement::RICHTEXT) && ($o_formElement->getType() != \fPHP\Forms\forestFormElement::DESCRIPTION) ) {
 					$o_formElement->Readonly = true;
 				}
 				
 				/* other elements do not have readonly flag, instead we are using disabled flag */
-				if ( ($o_formElement->getType() == forestFormElement::RICHTEXT) || ($o_formElement->getType() == forestFormElement::RADIO) || ($o_formElement->getType() == forestFormElement::CHECKBOX) || ($o_formElement->getType() == forestFormElement::SELECT) || ($o_formElement->getType() == forestFormElement::LOOKUP) || ($o_formElement->getType() == forestFormElement::COLOR) || ( ($o_formElement->getType() == forestFormElement::BUTTON) && (!$o_formElement->NoFormGroup) ) ) {
+				if ( ($o_formElement->getType() == \fPHP\Forms\forestFormElement::RICHTEXT) || ($o_formElement->getType() == \fPHP\Forms\forestFormElement::RADIO) || ($o_formElement->getType() == \fPHP\Forms\forestFormElement::CHECKBOX) || ($o_formElement->getType() == \fPHP\Forms\forestFormElement::SELECT) || ($o_formElement->getType() == \fPHP\Forms\forestFormElement::LOOKUP) || ($o_formElement->getType() == \fPHP\Forms\forestFormElement::COLOR) || ( ($o_formElement->getType() == \fPHP\Forms\forestFormElement::BUTTON) && (!$o_formElement->NoFormGroup) ) ) {
 					$o_formElement->Disabled = true;
 				}
 			}
 			
-			/* overwrite Radio Class if it is not set */
-			if ($o_formElement->getType() == forestFormElement::RADIO) {
+			/* overwrite Radio Classes if it is not set */
+			if ($o_formElement->getType() == \fPHP\Forms\forestFormElement::RADIO) {
+				if (issetStr($this->FormObject->value->RadioContainerClass)) {
+					if (!issetStr($o_formElement->RadioContainerClass)) {
+						$o_formElement->RadioContainerClass = $this->FormObject->value->RadioContainerClass;
+					}
+				}
+				
 				if (issetStr($this->FormObject->value->RadioClass)) {
 					if (!issetStr($o_formElement->RadioClass)) {
 						$o_formElement->RadioClass = $this->FormObject->value->RadioClass;
 					}
 				}
+				
+				if (issetStr($this->FormObject->value->RadioLabelClass)) {
+					if (!issetStr($o_formElement->RadioLabelClass)) {
+						$o_formElement->RadioLabelClass = $this->FormObject->value->RadioLabelClass;
+					}
+				}
 			}
 			
-			/* overwrite Checkbox Class if it is not set */
-			if ($o_formElement->getType() == forestFormElement::CHECKBOX) {
+			/* overwrite Checkbox Classes if it is not set */
+			if ($o_formElement->getType() == \fPHP\Forms\forestFormElement::CHECKBOX) {
+				if (issetStr($this->FormObject->value->CheckboxContainerClass)) {
+					if (!issetStr($o_formElement->CheckboxContainerClass)) {
+						$o_formElement->CheckboxContainerClass = $this->FormObject->value->CheckboxContainerClass;
+					}
+				}
+				
 				if (issetStr($this->FormObject->value->CheckboxClass)) {
 					if (!issetStr($o_formElement->CheckboxClass)) {
 						$o_formElement->CheckboxClass = $this->FormObject->value->CheckboxClass;
+					}
+				}
+				
+				if (issetStr($this->FormObject->value->CheckboxLabelClass)) {
+					if (!issetStr($o_formElement->CheckboxLabelClass)) {
+						$o_formElement->CheckboxLabelClass = $this->FormObject->value->CheckboxLabelClass;
+					}
+				}
+			}
+			
+			/* overwrite Select class if it is not set */
+			if ( ($o_formElement->getType() == \fPHP\Forms\forestFormElement::SELECT) || ($o_formElement->getType() == \fPHP\Forms\forestFormElement::LOOKUP) ) {
+				if (issetStr($this->FormObject->value->SelectClass)) {
+					if (!issetStr($o_formElement->Class)) {
+						$o_formElement->Class = $this->FormObject->value->SelectClass;
 					}
 				}
 			}
@@ -1389,6 +1609,16 @@ class forestForm {
 		}
 	}
 	
+	/**
+	 * render forest form validation rules for form
+	 *
+	 * @param string $p_s_foo  form string which contains all html form elements, passed by reference
+	 *
+	 * @return null
+	 *
+	 * @access private
+	 * @static no
+	 */
 	private function PrintValRules(&$p_s_foo) {
 		$i_valRules = $this->FormObject->value->ValRules->Count();
 		
@@ -1433,7 +1663,7 @@ class forestForm {
 }
 
 class forestFormTab {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -1450,12 +1680,26 @@ class forestFormTab {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormTab class
+	 *
+	 * @param string $p_s_tabId  tab id for html tab element
+	 * @param string $p_s_tabTitle  tab title for html tab element
+	 * @param string $p_s_tabClass  tab class for html tab element
+	 * @param string $p_b_printFooter  tab active class for html tab element
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct($p_s_tabId = null, $p_s_tabTitle = null, $p_s_tabClass = null, $p_s_tabActiveClass = null) {
 		$this->TabId = new forestString;
 		$this->TabTitle = new forestString;
 		$this->FormElements = new forestObject(new forestObjectList('forestFormElement'), false);
 		$this->Active = new forestBool;
-		$this->TempFormObject = new forestObject(new forestFormElement(forestFormElement::FORM));
+		$this->TempFormObject = new forestObject(new forestFormElement(\fPHP\Forms\forestFormElement::FORM));
 		$this->TabClass = new forestString;
 		$this->TabActiveClass = new forestString;
 		$this->ReadOnly = new forestBool;
@@ -1477,6 +1721,15 @@ class forestFormTab {
 		}
 	}
 	
+	/**
+	 * render the complete form tab with all its settings
+	 *
+	 * @return string
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
 		$s_tabId = $this->TabId->value;
 		
@@ -1499,6 +1752,16 @@ class forestFormTab {
 		return $s_foo;
 	}
 	
+	/**
+	 * render forest form form elements
+	 *
+	 * @param string $p_s_foo  form string which contains all html form elements, passed by reference
+	 *
+	 * @return null
+	 *
+	 * @access private
+	 * @static no
+	 */
 	private function PrintFormElements(&$p_s_foo) {
 		foreach ($this->FormElements->value as $o_formElement) {
 			/* overwrite Form Group Class if it is not set */
@@ -1523,7 +1786,7 @@ class forestFormTab {
 			}
 			
 			/* overwrite Class if it is not set */
-			if ( ($o_formElement->getType() != forestFormElement::RADIO) && ($o_formElement->getType() != forestFormElement::CHECKBOX) && ($o_formElement->getType() != forestFormElement::DESCRIPTION) ) {
+			if ( ($o_formElement->getType() != \fPHP\Forms\forestFormElement::RADIO) && ($o_formElement->getType() != \fPHP\Forms\forestFormElement::CHECKBOX) && ($o_formElement->getType() != \fPHP\Forms\forestFormElement::SELECT) && ($o_formElement->getType() != \fPHP\Forms\forestFormElement::LOOKUP) && ($o_formElement->getType() != \fPHP\Forms\forestFormElement::DESCRIPTION) ) {
 				if (issetStr($this->TempFormObject->value->ClassAll)) {
 					if (!issetStr($o_formElement->Class)) {
 						$o_formElement->Class = $this->TempFormObject->value->ClassAll;
@@ -1533,37 +1796,70 @@ class forestFormTab {
 			
 			/* set required flag for all form elements */
 			if ($this->TempFormObject->value->RequiredAll) {
-				if ($o_formElement->getType() != forestFormElement::CHECKBOX) {
+				if ($o_formElement->getType() != \fPHP\Forms\forestFormElement::CHECKBOX) {
 					$o_formElement->Required = true;
 				}
 			}
 			
 			/* set readonly flag for all form elements */
 			if ($this->TempFormObject->value->ReadonlyAll) {
-				if ( ($o_formElement->getType() != forestFormElement::SELECT) && ($o_formElement->getType() != forestFormElement::LOOKUP) && ($o_formElement->getType() != forestFormElement::COLOR) && ($o_formElement->getType() != forestFormElement::DROPZONE) && ($o_formElement->getType() != forestFormElement::RICHTEXT) && ($o_formElement->getType() != forestFormElement::DESCRIPTION) ) {
+				if ( ($o_formElement->getType() != \fPHP\Forms\forestFormElement::SELECT) && ($o_formElement->getType() != \fPHP\Forms\forestFormElement::LOOKUP) && ($o_formElement->getType() != \fPHP\Forms\forestFormElement::COLOR) && ($o_formElement->getType() != \fPHP\Forms\forestFormElement::DROPZONE) && ($o_formElement->getType() != \fPHP\Forms\forestFormElement::RICHTEXT) && ($o_formElement->getType() != \fPHP\Forms\forestFormElement::DESCRIPTION) ) {
 					$o_formElement->Readonly = true;
 				}
 				
 				/* other elements do not have readonly flag, instead we are using disabled flag */
-				if ( ($o_formElement->getType() == forestFormElement::RICHTEXT) || ($o_formElement->getType() == forestFormElement::RADIO) || ($o_formElement->getType() == forestFormElement::CHECKBOX) || ($o_formElement->getType() == forestFormElement::SELECT) || ($o_formElement->getType() == forestFormElement::LOOKUP) || ($o_formElement->getType() == forestFormElement::COLOR) || ( ($o_formElement->getType() == forestFormElement::BUTTON)  && (!$o_formElement->NoFormGroup) ) ) {
+				if ( ($o_formElement->getType() == \fPHP\Forms\forestFormElement::RICHTEXT) || ($o_formElement->getType() == \fPHP\Forms\forestFormElement::RADIO) || ($o_formElement->getType() == \fPHP\Forms\forestFormElement::CHECKBOX) || ($o_formElement->getType() == \fPHP\Forms\forestFormElement::SELECT) || ($o_formElement->getType() == \fPHP\Forms\forestFormElement::LOOKUP) || ($o_formElement->getType() == \fPHP\Forms\forestFormElement::COLOR) || ( ($o_formElement->getType() == \fPHP\Forms\forestFormElement::BUTTON)  && (!$o_formElement->NoFormGroup) ) ) {
 					$o_formElement->Disabled = true;
 				}
 			}
 			
-			/* overwrite Radio Class if it is not set */
-			if ($o_formElement->getType() == forestFormElement::RADIO) {
+			/* overwrite Radio Classes if it is not set */
+			if ($o_formElement->getType() == \fPHP\Forms\forestFormElement::RADIO) {
+				if (issetStr($this->TempFormObject->value->RadioContainerClass)) {
+					if (!issetStr($o_formElement->RadioContainerClass)) {
+						$o_formElement->RadioContainerClass = $this->TempFormObject->value->RadioContainerClass;
+					}
+				}
+				
 				if (issetStr($this->TempFormObject->value->RadioClass)) {
 					if (!issetStr($o_formElement->RadioClass)) {
 						$o_formElement->RadioClass = $this->TempFormObject->value->RadioClass;
 					}
 				}
+				
+				if (issetStr($this->TempFormObject->value->RadioLabelClass)) {
+					if (!issetStr($o_formElement->RadioLabelClass)) {
+						$o_formElement->RadioLabelClass = $this->TempFormObject->value->RadioLabelClass;
+					}
+				}
 			}
 			
-			/* overwrite Checkbox Class if it is not set */
-			if ($o_formElement->getType() == forestFormElement::CHECKBOX) {
+			/* overwrite Checkbox Classes if it is not set */
+			if ($o_formElement->getType() == \fPHP\Forms\forestFormElement::CHECKBOX) {
+				if (issetStr($this->TempFormObject->value->CheckboxContainerClass)) {
+					if (!issetStr($o_formElement->CheckboxContainerClass)) {
+						$o_formElement->CheckboxContainerClass = $this->TempFormObject->value->CheckboxContainerClass;
+					}
+				}
+				
 				if (issetStr($this->TempFormObject->value->CheckboxClass)) {
 					if (!issetStr($o_formElement->CheckboxClass)) {
 						$o_formElement->CheckboxClass = $this->TempFormObject->value->CheckboxClass;
+					}
+				}
+				
+				if (issetStr($this->TempFormObject->value->CheckboxLabelClass)) {
+					if (!issetStr($o_formElement->CheckboxLabelClass)) {
+						$o_formElement->CheckboxLabelClass = $this->TempFormObject->value->CheckboxLabelClass;
+					}
+				}
+			}
+			
+			/* overwrite Select class if it is not set */
+			if ( ($o_formElement->getType() == \fPHP\Forms\forestFormElement::SELECT) || ($o_formElement->getType() == \fPHP\Forms\forestFormElement::LOOKUP) ) {
+				if (issetStr($this->TempFormObject->value->SelectClass)) {
+					if (!issetStr($o_formElement->Class)) {
+						$o_formElement->Class = $this->TempFormObject->value->SelectClass;
 					}
 				}
 			}
@@ -1572,8 +1868,19 @@ class forestFormTab {
 		}
 	}
 	
+	/**
+	 * load forestFormTab class with settings from json object
+	 *
+	 * @param string $p_s_jsonDataSettings  json settings
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function loadJSON($p_s_jsonDataSettings) {
-		forestFormElement::JSONSettingsMultilanguage($p_s_jsonDataSettings);
+		\fPHP\Forms\forestFormElement::JSONSettingsMultilanguage($p_s_jsonDataSettings);
 		$a_settings = json_decode($p_s_jsonDataSettings, true);
 		
 		if ($a_settings != null) {
@@ -1587,6 +1894,17 @@ class forestFormTab {
 		}
 	}
 	
+	/**
+	 * check if all necessary settings for forestFormTab are set
+	 *
+	 * @param boool $p_b_extended  true - check tab class and tab active class, false - check only tab id and tab title
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function CheckIsset($p_b_extended = false) {
 		if (!( issetStr($this->TabId->value) && issetStr($this->TabTitle->value) )) {
 			throw new forestException('Not all necessary FormTab settings are set.');
@@ -1599,6 +1917,16 @@ class forestFormTab {
 		}
 	}
 	
+	/**
+	 * get form element by form element id
+	 *
+	 * @param string $p_s_formId
+	 *
+	 * @return forestFormElement
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function GetFormElementByFormId($p_s_formId) {
 		$o_return = null;
 		
@@ -1612,6 +1940,16 @@ class forestFormTab {
 		return $o_return;
 	}
 
+	/**
+	 * delete form element by form element id
+	 *
+	 * @param string $p_s_formId
+	 *
+	 * @return bool  true - form element has been deleted, false - form element has been not found
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function DeleteFormElementByFormId($p_s_formId) {
 		$b_return = false;
 		$s_listKey = null;
@@ -1631,7 +1969,18 @@ class forestFormTab {
 		return $b_return;
 	}
 	
-	public function AddFormElement(forestFormElement $p_o_formElement, $p_b_first = false) {
+	/**
+	 * add form element to form
+	 *
+	 * @param forestFormElement $p_o_formElement
+	 * @param bool $p_b_first  true - add as first element, false - just add to form element list
+	 *
+	 * @return bool  true - form element has been added, false - form element has been not added
+	 *
+	 * @access public
+	 * @static no
+	 */
+	public function AddFormElement(\fPHP\Forms\forestFormElement $p_o_formElement, $p_b_first = false) {
 		if ($p_b_first) {
 			$this->FormElements->value->AddFirst($p_o_formElement);
 		} else {
@@ -1643,12 +1992,14 @@ class forestFormTab {
 }
 
 class forestTabConfiguration {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
 	private $Tab;
 	private $TabMenuClass;
+	private $TabLiClass;
+	private $TabAClass;
 	private $TabActiveClass;
 	private $TabToggle;
 	private $TabContentClass;
@@ -1659,10 +2010,22 @@ class forestTabConfiguration {
 	/* Properties */
 	
 	/* Methods */
-	 
+	
+	/**
+	 * constructor of forestTabConfiguration class, holding all information
+	 *
+	 * @param parameters based on the forestTabConfiguration class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */	
 	public function __construct(
 		$p_b_tab = false,
 		$p_s_tabMenuClass = null,
+		$p_s_tabLiClass = null,
+		$p_s_tabAClass = null,
 		$p_s_tabActiveClass = null,
 		$p_s_tabToggle = null,
 		$p_s_tabContentClass = null,
@@ -1672,6 +2035,8 @@ class forestTabConfiguration {
 	) {
 		$this->Tab = new forestBool($p_b_tab);
 		$this->TabMenuClass = new forestString;
+		$this->TabLiClass = new forestString;
+		$this->TabAClass = new forestString;
 		$this->TabActiveClass = new forestString;
 		$this->TabToggle = new forestString;
 		$this->TabContentClass = new forestString;
@@ -1681,6 +2046,14 @@ class forestTabConfiguration {
 		
 		if ($p_s_tabMenuClass != null) {
 			$this->TabMenuClass->value = $p_s_tabMenuClass;
+		}
+		
+		if ($p_s_tabLiClass != null) {
+			$this->TabLiClass->value = $p_s_tabLiClass;
+		}
+		
+		if ($p_s_tabAClass != null) {
+			$this->TabAClass->value = $p_s_tabAClass;
 		}
 		
 		if ($p_s_tabActiveClass != null) {
@@ -1708,8 +2081,19 @@ class forestTabConfiguration {
 		}
 	}
 	
+	/**
+	 * load forestTabConfiguration class with settings from json object
+	 *
+	 * @param string $p_s_jsonDataSettings  json settings
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function loadJSON($p_s_jsonDataSettings) {
-		forestFormElement::JSONSettingsMultilanguage($p_s_jsonDataSettings);
+		\fPHP\Forms\forestFormElement::JSONSettingsMultilanguage($p_s_jsonDataSettings);
 		$a_settings = json_decode($p_s_jsonDataSettings, true);
 		
 		if ($a_settings != null) {
@@ -1722,7 +2106,16 @@ class forestTabConfiguration {
 			throw new forestException('Cannot decode json data. Please check json data settings for correct syntax.');
 		}
 	}
-
+	
+	/**
+	 * check if all necessary settings for forestTabConfiguration are set
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function CheckIsset() {
 		if (!( issetStr($this->TabMenuClass->value) && issetStr($this->TabActiveClass->value) && issetStr($this->TabToggle->value) && issetStr($this->TabContentClass->value) && issetStr($this->TabFooterClass->value) && issetStr($this->TabElementClass->value) && issetStr($this->TabElementActiveClass->value) )) {
 			throw new forestException('Not all necessary TabConfiguration settings are set.');
@@ -1731,7 +2124,7 @@ class forestTabConfiguration {
 }
 
 class forestModalConfiguration {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -1739,6 +2132,7 @@ class forestModalConfiguration {
 	private $ModalClass;
 	private $ModalId;
 	private $ModalTitle;
+	private $ModalTitleClass;
 	private $ModalRole;
 	private $ModalDialogClass;
 	private $ModalDialogContentClass;
@@ -1752,12 +2146,23 @@ class forestModalConfiguration {
 	/* Properties */
 	
 	/* Methods */
-	 
+	
+	/**
+	 * constructor of forestModalConfiguration class, holding all information
+	 *
+	 * @param parameters based on the forestModalConfiguration class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */	
 	public function __construct(
 		$p_b_modal = false,
 		$p_s_modalClass = null,
 		$p_s_modalId = null,
 		$p_s_modalTitle = null,
+		$p_s_modalTitleClass = null,
 		$p_s_modalRole = null,
 		$p_s_modalDialogClass = null,
 		$p_s_modalDialogContentClass = null,
@@ -1772,6 +2177,7 @@ class forestModalConfiguration {
 		$this->ModalClass = new forestString;
 		$this->ModalId = new forestString;
 		$this->ModalTitle = new forestString;
+		$this->ModalTitleClass = new forestString;
 		$this->ModalRole = new forestString;
 		$this->ModalDialogClass = new forestString;
 		$this->ModalDialogContentClass = new forestString;
@@ -1792,6 +2198,10 @@ class forestModalConfiguration {
 		
 		if ($p_s_modalTitle != null) {
 			$this->ModalTitle->value = $p_s_modalTitle;
+		}
+		
+		if ($p_s_modalTitleClass != null) {
+			$this->ModalTitleClass->value = $p_s_modalTitleClass;
 		}
 		
 		if ($p_s_modalRole != null) {
@@ -1831,8 +2241,19 @@ class forestModalConfiguration {
 		}
 	}
 	
+	/**
+	 * load forestModalConfiguration class with settings from json object
+	 *
+	 * @param string $p_s_jsonDataSettings  json settings
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function loadJSON($p_s_jsonDataSettings) {
-		forestFormElement::JSONSettingsMultilanguage($p_s_jsonDataSettings);
+		\fPHP\Forms\forestFormElement::JSONSettingsMultilanguage($p_s_jsonDataSettings);
 		$a_settings = json_decode($p_s_jsonDataSettings, true);
 		
 		if ($a_settings != null) {
@@ -1845,13 +2266,22 @@ class forestModalConfiguration {
 			throw new forestException('Cannot decode json data. Please check json data settings for correct syntax.');
 		}
 	}
-
+	
+	/**
+	 * check if all necessary settings for forestModalConfiguration are set
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function CheckIsset() {
 		if (!( 
 			issetStr($this->ModalClass->value) && 
 			issetStr($this->ModalId->value) && 
 			issetStr($this->ModalTitle->value) && 
-			issetStr($this->ModalRole->value) && 
+			issetStr($this->ModalTitleClass->value) && 
 			issetStr($this->ModalDialogClass->value) && 
 			issetStr($this->ModalDialogContentClass->value) && 
 			issetStr($this->ModalHeaderClass->value) && 
@@ -1861,7 +2291,7 @@ class forestModalConfiguration {
 			issetStr($this->ModalBodyClass->value) && 
 			issetStr($this->ModalFooterClass->value)
 		)) {
-			throw new forestException('Not all necessary ModalConfiguration settings are set.');
+			throw new forestException('Not all necessary ModalConfiguration settings are set. [' . $this->ModalId->value . ']');
 		}
 	}
 }

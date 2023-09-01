@@ -1,8 +1,21 @@
-const glyph_ok = '<span class="glyphicon glyphicon-ok form-control-feedback"></span>';
-const glyph_error = '<span class="glyphicon glyphicon-remove form-control-feedback"></span>';
-const types_ignore_glyphs = ['select-one', 'select-multiple', 'date', 'datetime-local', 'number', 'range', 'time', 'week', 'month', 'list'];
-const types_ignore_glyphs_form_linear = ['select-one', 'select-multiple', 'date', 'datetime-local', 'number', 'range', 'time', 'week', 'month', 'list', 'checkbox', 'radio'];
-
+/**
+ * javascript library for fphp_validation module with jQuery Validate
+ *
+ * @category    forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestphp.de>
+ * @copyright   (c) 2019 forestPHP Framework
+ * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
+ * @license     https://opensource.org/licenses/MIT MIT License
+ * @version     0.9.0 beta
+ * @link        http://www.forestphp.de/
+ * @object-id   0x2 00002
+ * @since       File available since Release 0.1.3 alpha
+ * @deprecated  -
+ *
+ * @version log Version     Developer Date        Comment
+ *              0.1.3 alpha	renatus		2019-08-15	added to framework
+ *              0.9.0 beta	renatus		2020-01-27	changes for bootstrap 4
+ */
 $.fn.ReplaceCommaWithDot = function() {
 	return this.each(function() {
 		$(this).keyup(function(p_e_event) {
@@ -25,16 +38,9 @@ function fphp_apply_data_validator(p_o_options) {
 		showErrors: function(errorMap, errorList) {
 			this.defaultShowErrors();
 			
-			// Clean up any tooltips for valid elements
-			$.each(this.validElements(), function (index, element) {
-					var $element = $(element);
-					$element.data('title', '') // Clear the title - there is no error associated anymore
-					.tooltip('hide');
-			});
-
 			var b_tooltip = false;
 
-			// Create new tooltips for invalid elements
+			// create new tooltips for invalid elements
 			$.each(errorList, function (index, error) {
 				var $element = $(error.element);
 
@@ -46,11 +52,10 @@ function fphp_apply_data_validator(p_o_options) {
 					s_message = error.message;
 				}
 				
+				s_message = '<div class="invalid-tooltip">' + s_message + '</div>';
+				
 				if (!b_tooltip) {
-					$element.tooltip(/*{
-						placement: 'bottom',
-						trigger: 'manual'
-					}*/).attr('title', s_message).tooltip('fixTitle').tooltip('show');
+					$element.after(s_message);
 					
 					b_tooltip = true;
 				}
@@ -60,87 +65,24 @@ function fphp_apply_data_validator(p_o_options) {
 		errorPlacement: function(error, element) {
 		},
 		
-		/*errorPlacement: function(error, element) {
-			//if ($(element).closest('form').find('.tooltip').length < 1) {
-			
-			if ($('.tab-required').text() == 'No messages') {
-				var s_message = '';
-				
-				if ($(element).data('valmessage')) {
-					s_message = $(element).data('valmessage')
-				} else if ($(element).data('valmessage') == undefined) {
-					s_message = $(error).text();
-				}
-				
-				var lastError = $(element).data('lastError');
-                var newError = s_message;
-
-				$(element).data('lastError', newError);
-
-				if(newError !== '' && newError !== lastError) {
-					//$(element).closest('label').tooltip({
-					//	placement: 'bottom',
-					//	trigger: 'manual'
-					//}).attr('title', newError).tooltip('fixTitle').tooltip('show');
-					$('.tab-required').text(newError);
-					$('.tab-required').show();
-				}
-			}
-		},*/
-		
-		/*success: function(label, element) { console.log($(element).attr('name')); console.log(label);
-			//if ($('.tab-required').text() != 'No messages') {
-			//	$('.tab-required').text('No messages');
-			//	$('.tab-required').hide();
-			//}
-		},*/
-		
 		highlight: function(element) {
-			$(element).closest('.form-group').removeClass('has-success has-feedback');
-			$(element).closest('.form-group').addClass('has-error has-feedback');
+			$(element).removeClass('is-valid');
+			$(element).addClass('is-invalid');
 			
-			var types = null;
-			
-			if ($(element).closest('.form-inline').length != 0) {
-				types = types_ignore_glyphs_form_linear;
-			} else {
-				types = types_ignore_glyphs;
-			}
-			
-			if ( (!(types.indexOf($(element)[0].type) > -1)) && (!(types.indexOf($(element).attr('type')) > -1)) && (!(typeof $(element).attr('list') !== typeof undefined && $(element).attr('list') !== false)) ) {
-				if ( (!($(element).parent().hasClass('radio-inline'))) && (!($(element).parent().hasClass('checkbox-inline'))) ) {
-					if ($(element).closest('.form-group').find('.glyphicon').length != 0) {
-						$(element).closest('.form-group').find('.glyphicon').remove();
-					}
-					
-					if ($(element).closest('.form-group').find('.glyphicon').length == 0) {
-						$(element).after(glyph_error);
-					}
-				}
-			}
+			$(element).parent().siblings().each(function() {
+				$(this).find("input[name='" + $(element).attr('name') + "']").removeClass('is-valid');
+				$(this).find("input[name='" + $(element).attr('name') + "']").addClass('is-invalid');
+			});
 		},
 		
 		unhighlight: function(element) {
-			$(element).closest('.form-group').removeClass('has-error has-feedback');
-			$(element).closest('.form-group').addClass('has-success has-feedback');
+			$(element).removeClass('is-invalid');
+			$(element).addClass('is-valid');
 			
-			if ($(element).closest('.form-inline').length != 0) {
-				types = types_ignore_glyphs_form_linear;
-			} else {
-				types = types_ignore_glyphs;
-			}
-			
-			if ( (!(types.indexOf($(element)[0].type) > -1)) && (!(types.indexOf($(element).attr('type')) > -1)) && (!(typeof $(element).attr('list') !== typeof undefined && $(element).attr('list') !== false)) ) {
-				if ( (!($(element).parent().hasClass('radio-inline'))) && (!($(element).parent().hasClass('checkbox-inline'))) ) {
-					if ($(element).closest('.form-group').find('.glyphicon').length != 0) {
-						$(element).closest('.form-group').find('.glyphicon').remove();
-					}
-					
-					if ($(element).closest('.form-group').find('.glyphicon').length == 0) {
-						$(element).after(glyph_ok);
-					}
-				}
-			}
+			$(element).parent().siblings().each(function() {
+				$(this).find("input[name='" + $(element).attr('name') + "']").removeClass('is-invalid');
+				$(this).find("input[name='" + $(element).attr('name') + "']").addClass('is-valid');
+			});
 		}
 	});
 	

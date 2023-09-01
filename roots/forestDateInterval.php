@@ -1,21 +1,29 @@
 <?php
-/* +--------------------------------+ */
-/* |				    | */
-/* | forestPHP V0.8.0 (0x1 00013)   | */
-/* |				    | */
-/* +--------------------------------+ */
-
-/*
- * + Description +
+/**
  * date interval class with match validation of date interval strings
  *
- * + Version Log +
- * Version	Developer	Date		Comment
- * 0.1.1 alpha	renatus		2019-08-09	added to framework
+ * @category    forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestphp.de>
+ * @copyright   (c) 2019 forestPHP Framework
+ * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
+ * @license     https://opensource.org/licenses/MIT MIT License
+ * @version     0.9.0 beta
+ * @link        http://www.forestphp.de/
+ * @object-id   0x1 00013
+ * @since       File available since Release 0.1.1 alpha
+ * @deprecated  -
+ *
+ * @version log Version		Developer	Date		Comment
+ * 		0.1.1 alpha	renatus		2019-08-09	added to framework        
  */
 
+namespace fPHP\Helper;
+
+use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \fPHP\Roots\forestException as forestException;
+
 class forestDateInterval {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -27,9 +35,20 @@ class forestDateInterval {
 	private $s;
 	
 	/* Properties */
-		
+	
 	/* Methods */
 	
+	/**
+	 * constructor of forestDateInterval class
+	 *
+	 * @param string $p_s_dateinterval  date interval string, e.g. P2D, P1Y3M18DT5H16M33S, PT3H30S, ...
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct($p_s_dateinterval = null) {
 		$this->y = new forestInt;
 		$this->m = new forestInt;
@@ -96,7 +115,17 @@ class forestDateInterval {
 		}
 	}
 	
-	public function SetDateInterval(DateInterval $p_o_dateInterval) {
+	/**
+	 * set date interval values with PHP DateInterval object
+	 *
+	 * @param DateInterval $p_o_dateInterval
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
+	public function SetDateInterval(\DateInterval $p_o_dateInterval) {
 		$this->y->value = $p_o_dateInterval->y;
 		$this->m->value = $p_o_dateInterval->m;
 		$this->d->value = $p_o_dateInterval->d;
@@ -104,9 +133,17 @@ class forestDateInterval {
 		$this->i->value = $p_o_dateInterval->i;
 		$this->s->value = $p_o_dateInterval->s;
 	}
-
-	function __toString() {
-		$o_glob = forestGlobals::init();
+	
+	/**
+	 * returns date interval string with translation
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
+	public function __toString() {
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		$s_foo = '';
 		
 		if ($this->y->value != 0) {

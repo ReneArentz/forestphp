@@ -1,6 +1,10 @@
 <?php
+
+namespace fPHP\Branches;
+use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+
 class translationBranch extends forestBranch {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -13,11 +17,11 @@ class translationBranch extends forestBranch {
 		$this->StandardView = forestBranch::LIST;
 		$this->KeepFilter->value = false;
 		
-		$this->Twig = new translationTwig();
+		$this->Twig = new \fPHP\Twigs\translationTwig();
 	}
 	
 	protected function init() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if ($this->StandardView == forestBranch::DETAIL) {
 			$this->GenerateView();

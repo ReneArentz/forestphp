@@ -1,6 +1,10 @@
 <?php
+
+namespace fPHP\Branches;
+use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+
 class userBranch extends forestBranch {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -13,11 +17,11 @@ class userBranch extends forestBranch {
 		$this->StandardView = forestBranch::LIST;
 		$this->KeepFilter->value = false;
 		
-		$this->Twig = new userTwig();
+		$this->Twig = new \fPHP\Twigs\userTwig();
 	}
 	
 	protected function init() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if ($this->StandardView == forestBranch::DETAIL) {
 			$this->GenerateView();
@@ -101,10 +105,10 @@ class userBranch extends forestBranch {
 		protected function beforeDeleteAction() {
 			/* $this->Twig holds current record */
 			
-			$o_glob = forestGlobals::init();
+			$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 			/* delete membership records of user record */
-			$o_usergroup_userTwig = new usergroup_userTwig;
+			$o_usergroup_userTwig = new \fPHP\Twigs\usergroup_userTwig;
 			
 			$a_sqlAdditionalFilter = array(array('column' => 'userUUID', 'value' => $this->Twig->UUID, 'operator' => '=', 'filterOperator' => 'AND'));
 			$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
@@ -122,7 +126,7 @@ class userBranch extends forestBranch {
 			}
 			
 			/* delete account record of user record */
-			$o_accountTwig = new accountTwig;
+			$o_accountTwig = new \fPHP\Twigs\accountTwig;
 			
 			if ($o_accountTwig->GetRecord(array($this->Twig->UUID))) {
 				/* delete membership record */

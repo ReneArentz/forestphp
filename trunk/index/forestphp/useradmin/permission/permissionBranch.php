@@ -1,6 +1,10 @@
 <?php
+
+namespace fPHP\Branches;
+use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+
 class permissionBranch extends forestBranch {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -13,11 +17,11 @@ class permissionBranch extends forestBranch {
 		$this->StandardView = forestBranch::LIST;
 		$this->KeepFilter->value = false;
 		
-		$this->Twig = new permissionTwig();
+		$this->Twig = new \fPHP\Twigs\permissionTwig();
 	}
 	
 	protected function init() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if ($this->StandardView == forestBranch::DETAIL) {
 			$this->GenerateView();
@@ -67,17 +71,17 @@ class permissionBranch extends forestBranch {
 			}
 	
 	protected function newAction() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!$o_glob->IsPost) {
 			$this->HandleFormKey($o_glob->URL->Branch . $o_glob->URL->Action . 'Form');
 			
 			/* add new record - step zero */
-			$o_glob->PostModalForm = new forestForm($this->Twig, true);
+			$o_glob->PostModalForm = new \fPHP\Forms\forestForm($this->Twig, true);
 			$o_glob->PostModalForm->FormModalConfiguration->ModalTitle = $o_glob->GetTranslation('NewModalTitle', 1);
 			
 			/* add step flag to modal form */
-			$o_hidden = new forestFormElement(forestFormElement::HIDDEN);
+			$o_hidden = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::HIDDEN);
 			$o_hidden->Id = 'sys_fphp_step';
 			$o_hidden->Value = 'one';
 			
@@ -85,12 +89,12 @@ class permissionBranch extends forestBranch {
 			
 			/* delete Name-element */
 			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_permission_Name')) {
-				throw new forestException('Cannot delete form element with Id[sys_fphp_permission_Name].');
+				throw new \fPHP\Roots\forestException('Cannot delete form element with Id[sys_fphp_permission_Name].');
 			}
 			
 			/* delete Action-element */
 			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_permission_Action')) {
-				throw new forestException('Cannot delete form element with Id[sys_fphp_permission_Action].');
+				throw new \fPHP\Roots\forestException('Cannot delete form element with Id[sys_fphp_permission_Action].');
 			}
 			
 			/* add any branch to lookup element */
@@ -107,12 +111,12 @@ class permissionBranch extends forestBranch {
 				$this->HandleFormKey($o_glob->URL->Branch . $o_glob->URL->Action . 'Form', true);
 				
 				/* check posted data for new sub record */
-				$o_branchTwig = new branchTwig;
+				$o_branchTwig = new \fPHP\Twigs\branchTwig;
 				
 				/* check if posted branch really exists */
 				if (intval($_POST['sys_fphp_permission_Branch']) != 0) {
 					if (! ($o_branchTwig->GetRecord(array($_POST['sys_fphp_permission_Branch']))) ) {
-						throw new forestException(0x10001401, array($o_branchTwig->fphp_Table));
+						throw new \fPHP\Roots\forestException(0x10001401, array($o_branchTwig->fphp_Table));
 					}
 				} else {
 					$o_branchTwig->Id = 0;
@@ -121,7 +125,7 @@ class permissionBranch extends forestBranch {
 				}
 				
 				/* look for actions, if they are no actions for selected branch, throw warning */
-				$o_actionTwig = new actionTwig;
+				$o_actionTwig = new \fPHP\Twigs\actionTwig;
 	
 				$a_sqlAdditionalFilter = array(array('column' => 'BranchId', 'value' => $o_branchTwig->Id, 'operator' => '=', 'filterOperator' => 'AND'));
 				$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
@@ -129,18 +133,18 @@ class permissionBranch extends forestBranch {
 				$o_glob->Temp->Del('SQLAdditionalFilter');
 				
 				if ($i_actions <= 0) {
-					throw new forestException(0x10001F11, array($o_branchTwig->Name));
+					throw new \fPHP\Roots\forestException(0x10001F11, array($o_branchTwig->Name));
 				} else {
 					/* update lookup form element with branch-id filter */
-					$this->Twig->Action->SetLookupData(new forestLookupData('sys_fphp_action', array('Id'), array('Name'), array('BranchId' => $o_branchTwig->Id)));
+					$this->Twig->Action->SetLookupData(new \fPHP\Helper\forestLookupData('sys_fphp_action', array('Id'), array('Name'), array('BranchId' => $o_branchTwig->Id)));
 				}
 				
 				/* add new record - step one */
-				$o_glob->PostModalForm = new forestForm($this->Twig, true);
+				$o_glob->PostModalForm = new \fPHP\Forms\forestForm($this->Twig, true);
 				$o_glob->PostModalForm->FormModalConfiguration->ModalTitle = $o_glob->GetTranslation('NewModalTitle', 1);
 				
 				/* add step flag to modal form */
-				$o_hidden = new forestFormElement(forestFormElement::HIDDEN);
+				$o_hidden = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::HIDDEN);
 				$o_hidden->Id = 'sys_fphp_step';
 				$o_hidden->Value = 'submit';
 				
@@ -148,11 +152,11 @@ class permissionBranch extends forestBranch {
 				
 				/* delete Branch-element */
 				if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_permission_Branch')) {
-					throw new forestException('Cannot delete form element with Id[sys_fphp_permission_Branch].');
+					throw new \fPHP\Roots\forestException('Cannot delete form element with Id[sys_fphp_permission_Branch].');
 				}
 				
 				/* add hidden branch to modal form */
-				$o_hiddenBranch = new forestFormElement(forestFormElement::HIDDEN);
+				$o_hiddenBranch = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::HIDDEN);
 				$o_hiddenBranch->Id = 'sys_fphp_permission_BranchTransfer';
 				$o_hiddenBranch->Value = $_POST['sys_fphp_permission_Branch'];
 				
@@ -160,7 +164,7 @@ class permissionBranch extends forestBranch {
 				
 				/* remove existing permission actions of lookup element */
 				/* get actions */
-				$o_permissionTwig = new permissionTwig;
+				$o_permissionTwig = new \fPHP\Twigs\permissionTwig;
 	
 				$a_sqlAdditionalFilter = array(array('column' => 'Branch', 'value' => $o_branchTwig->Id, 'operator' => '=', 'filterOperator' => 'AND'));
 				$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
@@ -189,7 +193,7 @@ class permissionBranch extends forestBranch {
 					}
 					
 					if (count($a_options) <= 0) {
-						throw new forestException(0x10001F11, array($o_branchTwig->Name));
+						throw new \fPHP\Roots\forestException(0x10001F11, array($o_branchTwig->Name));
 					}
 					
 					$o_actionElement->Options = $a_options;
@@ -201,37 +205,37 @@ class permissionBranch extends forestBranch {
 				$this->TransferPOST_Twig();
 				
 				/* check posted data for new sub record */
-				$o_branchTwig = new branchTwig;
+				$o_branchTwig = new \fPHP\Twigs\branchTwig;
 				
 				/* check if posted branch really exists */
 				if (intval($_POST['sys_fphp_permission_BranchTransfer']) != 0) {
 					if (! ($o_branchTwig->GetRecord(array($_POST['sys_fphp_permission_BranchTransfer']))) ) {
-						throw new forestException(0x10001401, array($o_branchTwig->fphp_Table));
+						throw new \fPHP\Roots\forestException(0x10001401, array($o_branchTwig->fphp_Table));
 					}
 				}
 				
 				$this->Twig->Branch = $_POST['sys_fphp_permission_BranchTransfer'];
 				
 				/* check if posted action really exists */
-				$o_actionTwig = new actionTwig;
+				$o_actionTwig = new \fPHP\Twigs\actionTwig;
 				
 				if (! ($o_actionTwig->GetRecord(array($_POST['sys_fphp_permission_Action']))) ) {
-					throw new forestException(0x10001401, array($o_actionTwig->fphp_Table));
+					throw new \fPHP\Roots\forestException(0x10001401, array($o_actionTwig->fphp_Table));
 				}
 				
 				/* set values for info columns when configured */
 				$i_infoColumns = $o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['InfoColumns'];
 				
 				if ($i_infoColumns == 10) {
-					$this->Twig->Created = new forestDateTime;
+					$this->Twig->Created = new \fPHP\Helper\forestDateTime;
 					$this->Twig->CreatedBy = $o_glob->Security->UserUUID;
 				} else if ($i_infoColumns == 100) {
-					$this->Twig->Modified = new forestDateTime;
+					$this->Twig->Modified = new \fPHP\Helper\forestDateTime;
 					$this->Twig->ModifiedBy = $o_glob->Security->UserUUID;
 				} else if ($i_infoColumns == 1000) {
-					$this->Twig->Created = new forestDateTime;
+					$this->Twig->Created = new \fPHP\Helper\forestDateTime;
 					$this->Twig->CreatedBy = $o_glob->Security->UserUUID;
-					$this->Twig->Modified = new forestDateTime;
+					$this->Twig->Modified = new \fPHP\Helper\forestDateTime;
 					$this->Twig->ModifiedBy = $o_glob->Security->UserUUID;
 				}
 				
@@ -249,12 +253,12 @@ class permissionBranch extends forestBranch {
 				/* evaluate result */
 				if ($i_result == -1) {
 					$this->UndoFilesEntries();
-					throw new forestException(0x10001403, array($o_glob->Temp->{'UniqueIssue'}));
+					throw new \fPHP\Roots\forestException(0x10001403, array($o_glob->Temp->{'UniqueIssue'}));
 				} else if ($i_result == 0) {
 					$this->UndoFilesEntries();
-					throw new forestException(0x10001402);
+					throw new \fPHP\Roots\forestException(0x10001402);
 				} else if ($i_result == 1) {
-					$o_glob->SystemMessages->Add(new forestException(0x10001404));
+					$o_glob->SystemMessages->Add(new \fPHP\Roots\forestException(0x10001404));
 				}
 			}
 		}
@@ -301,10 +305,10 @@ class permissionBranch extends forestBranch {
 		protected function beforeDeleteAction() {
 			/* $this->Twig holds current record */
 			
-			$o_glob = forestGlobals::init();
+			$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 			/* look for role_permission records */
-			$o_role_permissionTwig = new role_permissionTwig;
+			$o_role_permissionTwig = new \fPHP\Twigs\role_permissionTwig;
 			
 			$a_sqlAdditionalFilter = array(array('column' => 'permissionUUID', 'value' => $this->Twig->UUID, 'operator' => '=', 'filterOperator' => 'AND'));
 			$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
@@ -317,7 +321,7 @@ class permissionBranch extends forestBranch {
 				
 				/* evaluate the result */
 				if ($i_return <= 0) {
-					throw new forestException(0x10001423);
+					throw new \fPHP\Roots\forestException(0x10001423);
 				}
 			}
 		}

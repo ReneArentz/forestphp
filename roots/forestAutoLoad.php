@@ -1,18 +1,27 @@
 <?php
-/* +--------------------------------+ */
-/* |				    | */
-/* | forestPHP V0.8.0 (0x1 00002)   | */
-/* |				    | */
-/* +--------------------------------+ */
-
-/*
- * + Description +
+/**
  * global function __autoload uses this class to create object of classes who were not included before
  *
- * + Version Log +
- * Version	Developer	Date		Comment
- * 0.1.0 alpha	renatus		2019-08-04	first build
+ * @category    forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestphp.de>
+ * @copyright   (c) 2019 forestPHP Framework
+ * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
+ * @license     https://opensource.org/licenses/MIT MIT License
+ * @version     0.9.0 beta
+ * @link        http://www.forestphp.de/
+ * @object-id   0x1 00002
+ * @since       File available since Release 0.1.0 alpha
+ * @deprecated  -
+ *
+ * @version log	Version		Developer	Date		Comment
+ * 		0.1.0 alpha	renatus		2019-08-04	first build
+ * 		0.9.0 beta	renatus		2020-01-27	changes for namespaces
+ * 		0.9.0 beta	renatus		2020-01-27	add adopted folder for root classes
  */
+
+namespace fPHP\Roots;
+
+use \fPHP\Roots\forestException as forestException;
 
 class forestAutoLoad {
 	/* Fields */
@@ -21,14 +30,32 @@ class forestAutoLoad {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestAutoLoad class, to load class file
+	 *
+	 * @param string $p_s_name  class name
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct($p_s_name) {
+		/* remove namespace path from name parameter */
+		if (strrpos($p_s_name, '\\') !== false) {
+			$p_s_name = substr($p_s_name, strrpos($p_s_name, '\\') + 1);
+		}
+		
 		/* check if file is readable in suspected directory and calling funtion to include class-file */
 		if ($this->IsReadable('./roots/' . $p_s_name . '.php')) {
 			$this->getRoot($p_s_name);
+		} else if ($this->IsReadable('./roots/adopted/' . $p_s_name . '.php')) {
+			$this->getAdoptedRoot($p_s_name);
 		} else if ($this->IsReadable('./roots/custom/' . $p_s_name . '.php')) {
 			$this->getCustomRoot($p_s_name);
 		} else {
-			$o_glob = forestGlobals::init();
+			$o_glob = \fPHP\Roots\forestGlobals::init();
 			$s_path = '';
 			
 			$a_branches = $o_glob->URL->Branches;
@@ -71,30 +98,101 @@ class forestAutoLoad {
 		}
 	}
 	
+	/**
+	 * include function to load php class file in roots folder
+	 *
+	 * @param string $p_s_name  class name as filename
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access private
+	 * @static no
+	 */
 	private function getRoot($p_s_name) {
 		if (!(@include_once('./roots/' . $p_s_name . '.php'))) {
 			throw new forestException('File[' . $p_s_name . '] could not be loaded in roots-folder');
 		}
 	}
 	
+	/**
+	 * include function to load php class file in adopted roots folder
+	 *
+	 * @param string $p_s_name  class name as filename
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access private
+	 * @static no
+	 */
+	private function getAdoptedRoot($p_s_name) {
+		if (!(@include_once('./roots/adopted/' . $p_s_name . '.php'))) {
+			throw new forestException('File[' . $p_s_name . '] could not be loaded in roots/adopted-folder');
+		}
+	}
+	
+	/**
+	 * include function to load php class file in custom roots folder
+	 *
+	 * @param string $p_s_name  class name as filename
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access private
+	 * @static no
+	 */
 	private function getCustomRoot($p_s_name) {
 		if (!(@include_once('./roots/custom/' . $p_s_name . '.php'))) {
 			throw new forestException('File[' . $p_s_name . '] could not be loaded in roots/custom-folder');
 		}
 	}
 	
+	/**
+	 * include function to load php class file in trunk folder
+	 *
+	 * @param string $p_s_name  class name as filename
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access private
+	 * @static no
+	 */
 	private function getContent($p_s_name, $p_path) {
 		if (!(@include_once('./trunk/' . $p_path . $p_s_name . '.php'))) {
 			throw new forestException('File[' . $p_s_name . '] could not be loaded in trunk-folder');
 		}
 	}
 	
+	/**
+	 * include function to load php class file in twigs folder
+	 *
+	 * @param string $p_s_name  class name as filename
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access private
+	 * @static no
+	 */
 	private function getTwig($p_s_name) {
 		if (!(@include_once('./twigs/' . $p_s_name . '.php'))) {
 			throw new forestException('File[' . $p_s_name . '] could not be loaded in twigs-folder');
 		}
 	}
 	
+	/**
+	 * static helper function to check if a file is readable or exists
+	 *
+	 * @param string $p_s_filename  path of filename + filename
+	 *
+	 * @return bool  true - file is readable and exists, false - file does not exists
+	 *
+	 * @access public
+	 * @static yes
+	 */
 	public static function IsReadable($p_s_filename) {
 		/* check if file is readable by using fopen function and read access */
 		if (!$o_filehandle = @fopen($p_s_filename, 'r')) {

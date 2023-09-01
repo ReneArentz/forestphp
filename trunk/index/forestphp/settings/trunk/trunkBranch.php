@@ -1,6 +1,10 @@
 <?php
+
+namespace fPHP\Branches;
+use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+
 class trunkBranch extends forestBranch {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -13,11 +17,11 @@ class trunkBranch extends forestBranch {
 		$this->StandardView = forestBranch::DETAIL;
 		$this->KeepFilter->value = false;
 		
-		$this->Twig = new trunkTwig();
+		$this->Twig = new \fPHP\Twigs\trunkTwig();
 	}
 	
 	protected function init() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if ($this->StandardView == forestBranch::DETAIL) {
 			$this->GenerateView();
@@ -51,11 +55,11 @@ class trunkBranch extends forestBranch {
 		}
 	
 	protected function viewFlexAction() {
-		$this->GenerateFlexView();
+		throw new \fPHP\Roots\forestException(0x10000100);
 	}
 	
 	protected function editFlexAction() {
-		$this->EditFlexView();
+		throw new \fPHP\Roots\forestException(0x10000100);
 	}
 	
 		protected function beforeNewAction() {
@@ -67,7 +71,7 @@ class trunkBranch extends forestBranch {
 			}
 	
 	protected function newAction() {
-		$this->NewRecord();
+		throw new \fPHP\Roots\forestException(0x10000100);
 	}
 	
 			protected function afterNewSubAction() {
@@ -111,7 +115,7 @@ class trunkBranch extends forestBranch {
 				}
 		
 	protected function deleteAction() {
-		$this->DeleteRecord();
+		throw new \fPHP\Roots\forestException(0x10000100);
 	}
 				
 				protected function afterDeleteFileAction() {
@@ -127,11 +131,11 @@ class trunkBranch extends forestBranch {
 		}
 		
 	protected function moveUpAction() {
-		$this->MoveUpRecord();
+		throw new \fPHP\Roots\forestException(0x10000100);
 	}
 	
 	protected function moveDownAction() {
-		$this->MoveDownRecord();
+		throw new \fPHP\Roots\forestException(0x10000100);
 	}
 	
 		protected function beforeReplaceFileAction() {

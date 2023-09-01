@@ -1,6 +1,11 @@
 <?php
+
+namespace fPHP\Twigs;
+use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \fPHP\Helper\forestLookupData;
+
 class flexTwig extends forestTwig {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	

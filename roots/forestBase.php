@@ -1,34 +1,43 @@
 <?php
-/* +--------------------------------+ */
-/* |				    | */
-/* | forestPHP V0.8.0 (0x1 00009)   | */
-/* |				    | */
-/* +--------------------------------+ */
-
-/*
- * + Description +
+/**
  * gathering class for all database interfaces an gateways who can be used by the script collection
  * whole database connectivity goes over this class
  * on initialization the developer can decide which gateway he wants to use
  *
- * + Version Log +
- * Version	Developer	Date		Comment
- * 0.1.0 alpha	renatus		2019-08-04	first build
- * 0.1.1 alpha	renatus		2019-08-07	added date conversion and trunk settings
+ * @category    forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestphp.de>
+ * @copyright   (c) 2019 forestPHP Framework
+ * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
+ * @license     https://opensource.org/licenses/MIT MIT License
+ * @version     0.9.0 beta
+ * @link        http://www.forestphp.de/
+ * @object-id   0x1 00009
+ * @since       File available since Release 0.1.0 alpha
+ * @deprecated  -
+ *
+ * @version log Version		Developer	Date		Comment
+ * 		0.1.0 alpha	renatus		2019-08-04	first build
+ * 		0.1.1 alpha	renatus		2019-08-07	added date conversion and trunk settings
  */
 
+namespace fPHP\Base;
+
+use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \fPHP\Roots\forestException as forestException;
+use fPHP\Base\forestSQLQuery as forestSQLQuery;
+
 class forestBase {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
 	const MariaSQL = 'mariasql';
 	
-	const ASSOC = PDO::FETCH_ASSOC;
-	const NUM = PDO::FETCH_NUM;
-	const BOTH = PDO::FETCH_BOTH;
-	const OBJ = PDO::FETCH_OBJ;
-	const LAZY = PDO::FETCH_LAZY;
+	const ASSOC = \PDO::FETCH_ASSOC;
+	const NUM = \PDO::FETCH_NUM;
+	const BOTH = \PDO::FETCH_BOTH;
+	const OBJ = \PDO::FETCH_OBJ;
+	const LAZY = \PDO::FETCH_LAZY;
 	
 	private $AmountQueries;
 	private $Queries;
@@ -41,6 +50,22 @@ class forestBase {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestBase class, set connection parameters to destination database
+	 *
+	 * @param string $p_s_baseGateway  base-gateway constant
+	 * @param string $p_s_host  host value of database server
+	 * @param string $p_s_datasource  database name
+	 * @param string $p_s_user  database user
+	 * @param string $p_s_password  database user's password
+	 * @param bool $p_b_persistentConnection  standard true, optional
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct($p_s_baseGateway = '', $p_s_host = '', $p_s_datasource = '', $p_s_user = '', $p_s_password = '', $p_b_persistentConnection = true) {
 		if (empty($p_s_baseGateway)) {
 			throw new forestException('No base-gateway was selected');
@@ -72,11 +97,11 @@ class forestBase {
 			$p_s_temp_pw = null;
 		}
 		
-		/* chosse database gateway and create new PDO object with connection settings		 */
+		/* chosse database gateway and create new PDO object with connection settings */
 		try {
 			switch ($this->BaseGateway->value) {
 				case forestBase::MariaSQL:
-					$this->CurrentConnection->value = new PDO('mysql:dbname=' . $p_s_datasource . ';host=' . $p_s_host, $p_s_temp_user, $p_s_temp_pw, array(PDO::ATTR_PERSISTENT => $p_b_persistentConnection));
+					$this->CurrentConnection->value = new \PDO('mysql:dbname=' . $p_s_datasource . ';host=' . $p_s_host, $p_s_temp_user, $p_s_temp_pw, array(\PDO::ATTR_PERSISTENT => $p_b_persistentConnection));
 				break;
 				default:
 					throw new forestException('Invalid base-gateway [' . $this->BaseGateway->value . '].');
@@ -84,8 +109,8 @@ class forestBase {
 			}
 			
 			/* set exception setting for PDO class */
-			$this->CurrentConnection->value->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
-			$this->CurrentConnection->value->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+			$this->CurrentConnection->value->setAttribute(\PDO::ATTR_EMULATE_PREPARES, false);
+			$this->CurrentConnection->value->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 		} catch (PDOException $o_pdoException) {
 			throw new forestException('The connection to the database is not possible; <i>' . $o_pdoException->getCode() . ': ' . $o_pdoException->getMessage() . '</i>');
 		}
@@ -96,6 +121,15 @@ class forestBase {
 		}
 	}
 	
+	/**
+	 * destructor of forestBase class, closes current connection
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __destruct() {
 		/* close connection if object is being destroyed */
 		unset($this->CurrentConnection->value);
@@ -105,7 +139,22 @@ class forestBase {
 		}
 	}
 	
-	public function FetchQuery(forestSQLQuery $p_o_sqlQuery, $p_b_transaction = false, $p_b_resultTwigList = true, $p_b_freeResult = false, $p_i_resultType = forestBase::ASSOC) {
+	/**
+	 * function to send a query to the database and get a result set/answer/value
+	 *
+	 * @param forestSQLQuery $p_o_sqlQuery  sql query
+	 * @param bool $p_b_transaction  use query in transaction mode
+	 * @param bool $p_b_resultTwigList  convert result set into twig list
+	 * @param bool $p_b_freeResult  free result memory
+	 * @param integer $p_i_resultType  standard ASSOC - ASSOC, NUM, BOTH, OBJ, LAZY
+	 *
+	 * @return object  result set/twig list/row count
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function FetchQuery(\fPHP\Base\forestSQLQuery $p_o_sqlQuery, $p_b_transaction = false, $p_b_resultTwigList = true, $p_b_freeResult = false, $p_i_resultType = \fPHP\Base\forestBase::ASSOC) {
 		/* save query statistics */
 		$this->AmountQueries->value++;
 		$this->Queries->value[] = date('H:i:s');
@@ -139,9 +188,10 @@ class forestBase {
 				$this->CurrentConnection->value->beginTransaction();
 			}
 			
+			/* execute query */
 			$this->CurrentResult->value = $this->CurrentConnection->value->prepare($this->Query->value);
 			$this->CurrentResult->value->execute();
-		} catch (PDOException $o_pdoException) {
+		} catch (\PDOException $o_pdoException) {
 			/* if transaction flag is set, roll-back transaction */
 			if ($p_b_transaction) {
 				$this->CurrentConnection->value->rollBack();
@@ -151,13 +201,13 @@ class forestBase {
 		}
 		
 		/* check if query got a result */
-		if(!$this->CurrentResult->value) {
+		if (!$this->CurrentResult->value) {
 			/* if transaction flag is set, roll-back transaction */
 			if ($p_b_transaction) {
 				$this->CurrentConnection->value->rollBack();
 			}
 			
-			throw new forestException('The query could not be executed.');
+			throw new forestException('The query could not be executed or has no valid result.');
 		}
 		
 		/* if transaction flag is set, commit transaction */
@@ -167,28 +217,12 @@ class forestBase {
 		
 		/* on SELECT query, prepare to return result rows */
 		if ($p_o_sqlQuery->SqlType == forestSQLQuery::SELECT) {
+			$b_once = false;
 			$a_fieldInformation = array();
-			
-			/* gather field information for conversion handling */
-			foreach(range(0, $this->CurrentResult->value->columnCount() - 1) as $i_column_index)
-			{
-				$foo = $this->CurrentResult->value->getColumnMeta($i_column_index);
-				
-				if (empty($foo)) {
-					throw new forestException('Could not get column metadata; <i>' . $this->CurrentConnection->value->errorCode() . ': ' . $this->CurrentConnection->value->errorInfo()[2] . '</i>');
-				}
-				
-				$a_fieldInformation[] = $foo;
-			}
-			
-			/*echo '<pre>';
-			print_r($a_fieldInformation);
-			echo '</pre>';*/
-			
 			$a_fetchData = array();
 			
 			/* fetch sql result into data-array */
-			while ($o_fetchRow = $this->CurrentResult->value->fetch($p_i_resultType, PDO::FETCH_ORI_NEXT)) {
+			while ($o_fetchRow = $this->CurrentResult->value->fetch($p_i_resultType, \PDO::FETCH_ORI_NEXT)) {
 				if (!$o_fetchRow) {
 					throw new forestException('Could not fetch row; <i>' . $this->CurrentConnection->value->errorCode() . ': ' . $this->CurrentConnection->value->errorInfo()[2] . '</i>');
 				}
@@ -197,10 +231,30 @@ class forestBase {
 				print_r($o_fetchRow);
 				echo '</pre>';*/
 				
+				/* we only need columns information once after fetched one row */
+				if (!$b_once) {
+					/* gather field information for conversion handling */
+					foreach (range(0, $this->CurrentResult->value->columnCount() - 1) as $i_column_index) {
+						$foo = $this->CurrentResult->value->getColumnMeta($i_column_index);
+						
+						if (empty($foo)) {
+							throw new forestException('Could not get column metadata; <i>' . $this->CurrentConnection->value->errorCode() . ': ' . $this->CurrentConnection->value->errorInfo()[2] . '</i>');
+						}
+						
+						$a_fieldInformation[] = $foo;
+					}
+					
+					/*echo '<pre>';
+					print_r($a_fieldInformation);
+					echo '</pre>';*/
+					
+					$b_once = true;
+				}
+				
 				$this->SetTypeFields($o_fetchRow, $a_fieldInformation, $p_i_resultType);
 				$a_fetchData[] = $o_fetchRow;
 			}
-						
+			
 			/*echo '<pre>';
 			print_r($a_fetchData);
 			echo '</pre>';*/
@@ -216,7 +270,7 @@ class forestBase {
 			
 			/* return fetched data as a twig list class or raw data as an array */
 			if ($p_b_resultTwigList) {
-				$ol_twigs = new forestTwigList($p_o_sqlQuery->Table, $a_fetchData, $p_i_resultType);
+				$ol_twigs = new \fPHP\Twigs\forestTwigList($p_o_sqlQuery->Table, $a_fetchData, $p_i_resultType);
 				$foo = $ol_twigs;
 			} else {
 				$foo = $a_fetchData;
@@ -231,6 +285,15 @@ class forestBase {
 		return $foo;
 	}
 	
+	/**
+	 * function to start transaction mode
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function ManualTransaction() {
 		/* check connection */
 		if (!$this->CurrentConnection->value) {
@@ -243,6 +306,15 @@ class forestBase {
 		$b_transaction_active = true;
 	}
 	
+	/**
+	 * function to roll back all transactions
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function ManualRollBack() {
 		/* check connection */
 		if (!$this->CurrentConnection->value) {
@@ -255,6 +327,15 @@ class forestBase {
 		$b_transaction_active = false;
 	}
 	
+	/**
+	 * function to end transaction mode
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function ManualCommit() {
 		/* check connection */
 		if (!$this->CurrentConnection->value) {
@@ -267,17 +348,37 @@ class forestBase {
 		$b_transaction_active = false;
 	}
 	
+	/**
+	 * function to get id of last insert with this connection
+	 *
+	 * @return integer  id of last inserted record
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function LastInsertId() {
 		$foo = $this->CurrentConnection->value->lastInsertId();
 		
 		if (!$foo) {
 			throw new forestException('Could not get last insert id; <i>' . $this->CurrentConnection->value->errorCode() . ': ' . $this->CurrentConnection->value->errorInfo()[2] . '</i>');
 		}
-		
+	
 		return $foo;
 	}
 	
-	/* iterate all result rows with their field-information for conversion */
+	/**
+	 * iterate all result rows with their field-information for conversion
+	 *
+	 * @param array $p_a_record  record data, passed by reference
+	 * @param array $p_a_fieldInformation  field information data
+	 * @param integer $p_i_resultType  ASSOC, NUM, BOTH, OBJ, LAZY
+	 *
+	 * @return null
+	 *
+	 * @access private
+	 * @static no
+	 */
 	private function SetTypeFields(&$p_a_record, $p_a_fieldInformation, $p_i_resultType) {
 		$i = 0;
 		
@@ -292,9 +393,24 @@ class forestBase {
 		}
 	}
 	
-	/* convert result field value with the help of the field information */
+	/**
+	 * convert result field value with the help of the field information
+	 *
+	 * @param object $p_o_field  field data as array
+	 * @param string $p_s_value  field's value, passed by reference
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access private
+	 * @static no
+	 */
 	private function SetTypeValue($p_o_field, &$p_s_value) {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
+		
+		/*echo '<pre>';var_export($p_s_value);echo '<br>';
+		print_r($p_o_field);
+		echo '</pre>'*/
 		
 		$s_type = null;
 		
@@ -311,6 +427,7 @@ class forestBase {
 					$s_type = 'string';
 				}
 			break;
+			
 			default:
 				throw new forestException('Invalid base-gateway [' . $this->BaseGateway->value . '].');
 			break;
@@ -322,7 +439,7 @@ class forestBase {
 		} else if ($s_type == 'real') {
 			$p_s_value = floatval($p_s_value);
 		} else if ($s_type == 'date') {
-			$p_s_value = forestStringLib::TextToDate($p_s_value);
+			$p_s_value = \fPHP\Helper\forestStringLib::TextToDate($p_s_value);
 		} else if ($s_type == 'string') {
 			$p_s_value = strval($p_s_value);
 			

@@ -1,21 +1,29 @@
 <?php
-/* +--------------------------------+ */
-/* |				    | */
-/* | forestPHP V0.8.0 (0x1 00017)   | */
-/* |				    | */
-/* +--------------------------------+ */
-
-/*
- * + Description +
+/**
  * class generate link-element out of array-parameters with static functions
  *
- * + Version Log +
- * Version	Developer	Date		Comment
- * 0.1.0 alpha	renatus		2019-08-04	first build	
+ * @category    forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestphp.de>
+ * @copyright   (c) 2019 forestPHP Framework
+ * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
+ * @license     https://opensource.org/licenses/MIT MIT License
+ * @version     0.9.0 beta
+ * @link        http://www.forestphp.de/
+ * @object-id   0x1 00017
+ * @since       File available since Release 0.1.0 alpha
+ * @deprecated  -
+ *
+ * @version log Version		Developer	Date		Comment
+ * 		0.1.0 alpha	renatus		2019-08-04	first build	
  */
 
+namespace fPHP\Helper;
+
+use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \fPHP\Roots\forestException as forestException;
+
 class forestLink {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -23,9 +31,22 @@ class forestLink {
 	
 	/* Methods */
 	
-	/* static method to create a url for html a link value */
+	/**
+	 * static method to create a url for html a link value
+	 *
+	 * @param string $p_s_branch  name of branch
+	 * @param string $p_s_action  name of action
+	 * @param string $p_a_parameters  parameters, syntax: 'key' => 'value', 'key' => 'value', ...
+	 * @param string $p_s_anchor  value for html anchor
+	 *
+	 * @return string  valid url string
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static yes
+	 */
 	public static function Link($p_s_branch = null, $p_s_action = null, array $p_a_parameters = null, $p_s_anchor = null) {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		$a_branchTree = $o_glob->BranchTree;
 		
 		try {

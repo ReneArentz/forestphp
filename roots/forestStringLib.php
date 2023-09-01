@@ -1,20 +1,29 @@
 <?php
-/* +--------------------------------+ */
-/* |				    | */
-/* | forestPHP V0.8.0 (0x1 0001A)   | */
-/* |				    | */
-/* +--------------------------------+ */
-
-/*
- * + Description +
- * collection of static string functions
+/**
+ * collection of static string helper functions
  *
- * + Version Log +
- * Version	Developer	Date		Comment
- * 0.1.0 alpha	renatus		2019-08-04	first build
- * 0.1.0 alpha	renatus		2019-08-04	added conversion for forestDateTime	
- * 0.7.0 beta	renatus		2020-01-03	added IncreaseIdentifier and mondey_format functions
+ * @category    forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestphp.de>
+ * @copyright   (c) 2019 forestPHP Framework
+ * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
+ * @license     https://opensource.org/licenses/MIT MIT License
+ * @version     0.9.0 beta
+ * @link        http://www.forestphp.de/
+ * @object-id   0x1 0001A
+ * @since       File available since Release 0.1.0 alpha
+ * @deprecated  -
+ *
+ * @version log Version		Developer	Date		Comment
+ * 		0.1.0 alpha	renatus		2019-08-04	first build
+ * 		0.1.0 alpha	renatus		2019-08-04	added conversion for forestDateTime	
+ * 		0.7.0 beta	renatus		2020-01-03	added IncreaseIdentifier and mondey_format functions
+ * 		0.9.0 beta	renatus		2020-01-30	changes for TextToDate function for ocisql
  */
+
+namespace fPHP\Helper;
+
+use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \fPHP\Roots\forestException as forestException;
 
 class forestStringLib {
 	
@@ -24,7 +33,18 @@ class forestStringLib {
 	
 	/* Methods */
 	
-	/* replace multiple values in a string where we have numeric placeholders with a preceding character */
+	/**
+	 * replace multiple values in a string where we have numeric placeholders with a preceding character
+	 *
+	 * @param string $p_s_str  string value with numeric placeholders
+	 * @param array $p_a_vars  array of values
+	 * @param char $p_s_char  numeric placeholder char for recognition
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static yes
+	 */
 	public static function sprintf2($p_s_str = '', $p_a_vars = array(), $p_s_char = '%') {
 		if (empty($p_s_str)) {
 			return '';
@@ -39,7 +59,18 @@ class forestStringLib {
 		return $p_s_str;
 	}
 	
-	/* replace multiple chars in a string which are arranged in two parameter-arrays */
+	/**
+	 * replace multiple chars in a string which are arranged in two parameter-arrays
+	 *
+	 * @param string $p_s_str  string value, passed by reference
+	 * @param array $p_a_search  array of characters which should be replaced
+	 * @param array $p_a_replace  array of characters which are replacing the found characters
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static yes
+	 */
 	public static function ReplaceChar(&$p_s_str, array $p_a_search, array $p_a_replace) {
 		if (count($p_a_search) != count($p_a_replace)) {
 			return $p_s_str;
@@ -72,7 +103,18 @@ class forestStringLib {
 		}
 	}
 	
-	/* replace multiple chars in a string which are arranged in two parameter-arrays */
+	
+	/**
+	 * remove multiple chars in a string which are set in parameter-array
+	 *
+	 * @param string $p_s_str  string value
+	 * @param array $p_a_search  array of characters which should be removed
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static yes
+	 */
 	public static function RemoveChar($p_s_str, array $p_a_search) {
 		$i_amount = strlen($p_s_str);
 		$p_s_new_str = '';
@@ -86,8 +128,17 @@ class forestStringLib {
 		return $p_s_new_str;
 	}
 	
-	/* converts sql-filter arguments into sql-clauses-array for implementing filter in query */
-	/* example: =35&<2|>=5&1..5&2*|ab?d */
+	/**
+	 * converts sql-filter arguments into sql-clauses-array for implementing filter in query
+	 * example: =35&<2|>=5&1..5&2*|ab?d
+	 *
+	 * @param string $p_s_value  string value
+	 *
+	 * @return array  array of filter clauses
+	 *
+	 * @access public
+	 * @static yes
+	 */
 	public static function SplitFilter($p_s_value) {
 		/* remove whitespaces from beginning and end */
 		$p_s_value = trim($p_s_value);
@@ -306,9 +357,18 @@ class forestStringLib {
 		return $filter;
 	}
 	
-	/* converts date/time/datetime-sql-string into forestDateTime object */
+	/**
+	 * converts date/time/datetime-sql-string into forestDateTime object
+	 *
+	 * @param string $p_s_value  string value
+	 *
+	 * @return forestDateTime
+	 *
+	 * @access public
+	 * @static yes
+	 */
 	public static function TextToDate($p_s_value) {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		$s_format = null;
 		$i_year = 0;
 		$i_month = 0;
@@ -373,11 +433,11 @@ class forestStringLib {
 			}
 		}
 		
-		$i_pos = strpos($p_s_value,'-');
-		$i_pos2 = strpos($p_s_value,'.');
-		$i_pos3 = strpos($p_s_value,':');
+		$i_pos = strpos($p_s_value, '-');
+		$i_pos2 = strpos($p_s_value, '.');
+		$i_pos3 = strpos($p_s_value, ':');
 		
-		/* special time format from mssql with additional zeroes .0000 */
+		/* special time format from mssql and ocisql with additional zeroes .0000 */
 		if (($i_pos2 !== false) && ($i_pos3 !== false)) {
 			$a_temp = explode('.', $p_s_value);
 			$p_s_value = $a_temp[0];
@@ -420,6 +480,10 @@ class forestStringLib {
 			$i_year = $a_temp[2];
 			$i_month = $a_temp[1];
 			$i_day = $a_temp[0];
+			
+			if (strlen($i_year) < 4) {
+				$i_year = '20' . $i_year;
+			}
 		} else if ($i_pos3 !== false) {
 			/* time */
 			if (is_null($s_format)) {
@@ -443,10 +507,39 @@ class forestStringLib {
 			}
 		}
 		
-		return new forestDateTime($s_format, $i_year, $i_month, $i_day, $i_hour, $i_minute, $i_second);
+		/* because of weird ocisql return value for timestamps */
+		if (strpos($i_second, ',') !== false) {
+			$i_second = explode(',', $i_second)[0];
+		}
+		
+		/* because of weird ocisql return value for timestamps */
+		if (strpos($i_second, '.') !== false) {
+			$i_second = explode('.', $i_second)[0];
+		}
+		
+		/*echo '<pre>';
+		echo $s_format . '<br>';
+		echo $i_year . '<br>';
+		echo $i_month . '<br>';
+		echo $i_day . '<br>';
+		echo $i_hour . '<br>';
+		echo $i_minute . '<br>';
+		echo $i_second . '<br>';
+		echo '</pre>';*/
+		
+		return new \fPHP\Helper\forestDateTime($s_format, $i_year, $i_month, $i_day, $i_hour, $i_minute, $i_second);
 	}
 	
-	/*converts hex-value into integer */
+	/**
+	 * converts hex-value into integer
+	 *
+	 * @param string $p_s_value  string value
+	 *
+	 * @return integer
+	 *
+	 * @access public
+	 * @static yes
+	 */
 	public static function HexToInt($p_s_value) {
 		$i_result = 0;
 		$i_hexValue = 0;
@@ -480,7 +573,16 @@ class forestStringLib {
 		return $i_result;
 	}
 	
-	/* converts integer into hex-value */
+	/**
+	 * converts integer into hex-value
+	 *
+	 * @param integer $p_i_value  integer value
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static yes
+	 */
 	public static function IntToHex($p_i_value) {
 		$s_hex = '';
 		$i_hexValue = 0;
@@ -516,19 +618,48 @@ class forestStringLib {
 		return $s_hex;
 	}
 	
-	/* check if a string starts with a specific order of characters */
+	/**
+	 * check if a string starts with a specific order of characters
+	 *
+	 * @param string $p_s_str  string value
+	 * @param string $p_s_search  search for occurence
+	 *
+	 * @return bool  true - string starts with search value, false - string start not with search value
+	 *
+	 * @access public
+	 * @static yes
+	 */
 	public static function StartsWith($p_s_str, $p_s_search) {
 		/* search backwards starting from haystack length characters from the end */
 		return $p_s_search === "" || strrpos($p_s_str, $p_s_search, -strlen($p_s_str)) !== false;
 	}
 
-	/* check if a string ends with a specific order of characters */
+	/**
+	 * check if a string ends with a specific order of characters
+	 *
+	 * @param string $p_s_str  string value
+	 * @param string $p_s_search  search for occurence
+	 *
+	 * @return bool  true - string ends with search value, false - string ends not with search value
+	 *
+	 * @access public
+	 * @static yes
+	 */
 	public static function EndsWith($p_s_str, $p_s_search) {
 		/* search forward starting from end minus needle length characters */
 		return $p_s_search === "" || (($temp = strlen($p_s_str) - strlen($p_s_search)) >= 0 && strpos($p_s_str, $p_s_search, $temp) !== false);
 	}
 	
-	/* close all open html tags of the parameter string */
+	/**
+	 * close all open html tags of the parameter string
+	 *
+	 * @param string $p_s_value  string value
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static yes
+	 */
 	public static function closeHTMLTags($p_s_value) {
 		preg_match_all('#<([a-z]+)(?: .*)?(?<![/|/ ])>#iU', $p_s_value, $a_result);
 		$a_htmlTagsOpen = $a_result[1];
@@ -553,23 +684,43 @@ class forestStringLib {
 				unset($a_htmlTagsClose[array_search($a_htmlTagsOpen[$i], $a_htmlTagsClose)]);
 			}
 		}
+		
 		return $p_s_value;
 	}
 	
-	/* function to remove system prefix of sql table names */
+	/**
+	 * function to remove system prefix of sql table names
+	 *
+	 * @param string $p_s_table  name of table, passed by reference
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static yes
+	 */
 	public static function RemoveTablePrefix(&$p_s_table) {
 		/* using sys_fphp prefix for all system-sql-tables, but we do not use it for class-name-declaration */
 		if (strstr($p_s_table, 'sys_fphp_') !== false) {
-			$p_s_table = substr($p_s_table, 9);
+			$p_s_table = str_replace('sys_fphp_', '', $p_s_table);
 		}
-				
+		
 		/* using fphp prefix for all sql-tables, but we do not use it for class-name-declaration */
 		if (strstr($p_s_table, 'fphp_') !== false) {
-			$p_s_table = substr($p_s_table, 5);
+			$p_s_table = str_replace('fphp_', '', $p_s_table);
 		}
 	}
 	
-	/* help function to increase alphanumeric and numeric only identifiers, with leading zeros as well */
+	/**
+	 * help function to increase alphanumeric and numeric only identifiers, with leading zeros as well
+	 *
+	 * @param string $p_s_identifier  value of identifier
+	 * @param string $p_i_increment  increment value
+	 *
+	 * @return string  incremented identifier
+	 *
+	 * @access public
+	 * @static yes
+	 */
 	public static function IncreaseIdentifier($p_s_identifier, $p_i_increment) {
 		preg_match_all('/([a-zA-Z]+)(\d+)/', $p_s_identifier, $a_matches, PREG_OFFSET_CAPTURE);
 		
@@ -602,7 +753,16 @@ class forestStringLib {
 		return $p_s_identifier;
 	}
 	
-	/* replace unicode escape sequence within a string */
+	/**
+	 * replace unicode escape sequence within a string
+	 *
+	 * @param string $p_s_string  string value
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static yes
+	 */
 	public static function ReplaceUnicodeEscapeSequence($p_s_string) {
 		return preg_replace_callback(
 			'/\\\\u([0-9a-f]{4})/i',
@@ -613,7 +773,18 @@ class forestStringLib {
 		);
 	} 
 
-	/* manual money_format function (c) by Rafael M. Salvioni https://www.php.net/manual/en/function.money-format.php */
+	/**
+	 * manual money_format function
+	 * (c) by Rafael M. Salvioni https://www.php.net/manual/en/function.money-format.php
+	 *
+	 * @param string $format  locale format e.g. en_US, de_DE
+	 * @param float $number
+	 *
+	 * @return string  well formated money string
+	 *
+	 * @access public
+	 * @static yes
+	 */
 	public static function money_format($format, $number) {
 		$regex  = '/%((?:[\^!\-]|\+|\(|\=.)*)([0-9]+)?'.
 		'(?:#([0-9]+))?(?:\.([0-9]+))?([in%])/';

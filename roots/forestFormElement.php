@@ -1,28 +1,38 @@
 <?php
-/* +--------------------------------+ */
-/* |				    | */
-/* | forestPHP V0.8.0 (0x1 00016)   | */
-/* |				    | */
-/* +--------------------------------+ */
-
-/*
- * + Description +
+/**
  * class collection for rendering all usable html form elements
  * all necessary properties can be changed and will be considered in the __toString-methods
  * its a full collection of these properties
  *
- * + Version Log +
- * Version	Developer	Date		Comment
- * 0.1.1 alpha	renatus		2019-08-12	added to framework
- * 0.1.3 alpha	renatus		2019-09-06	added validationrules
- * 0.1.4 alpha	renatus		2019-09-23	added file, dropzone and richtext
- * 0.1.5 alpha	renatus		2019-10-04	added forestLookup and Captcha
- * 0.5.0 beta	renatus		2019-12-04	added auto checkin element
- * 0.7.0 beta	renatus		2020-01-03	added mondey-format property to general input attributes
+ * @category    forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestphp.de>
+ * @copyright   (c) 2019 forestPHP Framework
+ * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
+ * @license     https://opensource.org/licenses/MIT MIT License
+ * @version     0.9.0 beta
+ * @link        http://www.forestphp.de/
+ * @object-id   0x1 00016
+ * @since       File available since Release 0.1.1 alpha
+ * @deprecated  -
+ *
+ * @version log Version		Developer	Date		Comment
+ * 		0.1.1 alpha	renatus		2019-08-12	added to framework
+ * 		0.1.3 alpha	renatus		2019-09-06	added validationrules
+ * 		0.1.4 alpha	renatus		2019-09-23	added file, dropzone and richtext
+ * 		0.1.5 alpha	renatus		2019-10-04	added forestLookup and Captcha
+ * 		0.5.0 beta	renatus		2019-12-04	added auto checkin element
+ * 		0.7.0 beta	renatus		2020-01-03	added mondey-format property to general input attributes
+ * 		0.9.0 beta	renatus		2020-01-29	changes for bootstrap 4 on checkbox, radio. dropzone and richtext
  */
 
+namespace fPHP\Forms;
+
+use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \fPHP\Helper\forestObjectList;
+use \fPHP\Roots\forestException as forestException;
+
 class forestFormElement {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -64,16 +74,43 @@ class forestFormElement {
 	
 	/* Properties */
 	
+	/**
+	 * access to forestFormElement type value
+	 *
+	 * @return string  forestFormElement type
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getType() {
 		return $this->Type->value;
 	}
 	
+	/**
+	 * access to forestFormElement formelement value
+	 *
+	 * @return forestFormElement
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getFormElement() {
 		return $this->FormElement->value;
 	}
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElement class
+	 *
+	 * @param string $p_s_type  string value as constant pointer to desired form elements
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct($p_s_type) {
 		$this->Type = new forestString($p_s_type, false);
 		$this->FormElement = new forestObject('forestFormGeneralAttributes', false);
@@ -195,7 +232,7 @@ class forestFormElement {
 			break;
 			case self::AUTOCHECKIN:
 				$this->Type->value = self::AUTOCHECKIN;
-				$this->FormElement->value = new forestFormElementRadio();
+				$this->FormElement->value = new forestFormElementCheckbox();
 			break;
 			case self::FIELDSET:
 				$this->Type->value = self::FIELDSET;
@@ -207,20 +244,61 @@ class forestFormElement {
 		}
 	}
 	
+	/**
+	 * render form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
 		return strval($this->FormElement->value);
 	}
 	
+	/**
+	 * bridge function to access form element properties
+	 *
+	 * @param string $p_s_name  name of property
+	 *
+	 * @return forestFormElement Property
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function &__get($p_s_name) {
 		return $this->FormElement->value->$p_s_name;
 	}
 	
+	/**
+	 * bridge function to set form element properties
+	 *
+	 * @param string $p_s_name  name of property
+	 * @param object $p_o_value  property value
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __set($p_s_name, $p_o_value) {
 		$this->FormElement->value->$p_s_name = $p_o_value;
 	}
 	
+	/**
+	 * load forestFormElement class with settings from json object
+	 *
+	 * @param string $p_s_jsonDataSettings  json settings
+	 * @param integer $p_i_branchId  deviating branch id
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function loadJSON($p_s_jsonDataSettings, $p_i_branchId = null) {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		forestFormElement::JSONSettingsMultilanguage($p_s_jsonDataSettings, $p_i_branchId);
 		$a_settings = json_decode($p_s_jsonDataSettings, true);
@@ -236,8 +314,20 @@ class forestFormElement {
 		}
 	}
 	
+	/**
+	 * replace forestFormElement json settings text placeholders with translation values
+	 *
+	 * @param string $p_s_jsonDataSettings  json settings, passed by reference
+	 * @param integer $p_i_branchId  deviating branch id
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static yes
+	 */
 	public static function JSONSettingsMultilanguage(&$p_s_jsonDataSettings, $p_i_branchId = null) {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
+		
 		preg_match_all('/\#([^#]+)\#/', $p_s_jsonDataSettings, $a_matches);
 		
 		if (count($a_matches) > 1) {
@@ -263,7 +353,7 @@ class forestFormElement {
 
 
 abstract class forestFormGeneralAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -289,7 +379,15 @@ abstract class forestFormGeneralAttributes {
 	/* Properties */
 	
 	/* Methods */
-	 
+	
+	/**
+	 * constructor of forestFormGeneralAttributes abstract class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		$this->FormGroupClass = new forestString;
 		$this->Label = new forestString;
@@ -311,6 +409,14 @@ abstract class forestFormGeneralAttributes {
 		$this->ValMessage = new forestString;
 	}
 	
+	/**
+	 * abstract render function for forestFormElement objects to render form group containers, labels, etc.
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
 		if ( (get_called_class() != 'forestFormElementRadio') && (get_called_class() != 'forestFormElementCheckbox') ) {
 			$this->LabelFor->value = $this->Id->value;
@@ -379,6 +485,14 @@ abstract class forestFormInputAttributes extends forestFormGeneralAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormInputAttributes abstract class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 		
@@ -406,13 +520,21 @@ abstract class forestFormInputAttributes extends forestFormGeneralAttributes {
 		$this->FormNoValidate = new forestBool;
 	}
 	
+	/**
+	 * abstract render function for forestFormElement objects to render form group containers, labels, etc.
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
 		return parent::__toString();
 	}
 }
 
 class forestFormValidationRule {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -426,6 +548,20 @@ class forestFormValidationRule {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormValidationRule class
+	 *
+	 * @param string $p_s_formElementId  form element Id for validation rule
+	 * @param string $p_s_rule  rule name
+	 * @param string $p_s_ruleParam01  rule parameter #1
+	 * @param string $p_s_ruleParam02  rule parameter #2
+	 * @param string $p_s_autoRequired  'true' - form element gets required automatically with validation rule, 'false' - normal validation rule
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct($p_s_formElementId, $p_s_rule, $p_s_ruleParam01, $p_s_ruleParam02 = null, $p_s_autoRequired = 'true') {
 		$this->FormElementId = new forestString;
 		$this->Rule = new forestString;
@@ -452,7 +588,7 @@ class forestFormValidationRule {
 }
 
 class forestFormObject extends forestFormGeneralAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -465,8 +601,13 @@ class forestFormObject extends forestFormGeneralAttributes {
 	private $Role;
 	
 	private $ClassAll;
+	private $RadioContainerClass;
 	private $RadioClass;
+	private $RadioLabelClass;
+	private $CheckboxContainerClass;
 	private $CheckboxClass;
+	private $CheckboxLabelClass;
+	private $SelectClass;
 	private $RequiredAll;
 	private $ReadonlyAll;
 	
@@ -479,15 +620,23 @@ class forestFormObject extends forestFormGeneralAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormObject class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 		
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		$this->Id->value = $o_glob->URL->Branch . $o_glob->URL->Action . 'Form';
 		$this->Name->value = $o_glob->URL->Branch . $o_glob->URL->Action . 'Form';
 		
-		$this->Action = new forestString(forestLink::Link($o_glob->URL->Branch, $o_glob->URL->Action, $o_glob->URL->Parameters));
+		$this->Action = new forestString(\fPHP\Helper\forestLink::Link($o_glob->URL->Branch, $o_glob->URL->Action, $o_glob->URL->Parameters));
 		$this->AutoComplete = new forestBool(true);
 		$this->Enctype = new forestList(array('application/x-www-form-urlencoded', 'multipart/form-data', 'text/plain'), 'application/x-www-form-urlencoded');
 		$this->Method = new forestList(array('GET', 'POST'), 'POST');
@@ -496,8 +645,13 @@ class forestFormObject extends forestFormGeneralAttributes {
 		$this->Role = new forestString('form');
 		
 		$this->ClassAll = new forestString;
+		$this->RadioContainerClass = new forestString;
 		$this->RadioClass = new forestString;
+		$this->RadioLabelClass = new forestString;
+		$this->CheckboxContainerClass = new forestString;
 		$this->CheckboxClass = new forestString;
+		$this->CheckboxLabelClass = new forestString;
+		$this->SelectClass = new forestString;
 		$this->RequiredAll = new forestBool;
 		$this->ReadonlyAll = new forestBool;
 		
@@ -507,12 +661,28 @@ class forestFormObject extends forestFormGeneralAttributes {
 		$this->UseCaptcha = new forestBool;
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
 	
-	function __toString() {
-		$o_glob = forestGlobals::init();
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
+	public function __toString() {
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		$s_foo = '<form';
 		
@@ -568,7 +738,7 @@ class forestFormObject extends forestFormGeneralAttributes {
 
 
 class forestFormElementText extends forestFormInputAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -579,6 +749,14 @@ class forestFormElementText extends forestFormInputAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementText class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 		
@@ -586,12 +764,28 @@ class forestFormElementText extends forestFormInputAttributes {
 		$this->NoDisplay = new forestBool;
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
-		
+	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */	
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!issetStr($this->Name->value)) {
 			$this->Name->value = $this->Id->value;
@@ -696,12 +890,12 @@ class forestFormElementText extends forestFormInputAttributes {
 			$s_foo = '<input type="text" id="' . $this->Id->value . '" name="' . $this->Name->value . '" value="" style="display:none !important" tabindex="-1" autocomplete="off">';
 		}
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 class forestFormElementList extends forestFormInputAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -709,16 +903,40 @@ class forestFormElementList extends forestFormInputAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementList class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
 	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!issetStr($this->Name->value)) {
 			$this->Name->value = $this->Id->value;
@@ -822,12 +1040,12 @@ class forestFormElementList extends forestFormInputAttributes {
 			$s_foo .= '><small>' . $this->Description->value . '</small></div>' . "\n";
 		}
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 class forestFormElementHidden extends forestFormInputAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -837,18 +1055,42 @@ class forestFormElementHidden extends forestFormInputAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementHidden class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 		
 		$this->NoFormGroup = new forestBool(true);
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
 	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!issetStr($this->Name->value)) {
 			$this->Name->value = $this->Id->value;
@@ -890,12 +1132,12 @@ class forestFormElementHidden extends forestFormInputAttributes {
 		
 		$s_foo .= '>' . "\n";
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 class forestFormElementPassword extends forestFormInputAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -903,16 +1145,40 @@ class forestFormElementPassword extends forestFormInputAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementPassword class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
-		
+	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */	
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!issetStr($this->Name->value)) {
 			$this->Name->value = $this->Id->value;
@@ -1002,12 +1268,12 @@ class forestFormElementPassword extends forestFormInputAttributes {
 			$s_foo .= '><small>' . $this->Description->value . '</small></div>' . "\n";
 		}
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 class forestFormElementFile extends forestFormInputAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -1015,16 +1281,40 @@ class forestFormElementFile extends forestFormInputAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementFile class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
 	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!issetStr($this->Name->value)) {
 			$this->Name->value = $this->Id->value;
@@ -1102,39 +1392,66 @@ class forestFormElementFile extends forestFormInputAttributes {
 			$s_foo .= '><small>' . $this->Description->value . '</small></div>' . "\n";
 		}
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 class forestFormElementRadio extends forestFormInputAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
-	private $Break;
+	private $RadioContainerClass;
 	private $RadioClass;
+	private $RadioLabelClass;
 	
 	/* Properties */
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementRadio class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
-		$this->Break = new forestBool(true);
+		
+		$this->RadioContainerClass = new forestString;
 		$this->RadioClass = new forestString;
+		$this->RadioLabelClass = new forestString;
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
 	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!issetStr($this->Name->value)) {
 			$this->Name->value = $this->Id->value;
 			
-			if (forestStringLib::EndsWith($this->Id->value, '[]')) {
+			if (\fPHP\Helper\forestStringLib::EndsWith($this->Id->value, '[]')) {
 				$this->Id->value = substr($this->Id->value, 0, -2);
 			}
 		}
@@ -1146,16 +1463,12 @@ class forestFormElementRadio extends forestFormInputAttributes {
 			$b_isAssoc = ( array_keys($this->Options->value) !== range(0, count($this->Options->value) - 1) );
 			
 			foreach ($this->Options->value as $s_option_label => $s_option_value) {
-				if ($this->Break->value) {
-					$s_foo .= '<div class="radio-container ' . $this->RadioClass->value . '"><label>';
-				} else {
-					$s_foo .= '<label class="radio-container ' . $this->RadioClass->value . '">';
-				}
+				$s_foo .= '<div class="' . $this->RadioContainerClass->value . '">';
 				
 				$s_foo .= '<input type="radio" id="' . $this->Id->value . '_' . $i . '" name="' . $this->Name->value . '" value="' . $s_option_value . '"';
 				
-				if (issetStr($this->Class->value)) {
-					$s_foo .= 'class="' . $this->Class->value . '"';
+				if (issetStr($this->RadioClass->value)) {
+					$s_foo .= ' class="' . $this->RadioClass->value . '"';
 				}
 				
 				if (issetStr($this->Style->value)) {
@@ -1214,15 +1527,21 @@ class forestFormElementRadio extends forestFormInputAttributes {
 					$s_foo .= ' checked';
 				}
 				
-				$s_foo .= '>' . (($b_isAssoc) ? $s_option_label : $s_option_value);
+				$s_foo .= '>' . "\n";
 				
-				$s_foo .= '<span class="radio-checkmark"></span>';
+				$s_foo .= '<label for="' . $this->Id->value . '_' . $i . '"';
 				
-				if ($this->Break->value) {
-					$s_foo .= '</label></div>' . "\n";
-				} else {
-					$s_foo .= '</label>' . "\n";
+				if (issetStr($this->RadioLabelClass->value)) {
+					$s_foo .= ' class="' . $this->RadioLabelClass->value . '"';
 				}
+				
+				$s_foo .= '>' . "\n";
+				
+				$s_foo .= (($b_isAssoc) ? $s_option_label : $s_option_value);
+				
+				$s_foo .= '</label>' . "\n";
+				$s_foo .= '</div>' . "\n";
+				
 				
 				$i++;
 			}
@@ -1238,41 +1557,68 @@ class forestFormElementRadio extends forestFormInputAttributes {
 			$s_foo .= '><small>' . $this->Description->value . '</small></div>' . "\n";
 		}
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 class forestFormElementCheckbox extends forestFormInputAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
 	private $Checked;
-	private $Break;
+	private $CheckboxContainerClass;
 	private $CheckboxClass;
+	private $CheckboxLabelClass;
 	
 	/* Properties */
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementCheckbox class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
+		
 		$this->Checked = new forestBool;
-		$this->Break = new forestBool(true);
+		$this->CheckboxContainerClass = new forestString;
 		$this->CheckboxClass = new forestString;
+		$this->CheckboxLabelClass = new forestString;
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
 	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!issetStr($this->Name->value)) {
 			$this->Name->value = $this->Id->value;
 			
-			if (forestStringLib::EndsWith($this->Id->value, '[]')) {
+			if (\fPHP\Helper\forestStringLib::EndsWith($this->Id->value, '[]')) {
 				$this->Id->value = substr($this->Id->value, 0, -2);
 			}
 		}
@@ -1284,16 +1630,12 @@ class forestFormElementCheckbox extends forestFormInputAttributes {
 			$b_isAssoc = ( array_keys($this->Options->value) !== range(0, count($this->Options->value) - 1) );
 			
 			foreach ($this->Options->value as $s_option_label => $s_option_value) {
-				if ($this->Break->value) {
-					$s_foo .= '<div class="checkbox-container ' . $this->CheckboxClass->value . '"><label>';
-				} else {
-					$s_foo .= '<label class="checkbox-container ' . $this->CheckboxClass->value . '">';
-				}
+				$s_foo .= '<div class="' . $this->CheckboxContainerClass->value . '">' . "\n";
 				
 				$s_foo .= '<input type="checkbox" id="' . $this->Id->value . '_' . $i . '" name="' . $this->Name->value . '" value="' . $s_option_value . '"';
 				
-				if (issetStr($this->Class->value)) {
-					$s_foo .= 'class="' . $this->Class->value . '"';
+				if (issetStr($this->CheckboxClass->value)) {
+					$s_foo .= ' class="' . $this->CheckboxClass->value . '"';
 				}
 				
 				if (issetStr($this->Style->value)) {
@@ -1360,15 +1702,20 @@ class forestFormElementCheckbox extends forestFormInputAttributes {
 					}
 				}
 				
-				$s_foo .= '>' . (($b_isAssoc) ? $s_option_label : $s_option_value);
+				$s_foo .= '>' . "\n";
 				
-				$s_foo .= '<span class="checkbox-checkmark"></span>';
+				$s_foo .= '<label for="' . $this->Id->value . '_' . $i . '"';
 				
-				if ($this->Break->value) {
-					$s_foo .= '</label></div>' . "\n";
-				} else {
-					$s_foo .= '</label>' . "\n";
+				if (issetStr($this->CheckboxLabelClass->value)) {
+					$s_foo .= ' class="' . $this->CheckboxLabelClass->value . '"';
 				}
+				
+				$s_foo .= '>' . "\n";
+				
+				$s_foo .= (($b_isAssoc) ? $s_option_label : $s_option_value);
+				
+				$s_foo .= '</label>' . "\n";
+				$s_foo .= '</div>' . "\n";
 				
 				$i++;
 			}
@@ -1384,12 +1731,12 @@ class forestFormElementCheckbox extends forestFormInputAttributes {
 			$s_foo .= '><small>' . $this->Description->value . '</small></div>' . "\n";
 		}
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 class forestFormElementColor extends forestFormInputAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -1397,16 +1744,40 @@ class forestFormElementColor extends forestFormInputAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementColor class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
-		
+	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */	
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!issetStr($this->Name->value)) {
 			$this->Name->value = $this->Id->value;
@@ -1488,12 +1859,12 @@ class forestFormElementColor extends forestFormInputAttributes {
 			$s_foo .= '><small>' . $this->Description->value . '</small></div>' . "\n";
 		}
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 class forestFormElementEmail extends forestFormInputAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -1501,16 +1872,40 @@ class forestFormElementEmail extends forestFormInputAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementEmail class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
-		
+	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */	
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!issetStr($this->Name->value)) {
 			$this->Name->value = $this->Id->value;
@@ -1604,12 +1999,12 @@ class forestFormElementEmail extends forestFormInputAttributes {
 			$s_foo .= '><small>' . $this->Description->value . '</small></div>' . "\n";
 		}
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 class forestFormElementUrl extends forestFormInputAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -1617,16 +2012,40 @@ class forestFormElementUrl extends forestFormInputAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementUrl class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
-		
+	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */	
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!issetStr($this->Name->value)) {
 			$this->Name->value = $this->Id->value;
@@ -1720,12 +2139,12 @@ class forestFormElementUrl extends forestFormInputAttributes {
 			$s_foo .= '><small>' . $this->Description->value . '</small></div>' . "\n";
 		}
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 class forestFormElementDate extends forestFormInputAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -1733,16 +2152,40 @@ class forestFormElementDate extends forestFormInputAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementDate class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
-		
+	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!issetStr($this->Name->value)) {
 			$this->Name->value = $this->Id->value;
@@ -1836,12 +2279,12 @@ class forestFormElementDate extends forestFormInputAttributes {
 			$s_foo .= '><small>' . $this->Description->value . '</small></div>' . "\n";
 		}
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 class forestFormElementDateTimeLocal extends forestFormInputAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -1849,16 +2292,40 @@ class forestFormElementDateTimeLocal extends forestFormInputAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementDateTimeLocal class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
-		
+	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!issetStr($this->Name->value)) {
 			$this->Name->value = $this->Id->value;
@@ -1952,12 +2419,12 @@ class forestFormElementDateTimeLocal extends forestFormInputAttributes {
 			$s_foo .= '><small>' . $this->Description->value . '</small></div>' . "\n";
 		}
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 class forestFormElementMonth extends forestFormInputAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -1965,16 +2432,40 @@ class forestFormElementMonth extends forestFormInputAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementMonth class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
-		
+	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!issetStr($this->Name->value)) {
 			$this->Name->value = $this->Id->value;
@@ -2068,12 +2559,12 @@ class forestFormElementMonth extends forestFormInputAttributes {
 			$s_foo .= '><small>' . $this->Description->value . '</small></div>' . "\n";
 		}
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 class forestFormElementNumber extends forestFormInputAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -2081,16 +2572,40 @@ class forestFormElementNumber extends forestFormInputAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementNumber class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
-		
+	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!issetStr($this->Name->value)) {
 			$this->Name->value = $this->Id->value;
@@ -2192,12 +2707,12 @@ class forestFormElementNumber extends forestFormInputAttributes {
 			$s_foo .= '><small>' . $this->Description->value . '</small></div>' . "\n";
 		}
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 class forestFormElementRange extends forestFormInputAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -2205,16 +2720,40 @@ class forestFormElementRange extends forestFormInputAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementRange class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
-		
+	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!issetStr($this->Name->value)) {
 			$this->Name->value = $this->Id->value;
@@ -2312,12 +2851,12 @@ class forestFormElementRange extends forestFormInputAttributes {
 			$s_foo .= '><small>' . $this->Description->value . '</small></div>' . "\n";
 		}
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 class forestFormElementSearch extends forestFormInputAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -2325,16 +2864,40 @@ class forestFormElementSearch extends forestFormInputAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementSearch class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
-		
+	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!issetStr($this->Name->value)) {
 			$this->Name->value = $this->Id->value;
@@ -2428,12 +2991,12 @@ class forestFormElementSearch extends forestFormInputAttributes {
 			$s_foo .= '><small>' . $this->Description->value . '</small></div>' . "\n";
 		}
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 class forestFormElementPhone extends forestFormInputAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -2441,16 +3004,40 @@ class forestFormElementPhone extends forestFormInputAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementPhone class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
-		
+	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!issetStr($this->Name->value)) {
 			$this->Name->value = $this->Id->value;
@@ -2544,12 +3131,12 @@ class forestFormElementPhone extends forestFormInputAttributes {
 			$s_foo .= '><small>' . $this->Description->value . '</small></div>' . "\n";
 		}
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 class forestFormElementTime extends forestFormInputAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -2557,18 +3144,42 @@ class forestFormElementTime extends forestFormInputAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementTime class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 		
 		$this->Step->value = 1;
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
-		
+	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!issetStr($this->Name->value)) {
 			$this->Name->value = $this->Id->value;
@@ -2670,12 +3281,12 @@ class forestFormElementTime extends forestFormInputAttributes {
 			$s_foo .= '><small>' . $this->Description->value . '</small></div>' . "\n";
 		}
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 class forestFormElementWeek extends forestFormInputAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -2683,16 +3294,40 @@ class forestFormElementWeek extends forestFormInputAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementWeek class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
-		
+	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!issetStr($this->Name->value)) {
 			$this->Name->value = $this->Id->value;
@@ -2790,13 +3425,13 @@ class forestFormElementWeek extends forestFormInputAttributes {
 			$s_foo .= '><small>' . $this->Description->value . '</small></div>' . "\n";
 		}
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 
 class forestFormElementTextArea extends forestFormGeneralAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	 
@@ -2810,7 +3445,15 @@ class forestFormElementTextArea extends forestFormGeneralAttributes {
 	/* Properties */
 	 
 	/* Methods */
-	 
+	
+	/**
+	 * constructor of forestFormElementTextArea class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 		
@@ -2822,12 +3465,28 @@ class forestFormElementTextArea extends forestFormGeneralAttributes {
 		$this->Wrap = new forestList(array('soft', 'hard'), 'soft');
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
 	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!issetStr($this->Name->value)) {
 			$this->Name->value = $this->Id->value;
@@ -2901,12 +3560,12 @@ class forestFormElementTextArea extends forestFormGeneralAttributes {
 			$s_foo .= '><small>' . $this->Description->value . '</small></div>' . "\n";
 		}
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 class forestFormElementSelect extends forestFormGeneralAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -2919,6 +3578,14 @@ class forestFormElementSelect extends forestFormGeneralAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementSelect class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 		
@@ -2928,12 +3595,28 @@ class forestFormElementSelect extends forestFormGeneralAttributes {
 		$this->Data = new forestString;
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
 	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!issetStr($this->Name->value)) {
 			$this->Name->value = $this->Id->value;
@@ -3046,12 +3729,12 @@ class forestFormElementSelect extends forestFormGeneralAttributes {
 			$s_foo .= '><small>' . $this->Description->value . '</small></div>' . "\n";
 		}
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 class forestFormElementDropzone extends forestFormGeneralAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -3081,6 +3764,14 @@ class forestFormElementDropzone extends forestFormGeneralAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementDropzone class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 		
@@ -3107,12 +3798,28 @@ class forestFormElementDropzone extends forestFormGeneralAttributes {
 		$this->RandomIdLength = new forestInt;
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
 	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		$s_foo = parent::__toString();
 		
@@ -3158,12 +3865,12 @@ class forestFormElementDropzone extends forestFormGeneralAttributes {
 			}
 		</div>';
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 class forestFormElementRichtext extends forestFormGeneralAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -3186,6 +3893,14 @@ class forestFormElementRichtext extends forestFormGeneralAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementRichtext class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 		
@@ -3205,12 +3920,28 @@ class forestFormElementRichtext extends forestFormGeneralAttributes {
 		$this->UndoAndRedo = new forestBool;
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
 	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		$s_foo = parent::__toString();
 		
@@ -3244,50 +3975,50 @@ class forestFormElementRichtext extends forestFormGeneralAttributes {
 				"s_sTitle" : "' . $o_glob->GetTranslation('richtextLinethrough', 1) . '",
 				"s_sButton" : "&lt;span style=\"text-decoration: line-through; font-weight: bold;\"&gt;S&lt;/span&gt;",
 				"s_incFontTitle" : "' . $o_glob->GetTranslation('richtextIncreaseFontsize', 1) . '",
-				"s_incFontButton" : "&lt;span class=\"glyphicon glyphicon-text-size\"&gt;&lt;/span&gt;&lt;span style=\"font-size:0.75em;\" class=\"glyphicon glyphicon-triangle-top\"&gt;&lt;/span&gt;",
+				"s_incFontButton" : "&lt;span class=\"fas fa-text-height\"&gt;&lt;/span&gt;&lt;span class=\"fas fa-caret-up\"&gt;&lt;/span&gt;",
 				"s_decFontTitle" : "' . $o_glob->GetTranslation('richtextDecreaseFontsize', 1) . '",
-				"s_decFontButton" : "&lt;span class=\"glyphicon glyphicon-text-size\"&gt;&lt;/span&gt;&lt;span style=\"font-size:0.75em;\" class=\"glyphicon glyphicon-triangle-bottom\"&gt;&lt;/span&gt;",
+				"s_decFontButton" : "&lt;span class=\"fas fa-text-height\"&gt;&lt;/span&gt;&lt;span class=\"fas fa-caret-down\"&gt;&lt;/span&gt;",
 				"s_foreColorTitle" : "' . $o_glob->GetTranslation('richtextFontColor', 1) . '",
-				"s_foreColorButton" : "&lt;span class=\"glyphicon glyphicon-text-color\"&gt;&lt;/span&gt;",
+				"s_foreColorButton" : "&lt;span class=\"fas fa-tint\"&gt;&lt;/span&gt;",
 				"s_backColorTitle" : "' . $o_glob->GetTranslation('richtextHiliteColor', 1) . '",
-				"s_backColorButton" : "&lt;span class=\"glyphicon glyphicon-text-background\"&gt;&lt;/span&gt;",
+				"s_backColorButton" : "&lt;span class=\"fas fa-fill\"&gt;&lt;/span&gt;",
 				"s_ulTitle" : "' . $o_glob->GetTranslation('richtextUnorderedList', 1) . '",
-				"s_ulButton" : "&lt;span class=\"glyphicon glyphicon-list\"&gt;&lt;/span&gt;",
+				"s_ulButton" : "&lt;span class=\"fas fa-list-ul\"&gt;&lt;/span&gt;",
 				"s_olTitle" : "' . $o_glob->GetTranslation('richtextOrderedList', 1) . '",
-				"s_olButton" : "&lt;span class=\"glyphicon glyphicon-list-alt\"&gt;&lt;/span&gt;",
-				"s_outTitle" : "' . $o_glob->GetTranslation('richtextIndent', 1) . '",
-				"s_outButton" : "&lt;span class=\"glyphicon glyphicon-indent-right\"&gt;&lt;/span&gt;",
-				"s_inTitle" : "' . $o_glob->GetTranslation('richtextOutdent', 1) . '",
-				"s_inButton" : "&lt;span class=\"glyphicon glyphicon-indent-left\"&gt;&lt;/span&gt;",
+				"s_olButton" : "&lt;span class=\"fas fa-list-ol\"&gt;&lt;/span&gt;",
+				"s_inTitle" : "' . $o_glob->GetTranslation('richtextIndent', 1) . '",
+				"s_inButton" : "&lt;span class=\"fas fa-indent\"&gt;&lt;/span&gt;",
+				"s_outTitle" : "' . $o_glob->GetTranslation('richtextOutdent', 1) . '",
+				"s_outButton" : "&lt;span class=\"fas fa-indent fa-rotate-180\"&gt;&lt;/span&gt;",
 				"s_leftTitle" : "' . $o_glob->GetTranslation('richtextJustifyLeft', 1) . '",
-				"s_leftButton" : "&lt;span class=\"glyphicon glyphicon-align-left\"&gt;",
+				"s_leftButton" : "&lt;span class=\"fas fa-align-left\"&gt;",
 				"s_centerTitle" : "' . $o_glob->GetTranslation('richtextJustifyCenter', 1) . '",
-				"s_centerButton" : "&lt;span class=\"glyphicon glyphicon-align-center\"&gt;",
+				"s_centerButton" : "&lt;span class=\"fas fa-align-center\"&gt;",
 				"s_rightTitle" : "' . $o_glob->GetTranslation('richtextJustifyRight', 1) . '",
-				"s_rightButton" : "&lt;span class=\"glyphicon glyphicon-align-right\"&gt;",
+				"s_rightButton" : "&lt;span class=\"fas fa-align-right\"&gt;",
 				"s_fullTitle" : "' . $o_glob->GetTranslation('richtextJustifyFull', 1) . '",
-				"s_fullButton" : "&lt;span class=\"glyphicon glyphicon-align-justify\"&gt;",
+				"s_fullButton" : "&lt;span class=\"fas fa-align-justify\"&gt;",
 				"s_linkTitle" : "' . $o_glob->GetTranslation('richtextHyperlink', 1) . '",
-				"s_linkButton" : "&lt;span class=\"glyphicon glyphicon-link\"&gt;",
+				"s_linkButton" : "&lt;span class=\"fas fa-link\"&gt;",
 				"s_unlinkTitle" : "' . $o_glob->GetTranslation('richtextRemoveHyperlink', 1) . '",
-				"s_unlinkButton" : "&lt;span class=\"glyphicon glyphicon-scissors\"&gt;&lt;/span&gt;",
+				"s_unlinkButton" : "&lt;span class=\"fas fa-unlink\"&gt;&lt;/span&gt;",
 				"s_undoTitle" : "' . $o_glob->GetTranslation('richtextUndo', 1) . '",
-				"s_undoButton" : "&lt;span style=\"transform: rotateY(180deg);\" class=\"glyphicon glyphicon-repeat\"&gt;",
+				"s_undoButton" : "&lt;span class=\"fas fa-undo\"&gt;",
 				"s_redoTitle" : "' . $o_glob->GetTranslation('richtextRedo', 1) . '",
-				"s_redoButton" : "&lt;span class=\"glyphicon glyphicon-repeat\"&gt;&lt;/span&gt;",
+				"s_redoButton" : "&lt;span class=\"fas fa-redo\"&gt;&lt;/span&gt;",
 				"s_removeTitle" : "' . $o_glob->GetTranslation('richtextDeleteFormat', 1) . '",
-				"s_removeButton" : "&lt;span class=\"glyphicon glyphicon-erase\"&gt;&lt;/span&gt;",
+				"s_removeButton" : "&lt;span class=\"fas fa-eraser\"&gt;&lt;/span&gt;",
 				"s_value" : "' . ( (issetStr($this->Value->value)) ? $this->Value->value : '' ) . '",
 				"b_disabled" : ' . ( ($this->Disabled->value) ? 'true' : 'false' ) . '
 			}
 		</div>';
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 class forestFormElementDescription extends forestFormGeneralAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -3297,18 +4028,42 @@ class forestFormElementDescription extends forestFormGeneralAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementDescription class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 		
 		$this->NoFormGroup = new forestBool;
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
 	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!issetStr($this->Name->value)) {
 			$this->Name->value = $this->Id->value;
@@ -3338,12 +4093,12 @@ class forestFormElementDescription extends forestFormGeneralAttributes {
 		
 		$s_foo .= '</div>';
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 class forestFormElementButton extends forestFormInputAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -3357,6 +4112,14 @@ class forestFormElementButton extends forestFormInputAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementButton class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 		
@@ -3367,12 +4130,28 @@ class forestFormElementButton extends forestFormInputAttributes {
 		$this->WrapSpanClass = new forestString;
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
 	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!issetStr($this->Name->value)) {
 			$this->Name->value = $this->Id->value;
@@ -3468,12 +4247,12 @@ class forestFormElementButton extends forestFormInputAttributes {
 			$s_foo .= '><small>' . $this->Description->value . '</small></div>' . "\n";
 		}
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 class forestFormElementCaptcha extends forestFormInputAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -3481,16 +4260,40 @@ class forestFormElementCaptcha extends forestFormInputAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementCaptcha class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
-		
+	
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __toString() {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if (!issetStr($this->Name->value)) {
 			$this->Name->value = $this->Id->value;
@@ -3592,14 +4395,14 @@ class forestFormElementCaptcha extends forestFormInputAttributes {
 		
 		$s_foo .= '<br>' . "\n";
 		
-		$s_foo .= '<img src="' . forestLink::Link($o_glob->URL->Branch, 'fphp_captcha') . '" alt="fphp_captcha could not be rendered" style="margin: 0px 5px 5px 0px;">' . "\n";
+		$s_foo .= '<img src="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'fphp_captcha') . '" alt="fphp_captcha could not be rendered" style="margin: 0px 5px 5px 0px;">' . "\n";
 		
-		return forestStringLib::closeHTMLTags($s_foo);
+		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
 }
 
 class forestFormElementFieldset extends forestFormGeneralAttributes {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -3610,6 +4413,14 @@ class forestFormElementFieldset extends forestFormGeneralAttributes {
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFormElementFieldset class
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function __construct() {
 		parent::__construct();
 		
@@ -3617,11 +4428,27 @@ class forestFormElementFieldset extends forestFormGeneralAttributes {
 		$this->LegendCSS = new forestString;
 	}
 	
+	/**
+	 * get array list of all class field variables
+	 *
+	 * @return array
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function getObjectVars() {
 		return get_object_vars($this);
 	}
 	
-	function __toString() {
+	/**
+	 * render method to print forestFormElement with all settings as valid html form element
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static no
+	 */
+	public function __toString() {
 		$s_foo = '<fieldset';
 		
 		if (issetStr($this->Class->value)) {

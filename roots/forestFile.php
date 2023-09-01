@@ -1,21 +1,29 @@
 <?php
-/* +--------------------------------+ */
-/* |				    | */
-/* | forestPHP V0.8.0 (0x1 0001E)   | */
-/* |				    | */
-/* +--------------------------------+ */
-
-/*
- * + Description +
+/**
  * file class for creating and editing files on your own webspace
  *
- * + Version Log +
- * Version	Developer	Date		Comment
- * 0.1.0 alpha	renatus		2019-08-04	first build	
+ * @category    forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestphp.de>
+ * @copyright   (c) 2019 forestPHP Framework
+ * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
+ * @license     https://opensource.org/licenses/MIT MIT License
+ * @version     0.9.0 beta
+ * @link        http://www.forestphp.de/
+ * @object-id   0x1 0001E
+ * @since       File available since Release 0.1.0 alpha
+ * @deprecated  -
+ *
+ * @version log Version		Developer	Date		Comment
+ * 		0.1.0 alpha	renatus		2019-08-04	first build
  */
 
+namespace fPHP\Helper;
+
+use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \fPHP\Roots\forestException as forestException;
+
 class forestFile {
-	use forestData;
+	use \fPHP\Roots\forestData;
 	
 	/* Fields */
 	
@@ -30,12 +38,32 @@ class forestFile {
 	
 	/* Properties */
 	
+	/**
+	 * access to amount of file lines
+	 *
+	 * @return integer  amount of file lines
+	 *
+	 * @access public
+	 * @static no
+	 */
 	public function FileLines() {
 		return count($this->FileContentArray->value);
 	}
 	
 	/* Methods */
 	
+	/**
+	 * constructor of forestFile class to read or create a file
+	 *
+	 * @param string $p_s_fullfilename  filename with full path
+	 * @param bool $p_b_new  true - create new file, false - read file
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function __construct($p_s_fullfilename, $p_b_new = false) {
 		$this->LineBreak = new forestString("\r\n", false);
 		$this->FullFilename = new forestString($p_s_fullfilename, false);
@@ -100,6 +128,15 @@ class forestFile {
 		}
 	}
 	
+	/**
+	 * delete file which was opened by creating forestFile
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function DeleteFile() {
 		/* delete file */
 		if (!(unlink($this->FullFilename->value))) {
@@ -110,6 +147,17 @@ class forestFile {
 		$this->Ready->value = false;
 	}
 	
+	/**
+	 * read a line from the file
+	 *
+	 * @param integer $p_i_line  file line number
+	 *
+	 * @return string  file line as string
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function ReadLine($p_i_line = 0) {
 		if (!($this->Ready->value)) {
 			throw new forestException('File[%0] cannot be used', array($this->Filename->value));
@@ -139,6 +187,18 @@ class forestFile {
 		return $this->FileContentArray->value[$p_i_line - 1];
 	}
 	
+	/**
+	 * wrote a line to the file
+	 *
+	 * @param string $p_s_value  new file line as string
+	 * @param integer $p_i_line  file line number
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function WriteLine($p_s_value, $p_i_line = 0) {
 		if (!($this->Ready->value)) {
 			throw new forestException('File[%0] cannot be used', array($this->Filename->value));
@@ -186,6 +246,18 @@ class forestFile {
 		$this->SetFileContent();
 	}
 	
+	/**
+	 * replace a line in the file
+	 *
+	 * @param string $p_s_value  new file line as string
+	 * @param integer $p_i_line  file line number
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function ReplaceLine($p_s_value, $p_i_line) {
 		if (!($this->Ready->value)) {
 			throw new forestException('File[%0] cannot be used', array($this->Filename->value));
@@ -213,6 +285,17 @@ class forestFile {
 		$this->SetFileContent();
 	}
 	
+	/**
+	 * delete a line from the file
+	 *
+	 * @param integer $p_i_line  file line number
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function DeleteLine($p_i_line) {
 		if (!($this->Ready->value)) {
 			throw new forestException('File[%0] cannot be used', array($this->Filename->value));
@@ -254,6 +337,17 @@ class forestFile {
 		}
 	}
 	
+	/**
+	 * replace full content of the file
+	 *
+	 * @param string $p_s_value  file content as string
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function ReplaceContent($p_s_value) {
 		if (!($this->Ready->value)) {
 			throw new forestException('File[%0] cannot be used', array($this->Filename->value));
@@ -273,6 +367,15 @@ class forestFile {
 		}
 	}
 	
+	/**
+	 * truncate full content of the file
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
 	public function TruncateContent() {
 		if (!($this->Ready->value)) {
 			throw new forestException('File[%0] cannot be used', array($this->Filename->value));
@@ -301,6 +404,15 @@ class forestFile {
 		fclose($this->FileHandle);
 	}
 	
+	/**
+	 * set file content of stored lines within FileContentArray
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access private
+	 * @static no
+	 */
 	private function SetFileContent() {
 		if (!($this->Ready->value)) {
 			throw new forestException('File[%0] cannot be used', array($this->Filename->value));
@@ -337,8 +449,19 @@ class forestFile {
 		fclose($this->FileHandle);
 	}
 	
+	/**
+	 * create csv file in temporary directory with file name and random name suffix
+	 *
+	 * @param string $p_s_name  name of file which should be created
+	 *
+	 * @return string  filename of generate csv file
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static yes
+	 */
 	public static function CreateTempFileCSV($p_s_name) {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		/* create temporary file */
 		$s_temp_file = tempnam(sys_get_temp_dir(), $p_s_name);
@@ -368,8 +491,19 @@ class forestFile {
 		return $s_new_filename;
 	}
 	
+	/**
+	 * create forestPHP file folder structure
+	 *
+	 * @param string $p_s_branch  name of branch where folder structure should be created
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static yes
+	 */
 	public static function CreateFileFolderStructure($p_s_branch) {
-		$o_glob = forestGlobals::init();
+		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		$o_glob->SetVirtualTarget($p_s_branch);
 		
@@ -389,7 +523,7 @@ class forestFile {
 		
 		/* if we cannot find fphp_files folder and we cannot create fphp_files folder as new directory */
 		if (!in_array('fphp_files', $a_dirContent)) {
-			if (!mkdir('./trunk/' . $s_path . 'fphp_files/')) {
+			if (!@mkdir('./trunk/' . $s_path . 'fphp_files/')) {
 				throw new forestException('Cannot create directory [%0].', array('./trunk/' . $s_path . 'fphp_files/'));
 			}
 		}
@@ -401,7 +535,7 @@ class forestFile {
 		if (count($a_dirContent) != 258) {
 			for ($i = 0; $i < 256; $i++) {
 				/* hex folder name */
-				$s_folder = forestStringLib::IntToHex($i);
+				$s_folder = \fPHP\Helper\forestStringLib::IntToHex($i);
 				
 				/* with leading zero */
 				if (strlen($s_folder) == 1) {
@@ -410,7 +544,7 @@ class forestFile {
 				
 				/* if we cannot find folder and we cannot create folder as new directory */
 				if (!in_array($s_folder, $a_dirContent)) {
-					if (!mkdir('./trunk/' . $s_path . 'fphp_files/' . $s_folder . '/')) {
+					if (!@mkdir('./trunk/' . $s_path . 'fphp_files/' . $s_folder . '/')) {
 						throw new forestException('Cannot create directory [%0].', array('./trunk/' . $s_path . 'fphp_files/' . $s_folder . '/'));
 					}
 				}
@@ -418,6 +552,16 @@ class forestFile {
 		}
 	}
 	
+	/**
+	 * remove a directory and all its sub-directories and files
+	 *
+	 * @param string $p_s_directory  path to directory
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static yes
+	 */
 	public static function RemoveDirectoryRecursive($p_s_directory) {
 		if (is_dir($p_s_directory)) {
 			$a_objects = scandir($p_s_directory);
@@ -437,13 +581,24 @@ class forestFile {
 		}
 	}
 	
+	/**
+	 * copy a directory and all its sub-directories and files to a destination directory
+	 *
+	 * @param string $p_s_srcDirectory  path to source directory
+	 * @param string $p_s_dstDirectory  path to destination directory
+	 *
+	 * @return null
+	 *
+	 * @access public
+	 * @static yes
+	 */
 	public static function CopyRecursive($p_s_srcDirectory, $p_s_dstDirectory) {
         if (file_exists($p_s_dstDirectory)) {
             forestFile::RemoveDirectoryRecursive($p_s_dstDirectory);
 		}
 		
         if (is_dir($p_s_srcDirectory)) {
-            mkdir($p_s_dstDirectory);
+            @mkdir($p_s_dstDirectory);
             $files = scandir($p_s_srcDirectory);
 			
             foreach ($files as $file) {
