@@ -8,7 +8,7 @@
  * @copyright   (c) 2019 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     0.9.0 beta
+ * @version     1.0.0 stable
  * @link        http://www.forestphp.de/
  * @object-id   0x1 00006
  * @since       File available since Release 0.1.0 alpha
@@ -22,11 +22,21 @@
  * 		0.4.0 beta	renatus		2019-11-12	distinguish between guest and user
  * 		0.4.0 beta	renatus		2019-11-13	added ListUserPermissions and CheckUserPermission functions
  * 		0.8.0 beta	renatus		2020-01-17	added account record access in init() to overwrite language settings
+ * 		1.0.0 stable	renatus		2020-02-04	added preparations for statistic validation
+ * 		1.0.0 beta	renatus		2020-02-13	added MongoDB support by breaking up SQL-Join Queries
  */
 
 namespace fPHP\Security;
 
-use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \fPHP\Roots\forestString as forestString;
+use \fPHP\Roots\forestList as forestList;
+use \fPHP\Roots\forestNumericString as forestNumericString;
+use \fPHP\Roots\forestInt as forestInt;
+use \fPHP\Roots\forestFloat as forestFloat;
+use \fPHP\Roots\forestBool as forestBool;
+use \fPHP\Roots\forestArray as forestArray;
+use \fPHP\Roots\forestObject as forestObject;
+use \fPHP\Roots\forestLookup as forestLookup;
 use \fPHP\Helper\forestObjectList;
 use \fPHP\Roots\forestException as forestException;
 
@@ -171,6 +181,47 @@ class forestSecurity {
 				
 				$this->SessionData->value->Add($this->SessionUUID->value, 'session_uuid');
 				$this->SessionData->value->Add(forestSecurity::SessionStatusGuest, 'session_status');
+				
+				if ( (strpos($_SERVER['HTTP_USER_AGENT'], 'google') === false) && (!$o_glob->FastProcessing) ) {
+					/* handle user statistics */
+					$o_statisticTwig = new \fPHP\Twigs\statisticTwig();
+					
+					if ($p_b_debug) { echo '#10__reading statistic record, because InitAccess is true<br />'; }
+					
+					if (!$o_statisticTwig->GetRecord(array(1))) {
+						throw new forestException('Statistic record is empty and cannot be found');
+					}
+					
+					/* increment overall visitor counter */
+					if ($p_b_debug) { echo '#11__increment overall visitor counter<br />'; }
+					$o_statisticTwig->CountUser++;
+					
+					$o_now = new \fPHP\Helper\forestDateTime($o_glob->Trunk->DateTimeSqlFormat);
+					$o_countusertoday = $o_statisticTwig->CountUserTodayTimestamp;
+					
+					/* check if we have first visitor of the day */
+					if (date('Ymd', $o_now->ToString('U')) > date('Ymd', $o_countusertoday->ToString('U'))) { //restart daily visitor counter
+						if ($p_b_debug) { echo '#12__we have first visitor of the day<br />'; }
+						$o_statisticTwig->CountUserToday = 1;
+						$o_statisticTwig->CountUserTodayTimestamp = new \fPHP\Helper\forestDateTime($o_glob->Trunk->DateTimeSqlFormat);
+					} else { /* increment daily visitor counter */
+						if ($p_b_debug) { echo '#13__increment daily visitor counter<br />'; }
+						$o_statisticTwig->CountUserToday++;
+					}
+					
+					/* check if we have a new visitor record, assume daily visitor count */
+					if ($o_statisticTwig->CountUserToday > $o_statisticTwig->CountUserRecord) {
+						if ($p_b_debug) { echo '#14__we have a new visitor record<br />'; }
+						$o_statisticTwig->CountUserRecord = $o_statisticTwig->CountUserToday;
+						$o_statisticTwig->CountUserRecordTimestamp = new \fPHP\Helper\forestDateTime($o_glob->Trunk->DateTimeSqlFormat);
+					}
+					
+					if ($p_b_debug) { echo '#15__update statistic record<br />'; }
+					
+					if ($o_statisticTwig->UpdateRecord() == -1) {
+						throw new forestException($o_glob->Temp->{'UniqueIssue'});
+					}
+				}
 			}
 		} else {
 			if ($p_b_debug) { echo '#16__Session is no guest<br />'; }
@@ -306,117 +357,260 @@ class forestSecurity {
 		
 		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
-		$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, 'sys_fphp_user');
-		
-		$o_permission_uuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
-			$o_permission_uuid->Table = 'sys_fphp_permission';
-			$o_permission_uuid->Column = 'UUID';
+		if ($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway == \fPHP\Base\forestBase::MongoDB) {
+			$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, 'sys_fphp_user');
 			
-		$o_permission_branch = new \fPHP\Base\forestSQLColumn($o_querySelect);
-			$o_permission_branch->Table = 'sys_fphp_permission';
-			$o_permission_branch->Column = 'Branch';
-		
-		$o_permission_action = new \fPHP\Base\forestSQLColumn($o_querySelect);
-			$o_permission_action->Table = 'sys_fphp_permission';
-			$o_permission_action->Column = 'Action';
-		
-		$o_usergroupuser_useruuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
-			$o_usergroupuser_useruuid->Table = 'sys_fphp_usergroup_user';
-			$o_usergroupuser_useruuid->Column = 'userUUID';
+			$o_user_uuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$o_user_uuid->Column = 'UUID';
+				
+			$o_user_locked = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$o_user_locked->Column = 'Locked';
+				
+			$o_querySelect->Query->Columns->Add($o_user_uuid);
+			$o_querySelect->Query->Columns->Add($o_user_locked);
+				
+			$where_A = new \fPHP\Base\forestSQLWhere($o_querySelect);
+				$where_A->Column = $o_user_uuid;
+				$where_A->Value = $where_A->ParseValue($this->UserUUID->value);
+				$where_A->Operator = '=';
+				
+			$where_B = new \fPHP\Base\forestSQLWhere($o_querySelect);
+				$where_B->Column = $o_user_locked;
+				$where_B->Value = $where_B->ParseValue(0);
+				$where_B->Operator = '=';
+				$where_B->FilterOperator = 'AND';
+				
+			$o_querySelect->Query->Where->Add($where_A);
+			$o_querySelect->Query->Where->Add($where_B);
 			
-		$o_usergroupuser_usergroupuuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
-			$o_usergroupuser_usergroupuuid->Table = 'sys_fphp_usergroup_user';
-			$o_usergroupuser_usergroupuuid->Column = 'usergroupUUID';
-		
-		$o_user_uuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
-			$o_user_uuid->Column = 'UUID';
+			$o_resultUser = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect, false, false);
+				
+			/* we only expect and accept one record as result; any other result is invalid */
+			if (count($o_resultUser) != 1) {
+				return array();
+			}
 			
-		$o_user_locked = new \fPHP\Base\forestSQLColumn($o_querySelect);
-			$o_user_locked->Column = 'Locked';
+			/* echo '<pre>';
+			print_r($o_resultUser);
+			echo '</pre>'; */
 			
-		$o_usergrouprole_usergroupuuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
-			$o_usergrouprole_usergroupuuid->Table = 'sys_fphp_usergroup_role';
-			$o_usergrouprole_usergroupuuid->Column = 'usergroupUUID';
+			$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, 'sys_fphp_usergroup_user');
 			
-		$o_usergrouprole_roleuuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
-			$o_usergrouprole_roleuuid->Table = 'sys_fphp_usergroup_role';
-			$o_usergrouprole_roleuuid->Column = 'roleUUID';
-		
-		$o_rolepermission_roleuuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
-			$o_rolepermission_roleuuid->Table = 'sys_fphp_role_permission';
-			$o_rolepermission_roleuuid->Column = 'roleUUID';
+			$o_usergroup_usergroup_uuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$o_usergroup_usergroup_uuid->Column = 'usergroupUUID';
+				
+			$o_usergroup_user_uuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$o_usergroup_user_uuid->Column = 'userUUID';
+	
+			$o_querySelect->Query->Columns->Add($o_usergroup_usergroup_uuid);
+				
+			$where_A = new \fPHP\Base\forestSQLWhere($o_querySelect);
+				$where_A->Column = $o_usergroup_user_uuid;
+				$where_A->Value = $where_A->ParseValue($o_resultUser[0]['UUID']);
+				$where_A->Operator = '=';
+				
+			$o_querySelect->Query->Where->Add($where_A);
 			
-		$o_rolepermission_permissionuuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
-			$o_rolepermission_permissionuuid->Table = 'sys_fphp_role_permission';
-			$o_rolepermission_permissionuuid->Column = 'permissionUUID';
+			$o_resultUsergroup_User = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect, false, false);
 			
-		$o_querySelect->Query->Columns->Add($o_permission_branch);
-		$o_querySelect->Query->Columns->Add($o_permission_action);
-		
-		$join_A = new \fPHP\Base\forestSQLJoin($o_querySelect);
-			$join_A->JoinType = 'INNER JOIN';
-			$join_A->Table = 'sys_fphp_usergroup_user';
-		
-			$relation_A = new \fPHP\Base\forestSQLRelation($o_querySelect);
-				$relation_A->ColumnLeft = $o_usergroupuser_useruuid;
-				$relation_A->ColumnRight = $o_user_uuid;
-				$relation_A->Operator = '=';
+			/* echo '<pre>';
+			print_r($o_resultUsergroup_User);
+			echo '</pre>'; */
 			
-			$join_A->Relations->Add($relation_A);
-		
-		$join_B = new \fPHP\Base\forestSQLJoin($o_querySelect);
-			$join_B->JoinType = 'INNER JOIN';
-			$join_B->Table = 'sys_fphp_usergroup_role';
-		
-			$relation_A = new \fPHP\Base\forestSQLRelation($o_querySelect);
-				$relation_A->ColumnLeft = $o_usergrouprole_usergroupuuid;
-				$relation_A->ColumnRight = $o_usergroupuser_usergroupuuid;
-				$relation_A->Operator = '=';
+			$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, 'sys_fphp_usergroup_role');
 			
-			$join_B->Relations->Add($relation_A);
-		
-		$join_C = new \fPHP\Base\forestSQLJoin($o_querySelect);
-			$join_C->JoinType = 'INNER JOIN';
-			$join_C->Table = 'sys_fphp_role_permission';
-		
-			$relation_A = new \fPHP\Base\forestSQLRelation($o_querySelect);
-				$relation_A->ColumnLeft = $o_rolepermission_roleuuid;
-				$relation_A->ColumnRight = $o_usergrouprole_roleuuid;
-				$relation_A->Operator = '=';
+			$o_usergroup_role_role_uuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$o_usergroup_role_role_uuid->Column = 'roleUUID';
+				
+			$o_usergroup_role_usergroup_uuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$o_usergroup_role_usergroup_uuid->Column = 'usergroupUUID';
+	
+			$o_querySelect->Query->Columns->Add($o_usergroup_role_role_uuid);
 			
-			$join_C->Relations->Add($relation_A);
-		
-		$join_D = new \fPHP\Base\forestSQLJoin($o_querySelect);
-			$join_D->JoinType = 'INNER JOIN';
-			$join_D->Table = 'sys_fphp_permission';
-		
-			$relation_A = new \fPHP\Base\forestSQLRelation($o_querySelect);
-				$relation_A->ColumnLeft = $o_permission_uuid;
-				$relation_A->ColumnRight = $o_rolepermission_permissionuuid;
-				$relation_A->Operator = '=';
+			foreach ($o_resultUsergroup_User as $o_resultUsergroup_User_Row) {
+				$where_A = new \fPHP\Base\forestSQLWhere($o_querySelect);
+					$where_A->Column = $o_usergroup_role_usergroup_uuid;
+					$where_A->Value = $where_A->ParseValue($o_resultUsergroup_User_Row['usergroupUUID']);
+					$where_A->Operator = '=';
+					$where_A->FilterOperator = 'OR';
+					
+				$o_querySelect->Query->Where->Add($where_A);
+			}
 			
-			$join_D->Relations->Add($relation_A);
+			$o_resultUsergroup_Role = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect, false, false);
 			
-		$o_querySelect->Query->Joins->Add($join_A);
-		$o_querySelect->Query->Joins->Add($join_B);
-		$o_querySelect->Query->Joins->Add($join_C);
-		$o_querySelect->Query->Joins->Add($join_D);
-		
-		$where_A = new \fPHP\Base\forestSQLWhere($o_querySelect);
-			$where_A->Column = $o_user_uuid;
-			$where_A->Value = $where_A->ParseValue($this->UserUUID->value);
-			$where_A->Operator = '=';
+			/* echo '<pre>';
+			print_r($o_resultUsergroup_Role);
+			echo '</pre>'; */
 			
-		$where_B = new \fPHP\Base\forestSQLWhere($o_querySelect);
-			$where_B->Column = $o_user_locked;
-			$where_B->Value = $where_B->ParseValue(0);
-			$where_B->Operator = '=';
-			$where_B->FilterOperator = 'AND';
+			$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, 'sys_fphp_role_permission');
 			
-		$o_querySelect->Query->Where->Add($where_A);
-		$o_querySelect->Query->Where->Add($where_B);
-		
-		$this->UserPermissions->value = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect, false, false);
+			$o_role_permission_permission_uuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$o_role_permission_permission_uuid->Column = 'permissionUUID';
+				
+			$o_role_permission_role_uuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$o_role_permission_role_uuid->Column = 'roleUUID';
+	
+			$o_querySelect->Query->Columns->Add($o_role_permission_permission_uuid);
+			
+			foreach ($o_resultUsergroup_Role as $o_resultUsergroup_Role_Row) {
+				$where_A = new \fPHP\Base\forestSQLWhere($o_querySelect);
+					$where_A->Column = $o_role_permission_role_uuid;
+					$where_A->Value = $where_A->ParseValue($o_resultUsergroup_Role_Row['roleUUID']);
+					$where_A->Operator = '=';
+					$where_A->FilterOperator = 'OR';
+					
+				$o_querySelect->Query->Where->Add($where_A);
+			}
+			
+			$o_resultRole_Permission = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect, false, false);
+			
+			/*echo '<pre>';
+			print_r($o_resultRole_Permission);
+			echo '</pre>';*/
+			
+			$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, 'sys_fphp_permission');
+			
+			$o_permission_branch = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$o_permission_branch->Column = 'Branch';
+				
+			$o_permission_action = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$o_permission_action->Column = 'Action';
+				
+			$o_permission_uuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$o_permission_uuid->Column = 'UUID';
+	
+			$o_querySelect->Query->Columns->Add($o_permission_branch);
+			$o_querySelect->Query->Columns->Add($o_permission_action);
+			
+			foreach ($o_resultRole_Permission as $o_resultRole_Permission_Row) {
+				$where_A = new \fPHP\Base\forestSQLWhere($o_querySelect);
+					$where_A->Column = $o_permission_uuid;
+					$where_A->Value = $where_A->ParseValue($o_resultRole_Permission_Row['permissionUUID']);
+					$where_A->Operator = '=';
+					$where_A->FilterOperator = 'OR';
+					
+				$o_querySelect->Query->Where->Add($where_A);
+			}
+			
+			$this->UserPermissions->value = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect, false, false);
+			
+			/*echo '<pre>';
+			print_r($this->UserPermissions->value);
+			echo '</pre>';*/
+		} else {
+			$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, 'sys_fphp_user');
+			
+			$o_permission_uuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$o_permission_uuid->Table = 'sys_fphp_permission';
+				$o_permission_uuid->Column = 'UUID';
+				
+			$o_permission_branch = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$o_permission_branch->Table = 'sys_fphp_permission';
+				$o_permission_branch->Column = 'Branch';
+			
+			$o_permission_action = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$o_permission_action->Table = 'sys_fphp_permission';
+				$o_permission_action->Column = 'Action';
+			
+			$o_usergroupuser_useruuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$o_usergroupuser_useruuid->Table = 'sys_fphp_usergroup_user';
+				$o_usergroupuser_useruuid->Column = 'userUUID';
+				
+			$o_usergroupuser_usergroupuuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$o_usergroupuser_usergroupuuid->Table = 'sys_fphp_usergroup_user';
+				$o_usergroupuser_usergroupuuid->Column = 'usergroupUUID';
+			
+			$o_user_uuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$o_user_uuid->Column = 'UUID';
+				
+			$o_user_locked = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$o_user_locked->Column = 'Locked';
+				
+			$o_usergrouprole_usergroupuuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$o_usergrouprole_usergroupuuid->Table = 'sys_fphp_usergroup_role';
+				$o_usergrouprole_usergroupuuid->Column = 'usergroupUUID';
+				
+			$o_usergrouprole_roleuuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$o_usergrouprole_roleuuid->Table = 'sys_fphp_usergroup_role';
+				$o_usergrouprole_roleuuid->Column = 'roleUUID';
+			
+			$o_rolepermission_roleuuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$o_rolepermission_roleuuid->Table = 'sys_fphp_role_permission';
+				$o_rolepermission_roleuuid->Column = 'roleUUID';
+				
+			$o_rolepermission_permissionuuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$o_rolepermission_permissionuuid->Table = 'sys_fphp_role_permission';
+				$o_rolepermission_permissionuuid->Column = 'permissionUUID';
+				
+			$o_querySelect->Query->Columns->Add($o_permission_branch);
+			$o_querySelect->Query->Columns->Add($o_permission_action);
+			
+			$join_A = new \fPHP\Base\forestSQLJoin($o_querySelect);
+				$join_A->JoinType = 'INNER JOIN';
+				$join_A->Table = 'sys_fphp_usergroup_user';
+			
+				$relation_A = new \fPHP\Base\forestSQLRelation($o_querySelect);
+					$relation_A->ColumnLeft = $o_usergroupuser_useruuid;
+					$relation_A->ColumnRight = $o_user_uuid;
+					$relation_A->Operator = '=';
+				
+				$join_A->Relations->Add($relation_A);
+			
+			$join_B = new \fPHP\Base\forestSQLJoin($o_querySelect);
+				$join_B->JoinType = 'INNER JOIN';
+				$join_B->Table = 'sys_fphp_usergroup_role';
+			
+				$relation_A = new \fPHP\Base\forestSQLRelation($o_querySelect);
+					$relation_A->ColumnLeft = $o_usergrouprole_usergroupuuid;
+					$relation_A->ColumnRight = $o_usergroupuser_usergroupuuid;
+					$relation_A->Operator = '=';
+				
+				$join_B->Relations->Add($relation_A);
+			
+			$join_C = new \fPHP\Base\forestSQLJoin($o_querySelect);
+				$join_C->JoinType = 'INNER JOIN';
+				$join_C->Table = 'sys_fphp_role_permission';
+			
+				$relation_A = new \fPHP\Base\forestSQLRelation($o_querySelect);
+					$relation_A->ColumnLeft = $o_rolepermission_roleuuid;
+					$relation_A->ColumnRight = $o_usergrouprole_roleuuid;
+					$relation_A->Operator = '=';
+				
+				$join_C->Relations->Add($relation_A);
+			
+			$join_D = new \fPHP\Base\forestSQLJoin($o_querySelect);
+				$join_D->JoinType = 'INNER JOIN';
+				$join_D->Table = 'sys_fphp_permission';
+			
+				$relation_A = new \fPHP\Base\forestSQLRelation($o_querySelect);
+					$relation_A->ColumnLeft = $o_permission_uuid;
+					$relation_A->ColumnRight = $o_rolepermission_permissionuuid;
+					$relation_A->Operator = '=';
+				
+				$join_D->Relations->Add($relation_A);
+				
+			$o_querySelect->Query->Joins->Add($join_A);
+			$o_querySelect->Query->Joins->Add($join_B);
+			$o_querySelect->Query->Joins->Add($join_C);
+			$o_querySelect->Query->Joins->Add($join_D);
+			
+			$where_A = new \fPHP\Base\forestSQLWhere($o_querySelect);
+				$where_A->Column = $o_user_uuid;
+				$where_A->Value = $where_A->ParseValue($this->UserUUID->value);
+				$where_A->Operator = '=';
+				
+			$where_B = new \fPHP\Base\forestSQLWhere($o_querySelect);
+				$where_B->Column = $o_user_locked;
+				$where_B->Value = $where_B->ParseValue(0);
+				$where_B->Operator = '=';
+				$where_B->FilterOperator = 'AND';
+				
+			$o_querySelect->Query->Where->Add($where_A);
+			$o_querySelect->Query->Where->Add($where_B);
+			
+			$this->UserPermissions->value = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect, false, false);
+		}
 	}
 	
 	/**

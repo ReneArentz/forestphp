@@ -7,7 +7,7 @@
  * @copyright   (c) 2019 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     0.9.0 beta
+ * @version     1.0.0 stable
  * @link        http://www.forestphp.de/
  * @object-id   0x1 0001B
  * @since       File available since Release 0.1.1 alpha
@@ -21,11 +21,20 @@
  * 		0.6.0 beta	renatus		2019-12-20	added restoreFile additional actions for create-new-branch-with-twig
  * 		0.8.0 beta	renatus		2020-01-18	added fphp_flex functionality
  * 		0.9.0 beta	renatus		2020-01-30	changes for bootstrap 4
+ * 		1.0.0 stable	renatus		2020-02-14	change all "use namespace" one-line commands to single "use namespace" commands because of PHP compatibility 5.x
  */
 
 namespace fPHP\Branches;
 
-use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \fPHP\Roots\forestString as forestString;
+use \fPHP\Roots\forestList as forestList;
+use \fPHP\Roots\forestNumericString as forestNumericString;
+use \fPHP\Roots\forestInt as forestInt;
+use \fPHP\Roots\forestFloat as forestFloat;
+use \fPHP\Roots\forestBool as forestBool;
+use \fPHP\Roots\forestArray as forestArray;
+use \fPHP\Roots\forestObject as forestObject;
+use \fPHP\Roots\forestLookup as forestLookup;
 use \fPHP\Roots\forestException as forestException;
 
 class forestTemplates {
@@ -277,7 +286,15 @@ EOF;
 <?php
 
 namespace fPHP\\Branches;
-use \\fPHP\\Roots\\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \\fPHP\\Roots\\forestString as forestString;
+use \\fPHP\\Roots\\forestList as forestList;
+use \\fPHP\\Roots\\forestNumericString as forestNumericString;
+use \\fPHP\\Roots\\forestInt as forestInt;
+use \\fPHP\\Roots\\forestFloat as forestFloat;
+use \\fPHP\\Roots\\forestBool as forestBool;
+use \\fPHP\\Roots\\forestArray as forestArray;
+use \\fPHP\\Roots\\forestObject as forestObject;
+use \\fPHP\\Roots\\forestLookup as forestLookup;
 
 class %0Branch extends forestBranch {
 	use \\fPHP\\Roots\\forestData;
@@ -303,7 +320,15 @@ EOF;
 <?php
 
 namespace fPHP\\Branches;
-use \\fPHP\\Roots\\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \\fPHP\\Roots\\forestString as forestString;
+use \\fPHP\\Roots\\forestList as forestList;
+use \\fPHP\\Roots\\forestNumericString as forestNumericString;
+use \\fPHP\\Roots\\forestInt as forestInt;
+use \\fPHP\\Roots\\forestFloat as forestFloat;
+use \\fPHP\\Roots\\forestBool as forestBool;
+use \\fPHP\\Roots\\forestArray as forestArray;
+use \\fPHP\\Roots\\forestObject as forestObject;
+use \\fPHP\\Roots\\forestLookup as forestLookup;
 
 class %0Branch extends forestBranch {
 	use \\fPHP\Roots\\forestData;
@@ -327,11 +352,11 @@ class %0Branch extends forestBranch {
 		
 		if (\$this->StandardView == forestBranch::DETAIL) {
 			\$this->GenerateView();
-		} else if (\$this->StandardView == forestBranch::LIST) {
+		} else if (\$this->StandardView == forestBranch::LISTVIEW) {
 			\$this->GenerateListView();
 		} else if (\$this->StandardView == forestBranch::FLEX) {
 			if ( (\$o_glob->Security->SessionData->Exists('lastView')) && (\$o_glob->URL->LastBranchId == \$o_glob->URL->BranchId) ) {
-				if (\$o_glob->Security->SessionData->{'lastView'} == forestBranch::LIST) {
+				if (\$o_glob->Security->SessionData->{'lastView'} == forestBranch::LISTVIEW) {
 					\$this->GenerateView();
 				} else if (\$o_glob->Security->SessionData->{'lastView'} == forestBranch::DETAIL) {
 					\$this->GenerateListView();
@@ -463,7 +488,16 @@ EOF;
 <?php
 
 namespace fPHP\Twigs;
-use \\fPHP\\Roots\\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+
+use \\fPHP\\Roots\\forestString as forestString;
+use \\fPHP\\Roots\\forestList as forestList;
+use \\fPHP\\Roots\\forestNumericString as forestNumericString;
+use \\fPHP\\Roots\\forestInt as forestInt;
+use \\fPHP\\Roots\\forestFloat as forestFloat;
+use \\fPHP\\Roots\\forestBool as forestBool;
+use \\fPHP\\Roots\\forestArray as forestArray;
+use \\fPHP\\Roots\\forestObject as forestObject;
+use \\fPHP\\Roots\\forestLookup as forestLookup;
 use \\fPHP\\Helper\\forestLookupData;
 
 class %0Twig extends forestTwig {

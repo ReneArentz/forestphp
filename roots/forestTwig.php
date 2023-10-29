@@ -11,7 +11,7 @@
  * @copyright   (c) 2019 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     0.9.0 beta
+ * @version     1.0.0 stable
  * @link        http://www.forestphp.de/
  * @object-id   0x1 0000C
  * @since       File available since Release 0.1.0 alpha
@@ -29,11 +29,20 @@
  * 		0.7.0 beta	renatus		2020-01-03	added identifier column as standard like id and uuid
  * 		0.7.0 beta	renatus		2020-01-03	added FILEVERSION and FILENAME commands to forestCombination
  * 		0.9.0 beta	renatus		2020-01-29	optimized ImplementFilter for search on filename
+ * 		1.0.0 beta	renatus		2020-02-13	added MongoDB support by breaking up SQL-Join Queries
  */
 
 namespace fPHP\Twigs;
 
-use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \fPHP\Roots\forestString as forestString;
+use \fPHP\Roots\forestList as forestList;
+use \fPHP\Roots\forestNumericString as forestNumericString;
+use \fPHP\Roots\forestInt as forestInt;
+use \fPHP\Roots\forestFloat as forestFloat;
+use \fPHP\Roots\forestBool as forestBool;
+use \fPHP\Roots\forestArray as forestArray;
+use \fPHP\Roots\forestObject as forestObject;
+use \fPHP\Roots\forestLookup as forestLookup;
 use \fPHP\Helper\forestObjectList;
 use \fPHP\Roots\forestException as forestException;
 
@@ -398,169 +407,355 @@ abstract class forestTwig {
 	public static function QueryFieldProperties($p_s_tableUUID, $p_s_field) {
 		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
-		$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, 'sys_fphp_tablefield');
+		if ($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway == \fPHP\Base\forestBase::MongoDB) {
+			$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, 'sys_fphp_tablefield');
+					
+				$column_A = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_A->Column = 'FieldName';
 				
-			$column_A = new \fPHP\Base\forestSQLColumn($o_querySelect);
-				$column_A->Column = 'FieldName';
+				$column_B = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_B->Column = 'UUID';
+				
+				$column_C = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_C->Column = 'TabId';
+					
+				$column_D = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_D->Column = 'JSONEncodedSettings';
+				
+				$column_E = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_E->Column = 'FooterElement';
+				
+				$column_T = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_T->Column = 'SubRecordField';
+					
+				$column_U = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_U->Column = 'Order';
+				
+				$column_F = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_F->Column = 'FormElementUUID';
+				
+				$column_I = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_I->Column = 'SqlTypeUUID';
+					$column_I->Name = 'SqlTypeUUID';
+				
+				$column_K = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_K->Column = 'ForestDataUUID';
+					$column_K->Name = 'ForestDataUUID';
+				
+			$o_querySelect->Query->Columns->Add($column_A);
+			$o_querySelect->Query->Columns->Add($column_B);
+			$o_querySelect->Query->Columns->Add($column_C);
+			$o_querySelect->Query->Columns->Add($column_D);
+			$o_querySelect->Query->Columns->Add($column_E);
+			$o_querySelect->Query->Columns->Add($column_T);
+			$o_querySelect->Query->Columns->Add($column_U);
+			$o_querySelect->Query->Columns->Add($column_F);
+			$o_querySelect->Query->Columns->Add($column_I);
+			$o_querySelect->Query->Columns->Add($column_K);
 			
+			$column_S = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$column_S->Column = 'TableUUID';
+			
+			/* filter by table-uuid and field-name */
+			$where_A = new \fPHP\Base\forestSQLWhere($o_querySelect);
+				$where_A->Column = $column_S;
+				$where_A->Value = $where_A->ParseValue($p_s_tableUUID);
+				$where_A->Operator = '=';
+				
+			$where_B = new \fPHP\Base\forestSQLWhere($o_querySelect);
+				$where_B->Column = $column_A;
+				$where_B->Value = $where_A->ParseValue($p_s_field);
+				$where_B->Operator = '=';
+				$where_B->FilterOperator = 'AND';
+			
+			$o_querySelect->Query->Where->Add($where_A);
+			$o_querySelect->Query->Where->Add($where_B);
+			
+			$o_resultTablefield = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect, false, false);
+			
+			/* we only expect and accept one record as result; any other result is invalid */
+			if (count($o_resultTablefield) != 1) {
+				return null;
+			}
+			
+			/*echo '<pre>';
+			print_r($o_resultTablefield[0]);
+			echo '</pre>';*/
+			
+			$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, 'sys_fphp_formelement');
+					
+				$column_A = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_A->Column = 'Name';
+				
+				$column_B = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_B->Column = 'JSONEncodedSettings';
+			
+			$o_querySelect->Query->Columns->Add($column_A);
+			$o_querySelect->Query->Columns->Add($column_B);
+				
+			$column_C = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$column_C->Column = 'UUID';
+			
+			/* filter by table-uuid and field-name */
+			$where_A = new \fPHP\Base\forestSQLWhere($o_querySelect);
+				$where_A->Column = $column_C;
+				$where_A->Value = $where_A->ParseValue($o_resultTablefield[0]['FormElementUUID']);
+				$where_A->Operator = '=';
+			
+			$o_querySelect->Query->Where->Add($where_A);
+			
+			$o_resultFormElement = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect, false, false);
+			
+			/* we only expect and accept one record as result; any other result is invalid */
+			if (count($o_resultFormElement) != 1) {
+				return null;
+			}
+			
+			/*echo '<pre>';
+			print_r($o_resultFormElement[0]);
+			echo '</pre>';*/
+			
+			$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, 'sys_fphp_sqltype');
+					
+				$column_A = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_A->Column = 'Name';
+			
+			$o_querySelect->Query->Columns->Add($column_A);
+				
 			$column_B = new \fPHP\Base\forestSQLColumn($o_querySelect);
 				$column_B->Column = 'UUID';
-				$column_B->Name = 'TableFieldUUID';
 			
-			$column_C = new \fPHP\Base\forestSQLColumn($o_querySelect);
-				$column_C->Column = 'TabId';
-				$column_C->Name = 'TableFieldTabId';
+			/* filter by table-uuid and field-name */
+			$where_A = new \fPHP\Base\forestSQLWhere($o_querySelect);
+				$where_A->Column = $column_B;
+				$where_A->Value = $where_A->ParseValue($o_resultTablefield[0]['SqlTypeUUID']);
+				$where_A->Operator = '=';
 				
-			$column_D = new \fPHP\Base\forestSQLColumn($o_querySelect);
-				$column_D->Column = 'JSONEncodedSettings';
-				$column_D->Name = 'TableFieldJSONEncodedSettings';
+			$o_querySelect->Query->Where->Add($where_A);
 			
-			$column_E = new \fPHP\Base\forestSQLColumn($o_querySelect);
-				$column_E->Column = 'FooterElement';
-				$column_E->Name = 'TableFieldFooterElement';
+			$o_resultSqlType = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect, false, false);
 			
-			$column_T = new \fPHP\Base\forestSQLColumn($o_querySelect);
-				$column_T->Column = 'SubRecordField';
-				$column_T->Name = 'TableFieldSubRecordField';
+			/* we only expect and accept one record as result; any other result is invalid */
+			if (count($o_resultSqlType) != 1) {
+				return null;
+			}
+			
+			/*echo '<pre>';
+			print_r($o_resultSqlType[0]);
+			echo '</pre>';*/
+			
+			$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, 'sys_fphp_forestdata');
+					
+				$column_A = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_A->Column = 'Name';
+			
+			$o_querySelect->Query->Columns->Add($column_A);
 				
-			$column_U = new \fPHP\Base\forestSQLColumn($o_querySelect);
-				$column_U->Column = 'Order';
-				$column_U->Name = 'TableFieldOrder';
+			$column_B = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$column_B->Column = 'UUID';
 			
-			$column_F = new \fPHP\Base\forestSQLColumn($o_querySelect);
-				$column_F->Column = 'FormElementUUID';
-				$column_F->Name = 'FormElementUUID';
+			/* filter by table-uuid and field-name */
+			$where_A = new \fPHP\Base\forestSQLWhere($o_querySelect);
+				$where_A->Column = $column_B;
+				$where_A->Value = $where_A->ParseValue($o_resultTablefield[0]['ForestDataUUID']);
+				$where_A->Operator = '=';
 			
-			$column_G = new \fPHP\Base\forestSQLColumn($o_querySelect);
-				$column_G->Table = 'sys_fphp_formelement';
-				$column_G->Column = 'Name';
-				$column_G->Name = 'FormElementName';
+			$o_querySelect->Query->Where->Add($where_A);
 			
-			$column_H = new \fPHP\Base\forestSQLColumn($o_querySelect);
-				$column_H->Table = 'sys_fphp_formelement';
-				$column_H->Column = 'JSONEncodedSettings';
-				$column_H->Name = 'FormElementJSONEncodedSettings';
+			$o_resultForestData = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect, false, false);
+			
+			/* we only expect and accept one record as result; any other result is invalid */
+			if (count($o_resultForestData) != 1) {
+				return null;
+			}
+			
+			/*echo '<pre>';
+			print_r($o_resultForestData[0]);
+			echo '</pre>';*/
+			
+			$o_result = array();
+			
+			$o_result['TableFieldUUID'] = $o_resultTablefield[0]['UUID'];
+			$o_result['FieldName'] = $o_resultTablefield[0]['UUID'];
+			$o_result['TableFieldTabId'] = $o_resultTablefield[0]['TabId'];
+			$o_result['TableFieldJSONEncodedSettings'] = $o_resultTablefield[0]['JSONEncodedSettings'];
+			$o_result['TableFieldFooterElement'] = $o_resultTablefield[0]['FooterElement'];
+			$o_result['TableFieldSubRecordField'] = $o_resultTablefield[0]['SubRecordField'];
+			$o_result['TableFieldOrder'] = $o_resultTablefield[0]['Order'];
+			$o_result['FormElementUUID'] = $o_resultTablefield[0]['FormElementUUID'];
+			$o_result['FormElementName'] = $o_resultFormElement[0]['Name'];
+			$o_result['FormElementJSONEncodedSettings'] = $o_resultFormElement[0]['JSONEncodedSettings'];
+			$o_result['SqlTypeUUID'] = $o_resultTablefield[0]['SqlTypeUUID'];
+			$o_result['SqlTypeName'] = $o_resultSqlType[0]['Name'];
+			$o_result['ForestDataUUID'] = $o_resultTablefield[0]['ForestDataUUID'];
+			$o_result['ForestDataName'] = $o_resultForestData[0]['Name'];
+			
+			return $o_result;
+		} else {
+			$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, 'sys_fphp_tablefield');
+					
+				$column_A = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_A->Column = 'FieldName';
 				
-			$column_I = new \fPHP\Base\forestSQLColumn($o_querySelect);
-				$column_I->Column = 'SqlTypeUUID';
-				$column_I->Name = 'SqlTypeUUID';
-			
-			$column_J = new \fPHP\Base\forestSQLColumn($o_querySelect);
-				$column_J->Table = 'sys_fphp_sqltype';
-				$column_J->Column = 'Name';
-				$column_J->Name = 'SqlTypeName';
-			
-			$column_K = new \fPHP\Base\forestSQLColumn($o_querySelect);
-				$column_K->Column = 'ForestDataUUID';
-				$column_K->Name = 'ForestDataUUID';
-			
-			$column_L = new \fPHP\Base\forestSQLColumn($o_querySelect);
-				$column_L->Table = 'sys_fphp_forestdata';
-				$column_L->Column = 'Name';
-				$column_L->Name = 'ForestDataName';
-			
-		$o_querySelect->Query->Columns->Add($column_A);
-		$o_querySelect->Query->Columns->Add($column_B);
-		$o_querySelect->Query->Columns->Add($column_C);
-		$o_querySelect->Query->Columns->Add($column_D);
-		$o_querySelect->Query->Columns->Add($column_E);
-		$o_querySelect->Query->Columns->Add($column_T);
-		$o_querySelect->Query->Columns->Add($column_U);
-		$o_querySelect->Query->Columns->Add($column_F);
-		$o_querySelect->Query->Columns->Add($column_G);
-		$o_querySelect->Query->Columns->Add($column_H);
-		$o_querySelect->Query->Columns->Add($column_I);
-		$o_querySelect->Query->Columns->Add($column_J);
-		$o_querySelect->Query->Columns->Add($column_K);
-		$o_querySelect->Query->Columns->Add($column_L);
-		/* join with form element table */
-		$join_A = new \fPHP\Base\forestSQLJoin($o_querySelect);
-		$join_A->JoinType = 'INNER JOIN';
-		$join_A->Table = 'sys_fphp_formelement';
-			
-			$relation_A = new \fPHP\Base\forestSQLRelation($o_querySelect);
-			
-				$column_M = new \fPHP\Base\forestSQLColumn($o_querySelect);
-					$column_M->Column = 'FormElementUUID';
+				$column_B = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_B->Column = 'UUID';
+					$column_B->Name = 'TableFieldUUID';
 				
-				$column_N = new \fPHP\Base\forestSQLColumn($o_querySelect);
-					$column_N->Table = $join_A->Table;
-					$column_N->Column = 'UUID';
-			
-			$relation_A->ColumnLeft = $column_M;
-			$relation_A->ColumnRight = $column_N;
-			$relation_A->Operator = '=';
-		
-		$join_A->Relations->Add($relation_A);
-		/* left join with sqltype table */
-		$join_B = new \fPHP\Base\forestSQLJoin($o_querySelect);
-		$join_B->JoinType = 'LEFT OUTER JOIN';
-		$join_B->Table = 'sys_fphp_sqltype';
-		
-			$relation_B = new \fPHP\Base\forestSQLRelation($o_querySelect);
-			
-			$column_O = new \fPHP\Base\forestSQLColumn($o_querySelect);
-				$column_O->Column = 'SqlTypeUUID';
+				$column_C = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_C->Column = 'TabId';
+					$column_C->Name = 'TableFieldTabId';
+					
+				$column_D = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_D->Column = 'JSONEncodedSettings';
+					$column_D->Name = 'TableFieldJSONEncodedSettings';
 				
-			$column_P = new \fPHP\Base\forestSQLColumn($o_querySelect);
-				$column_P->Table = $join_B->Table;
-				$column_P->Column = 'UUID';
+				$column_E = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_E->Column = 'FooterElement';
+					$column_E->Name = 'TableFieldFooterElement';
+				
+				$column_T = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_T->Column = 'SubRecordField';
+					$column_T->Name = 'TableFieldSubRecordField';
+					
+				$column_U = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_U->Column = 'Order';
+					$column_U->Name = 'TableFieldOrder';
+				
+				$column_F = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_F->Column = 'FormElementUUID';
+					$column_F->Name = 'FormElementUUID';
+				
+				$column_G = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_G->Table = 'sys_fphp_formelement';
+					$column_G->Column = 'Name';
+					$column_G->Name = 'FormElementName';
+				
+				$column_H = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_H->Table = 'sys_fphp_formelement';
+					$column_H->Column = 'JSONEncodedSettings';
+					$column_H->Name = 'FormElementJSONEncodedSettings';
+					
+				$column_I = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_I->Column = 'SqlTypeUUID';
+					$column_I->Name = 'SqlTypeUUID';
+				
+				$column_J = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_J->Table = 'sys_fphp_sqltype';
+					$column_J->Column = 'Name';
+					$column_J->Name = 'SqlTypeName';
+				
+				$column_K = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_K->Column = 'ForestDataUUID';
+					$column_K->Name = 'ForestDataUUID';
+				
+				$column_L = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_L->Table = 'sys_fphp_forestdata';
+					$column_L->Column = 'Name';
+					$column_L->Name = 'ForestDataName';
+				
+			$o_querySelect->Query->Columns->Add($column_A);
+			$o_querySelect->Query->Columns->Add($column_B);
+			$o_querySelect->Query->Columns->Add($column_C);
+			$o_querySelect->Query->Columns->Add($column_D);
+			$o_querySelect->Query->Columns->Add($column_E);
+			$o_querySelect->Query->Columns->Add($column_T);
+			$o_querySelect->Query->Columns->Add($column_U);
+			$o_querySelect->Query->Columns->Add($column_F);
+			$o_querySelect->Query->Columns->Add($column_G);
+			$o_querySelect->Query->Columns->Add($column_H);
+			$o_querySelect->Query->Columns->Add($column_I);
+			$o_querySelect->Query->Columns->Add($column_J);
+			$o_querySelect->Query->Columns->Add($column_K);
+			$o_querySelect->Query->Columns->Add($column_L);
+			/* join with form element table */
+			$join_A = new \fPHP\Base\forestSQLJoin($o_querySelect);
+			$join_A->JoinType = 'INNER JOIN';
+			$join_A->Table = 'sys_fphp_formelement';
+				
+				$relation_A = new \fPHP\Base\forestSQLRelation($o_querySelect);
+				
+					$column_M = new \fPHP\Base\forestSQLColumn($o_querySelect);
+						$column_M->Column = 'FormElementUUID';
+					
+					$column_N = new \fPHP\Base\forestSQLColumn($o_querySelect);
+						$column_N->Table = $join_A->Table;
+						$column_N->Column = 'UUID';
+				
+				$relation_A->ColumnLeft = $column_M;
+				$relation_A->ColumnRight = $column_N;
+				$relation_A->Operator = '=';
 			
-			$relation_B->ColumnLeft = $column_O;
-			$relation_B->ColumnRight = $column_P;
-			$relation_B->Operator = '=';
-		
-		$join_B->Relations->Add($relation_B);
-		/* left join with forestdata table */
-		$join_C = new \fPHP\Base\forestSQLJoin($o_querySelect);
-		$join_C->JoinType = 'LEFT OUTER JOIN';
-		$join_C->Table = 'sys_fphp_forestdata';
-		
-			$relation_C = new \fPHP\Base\forestSQLRelation($o_querySelect);
+			$join_A->Relations->Add($relation_A);
+			/* left join with sqltype table */
+			$join_B = new \fPHP\Base\forestSQLJoin($o_querySelect);
+			$join_B->JoinType = 'LEFT OUTER JOIN';
+			$join_B->Table = 'sys_fphp_sqltype';
 			
-			$column_Q = new \fPHP\Base\forestSQLColumn($o_querySelect);
-				$column_Q->Column = 'ForestDataUUID';
+				$relation_B = new \fPHP\Base\forestSQLRelation($o_querySelect);
+				
+				$column_O = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_O->Column = 'SqlTypeUUID';
+					
+				$column_P = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_P->Table = $join_B->Table;
+					$column_P->Column = 'UUID';
+				
+				$relation_B->ColumnLeft = $column_O;
+				$relation_B->ColumnRight = $column_P;
+				$relation_B->Operator = '=';
 			
-			$column_R = new \fPHP\Base\forestSQLColumn($o_querySelect);
-				$column_R->Table = $join_C->Table;
-				$column_R->Column = 'UUID';
+			$join_B->Relations->Add($relation_B);
+			/* left join with forestdata table */
+			$join_C = new \fPHP\Base\forestSQLJoin($o_querySelect);
+			$join_C->JoinType = 'LEFT OUTER JOIN';
+			$join_C->Table = 'sys_fphp_forestdata';
 			
-			$relation_C->ColumnLeft = $column_Q;
-			$relation_C->ColumnRight = $column_R;
-			$relation_C->Operator = '=';
-		
-		$join_C->Relations->Add($relation_C);
-		
-		$o_querySelect->Query->Joins->Add($join_A);
-		$o_querySelect->Query->Joins->Add($join_B);
-		$o_querySelect->Query->Joins->Add($join_C);
-		
-		$column_S = new \fPHP\Base\forestSQLColumn($o_querySelect);
-			$column_S->Column = 'TableUUID';
-		
-		/* filter by table-uuid and field-name */
-		$where_A = new \fPHP\Base\forestSQLWhere($o_querySelect);
-			$where_A->Column = $column_S;
-			$where_A->Value = $where_A->ParseValue($p_s_tableUUID);
-			$where_A->Operator = '=';
+				$relation_C = new \fPHP\Base\forestSQLRelation($o_querySelect);
+				
+				$column_Q = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_Q->Column = 'ForestDataUUID';
+				
+				$column_R = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$column_R->Table = $join_C->Table;
+					$column_R->Column = 'UUID';
+				
+				$relation_C->ColumnLeft = $column_Q;
+				$relation_C->ColumnRight = $column_R;
+				$relation_C->Operator = '=';
 			
-		$where_B = new \fPHP\Base\forestSQLWhere($o_querySelect);
-			$where_B->Column = $column_A;
-			$where_B->Value = $where_A->ParseValue($p_s_field);
-			$where_B->Operator = '=';
-			$where_B->FilterOperator = 'AND';
-		
-		$o_querySelect->Query->Where->Add($where_A);
-		$o_querySelect->Query->Where->Add($where_B);
-		
-		$o_result = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect, false, false);
-		
-		/* we only expect and accept one record as result; any other result is invalid */
-		if (count($o_result) != 1) {
-			return null;
+			$join_C->Relations->Add($relation_C);
+			
+			$o_querySelect->Query->Joins->Add($join_A);
+			$o_querySelect->Query->Joins->Add($join_B);
+			$o_querySelect->Query->Joins->Add($join_C);
+			
+			$column_S = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$column_S->Column = 'TableUUID';
+			
+			/* filter by table-uuid and field-name */
+			$where_A = new \fPHP\Base\forestSQLWhere($o_querySelect);
+				$where_A->Column = $column_S;
+				$where_A->Value = $where_A->ParseValue($p_s_tableUUID);
+				$where_A->Operator = '=';
+				
+			$where_B = new \fPHP\Base\forestSQLWhere($o_querySelect);
+				$where_B->Column = $column_A;
+				$where_B->Value = $where_A->ParseValue($p_s_field);
+				$where_B->Operator = '=';
+				$where_B->FilterOperator = 'AND';
+			
+			$o_querySelect->Query->Where->Add($where_A);
+			$o_querySelect->Query->Where->Add($where_B);
+			
+			$o_result = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect, false, false);
+			
+			/* we only expect and accept one record as result; any other result is invalid */
+			if (count($o_result) != 1) {
+				return null;
+			}
+			
+			return $o_result[0];
 		}
-		
-		return $o_result[0];
 	}
 	
 	/**
@@ -585,73 +780,143 @@ abstract class forestTwig {
 			}
 		}
 		
-		/* get all subrecords, based on twig uuid - inner join with joinuuid on subtable */
-		$o_subrecordsTwig = new \fPHP\Twigs\subrecordsTwig;
-		$s_joinTable = array_search($p_o_subconstraint->SubTableUUID->PrimaryValue, $o_glob->Tables);
-		$a_sqlAdditionalFilter = array(array('column' => 'HeadUUID', 'value' => $this->UUID, 'operator' => '=', 'filterOperator' => 'AND'));
-		$o_glob->BackupTemp();
-		$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
-		
-		$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, $o_subrecordsTwig->fphp_Table->value);
-		
-		/* add join with sub constraint table */
-		$join_A = new \fPHP\Base\forestSQLJoin($o_querySelect);
-		$join_A->JoinType = 'INNER JOIN';
-		$join_A->Table = $s_joinTable;
+		if ($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway == \fPHP\Base\forestBase::MongoDB) {
+			$o_subrecordsTwig = new \fPHP\Twigs\subrecordsTwig;
+			$s_joinTable = array_search($p_o_subconstraint->SubTableUUID->PrimaryValue, $o_glob->Tables);
 			
-			$relation_A = new \fPHP\Base\forestSQLRelation($o_querySelect);
+			$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, $o_subrecordsTwig->fphp_Table->value);
 			
-				$column_A = new \fPHP\Base\forestSQLColumn($o_querySelect);
-					$column_A->Column = 'JoinUUID';
+			/* add all subrecords table columns */
+			foreach($o_subrecordsTwig->fphp_Mapping->value as $s_column) {
+				$o_column = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$o_column->Column = $s_column;
 				
-				$column_B = new \fPHP\Base\forestSQLColumn($o_querySelect);
-					$column_B->Table = $join_A->Table;
-					$column_B->Column = 'UUID';
+				$o_querySelect->Query->Columns->Add($o_column);
+			}
 			
-			$relation_A->ColumnLeft = $column_A;
-			$relation_A->ColumnRight = $column_B;
-			$relation_A->Operator = '=';
-		
-		$join_A->Relations->Add($relation_A);
-		
-		$o_glob->Temp->Add($join_A, 'SQLAdditionalJoin');
-		
-		$s_tempTable = $s_joinTable;
-		\fPHP\Helper\forestStringLib::RemoveTablePrefix($s_tempTable);
-		$s_foo = '\\fPHP\\Twigs\\' . $s_tempTable . 'Twig';
-		$o_tempTwig = new $s_foo;
-		$a_additionalColumns = array();
-		
-		/* add all subrecords table columns */
-		foreach($o_subrecordsTwig->fphp_Mapping->value as $s_column) {
-			$column = new \fPHP\Base\forestSQLColumn($o_querySelect);
-				$column->Column = $s_column;
+			$o_head_uuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
+				$o_head_uuid->Column = 'HeadUUID';
 			
-			$a_additionalColumns[] = $column;
-		}
-		
-		/* add columns of sub constraint table */
-		foreach($o_tempTwig->fphp_Mapping->value as $s_column) {
-			if ( ($s_column != 'Id') && ($s_column != 'UUID') ) {
+			$where_A = new \fPHP\Base\forestSQLWhere($o_querySelect);
+				$where_A->Column = $o_head_uuid;
+				$where_A->Value = $where_A->ParseValue($this->UUID);
+				$where_A->Operator = '=';
+				$where_A->FilterOperator = 'AND';
+			
+			$o_querySelect->Query->Where->Add($where_A);
+			
+			$o_resultSubRecords = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect, false, false);
+			
+			$s_tempTable = $s_joinTable;
+			\fPHP\Helper\forestStringLib::RemoveTablePrefix($s_tempTable);
+			$s_foo = '\\fPHP\\Twigs\\' . $s_tempTable . 'Twig';
+			$o_tempTwig = new $s_foo;
+			
+			foreach ($o_resultSubRecords as $o_resultSubRecord) {
 				$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, $o_tempTwig->fphp_Table->value);
+			
+				/* add all subrecords table columns */
+				foreach($o_tempTwig->fphp_Mapping->value as $s_column) {
+					if ( ($s_column != 'Id') && ($s_column != 'UUID') ) {
+						$o_column = new \fPHP\Base\forestSQLColumn($o_querySelect);
+							$o_column->Column = $s_column;
+						
+						$o_querySelect->Query->Columns->Add($o_column);
+						
+						$o_resultSubRecord[$s_tempTable . '$' . $s_column] = null;
+					}
+				}
 				
+				$o_uuid = new \fPHP\Base\forestSQLColumn($o_querySelect);
+					$o_uuid->Column = 'UUID';
+				
+				$where_A = new \fPHP\Base\forestSQLWhere($o_querySelect);
+					$where_A->Column = $o_uuid;
+					$where_A->Value = $where_A->ParseValue($o_resultSubRecord['JoinUUID']);
+					$where_A->Operator = '=';
+					$where_A->FilterOperator = 'AND';
+				
+				$o_querySelect->Query->Where->Add($where_A);
+				
+				$o_resultJoinRecord = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect, false, false);
+				
+				if (count($o_resultJoinRecord) == 1) {
+					foreach ($o_resultJoinRecord[0] as $s_joinRecordColumn => $o_joinRecordColumnValue) {
+						$o_resultSubRecord[$s_tempTable . '$' . $s_joinRecordColumn] = $o_joinRecordColumnValue;
+					}
+				}
+			}
+			
+			$o_subRecords = new \fPHP\Twigs\forestTwigList($o_subrecordsTwig->fphp_Table->value, $o_resultSubRecords, \fPHP\Base\forestBase::ASSOC);
+		} else {
+			/* get all subrecords, based on twig uuid - inner join with joinuuid on subtable */
+			$o_subrecordsTwig = new \fPHP\Twigs\subrecordsTwig;
+			$s_joinTable = array_search($p_o_subconstraint->SubTableUUID->PrimaryValue, $o_glob->Tables);
+			$a_sqlAdditionalFilter = array(array('column' => 'HeadUUID', 'value' => $this->UUID, 'operator' => '=', 'filterOperator' => 'AND'));
+			$o_glob->BackupTemp();
+			$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+			
+			$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, $o_subrecordsTwig->fphp_Table->value);
+			
+			/* add join with sub constraint table */
+			$join_A = new \fPHP\Base\forestSQLJoin($o_querySelect);
+			$join_A->JoinType = 'INNER JOIN';
+			$join_A->Table = $s_joinTable;
+				
+				$relation_A = new \fPHP\Base\forestSQLRelation($o_querySelect);
+				
+					$column_A = new \fPHP\Base\forestSQLColumn($o_querySelect);
+						$column_A->Column = 'JoinUUID';
+					
+					$column_B = new \fPHP\Base\forestSQLColumn($o_querySelect);
+						$column_B->Table = $join_A->Table;
+						$column_B->Column = 'UUID';
+				
+				$relation_A->ColumnLeft = $column_A;
+				$relation_A->ColumnRight = $column_B;
+				$relation_A->Operator = '=';
+			
+			$join_A->Relations->Add($relation_A);
+			
+			$o_glob->Temp->Add($join_A, 'SQLAdditionalJoin');
+			
+			$s_tempTable = $s_joinTable;
+			\fPHP\Helper\forestStringLib::RemoveTablePrefix($s_tempTable);
+			$s_foo = '\\fPHP\\Twigs\\' . $s_tempTable . 'Twig';
+			$o_tempTwig = new $s_foo;
+			$a_additionalColumns = array();
+			
+			/* add all subrecords table columns */
+			foreach($o_subrecordsTwig->fphp_Mapping->value as $s_column) {
 				$column = new \fPHP\Base\forestSQLColumn($o_querySelect);
 					$column->Column = $s_column;
-					$column->Name = $s_tempTable . '$' . $s_column;
 				
 				$a_additionalColumns[] = $column;
 			}
+			
+			/* add columns of sub constraint table */
+			foreach($o_tempTwig->fphp_Mapping->value as $s_column) {
+				if ( ($s_column != 'Id') && ($s_column != 'UUID') ) {
+					$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, $o_tempTwig->fphp_Table->value);
+					
+					$column = new \fPHP\Base\forestSQLColumn($o_querySelect);
+						$column->Column = $s_column;
+						$column->Name = $s_tempTable . '$' . $s_column;
+					
+					$a_additionalColumns[] = $column;
+				}
+			}
+			
+			$o_glob->Temp->Add($a_additionalColumns, 'SQLGetAllAdditionalColumns');
+			
+			/* execute query */
+			$o_subRecords = $o_subrecordsTwig->GetAllRecords(true);
+			
+			$o_glob->Temp->Del('SQLGetAllAdditionalColumns');
+			$o_glob->Temp->Del('SQLAdditionalJoin');
+			$o_glob->Temp->Del('SQLAdditionalFilter');
+			$o_glob->RestoreTemp();
 		}
-		
-		$o_glob->Temp->Add($a_additionalColumns, 'SQLGetAllAdditionalColumns');
-		
-		/* execute query */
-		$o_subRecords = $o_subrecordsTwig->GetAllRecords(true);
-		
-		$o_glob->Temp->Del('SQLGetAllAdditionalColumns');
-		$o_glob->Temp->Del('SQLAdditionalJoin');
-		$o_glob->Temp->Del('SQLAdditionalFilter');
-		$o_glob->RestoreTemp();
 		
 		/* save result into sub records field of twig class */
 		$this->fphp_SubRecords->value->Add($o_subRecords, $p_o_subconstraint->UUID);
@@ -910,6 +1175,10 @@ abstract class forestTwig {
 										/* sum up all field values of queried sub records into $o_value */
 										foreach ($o_subRecords->Twigs as $o_subRecord) {
 											if ($s_forestCombination != null) {
+												if ($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway == \fPHP\Base\forestBase::MongoDB) {
+													$o_glob->TablefieldsDictionary->{$s_forestCombination}->JSONEncodedSettings = htmlspecialchars_decode($o_glob->TablefieldsDictionary->{$s_forestCombination}->JSONEncodedSettings);
+												}
+												
 												/* if we found another forestCombination as table field, we need to calculate it's value as well */
 												$s_JSONEncodedSettings = str_replace('&quot;', '"', $o_glob->TablefieldsDictionary->{$s_forestCombination}->JSONEncodedSettings);
 												$a_settings = json_decode($s_JSONEncodedSettings, true);
@@ -945,7 +1214,7 @@ abstract class forestTwig {
 						/* get sub record field of forestCombination table field */
 						foreach ($o_glob->TablefieldsDictionary as $s_key => $o_tableFieldDictionaryObject) {
 							if ($o_tableFieldDictionaryObject->FieldName == $s_fileField) {
-								if ($o_tableFieldDictionaryObject->FormElementName == \fPHP\Forms\forestFormElement::FILE) {
+								if ($o_tableFieldDictionaryObject->FormElementName == \fPHP\Forms\forestFormElement::FILEDIALOG) {
 									/* check sub record field value */
 									if (issetStr($o_tableFieldDictionaryObject->SubRecordField)) {
 										/* check if field actually exists in current record */
@@ -989,7 +1258,7 @@ abstract class forestTwig {
 						/* get sub record field of forestCombination table field */
 						foreach ($o_glob->TablefieldsDictionary as $s_key => $o_tableFieldDictionaryObject) {
 							if ($o_tableFieldDictionaryObject->FieldName == $s_fileField) {
-								if ($o_tableFieldDictionaryObject->FormElementName == \fPHP\Forms\forestFormElement::FILE) {
+								if ($o_tableFieldDictionaryObject->FormElementName == \fPHP\Forms\forestFormElement::FILEDIALOG) {
 									/* check sub record field value */
 									if (issetStr($o_tableFieldDictionaryObject->SubRecordField)) {
 										/* check if field actually exists in current record */
@@ -1564,7 +1833,7 @@ abstract class forestTwig {
 					$a_file_uuids = array();
 					
 					if ($o_glob->TablefieldsDictionary->Exists($this->fphp_Table->value . '_' . $s_column)) {
-						if ($o_glob->TablefieldsDictionary->{$this->fphp_Table->value . '_' . $s_column}->FormElementName == \fPHP\Forms\forestFormElement::FILE) {
+						if ($o_glob->TablefieldsDictionary->{$this->fphp_Table->value . '_' . $s_column}->FormElementName == \fPHP\Forms\forestFormElement::FILEDIALOG) {
 							/* select uuid on table files filtered on displayname */
 							$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, 'sys_fphp_files');
 				
@@ -2440,7 +2709,7 @@ abstract class forestTwig {
 		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		/* create delete query */
-		$o_queryDelete = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::DELETE, $this->fphp_Table->value);
+		$o_queryDelete = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::REMOVE, $this->fphp_Table->value);
 		
 		if ($this->fphp_HasUUID->value) {
 			/* if twig object use uuid, use it as update filter */

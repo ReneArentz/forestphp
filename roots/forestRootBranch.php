@@ -7,7 +7,7 @@
  * @copyright   (c) 2019 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     0.9.0 beta
+ * @version     1.0.0 stable
  * @link        http://www.forestphp.de/
  * @object-id   0x1 0001F
  * @since       File available since Release 0.2.0 beta
@@ -28,9 +28,11 @@
  * 		0.7.0 beta	renatus		2020-01-02	added identifier administration
  * 		0.7.0 beta	renatus		2020-01-16	added fphp_flex functionality and create log entry
  * 		0.9.0 beta	renatus		2020-01-30	changes for bootstrap 4
+ * 		1.0.0 stable	renatus		2020-02-14	added translation deletion if a branch is deleted
  */
 
 namespace fPHP\Branches;
+
 use \fPHP\Roots\forestException as forestException;
 
 abstract class forestRootBranch {
@@ -724,7 +726,7 @@ abstract class forestRootBranch {
 			}
 			
 			/* get StandardView value */
-			if ($this->StandardView == forestBranch::LIST) {
+			if ($this->StandardView == forestBranch::LISTVIEW) {
 				$this->Twig->StandardView = 1;
 			} else if ($this->StandardView == forestBranch::DETAIL) {
 				$this->Twig->StandardView = 10;
@@ -775,7 +777,7 @@ abstract class forestRootBranch {
 					$s_keepFilter = 'true';
 				}
 				
-				$s_standardView = 'forestBranch::LIST';
+				$s_standardView = 'forestBranch::LISTVIEW';
 				
 				if ($this->Twig->StandardView == 10) {
 					$s_standardView = 'forestBranch::DETAIL';
@@ -835,7 +837,7 @@ abstract class forestRootBranch {
 			}
 			
 			/* get StandardView value */
-			if ($this->StandardView == forestBranch::LIST) {
+			if ($this->StandardView == forestBranch::LISTVIEW) {
 				$this->Twig->StandardView = 1;
 			} else if ($this->StandardView == forestBranch::DETAIL) {
 				$this->Twig->StandardView = 10;
@@ -911,7 +913,7 @@ abstract class forestRootBranch {
 		}
 		
 		/* get StandardView value */
-		if ($this->StandardView == forestBranch::LIST) {
+		if ($this->StandardView == forestBranch::LISTVIEW) {
 			$this->Twig->StandardView = 1;
 		} else if ($this->StandardView == forestBranch::DETAIL) {
 			$this->Twig->StandardView = 10;
@@ -1247,12 +1249,32 @@ abstract class forestRootBranch {
 					throw new forestException(0x10001401, array($o_translationTwig->fphp_Table));
 				}
 				
-				/* change title value and execute update */
+				/* delete translation record */
 				$i_return = $o_translationTwig->DeleteRecord();
 				
 				/* evaluate the result */
 				if ($i_return <= 0) {
 					throw new forestException(0x10001423);
+				}
+				
+				/* delete all translations of current branch */
+				$o_translationTwig = new \fPHP\Twigs\translationTwig;
+				
+				$a_sqlAdditionalFilter = array(array('column' => 'BranchId', 'value' => $_POST['sys_fphp_branchKey'], 'operator' => '=', 'filterOperator' => 'AND'));
+				$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+				$o_translations = $o_translationTwig->GetAllRecords(true);
+				$o_glob->Temp->Del('SQLAdditionalFilter');
+				
+				if ($o_translations->Twigs->Count() > 0) {
+					foreach ($o_translations->Twigs as $o_translation) {
+						/* delete translation record */
+						$i_return = $o_translation->DeleteRecord();
+						
+						/* evaluate the result */
+						if ($i_return <= 0) {
+							throw new forestException(0x10001423);
+						}
+					}
 				}
 				
 				/* delete branch file structure */
@@ -2170,7 +2192,7 @@ abstract class forestRootBranch {
 							$s_keepFilter = 'true';
 						}
 						
-						$s_standardView = 'forestBranch::LIST';
+						$s_standardView = 'forestBranch::LISTVIEW';
 						
 						if ($o_branchTwig->StandardView == 10) {
 							$s_standardView = 'forestBranch::DETAIL';
@@ -2837,7 +2859,7 @@ abstract class forestRootBranch {
 				$s_keepFilter = 'true';
 			}
 			
-			$s_standardView = 'forestBranch::LIST';
+			$s_standardView = 'forestBranch::LISTVIEW';
 			
 			if ($o_targetBranch->StandardView == 10) {
 				$s_standardView = 'forestBranch::DETAIL';

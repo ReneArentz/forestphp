@@ -1,7 +1,15 @@
 <?php
 
 namespace fPHP\Branches;
-use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \fPHP\Roots\forestString as forestString;
+use \fPHP\Roots\forestList as forestList;
+use \fPHP\Roots\forestNumericString as forestNumericString;
+use \fPHP\Roots\forestInt as forestInt;
+use \fPHP\Roots\forestFloat as forestFloat;
+use \fPHP\Roots\forestBool as forestBool;
+use \fPHP\Roots\forestArray as forestArray;
+use \fPHP\Roots\forestObject as forestObject;
+use \fPHP\Roots\forestLookup as forestLookup;
 
 class roleBranch extends forestBranch {
 	use \fPHP\Roots\forestData;
@@ -14,7 +22,7 @@ class roleBranch extends forestBranch {
 	
 	protected function initBranch() {
 		$this->Filter->value = true;
-		$this->StandardView = forestBranch::LIST;
+		$this->StandardView = forestBranch::LISTVIEW;
 		$this->KeepFilter->value = false;
 		
 		$this->Twig = new \fPHP\Twigs\roleTwig();
@@ -25,11 +33,11 @@ class roleBranch extends forestBranch {
 		
 		if ($this->StandardView == forestBranch::DETAIL) {
 			$this->GenerateView();
-		} else if ($this->StandardView == forestBranch::LIST) {
+		} else if ($this->StandardView == forestBranch::LISTVIEW) {
 			$this->GenerateListView();
 		} else if ($this->StandardView == forestBranch::FLEX) {
 			if ( ($o_glob->Security->SessionData->Exists('lastView')) && ($o_glob->URL->LastBranchId == $o_glob->URL->BranchId) ) {
-				if ($o_glob->Security->SessionData->{'lastView'} == forestBranch::LIST) {
+				if ($o_glob->Security->SessionData->{'lastView'} == forestBranch::LISTVIEW) {
 					$this->GenerateView();
 				} else if ($o_glob->Security->SessionData->{'lastView'} == forestBranch::DETAIL) {
 					$this->GenerateListView();
@@ -332,6 +340,24 @@ class roleBranch extends forestBranch {
 						foreach ($o_role_permissions->Twigs as $o_role_permission) {
 							/* delete record */
 							$i_return = $o_role_permission->DeleteRecord();
+							
+							/* evaluate the result */
+							if ($i_return <= 0) {
+								throw new \fPHP\Roots\forestException(0x10001423);
+							}
+						}
+						
+						/* look for usergroups */
+						$o_usergroup_roleTwig = new \fPHP\Twigs\usergroup_roleTwig;
+						
+						$a_sqlAdditionalFilter = array(array('column' => 'roleUUID', 'value' => $this->Twig->UUID, 'operator' => '=', 'filterOperator' => 'AND'));
+						$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+						$o_usergroup_roles = $o_usergroup_roleTwig->GetAllRecords(true);
+						$o_glob->Temp->Del('SQLAdditionalFilter');
+						
+						foreach ($o_usergroup_roles->Twigs as $o_usergroup_role) {
+							/* delete record */
+							$i_return = $o_usergroup_role->DeleteRecord();
 							
 							/* evaluate the result */
 							if ($i_return <= 0) {

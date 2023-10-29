@@ -9,7 +9,7 @@
  * @copyright   (c) 2019 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     0.9.0 beta
+ * @version     1.0.0 stable
  * @link        http://www.forestphp.de/
  * @object-id   0x1 00016
  * @since       File available since Release 0.1.1 alpha
@@ -23,11 +23,21 @@
  * 		0.5.0 beta	renatus		2019-12-04	added auto checkin element
  * 		0.7.0 beta	renatus		2020-01-03	added mondey-format property to general input attributes
  * 		0.9.0 beta	renatus		2020-01-29	changes for bootstrap 4 on checkbox, radio. dropzone and richtext
+ * 		1.0.0 stable	renatus		2020-02-14	added FilenameFromField functionality for FILE elements
+ * 		1.0.0 stable	renatus		2020-02-14	changes constants because of conflict with php system constants
  */
 
 namespace fPHP\Forms;
 
-use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \fPHP\Roots\forestString as forestString;
+use \fPHP\Roots\forestList as forestList;
+use \fPHP\Roots\forestNumericString as forestNumericString;
+use \fPHP\Roots\forestInt as forestInt;
+use \fPHP\Roots\forestFloat as forestFloat;
+use \fPHP\Roots\forestBool as forestBool;
+use \fPHP\Roots\forestArray as forestArray;
+use \fPHP\Roots\forestObject as forestObject;
+use \fPHP\Roots\forestLookup as forestLookup;
 use \fPHP\Helper\forestObjectList;
 use \fPHP\Roots\forestException as forestException;
 
@@ -41,21 +51,21 @@ class forestFormElement {
 	const TEXT = 'text';
 	const HIDDEN = 'hidden';
 	const PASSWORD = 'password';
-	const LIST = 'list';
-	const FILE = 'file';
+	const LISTTXT = 'list';
+	const FILEDIALOG = 'file';
 	const RADIO = 'radio';
 	const CHECKBOX = 'checkbox';
 	const COLOR = 'color';
 	const EMAIL = 'email';
 	const URL = 'url';
-	const DATE = 'date';
+	const DATEINPUT = 'date';
 	const DATETIMELOCAL = 'datetime-local';
 	const MONTH = 'month';
 	const NUMBER = 'number';
-	const RANGE = 'range';
+	const RANGEINPUT = 'range';
 	const SEARCH = 'search';
 	const PHONE = 'phone';
-	const TIME = 'time';
+	const TIMEINPUT = 'time';
 	const WEEK = 'week';
 	
 	const TEXTAREA = 'textarea';
@@ -133,12 +143,12 @@ class forestFormElement {
 				$this->Type->value = self::PASSWORD;
 				$this->FormElement->value = new forestFormElementPassword();
 			break;
-			case self::LIST:
-				$this->Type->value = self::LIST;
+			case self::LISTTXT:
+				$this->Type->value = self::LISTTXT;
 				$this->FormElement->value = new forestFormElementList();
 			break;
-			case self::FILE:
-				$this->Type->value = self::FILE;
+			case self::FILEDIALOG:
+				$this->Type->value = self::FILEDIALOG;
 				$this->FormElement->value = new forestFormElementFile();
 			break;
 			case self::RADIO:
@@ -161,8 +171,8 @@ class forestFormElement {
 				$this->Type->value = self::URL;
 				$this->FormElement->value = new forestFormElementUrl();
 			break;
-			case self::DATE:
-				$this->Type->value = self::DATE;
+			case self::DATEINPUT:
+				$this->Type->value = self::DATEINPUT;
 				$this->FormElement->value = new forestFormElementDate();
 			break;
 			case self::DATETIMELOCAL:
@@ -177,8 +187,8 @@ class forestFormElement {
 				$this->Type->value = self::NUMBER;
 				$this->FormElement->value = new forestFormElementNumber();
 			break;
-			case self::RANGE:
-				$this->Type->value = self::RANGE;
+			case self::RANGEINPUT:
+				$this->Type->value = self::RANGEINPUT;
 				$this->FormElement->value = new forestFormElementRange();
 			break;
 			case self::SEARCH:
@@ -189,8 +199,8 @@ class forestFormElement {
 				$this->Type->value = self::PHONE;
 				$this->FormElement->value = new forestFormElementPhone();
 			break;
-			case self::TIME:
-				$this->Type->value = self::TIME;
+			case self::TIMEINPUT:
+				$this->Type->value = self::TIMEINPUT;
 				$this->FormElement->value = new forestFormElementTime();
 			break;
 			case self::WEEK:
@@ -266,8 +276,9 @@ class forestFormElement {
 	 * @access public
 	 * @static no
 	 */
-	public function &__get($p_s_name) {
-		return $this->FormElement->value->$p_s_name;
+	public function __get($p_s_name) {
+		$foo = $this->FormElement->value->$p_s_name;
+		return $foo;
 	}
 	
 	/**
@@ -327,6 +338,10 @@ class forestFormElement {
 	 */
 	public static function JSONSettingsMultilanguage(&$p_s_jsonDataSettings, $p_i_branchId = null) {
 		$o_glob = \fPHP\Roots\forestGlobals::init();
+		
+		if ($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway == \fPHP\Base\forestBase::MongoDB) {
+			$p_s_jsonDataSettings = htmlspecialchars_decode($p_s_jsonDataSettings);
+		}
 		
 		preg_match_all('/\#([^#]+)\#/', $p_s_jsonDataSettings, $a_matches);
 		
@@ -1277,6 +1292,8 @@ class forestFormElementFile extends forestFormInputAttributes {
 	
 	/* Fields */
 	
+	private $FilenameFromField;
+	
 	/* Properties */
 	
 	/* Methods */
@@ -1291,6 +1308,8 @@ class forestFormElementFile extends forestFormInputAttributes {
 	 */
 	public function __construct() {
 		parent::__construct();
+		
+		$this->FilenameFromField = new forestString;
 	}
 	
 	/**

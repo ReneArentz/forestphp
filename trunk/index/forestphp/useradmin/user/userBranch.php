@@ -1,7 +1,15 @@
 <?php
 
 namespace fPHP\Branches;
-use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \fPHP\Roots\forestString as forestString;
+use \fPHP\Roots\forestList as forestList;
+use \fPHP\Roots\forestNumericString as forestNumericString;
+use \fPHP\Roots\forestInt as forestInt;
+use \fPHP\Roots\forestFloat as forestFloat;
+use \fPHP\Roots\forestBool as forestBool;
+use \fPHP\Roots\forestArray as forestArray;
+use \fPHP\Roots\forestObject as forestObject;
+use \fPHP\Roots\forestLookup as forestLookup;
 
 class userBranch extends forestBranch {
 	use \fPHP\Roots\forestData;
@@ -14,7 +22,7 @@ class userBranch extends forestBranch {
 	
 	protected function initBranch() {
 		$this->Filter->value = true;
-		$this->StandardView = forestBranch::LIST;
+		$this->StandardView = forestBranch::LISTVIEW;
 		$this->KeepFilter->value = false;
 		
 		$this->Twig = new \fPHP\Twigs\userTwig();
@@ -25,11 +33,11 @@ class userBranch extends forestBranch {
 		
 		if ($this->StandardView == forestBranch::DETAIL) {
 			$this->GenerateView();
-		} else if ($this->StandardView == forestBranch::LIST) {
+		} else if ($this->StandardView == forestBranch::LISTVIEW) {
 			$this->GenerateListView();
 		} else if ($this->StandardView == forestBranch::FLEX) {
 			if ( ($o_glob->Security->SessionData->Exists('lastView')) && ($o_glob->URL->LastBranchId == $o_glob->URL->BranchId) ) {
-				if ($o_glob->Security->SessionData->{'lastView'} == forestBranch::LIST) {
+				if ($o_glob->Security->SessionData->{'lastView'} == forestBranch::LISTVIEW) {
 					$this->GenerateView();
 				} else if ($o_glob->Security->SessionData->{'lastView'} == forestBranch::DETAIL) {
 					$this->GenerateListView();

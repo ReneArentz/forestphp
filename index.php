@@ -7,7 +7,7 @@
  * @copyright   (c) 2019 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     0.9.0 beta
+ * @version     1.0.0 stable
  * @link        http://www.forestphp.de/
  * @object-id   0x1 00000
  * @since       File available since Release 0.1.0 alpha
@@ -16,6 +16,7 @@
  * @version log Version		Developer	Date		Comment
  *              0.1.0 alpha	renatus		2019-08-04	first build
  *              0.9.0 beta	renatus		2020-01-27	added general functions
+ *              1.0.0 stable	renatus		2020-02-10	added global flags for testing DDL and filling data from SQLite3 DB into a MongoDB
  */
 
 /* display options for error reporting, useful for debugging */
@@ -44,6 +45,9 @@ global $b_debug_sql_query;
 global $b_debug_no_select_sql_query;
 global $b_write_sql_queries;
 global $b_transaction_active;
+global $b_run_testddl;
+global $b_run_testddl_embedded;
+global $b_fill_mongodb_from_sqlite3;
 
 $b_write_main_exception = false;
 $b_write_url_info = false;
@@ -54,6 +58,9 @@ $b_debug_sql_query = false;
 $b_debug_no_select_sql_query = false;
 $b_write_sql_queries = false;
 $b_transaction_active = false;
+$b_run_testddl = false;
+$b_run_testddl_embedded = false;
+$b_fill_mongodb_from_sqlite3 = false;
 
 /* save current microtime globally to calculate runtime duration at the end */
 global $start;

@@ -7,7 +7,7 @@
  * @copyright   (c) 2019 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     0.9.0 beta
+ * @version     1.0.0 stable
  * @link        http://www.forestphp.de/
  * @object-id   0x1 0001A
  * @since       File available since Release 0.1.0 alpha
@@ -18,11 +18,21 @@
  * 		0.1.0 alpha	renatus		2019-08-04	added conversion for forestDateTime	
  * 		0.7.0 beta	renatus		2020-01-03	added IncreaseIdentifier and mondey_format functions
  * 		0.9.0 beta	renatus		2020-01-30	changes for TextToDate function for ocisql
+ * 		1.0.0 stable	renatus		2020-02-10	added os identification in money_format
+ * 		1.0.0 stable	renatus		2020-02-14	added ParseNameToFilename function
  */
 
 namespace fPHP\Helper;
 
-use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \fPHP\Roots\forestString as forestString;
+use \fPHP\Roots\forestList as forestList;
+use \fPHP\Roots\forestNumericString as forestNumericString;
+use \fPHP\Roots\forestInt as forestInt;
+use \fPHP\Roots\forestFloat as forestFloat;
+use \fPHP\Roots\forestBool as forestBool;
+use \fPHP\Roots\forestArray as forestArray;
+use \fPHP\Roots\forestObject as forestObject;
+use \fPHP\Roots\forestLookup as forestLookup;
 use \fPHP\Roots\forestException as forestException;
 
 class forestStringLib {
@@ -102,8 +112,7 @@ class forestStringLib {
 			}
 		}
 	}
-	
-	
+		
 	/**
 	 * remove multiple chars in a string which are set in parameter-array
 	 *
@@ -771,11 +780,44 @@ class forestStringLib {
 			},
 			$p_s_string
 		);
-	} 
+	}
+	
+	/**
+	 * parse a string value to a valid filename string
+	 *
+	 * @param string $p_s_string  string value
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static yes
+	 */
+	public static function ParseNameToFilename($p_s_string) {
+		$s_foo = '';
+		
+		$p_s_string = str_replace('ö', 'oe', $p_s_string);
+		$p_s_string = str_replace('ä', 'ae', $p_s_string);
+		$p_s_string = str_replace('ü', 'ue', $p_s_string);
+		$p_s_string = str_replace('Ö', 'Oe', $p_s_string);
+		$p_s_string = str_replace('Ä', 'Ae', $p_s_string);
+		$p_s_string = str_replace('Ü', 'Ue', $p_s_string);
+		$p_s_string = str_replace('ß', 'ss', $p_s_string);
+		
+		for ($i = 0; $i < strlen($p_s_string); $i++) {
+			if ($p_s_string[$i] == ' ') {
+				$p_s_string[$i] = '_';
+			}
+			
+			if (in_array($p_s_string[$i], array('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','0','1','2','3','4','5','6','7','8','9','-','_'))) {
+				$s_foo .= $p_s_string[$i];
+			}
+		}
+		
+		return $s_foo;
+	}
 
 	/**
-	 * manual money_format function
-	 * (c) by Rafael M. Salvioni https://www.php.net/manual/en/function.money-format.php
+	 * manual european money_format function
 	 *
 	 * @param string $format  locale format e.g. en_US, de_DE
 	 * @param float $number
@@ -786,94 +828,7 @@ class forestStringLib {
 	 * @static yes
 	 */
 	public static function money_format($format, $number) {
-		$regex  = '/%((?:[\^!\-]|\+|\(|\=.)*)([0-9]+)?'.
-		'(?:#([0-9]+))?(?:\.([0-9]+))?([in%])/';
-		if (setlocale(LC_MONETARY, 0) == 'C') {
-		setlocale(LC_MONETARY, '');
-		}
-		$locale = localeconv();
-		preg_match_all($regex, $format, $matches, PREG_SET_ORDER);
-		foreach ($matches as $fmatch) {
-		$value = floatval($number);
-		$flags = array(
-		'fillchar'  => preg_match('/\=(.)/', $fmatch[1], $match) ?
-		$match[1] : ' ',
-		'nogroup'   => preg_match('/\^/', $fmatch[1]) > 0,
-		'usesignal' => preg_match('/\+|\(/', $fmatch[1], $match) ?
-		$match[0] : '+',
-		'nosimbol'  => preg_match('/\!/', $fmatch[1]) > 0,
-		'isleft'    => preg_match('/\-/', $fmatch[1]) > 0
-		);
-		$width      = trim($fmatch[2]) ? (int)$fmatch[2] : 0;
-		$left       = trim($fmatch[3]) ? (int)$fmatch[3] : 0;
-		$right      = trim($fmatch[4]) ? (int)$fmatch[4] : $locale['int_frac_digits'];
-		$conversion = $fmatch[5];
-
-		$positive = true;
-		if ($value < 0) {
-		$positive = false;
-		$value  *= -1;
-		}
-		$letter = $positive ? 'p' : 'n';
-
-		$prefix = $suffix = $cprefix = $csuffix = $signal = '';
-
-		$signal = $positive ? $locale['positive_sign'] : $locale['negative_sign'];
-		switch (true) {
-		case $locale["{$letter}_sign_posn"] == 1 && $flags['usesignal'] == '+':
-		$prefix = $signal;
-		break;
-		case $locale["{$letter}_sign_posn"] == 2 && $flags['usesignal'] == '+':
-		$suffix = $signal;
-		break;
-		case $locale["{$letter}_sign_posn"] == 3 && $flags['usesignal'] == '+':
-		$cprefix = $signal;
-		break;
-		case $locale["{$letter}_sign_posn"] == 4 && $flags['usesignal'] == '+':
-		$csuffix = $signal;
-		break;
-		case $flags['usesignal'] == '(':
-		case $locale["{$letter}_sign_posn"] == 0:
-		$prefix = '(';
-		$suffix = ')';
-		break;
-		}
-		if (!$flags['nosimbol']) {
-		$currency = $cprefix .
-		/* ($conversion == 'i' ? $locale['int_curr_symbol'] : $locale['currency_symbol']) .*/
-		$csuffix;
-		} else {
-		$currency = '';
-		}
-
-		$space  = $locale["{$letter}_sep_by_space"] ? ' ' : '';
-
-		$value = number_format($value, $right, $locale['mon_decimal_point'],
-		$flags['nogroup'] ? '' : $locale['mon_thousands_sep']);
-		$value = @explode($locale['mon_decimal_point'], $value);
-
-		$n = strlen($prefix) + strlen($currency) + strlen($value[0]);
-
-		if ($left > 0 && $left > $n) {
-		$value[0] = str_repeat($flags['fillchar'], $left - $n) . $value[0];
-		}
-
-		$value = implode($locale['mon_decimal_point'], $value);
-
-		if ($locale["{$letter}_cs_precedes"]) {
-		$value = $prefix . $currency . $space . $value . $suffix;
-		} else {
-		$value = $prefix . $value . $space . $currency . $suffix;
-		}
-
-		if ($width > 0) {
-		$value = str_pad($value, $width, $flags['fillchar'], $flags['isleft'] ? STR_PAD_RIGHT : STR_PAD_LEFT);
-		}
-
-		$format = str_replace($fmatch[0], $value, $format);
-		}
-
-		return trim($format);
+		return number_format($number, 2, ',', '.') . ' &#8364;';
 	}
 }
 ?>

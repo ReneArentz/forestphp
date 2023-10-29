@@ -26,6 +26,9 @@ forestPHP framework will be released under the **GPLv3 license** and the **MIT l
 
 ## Releases
 
+### 1.0.0 (stable)
+New features: Database Support extended to: SQLite3 + MSSQL + OracleDB + PostgreSQL + MongoDB, Tested on linux, Issues resolved, Backward Compatibility to PHP 5.x, Preparation for Statistics
+
 ### 0.9.0 (beta)
 New features: Upgrade to Bootstrap 4, Navigation Sidebar + Full-screen, Implementation of PHP namespaces, Completion of English Translation, Restructure of comments in forestPHP Source Code
 

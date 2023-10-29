@@ -7,7 +7,7 @@
  * @copyright   (c) 2019 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     0.9.0 beta
+ * @version     1.0.0 stable
  * @link        http://www.forestphp.de/
  * @object-id   0x1 00002
  * @since       File available since Release 0.1.0 alpha
@@ -17,6 +17,7 @@
  * 		0.1.0 alpha	renatus		2019-08-04	first build
  * 		0.9.0 beta	renatus		2020-01-27	changes for namespaces
  * 		0.9.0 beta	renatus		2020-01-27	add adopted folder for root classes
+ * 		1.0.0 stable	renatus		2020-02-11	changed IsReadable by using function file_exists and not fopen anymore
  */
 
 namespace fPHP\Roots;
@@ -194,14 +195,7 @@ class forestAutoLoad {
 	 * @static yes
 	 */
 	public static function IsReadable($p_s_filename) {
-		/* check if file is readable by using fopen function and read access */
-		if (!$o_filehandle = @fopen($p_s_filename, 'r')) {
-			return false;
-		}
-		
-		@fclose($o_filehandle);
-		
-		return true;
+		return file_exists($p_s_filename);
 	}
 }
 ?>

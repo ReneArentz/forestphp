@@ -7,7 +7,7 @@
  * @copyright   (c) 2019 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     0.9.0 beta
+ * @version     1.0.0 stable
  * @link        http://www.forestphp.de/
  * @object-id   0x1 0001D
  * @since       File available since Release 0.1.0 alpha
@@ -19,7 +19,7 @@
  */
 ?>
 <div class="d-flex justify-content-center">
-&copy; 2019 by forestPHP.de Version 0.9.0 (beta)
+&copy; 2019 by forestPHP.de Version 1.0.0 (stable)
 </div>
 <?php
 if ($o_glob->Security->RootUser) {

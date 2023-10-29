@@ -9,7 +9,7 @@
  * @copyright   (c) 2019 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     0.9.0 beta
+ * @version     1.0.0 stable
  * @link        http://www.forestphp.de/
  * @object-id   0x1 00015
  * @since       File available since Release 0.1.1 alpha
@@ -28,11 +28,20 @@
  * 		0.7.0 beta	renatus		2020-01-03	added money-format display
  * 		0.9.0 beta	renatus		2020-01-27	added checkout message in readonly mode
  * 		0.9.0 beta	renatus		2020-01-29	changes for bootstrap 4
+ * 		1.0.0 beta	renatus		2020-02-13	added MongoDB support by breaking up SQL-Join Queries
  */
 
 namespace fPHP\Forms;
 
-use \fPHP\Roots\{forestString, forestList, forestNumericString, forestInt, forestFloat, forestBool, forestArray, forestObject, forestLookup};
+use \fPHP\Roots\forestString as forestString;
+use \fPHP\Roots\forestList as forestList;
+use \fPHP\Roots\forestNumericString as forestNumericString;
+use \fPHP\Roots\forestInt as forestInt;
+use \fPHP\Roots\forestFloat as forestFloat;
+use \fPHP\Roots\forestBool as forestBool;
+use \fPHP\Roots\forestArray as forestArray;
+use \fPHP\Roots\forestObject as forestObject;
+use \fPHP\Roots\forestLookup as forestLookup;
 use \fPHP\Helper\forestObjectList;
 use \fPHP\Roots\forestException as forestException;
 
@@ -246,7 +255,7 @@ class forestForm {
 					
 					if ($s_forestdataName != 'forestCombination') {
 						/* skip element if it is of type FILE PASSWORD DROPZONE, except forestCombination */
-						if ( ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == forestformElement::FILE) || ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == forestformElement::PASSWORD) || ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == forestformElement::DROPZONE) ) {
+						if ( ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == forestFormElement::FILEDIALOG) || ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == forestformElement::PASSWORD) || ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == forestformElement::DROPZONE) ) {
 							continue;
 						}
 					}
@@ -319,11 +328,11 @@ class forestForm {
 						if (is_a($p_o_twig->{$o_tableField->FieldName}, '\\fPHP\Helper\\forestDateTime')) {
 							if ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == \fPHP\Forms\forestFormElement::DATETIMELOCAL) {
 								$s_value = $p_o_twig->{$o_tableField->FieldName}->ToString('Y-m-d\TH:i:s');
-							} else if ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == \fPHP\Forms\forestFormElement::DATE) {
+							} else if ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == \fPHP\Forms\forestFormElement::DATEINPUT) {
 								$s_value = $p_o_twig->{$o_tableField->FieldName}->ToString('Y-m-d');
 							} else if ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == \fPHP\Forms\forestFormElement::MONTH) {
 								$s_value = $p_o_twig->{$o_tableField->FieldName}->ToString('Y-m');
-							} else if ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == \fPHP\Forms\forestFormElement::TIME) {
+							} else if ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == \fPHP\Forms\forestFormElement::TIMEINPUT) {
 								$s_value = $p_o_twig->{$o_tableField->FieldName}->ToString('H:i:s');
 							} else if ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == \fPHP\Forms\forestFormElement::WEEK) {
 								$s_value = $p_o_twig->{$o_tableField->FieldName}->ToString('Y-\WW');
@@ -411,46 +420,96 @@ class forestForm {
 					
 					/* if we have not read only mode */
 					if (!$this->FormObject->value->ReadonlyAll) {
-						/* get validation rules of tablefield and iterate them */
-						$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, 'sys_fphp_tablefield_validationrule');
-						
-						$column_A = new \fPHP\Base\forestSQLColumn($o_querySelect);
-							$column_A->Column = '*';
-						
-						$o_querySelect->Query->Columns->Add($column_A);
-						
-						$join_A = new \fPHP\Base\forestSQLJoin($o_querySelect);
-							$join_A->JoinType = 'INNER JOIN';
-							$join_A->Table = 'sys_fphp_validationrule';
+						if ($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway == \fPHP\Base\forestBase::MongoDB) {
+							/* get validation rules of tablefield and iterate them */
+							$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, 'sys_fphp_tablefield_validationrule');
+							
+							$column_A = new \fPHP\Base\forestSQLColumn($o_querySelect);
+								$column_A->Column = '*';
+							
+							$o_querySelect->Query->Columns->Add($column_A);
+							
+							$column_B = new \fPHP\Base\forestSQLColumn($o_querySelect);
+								$column_B->Column = 'TablefieldUUID';
+							
+							$where_A = new \fPHP\Base\forestSQLWhere($o_querySelect);
+								$where_A->Column = $column_B;
+								$where_A->Value = $where_A->ParseValue($o_tableField->UUID);
+								$where_A->Operator = '=';
+							
+							$o_querySelect->Query->Where->Add($where_A);
+							
+							$o_resultTablefieldValidationRules = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect, false, false);
+							
+							foreach ($o_resultTablefieldValidationRules as &$o_resultTablefieldValidationRule) {
+								$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, 'sys_fphp_validationrule');
+							
+								$column_A = new \fPHP\Base\forestSQLColumn($o_querySelect);
+									$column_A->Column = 'Name';
+								
+								$o_querySelect->Query->Columns->Add($column_A);
+								
+								$column_B = new \fPHP\Base\forestSQLColumn($o_querySelect);
+									$column_B->Column = 'UUID';
+								
+								$where_A = new \fPHP\Base\forestSQLWhere($o_querySelect);
+									$where_A->Column = $column_B;
+									$where_A->Value = $where_A->ParseValue($o_resultTablefieldValidationRule['ValidationruleUUID']);
+									$where_A->Operator = '=';
+								
+								$o_querySelect->Query->Where->Add($where_A);
+								
+								$o_resultValidationRule = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect, false, false);
+								
+								/* we only expect and accept one record as result; any other result is invalid */
+								if (count($o_resultValidationRule) == 1) {
+									$o_resultTablefieldValidationRule['Name'] = $o_resultValidationRule[0]['Name'];
+								}
+							}
+							
+							$o_result = $o_resultTablefieldValidationRules;
+						} else {
+							/* get validation rules of tablefield and iterate them */
+							$o_querySelect = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::SELECT, 'sys_fphp_tablefield_validationrule');
+							
+							$column_A = new \fPHP\Base\forestSQLColumn($o_querySelect);
+								$column_A->Column = '*';
+							
+							$o_querySelect->Query->Columns->Add($column_A);
+							
+							$join_A = new \fPHP\Base\forestSQLJoin($o_querySelect);
+								$join_A->JoinType = 'INNER JOIN';
+								$join_A->Table = 'sys_fphp_validationrule';
 
-						$relation_A = new \fPHP\Base\forestSQLRelation($o_querySelect);
-						
-						$column_B = new \fPHP\Base\forestSQLColumn($o_querySelect);
-							$column_B->Column = 'ValidationruleUUID';
+							$relation_A = new \fPHP\Base\forestSQLRelation($o_querySelect);
 							
-						$column_C = new \fPHP\Base\forestSQLColumn($o_querySelect);
-							$column_C->Column = 'UUID';
-							$column_C->Table = $join_A->Table;
-						
-						$relation_A->ColumnLeft = $column_B;
-						$relation_A->ColumnRight = $column_C;
-						$relation_A->Operator = '=';
-						
-						$join_A->Relations->Add($relation_A);
+							$column_B = new \fPHP\Base\forestSQLColumn($o_querySelect);
+								$column_B->Column = 'ValidationruleUUID';
+								
+							$column_C = new \fPHP\Base\forestSQLColumn($o_querySelect);
+								$column_C->Column = 'UUID';
+								$column_C->Table = $join_A->Table;
 							
-						$o_querySelect->Query->Joins->Add($join_A);
-						
-						$column_D = new \fPHP\Base\forestSQLColumn($o_querySelect);
-							$column_D->Column = 'TablefieldUUID';
-						
-						$where_A = new \fPHP\Base\forestSQLWhere($o_querySelect);
-							$where_A->Column = $column_D;
-							$where_A->Value = $where_A->ParseValue($o_tableField->UUID);
-							$where_A->Operator = '=';
-						
-						$o_querySelect->Query->Where->Add($where_A);
-						
-						$o_result = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect, false, false);
+							$relation_A->ColumnLeft = $column_B;
+							$relation_A->ColumnRight = $column_C;
+							$relation_A->Operator = '=';
+							
+							$join_A->Relations->Add($relation_A);
+								
+							$o_querySelect->Query->Joins->Add($join_A);
+							
+							$column_D = new \fPHP\Base\forestSQLColumn($o_querySelect);
+								$column_D->Column = 'TablefieldUUID';
+							
+							$where_A = new \fPHP\Base\forestSQLWhere($o_querySelect);
+								$where_A->Column = $column_D;
+								$where_A->Value = $where_A->ParseValue($o_tableField->UUID);
+								$where_A->Operator = '=';
+							
+							$o_querySelect->Query->Where->Add($where_A);
+							
+							$o_result = $o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_querySelect, false, false);
+						}
 						
 						foreach ($o_result as $o_row) {
 							/* render validation rules */
@@ -576,7 +635,9 @@ class forestForm {
 			}
 			
 			/* add auto checkin form element if current record is checked out */
-			if ( ($p_o_twig->fphp_HasUUID) && (!$p_o_twig->IsEmpty()) && (($o_checkoutTwig = new \fPHP\Twigs\checkoutTwig)->GetRecordPrimary(array($p_o_twig->UUID), array('ForeignUUID'))) && (!$this->FormObject->value->ReadonlyAll) ) {
+			$o_checkoutTwig = new \fPHP\Twigs\checkoutTwig;
+			
+			if ( ($p_o_twig->fphp_HasUUID) && (!$p_o_twig->IsEmpty()) && ($o_checkoutTwig->GetRecordPrimary(array($p_o_twig->UUID), array('ForeignUUID'))) && (!$this->FormObject->value->ReadonlyAll) ) {
 				/* query auto checkin form element */
 				if (!($o_formelementTwig->GetRecordPrimary(array(\fPHP\Forms\forestFormElement::AUTOCHECKIN), array('Name')))) {
 					throw new forestException(0x10001401, array($o_formelementTwig->fphp_Table));
@@ -596,7 +657,9 @@ class forestForm {
 			}
 			
 			/* add checkout message in readonly mode if current record is checked out */
-			if ( ($p_o_twig->fphp_HasUUID) && (!$p_o_twig->IsEmpty()) && (($o_checkoutTwig = new \fPHP\Twigs\checkoutTwig)->GetRecordPrimary(array($p_o_twig->UUID), array('ForeignUUID'))) && ($this->FormObject->value->ReadonlyAll) ) {
+			$o_checkoutTwig = new \fPHP\Twigs\checkoutTwig;
+			
+			if ( ($p_o_twig->fphp_HasUUID) && (!$p_o_twig->IsEmpty()) && ($o_checkoutTwig->GetRecordPrimary(array($p_o_twig->UUID), array('ForeignUUID'))) && ($this->FormObject->value->ReadonlyAll) ) {
 				$this->CheckoutMessage->value = '<div class="alert alert-warning">' . \fPHP\Helper\forestStringLib::sprintf2($o_glob->GetTranslation('messageCheckoutText', 1), array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID), $o_checkoutTwig->Timestamp)) . '</div>';
 			}
 			
@@ -1414,7 +1477,7 @@ class forestForm {
 			if ($this->FormTabs->value->Count() > 0) {
 				foreach ($this->FormTabs->value as $o_tabElement) {
 					foreach ($o_tabElement->FormElements as $o_formElement) {
-						if ( ($o_formElement->getType() == \fPHP\Forms\forestFormElement::FILE) || ($o_formElement->getType() == \fPHP\Forms\forestFormElement::DROPZONE) ) {
+						if ( ($o_formElement->getType() == \fPHP\Forms\forestFormElement::FILEDIALOG) || ($o_formElement->getType() == \fPHP\Forms\forestFormElement::DROPZONE) ) {
 							return true;
 						}
 					}
@@ -1423,7 +1486,7 @@ class forestForm {
 		}
 		
 		foreach ($this->FormElements->value as $o_formElement) {
-			if ( ($o_formElement->getType() == \fPHP\Forms\forestFormElement::FILE) || ($o_formElement->getType() == \fPHP\Forms\forestFormElement::DROPZONE) ) {
+			if ( ($o_formElement->getType() == \fPHP\Forms\forestFormElement::FILEDIALOG) || ($o_formElement->getType() == \fPHP\Forms\forestFormElement::DROPZONE) ) {
 				return true;
 			}
 		}
