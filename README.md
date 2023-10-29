@@ -19,6 +19,11 @@ forestPHP follows the **MVC model** and sets some conventions to keep the develo
 Following **database systems** are supported by forestPHP:
 
 * MariaDB/MySQL
+* SQLite3
+* MSSQL
+* OracleDB
+* PostgreSQL
+* MongoDB
 
 At the core of forestPHP measures have been taken to implement **security best practices** and to maximize the security of a web application. This helps prevent attacks such as SQL injection, CRFS, XSS, and form manipulation.
 
