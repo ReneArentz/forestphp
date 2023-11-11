@@ -8,10 +8,10 @@
  *
  * @category    forestPHP Framework
  * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2019 forestPHP Framework
+ * @copyright   (c) 2021 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.0 stable
+ * @version     1.0.1 stable
  * @link        http://www.forestphp.de/
  * @object-id   0x1 0000C
  * @since       File available since Release 0.1.0 alpha
@@ -29,7 +29,8 @@
  * 		0.7.0 beta	renatus		2020-01-03	added identifier column as standard like id and uuid
  * 		0.7.0 beta	renatus		2020-01-03	added FILEVERSION and FILENAME commands to forestCombination
  * 		0.9.0 beta	renatus		2020-01-29	optimized ImplementFilter for search on filename
- * 		1.0.0 beta	renatus		2020-02-13	added MongoDB support by breaking up SQL-Join Queries
+ * 		1.0.0 stable	renatus		2020-02-13	added MongoDB support by breaking up SQL-Join Queries
+ * 		1.0.1 stable	renatus		2021-04-09	added support comparing forestDateTime object for check uniqueness functionality
  */
 
 namespace fPHP\Twigs;
@@ -1360,7 +1361,7 @@ abstract class forestTwig {
 						}
 					}
 					
-					if ($o_field == null) {
+					if ($o_field === null) {
 						/* just another field of the same queried record in this twig object */
 						$o_field = $this->{$s_combination};
 					}
@@ -2040,6 +2041,10 @@ abstract class forestTwig {
 						$o_where->FilterOperator = $a_filter['filterOperator'];
 					}
 				
+				if (array_key_exists('escapeMarkedUnderscore', $a_filter)) {
+					$o_where->Value = str_replace('{[(_)]}', '\\_', $o_where->Value->scalar);
+				}
+				
 				$p_o_query->Query->Where->Add($o_where);
 				
 				$p_b_initWhere = true;
@@ -2637,7 +2642,70 @@ abstract class forestTwig {
 						throw new forestException('Record image does not match with twig object');
 					}
 					
-					if ($this->{$a_columns[$i]} != $this->fphp_RecordImage->value->{$a_columns[$i]}) {
+					$o_left = $this->{$a_columns[$i]};
+					$o_right = $this->fphp_RecordImage->value->{$a_columns[$i]};
+					
+					$b_compareDate = false;
+					$b_compareDateTime = false;
+					$b_compareMonth = false;
+					$b_compareTime = false;
+					$b_compareLookup = false;
+					
+					/* check if tablefield is in dictionary */
+					if ($o_glob->TablefieldsDictionary->Exists($this->fphp_Table->value . '_' . $a_columns[$i])) {
+						$s_sqlType = $o_glob->TablefieldsDictionary->{$this->fphp_Table->value . '_' . $a_columns[$i]}->SqlTypeName;
+						$s_forestData = $o_glob->TablefieldsDictionary->{$this->fphp_Table->value . '_' . $a_columns[$i]}->ForestDataName;
+						$s_formElement = $o_glob->TablefieldsDictionary->{$this->fphp_Table->value . '_' . $a_columns[$i]}->FormElementName;
+						
+						/* check if we have a sql datetime column and forestDateTime Object within fphp */
+						if ( ($s_sqlType == 'datetime') && ($s_forestData == 'forestObject(&apos;forestDateTime&apos;)') ) {
+							if ($s_formElement == 'date') {
+								$b_compareDate = true;
+							} else if ($s_formElement == 'datetime-local') {
+								$b_compareDateTime = true;
+							} else if ($s_formElement == 'month') {
+								$b_compareMonth = true;
+							} else if ($s_formElement == 'time') {
+								$b_compareTime = true;
+							}
+						}
+						
+						if ($s_forestData == 'forestLookup') {
+							$b_compareLookup = true;
+						}
+					} else {
+						/* this one exception, because 'TableUUID' tablefield does not exist for table 'sys_fphp_tablefield' */
+						if ( ($this->fphp_Table->value == 'sys_fphp_tablefield') && ($a_columns[$i] == 'TableUUID') ) {
+							$b_compareLookup = true;
+						}
+					}
+					
+					if ( ($o_left != null) && ($o_right != null) && ($o_left != 'NULL') && ($o_right != 'NULL') ) {
+						/* compare not on object level if we have date, datetime, month or time */
+						if ($b_compareDate) {
+							$o_left = $this->{$a_columns[$i]}->ToString($o_glob->Trunk->DateFormat);
+							$o_right = $this->fphp_RecordImage->value->{$a_columns[$i]}->ToString($o_glob->Trunk->DateFormat);
+						} else if ($b_compareDateTime) {
+							$o_left = $this->{$a_columns[$i]}->ToString($o_glob->Trunk->DateTimeFormat);
+							$o_right = $this->fphp_RecordImage->value->{$a_columns[$i]}->ToString($o_glob->Trunk->DateTimeFormat);
+						} else if ($b_compareMonth) {
+							$o_left = $this->{$a_columns[$i]}->ToString('m');
+							$o_right = $this->fphp_RecordImage->value->{$a_columns[$i]}->ToString('m');
+						} else if ($b_compareTime) {
+							$o_left = $this->{$a_columns[$i]}->ToString($o_glob->Trunk->TimeFormat);
+							$o_right = $this->fphp_RecordImage->value->{$a_columns[$i]}->ToString($o_glob->Trunk->TimeFormat);
+						} else if ($b_compareLookup) {
+							if (! (preg_match('/^ (([0-9])|([a-f])){8} \- (([0-9])|([a-f])){4} \- (([0-9])|([a-f])){4} \- (([0-9])|([a-f])){4} \- (([0-9])|([a-f])){12} $/x', $o_left)) ) {
+								$o_left = $this->{$a_columns[$i]}->PrimaryValue;
+							}
+							
+							if (! (preg_match('/^ (([0-9])|([a-f])){8} \- (([0-9])|([a-f])){4} \- (([0-9])|([a-f])){4} \- (([0-9])|([a-f])){4} \- (([0-9])|([a-f])){12} $/x', $o_right)) ) {
+								$o_right = $this->fphp_RecordImage->value->{$a_columns[$i]}->PrimaryValue;
+							}
+						}
+					}
+					
+					if ($o_left != $o_right) {
 						$b_uniqueChanged = true;
 						$a_unique_constraints[] = $s_unique;
 					}
@@ -2647,7 +2715,50 @@ abstract class forestTwig {
 					throw new forestException('Record image does not match with twig object');
 				}
 				
-				if ($this->{$s_unique} != $this->fphp_RecordImage->value->{$s_unique}) {
+				$o_left = $this->{$s_unique};
+				$o_right = $this->fphp_RecordImage->value->{$s_unique};
+				
+				$b_compareDate = false;
+				$b_compareDateTime = false;
+				$b_compareMonth = false;
+				$b_compareTime = false;
+				
+				/* check if tablefield is in dictionary */
+				if ($o_glob->TablefieldsDictionary->Exists($this->fphp_Table->value . '_' . $s_unique)) {
+					$s_sqlType = $o_glob->TablefieldsDictionary->{$this->fphp_Table->value . '_' . $s_unique}->SqlTypeName;
+					$s_forestData = $o_glob->TablefieldsDictionary->{$this->fphp_Table->value . '_' . $s_unique}->ForestDataName;
+					$s_formElement = $o_glob->TablefieldsDictionary->{$this->fphp_Table->value . '_' . $s_unique}->FormElementName;
+					
+					/* check if we have a sql datetime column and forestDateTime object as table field */
+					if ( ($s_sqlType == 'datetime') && ($s_forestData == 'forestObject(&apos;forestDateTime&apos;)') ) {
+						if ($s_formElement == 'date') {
+							$b_compareDate = true;
+						} else if ($s_formElement == 'datetime-local') {
+							$b_compareDateTime = true;
+						} else if ($s_formElement == 'month') {
+							$b_compareMonth = true;
+						} else if ($s_formElement == 'time') {
+							$b_compareTime = true;
+						}
+					}
+				}
+				
+				/* compare not on object level if we have date, datetime, month or time */
+				if ($b_compareDate) {
+					$o_left = $this->{$s_unique}->ToString($o_glob->Trunk->DateFormat);
+					$o_right = $this->fphp_RecordImage->value->{$s_unique}->ToString($o_glob->Trunk->DateFormat);
+				} else if ($b_compareDateTime) {
+					$o_left = $this->{$s_unique}->ToString($o_glob->Trunk->DateTimeFormat);
+					$o_right = $this->fphp_RecordImage->value->{$s_unique}->ToString($o_glob->Trunk->DateTimeFormat);
+				} else if ($b_compareMonth) {
+					$o_left = $this->{$s_unique}->ToString('m');
+					$o_right = $this->fphp_RecordImage->value->{$s_unique}->ToString('m');
+				} else if ($b_compareTime) {
+					$o_left = $this->{$s_unique}->ToString($o_glob->Trunk->TimeFormat);
+					$o_right = $this->fphp_RecordImage->value->{$s_unique}->ToString($o_glob->Trunk->TimeFormat);
+				}
+				
+				if ($o_left != $o_right) {
 					$b_uniqueChanged = true;
 					$a_unique_constraints[] = $s_unique;
 				}

@@ -85,7 +85,7 @@ class forestLink {
 				
 				if (!is_null($p_s_action)) {
 					/* check if action exists */
-					if (array_key_exists($p_s_action, $a_branchTree['Id'][$i_branchId]['actions']['Name'])) {
+					if ( (array_key_exists($p_s_action, $a_branchTree['Id'][$i_branchId]['actions']['Name'])) || (array_key_exists($p_s_action, $a_branchTree['Zero']['actions']['Name'])) ) {
 						$s_link .= '&' . $p_s_action;
 					}
 				}

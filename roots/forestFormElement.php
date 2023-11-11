@@ -6,10 +6,10 @@
  *
  * @category    forestPHP Framework
  * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2019 forestPHP Framework
+ * @copyright   (c) 2021 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.0 stable
+ * @version     1.0.1 stable
  * @link        http://www.forestphp.de/
  * @object-id   0x1 00016
  * @since       File available since Release 0.1.1 alpha
@@ -25,6 +25,7 @@
  * 		0.9.0 beta	renatus		2020-01-29	changes for bootstrap 4 on checkbox, radio. dropzone and richtext
  * 		1.0.0 stable	renatus		2020-02-14	added FilenameFromField functionality for FILE elements
  * 		1.0.0 stable	renatus		2020-02-14	changes constants because of conflict with php system constants
+ * 		1.0.1 stable	renatus		2020-04-14	take id for list value of datalist if it is not set or 'NULL'
  */
 
 namespace fPHP\Forms;
@@ -955,6 +956,10 @@ class forestFormElementList extends forestFormInputAttributes {
 		
 		if (!issetStr($this->Name->value)) {
 			$this->Name->value = $this->Id->value;
+		}
+		
+		if ( (!issetStr($this->List->value)) || ($this->List->value == 'NULL') ) {
+			$this->List->value = $this->Id->value . '_options';
 		}
 		
 		$s_foo = parent::__toString();

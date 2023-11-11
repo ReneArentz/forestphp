@@ -15,6 +15,7 @@
  * @version log Version     Developer   Date        Comment
  *              0.1.4 alpha	renatus		  2019-09-28	added to framework
  *              0.9.0 beta	renatus		  2020-01-27	changes for bootstrap 4
+ *              1.0.1 stable	renatus		  2021-04-18	changes for blocking images with pasting ctrl+v and auto resize images with drag and drop
  */
 $(function() {
 	$.fn.fphp_richtext = function(p_o_options) {
@@ -158,17 +159,22 @@ $(function() {
 		});
 		
 		this.on('paste', function(p_e_event) {
-			if (p_e_event.originalEvent.clipboardData == false) {
+			clipboardData = (p_e_event.originalEvent || p_e_event).clipboardData;
+			
+			if (clipboardData == false) {
 				if (typeof(p_o_callback) == 'function') {
 					p_o_callback(undefined);
 				}
 			};
 
-			var a_items = p_e_event.originalEvent.clipboardData.items;
-
-			if (a_items == undefined) {
+			var a_items = clipboardData.items;
+			
+			if (a_items == undefined || clipboardData.types.length < 1) {
 				if (typeof(p_o_callback) == 'function') {
 					p_o_callback(undefined);
+				} else {
+					p_e_event.preventDefault();
+					p_e_event.stopPropagation();
 				}
 			};
 			
@@ -190,7 +196,10 @@ $(function() {
 			p_e_event.stopPropagation();
 		});
 		
-		this.on('drop', function(p_e_event) {
+		this.on('drop', async function(p_e_event) {
+			p_e_event.preventDefault();
+			p_e_event.stopPropagation();
+			
 			if (p_o_options.b_dropImage) {
 				$('#' + p_o_options.s_id).focus();
 				
@@ -199,38 +208,63 @@ $(function() {
 				for (let i = 0; i < a_fileArray.length; i++) {
 					if (a_fileArray[i].name.lastIndexOf('.') > 3) {
 						if (a_fileArray[i].type.indexOf('image') >= 0) {
+							var s_dataUrl = await fphp_readFileAsDataURLAsync(a_fileArray[i]);
+							var s_newDataUrl = await fphp_resizeImageFromDataURLAsync(s_dataUrl, p_o_options.i_imagesWidth, p_o_options.i_imagesHeight);
 							
-							var o_loadIdentification = $.Deferred();
-							var o_fileReader = new FileReader();
+							/* do not know why, but we need to do this twice */
+							s_dataUrl = await fphp_readFileAsDataURLAsync(a_fileArray[i]);
+							s_newDataUrl = await fphp_resizeImageFromDataURLAsync(s_dataUrl, p_o_options.i_imagesWidth, p_o_options.i_imagesHeight);
 							
-							o_fileReader.onload = function (p_e_fileReaderEvent) {
-								o_loadIdentification.resolve(p_e_fileReaderEvent.target.result);
-							};
-							
-							o_fileReader.onerror = o_loadIdentification.reject;
-							o_fileReader.onprogress = o_loadIdentification.notify;
-							o_fileReader.readAsDataURL(a_fileArray[i]);
-							
-							o_loadIdentification.promise().done(function (s_dataUrl) {
-								var i_width = parseInt(p_o_options.i_imagesWidth);
-								var i_height = parseInt(p_o_options.i_imagesHeight);
-								
-								if (p_o_options.b_askImageSize) {
-									i_width = parseInt(prompt(p_o_options.s_imageWidthQuestion, p_o_options.i_imagesWidth));
-									i_height = parseInt(prompt(p_o_options.s_imageHeightQuestion, p_o_options.i_imagesHeight));
+							if (s_newDataUrl != null) {
+								if (s_newDataUrl.length > 0) {
+									let s_imageHTML = '<img src="' + s_newDataUrl + '" width="' + parseInt(p_o_options.i_imagesWidth) + '" height="' + parseInt(p_o_options.i_imagesHeight) + '">';
+									fphp_execRichTextCommand(p_o_options, 'insertHTML', s_imageHTML);
 								}
-								
-								var s_imageHTML = '<img src="' + s_dataUrl + '" width="' + i_width + '" height="' + i_height + '">';
-								fphp_execRichTextCommand(p_o_options, 'insertHTML', s_imageHTML);
-							});
+							}
 						}
 					}
 				}
 			}
-			
-			p_e_event.preventDefault();
-			p_e_event.stopPropagation();
 		});
+		
+		fphp_readFileAsDataURLAsync = function (file) {
+			return new Promise((resolve, reject) => {
+				let reader = new FileReader();
+
+				reader.onload = () => {
+					resolve(reader.result);
+				};
+
+				reader.onerror = reject;
+
+				reader.readAsDataURL(file);
+			});
+		};
+		
+		fphp_resizeImageFromDataURLAsync = function (s_dataUrl, p_i_width, p_i_height) {
+			return new Promise((resolve, reject) => {
+				const img = document.createElement('img');
+				img.src = s_dataUrl;
+				
+				let i_width = parseInt(p_i_width);
+				let i_height = parseInt(p_i_height);
+				
+				// create an off-screen canvas
+				const canvas = document.createElement('canvas');
+				const ctx = canvas.getContext('2d');
+
+				// set its dimension to target size
+				canvas.width = i_width;
+				canvas.height = i_height;
+
+				// draw source image into the off-screen canvas:
+				ctx.drawImage(img, 0, 0);
+				ctx.drawImage(img, 0, 0, i_width, i_height);
+				
+				// encode image to data-uri with base64 version of compressed image
+				resolve(canvas.toDataURL());
+			});
+		};
 		
 		$(p_o_options.s_toolbarSelector + ' input#' + p_o_options.s_toolbarId + 'fontColor').on('change', function() {
 			document.execCommand('foreColor', 0, $(p_o_options.s_toolbarSelector + ' input#' + p_o_options.s_toolbarId + 'fontColor').val());

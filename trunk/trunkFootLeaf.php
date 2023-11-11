@@ -4,10 +4,10 @@
  *
  * @category    forestPHP Framework
  * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2019 forestPHP Framework
+ * @copyright   (c) 2021 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.0 stable
+ * @version     1.0.1 stable
  * @link        http://www.forestphp.de/
  * @object-id   0x1 0001D
  * @since       File available since Release 0.1.0 alpha
@@ -19,7 +19,7 @@
  */
 ?>
 <div class="d-flex justify-content-center">
-&copy; 2019 by forestPHP.de Version 1.0.0 (stable)
+&copy; 2021 by forestPHP.de Version 1.0.1 (stable)
 </div>
 <?php
 if ($o_glob->Security->RootUser) {

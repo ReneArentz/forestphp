@@ -7,10 +7,10 @@
  *
  * @category    forestPHP Framework
  * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2019 forestPHP Framework
+ * @copyright   (c) 2021 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.0 stable
+ * @version     1.0.1 stable
  * @link        http://www.forestphp.de/
  * @object-id   0x1 00014
  * @since       File available since Release 0.1.0 alpha
@@ -47,6 +47,9 @@
  * 		1.0.0 stable	renatus		2020-02-14	changes constants because of conflict with php system constants
  * 		1.0.0 stable	renatus		2020-02-14	added FilenameFromField functionality for FILE elements
  * 		1.0.0 stable	renatus		2020-02-14	break up checkout twig definition and function call in one line, because of 5.x back compatiblity
+ * 		1.0.1 stable	renatus		2021-04-09	create new function to resize an image, make it usable for thumbnail action and other purposes
+ * 		1.0.1 stable	renatus		2021-04-10	added support for handling forestLookup table field with datalist/list form element
+ * 		1.0.1 stable	renatus		2021-04-11	added support for thumbnail and detailview image preview
  */
 
 namespace fPHP\Branches;
@@ -262,7 +265,7 @@ abstract class forestBranch extends forestRootBranch {
 	 * @access protected
 	 * @static no
 	 */
-	protected function SetNextAction($p_s_nextAction, $p_s_nextActionAfterReload = null) {
+	protected function SetNextAction($p_s_nextAction, $p_s_nextActionAfterReload = null, $p_a_nextParameters = null, $p_s_nextAnchor = null) {
 		if ($p_s_nextAction != null) {
 			$o_glob = \fPHP\Roots\forestGlobals::init();
 			$a_branchTree = $o_glob->BranchTree;
@@ -276,11 +279,7 @@ abstract class forestBranch extends forestRootBranch {
 					}
 				}
 				
-				if ($p_s_nextActionAfterReload != null) {
-					header('Location: '. \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, $p_s_nextActionAfterReload));
-				} else {
-					header('Location: '. \fPHP\Helper\forestLink::Link($o_glob->URL->Branch));
-				}
+				header('Location: '. \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, $p_s_nextActionAfterReload, $p_a_nextParameters, $p_s_nextAnchor));
 			}
 			
 			/* check if action really exists */
@@ -1355,6 +1354,16 @@ abstract class forestBranch extends forestRootBranch {
 				continue;
 			}
 			
+			/* skip forestCombination which not starts with SUM( CNT(, FILENAME( and FILEVERSION( */
+			if ($s_forestData == 'forestCombination') {
+				$s_JSONEncodedSettings = str_replace('&quot;', '"', $o_glob->TablefieldsDictionary->{$this->Twig->fphp_Table . '_' . $s_columnHead}->JSONEncodedSettings);
+				$a_settings = json_decode($s_JSONEncodedSettings, true);
+				
+				if (!( (\fPHP\Helper\forestStringLib::StartsWith($a_settings['forestCombination'], 'SUM(')) || (\fPHP\Helper\forestStringLib::StartsWith($a_settings['forestCombination'], 'CNT(')) || (\fPHP\Helper\forestStringLib::StartsWith($a_settings['forestCombination'], 'FILENAME(')) || (\fPHP\Helper\forestStringLib::StartsWith($a_settings['forestCombination'], 'FILEVERSION(')) )) {
+					continue;
+				}
+			}
+			
 			if ($s_forestData == 'forestCombination') {
 				$s_tableHead .= '<th><div class="btn-group"><a href="#" class="btn btn-light">' . $o_glob->GetTranslation('sort' . $s_columnHead) . '</a></div></th>' . "\n";
 			} else {
@@ -1402,6 +1411,16 @@ abstract class forestBranch extends forestRootBranch {
 					
 					if ( ($s_formElement == \fPHP\Forms\forestFormElement::FORM) || ($s_formElement == \fPHP\Forms\forestFormElement::PASSWORD) ||($s_formElement == \fPHP\Forms\forestFormElement::RICHTEXT) || ($s_formElement == \fPHP\Forms\forestFormElement::CAPTCHA) || ($s_formElement == \fPHP\Forms\forestFormElement::DROPZONE) ) {
 						continue;
+					}
+					
+					/* skip forestCombination which not starts with SUM( CNT(, FILENAME( and FILEVERSION( */
+					if ($s_forestData == 'forestCombination') {
+						$s_JSONEncodedSettings = str_replace('&quot;', '"', $o_glob->TablefieldsDictionary->{$this->Twig->fphp_Table . '_' . $s_column}->JSONEncodedSettings);
+						$a_settings = json_decode($s_JSONEncodedSettings, true);
+						
+						if (!( (\fPHP\Helper\forestStringLib::StartsWith($a_settings['forestCombination'], 'SUM(')) || (\fPHP\Helper\forestStringLib::StartsWith($a_settings['forestCombination'], 'CNT(')) || (\fPHP\Helper\forestStringLib::StartsWith($a_settings['forestCombination'], 'FILENAME(')) || (\fPHP\Helper\forestStringLib::StartsWith($a_settings['forestCombination'], 'FILEVERSION(')) )) {
+							continue;
+						}
 					}
 					
 					$s_value = '-';
@@ -1547,20 +1566,26 @@ abstract class forestBranch extends forestRootBranch {
 				
 				if (is_dir($s_path)) {
 					if (file_exists($s_path . $o_filesTwig->Name)) {
-						/* check if we have activated thumbnaiil option within json settings of file field */
+						/* check if we have activated render option within json settings of file field, to create a small size version of the file/picture in runtime */
 						$b_thumbnail = false;
 						$s_JSONEncodedSettings = str_replace('&quot;', '"', $o_glob->TablefieldsDictionary->{$p_s_dictionaryKey}->JSONEncodedSettings);
 						$a_settings = json_decode($s_JSONEncodedSettings, true);
 						
 						if (array_key_exists('Accept', $a_settings)) {
 							if ( (\fPHP\Helper\forestStringLib::StartsWith($a_settings['Accept'], 'image/')) || (\fPHP\Helper\forestStringLib::StartsWith($a_settings['Accept'], 'IMAGE/')) ) {
-								if (array_key_exists('ShowImage', $a_settings)) {
-									if ($a_settings['ShowImage'] == true) {
-										if (array_key_exists('ImageMaxWidth', $a_settings)) {
+								if (array_key_exists('Render', $a_settings)) {
+									if ($a_settings['Render'] == true) {
+										if (array_key_exists('RenderMaxWidth', $a_settings)) {
 											/* render file as thumbnail picture */
-											$p_s_value = '<a href="' . $s_path . $o_filesTwig->Name . '" target="_blank" title="' . $o_filesTwig->DisplayName . '"><img src="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'fphp_imageThumbnail', array('fphp_thumbnail' => $o_filesTwig->UUID, 'fphp_thumbnail_width' => $a_settings['ImageMaxWidth'])) . '" alt="image could not be rendered" title="' . $o_filesTwig->DisplayName . '"></a>';
+											$p_s_value = '<a href="' . $s_path . $o_filesTwig->Name . '" target="_blank" title="' . $o_filesTwig->DisplayName . '"><img src="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'fphp_imageThumbnail', array('fphp_thumbnail' => $o_filesTwig->UUID, 'fphp_thumbnail_width' => $a_settings['RenderMaxWidth'])) . '" alt="image could not be rendered" title="' . $o_filesTwig->DisplayName . '"></a>';
 											$b_thumbnail = true;
 										}
+									}
+								} else if (array_key_exists('Thumbnail', $a_settings)) {
+									if ($a_settings['Thumbnail'] == true) {
+										/* show thumbnail picture file */
+										$p_s_value = '<a href="' . $s_path . $o_filesTwig->Name . '" target="_blank" title="' . $o_filesTwig->DisplayName . '"><img src="' . $s_path . 'tn_' . $o_filesTwig->Name . '" alt="image could not be rendered" title="' . $o_filesTwig->DisplayName . '"></a>';
+										$b_thumbnail = true;
 									}
 								}
 							}
@@ -1870,6 +1895,16 @@ abstract class forestBranch extends forestRootBranch {
 				/* skip other tablefields which have no use in a list view */
 				if ( ($s_formElement == \fPHP\Forms\forestFormElement::FORM) || ($s_formElement == \fPHP\Forms\forestFormElement::PASSWORD) ||($s_formElement == \fPHP\Forms\forestFormElement::RICHTEXT) || ($s_formElement == \fPHP\Forms\forestFormElement::CAPTCHA) || ($s_formElement == \fPHP\Forms\forestFormElement::DROPZONE) ) {
 					continue;
+				}
+				
+				/* skip forestCombination which not starts with SUM( CNT(, FILENAME( and FILEVERSION( */
+				if ($s_forestData == 'forestCombination') {
+					$s_JSONEncodedSettings = str_replace('&quot;', '"', $o_glob->TablefieldsDictionary->{$this->Twig->fphp_Table . '_' . $s_column}->JSONEncodedSettings);
+					$a_settings = json_decode($s_JSONEncodedSettings, true);
+					
+					if (!( (\fPHP\Helper\forestStringLib::StartsWith($a_settings['forestCombination'], 'SUM(')) || (\fPHP\Helper\forestStringLib::StartsWith($a_settings['forestCombination'], 'CNT(')) || (\fPHP\Helper\forestStringLib::StartsWith($a_settings['forestCombination'], 'FILENAME(')) || (\fPHP\Helper\forestStringLib::StartsWith($a_settings['forestCombination'], 'FILEVERSION(')) )) {
+						continue;
+					}
 				}
 				
 				$a_hidden_columns[$o_glob->GetTranslation('sort' . $s_column)] = $s_column;
@@ -2655,6 +2690,10 @@ abstract class forestBranch extends forestRootBranch {
 									$s_columnHead = substr($s_columnHead, 0, -1);
 								}
 								
+								if ( (!issetStr($s_columnHead)) ||(strlen(trim($s_columnHead)) < 1) ) {
+									$s_columnHead = $o_tableFieldDictionaryObject->FieldName;
+								}
+								
 								$s_subTableHead .= '<th>' . $s_columnHead . '</th>' . "\n";
 							}
 						}
@@ -3193,6 +3232,8 @@ abstract class forestBranch extends forestRootBranch {
 		$o_glob->Temp->Add( get($o_glob->URL->Parameters, 'viewKey'), 'viewKey' );
 		
 		if ( ($o_glob->Temp->Exists('viewKey')) && ($o_glob->Temp->{'viewKey'} != null) ) {
+			$s_viewKey = $o_glob->Temp->{'viewKey'};
+			
 			/* query twig record if we have view key in url parameters */
 			if (! ($this->Twig->GetRecord(array($o_glob->Temp->{'viewKey'}))) ) {
 				throw new forestException(0x10001401, array($this->Twig->fphp_Table));
@@ -3205,7 +3246,21 @@ abstract class forestBranch extends forestRootBranch {
 				$o_glob->PostModalForm = new \fPHP\Forms\forestForm($this->Twig, true, true);
 				
 				/* add sub constraints and files for modal form */
-				$o_glob->PostModalForm->FormModalSubForm = strval($this->ListSubRecords($this->Twig, true));
+				$o_glob->PostModalForm->FormModalSubForm = strval($this->ListSubRecords($this->Twig, false));
+				
+				/* create edit and delete option buttons */
+				$o_options = null;
+				
+				if ($o_glob->Security->CheckUserPermission(null, 'edit')) {
+					$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'edit', array('editKey' => $s_viewKey)) . '" class="btn btn-light btn-lg" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="fas fa-edit"></span></a>' . "\n";
+				}
+			
+				if ($o_glob->Security->CheckUserPermission(null, 'delete')) {
+					$o_options .= ' <a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete', array('deleteKey' => $s_viewKey)) . '" class="btn btn-light btn-lg" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="fas fa-trash text-danger"></span></a>' . "\n";
+				}
+				
+				$o_glob->PostModalForm->BeforeForm = $o_options;
+				$o_glob->PostModalForm->BeforeFormRightAlign = true;
 				
 				if (method_exists($this, 'afterViewAction')) {
 					$this->afterViewAction();
@@ -4986,6 +5041,151 @@ abstract class forestBranch extends forestRootBranch {
 							if (!$b_value_found) {
 								$this->Twig->{$s_column} = 'NULL';
 							}
+						} else if ($o_glob->TablefieldsDictionary->{$s_tableFieldIdentifier}->FormElementName == \fPHP\Forms\forestFormElement::LISTTXT) {
+							/* handle forestLookup within a list form element */
+							if ( ($o_glob->TablefieldsDictionary->{$s_tableFieldIdentifier}->ForestDataName == 'forestLookup') && ($this->Twig->$s_column != null) ) {
+								$b_value_found = false;
+								$a_optionsArray = $this->Twig->$s_column->CreateOptionsArray();
+								
+								/* look if exact the same given value is already available */
+								foreach ($a_optionsArray as $s_option_label => $s_option_value) {
+									if ( (issetStr($this->Twig->$s_column->PrimaryValue)) && (strtolower($this->Twig->$s_column->PrimaryValue) == strtolower($s_option_label)) ) {
+										/* assume for primary value found forestLookup options value */
+										$this->Twig->{$s_column}->PrimaryValue = $s_option_value;
+										$b_value_found = true;
+										break;
+									}
+								}
+								
+								if ( (!$b_value_found) && (issetStr($this->Twig->{$s_column}->PrimaryValue)) ) {
+									$a_fields = array();
+									
+									if (strpos($this->Twig->$s_column->PrimaryValue, $this->Twig->$s_column->Concat) !== false) { /* use concat delimiter of forestLookup */
+										$a_fields = explode($this->Twig->$s_column->Concat, $this->Twig->$s_column->PrimaryValue);
+									} else if (strpos($this->Twig->$s_column->PrimaryValue, ';') !== false) { /* general accept ';' as delimiter */
+										$a_fields = explode(';', $this->Twig->$s_column->PrimaryValue);
+									} else {
+										$a_fields[] = $this->Twig->$s_column->PrimaryValue;
+									}
+									
+									/* amount of given values must match label count to create a new record */
+									if (count($this->Twig->$s_column->Label) == count($a_fields)) {
+										$b_value_found = false;
+										
+										/* check if record already exists, because general delimiter could still create unique issue */
+										foreach ($a_optionsArray as $s_option_label => $s_option_value) {
+											if (strtolower(implode($this->Twig->$s_column->Concat, $a_fields)) == strtolower($s_option_label)) {
+												/* assume for primary value found forestLookup options value */
+												$this->Twig->{$s_column}->PrimaryValue = $s_option_value;
+												$b_value_found = true;
+												break;
+											}
+										}
+										
+										if (!$b_value_found) {
+											/* get table */
+											$o_tableTwig = new \fPHP\Twigs\tableTwig;
+											
+											/* get table record */
+											if (!($o_tableTwig->GetRecordPrimary(array($this->Twig->$s_column->Table), array('Name')))) {
+												$this->Twig->{$s_column}->PrimaryValue = 'NULL';
+											} else {
+												/* create twig object by table record */
+												$s_twigName = '\\fPHP\\Twigs\\' . $o_tableTwig->Name . 'Twig';
+												\fPHP\Helper\forestStringLib::RemoveTablePrefix($s_twigName);
+												$o_twig = new $s_twigName;
+												
+												/*  set new value(s) for new record */
+												for ($i = 0; $i < count($a_fields); $i++) {
+													$o_twig->{$this->Twig->$s_column->Label[$i]} = $a_fields[$i];
+												}
+												
+												/* set values for info columns when configured */
+												$i_infoColumns = $o_glob->TablesInformation[$o_twig->fphp_TableUUID]['InfoColumns'];
+												
+												if ($i_infoColumns == 10) {
+													$o_twig->Created = new \fPHP\Helper\forestDateTime;
+													$o_twig->CreatedBy = $o_glob->Security->UserUUID;
+												} else if ($i_infoColumns == 100) {
+													$o_twig->Modified = new \fPHP\Helper\forestDateTime;
+													$o_twig->ModifiedBy = $o_glob->Security->UserUUID;
+												} else if ($i_infoColumns == 1000) {
+													$o_twig->Created = new \fPHP\Helper\forestDateTime;
+													$o_twig->CreatedBy = $o_glob->Security->UserUUID;
+													$o_twig->Modified = new \fPHP\Helper\forestDateTime;
+													$o_twig->ModifiedBy = $o_glob->Security->UserUUID;
+												}
+												
+												/* set and increment identifier when configured */
+												if (issetStr($o_glob->TablesInformation[$o_twig->fphp_TableUUID]['Identifier']->PrimaryValue)) {
+													$o_identifierTwig = new \fPHP\Twigs\identifierTwig;
+													
+													/* get identifier record */
+													if (! ($o_identifierTwig->GetRecord(array($o_glob->TablesInformation[$o_twig->fphp_TableUUID]['Identifier']->PrimaryValue))) ) {
+														throw new forestException(0x10001401, array($o_identifierTwig->fphp_Table));
+													}
+													
+													/* set identifier for new record */
+													$o_twig->Identifier = $o_identifierTwig->IdentifierNext;
+													
+													/* increase identifier next */
+													$o_identifierTwig->IdentifierNext = \fPHP\Helper\forestStringLib::IncreaseIdentifier($o_identifierTwig->IdentifierNext, $o_identifierTwig->IdentifierIncrement);
+													
+													/* check identifier result */
+													if ($o_identifierTwig->IdentifierNext == 'INVALID') {
+														throw new forestException(0x10001F13, array($o_twig->Identifier));
+													} else if ($o_identifierTwig->IdentifierNext == 'OVERFLOW') {
+														throw new forestException(0x10001F14, array($o_twig->Identifier));
+													}
+													
+													/* update identifier record */
+													$i_result = $o_identifierTwig->UpdateRecord();
+													
+													/* evaluate result */
+													if ($i_result == -1) {
+														throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+													}
+												}
+											
+												/* insert new value(s) with new record */
+												$i_result = $o_twig->InsertRecord();
+											
+												/* evaluate result */
+												if ($i_result <= 0) {
+													$this->Twig->{$s_column}->PrimaryValue = 'NULL';
+												} else {
+													/* check if lookup table uses uuid */
+													if ($o_twig->fphp_HasUUID) {
+														/* set uuid as new primary value of lookup */
+														$this->Twig->{$s_column}->PrimaryValue = $o_twig->UUID;
+													} else {
+														$b_uniqueFound = false;
+														$s_unique = "";
+														
+														/* look for unique property */
+														foreach ($o_twig->fphp_Unique as $s_uniqueValue) {
+															if ($s_uniqueValue != 'UUID') {
+																$s_unique = $s_uniqueValue;
+																$b_uniqueFound = true;
+																break;
+															}
+														}
+														
+														/* check if we found a unique property and new record is available with found unique property */
+														if ( (!$b_uniqueFound) || (!$o_twig->GetRecordPrimary(explode(';', $s_unique), implode(';', $a_fields))) ) {
+															$this->Twig->{$s_column}->PrimaryValue = 'NULL';
+														} else {
+															$this->Twig->{$s_column}->PrimaryValue = implode(';', $a_fields);
+														}
+													}	
+												}
+											}
+										}
+									} else {
+										$this->Twig->{$s_column}->PrimaryValue = 'NULL';
+									}
+								}
+							}
 						}
 					}
 					
@@ -5326,9 +5526,27 @@ abstract class forestBranch extends forestRootBranch {
 											$s_path = './trunk/' . $s_path . 'fphp_files/' . $s_folder . '/';
 											
 											if (is_dir($s_path)) {
+												/* delete file if exists */
 												if (file_exists($s_path . $o_oldFilesTwig->Name)) {
+													/* delete file */
 													if (!(@unlink($s_path . $o_oldFilesTwig->Name))) {
 														throw new forestException(0x10001422, array($s_path . $o_oldFilesTwig->Name));
+													}
+												}
+												
+												/* delete file thumbnail if exists */
+												if (file_exists($s_path . 'tn_' . $o_oldFilesTwig->Name)) {
+													/* delete file */
+													if (!(@unlink($s_path . 'tn_' . $o_oldFilesTwig->Name))) {
+														throw new forestException(0x10001422, array($s_path . 'tn_' . $o_oldFilesTwig->Name));
+													}
+												}
+												
+												/* delete file 'show in detail view' if exists */
+												if (file_exists($s_path . 'dv_' . $o_oldFilesTwig->Name)) {
+													/* delete file */
+													if (!(@unlink($s_path . 'dv_' . $o_oldFilesTwig->Name))) {
+														throw new forestException(0x10001422, array($s_path . 'dv_' . $o_oldFilesTwig->Name));
 													}
 												}
 											}
@@ -5403,6 +5621,64 @@ abstract class forestBranch extends forestRootBranch {
 									}
 									
 									throw new forestException(0x10001425, array($o_filesTwig->DisplayName));
+								}
+								
+								/* handle thumbnail or 'show in detail view' flag */
+								if ($o_glob->TablefieldsDictionary->Exists($this->Twig->fphp_Table . '_' . $s_column)) {
+									if (issetStr($o_glob->TablefieldsDictionary->{$this->Twig->fphp_Table . '_' . $s_column}->JSONEncodedSettings)) {
+										$s_JSONEncodedSettings = str_replace('&quot;', '"', $o_glob->TablefieldsDictionary->{$this->Twig->fphp_Table . '_' . $s_column}->JSONEncodedSettings);
+										$a_settings = json_decode($s_JSONEncodedSettings, true);
+										
+										if (!empty($a_settings)) {
+											if ( (array_key_exists('Thumbnail', $a_settings)) && (array_key_exists('ThumbnailMaxWidth', $a_settings)) ) {
+												if ($a_settings['Thumbnail'] == true) {
+													$s_extension = strtolower(pathinfo($s_path . $o_filesTwig->Name, PATHINFO_EXTENSION));
+													$o_virtual_image = $this->fphp_resizeImage($s_path . $o_filesTwig->Name, $a_settings['ThumbnailMaxWidth']);
+													
+													/* create the physical thumbnail image to its destination */
+													switch ($s_extension) {
+														case 'jpg':
+														case 'jpeg':
+															imagejpeg($o_virtual_image, $s_path . 'tn_' . $o_filesTwig->Name, 100); /* 100 for best quality */
+														break;
+														case 'bmp':
+															imagebmp($o_virtual_image, $s_path . 'tn_' . $o_filesTwig->Name); /* (PHP 7 >= 7.2.0) */
+														break;
+														case 'gif':
+															imagegif($o_virtual_image, $s_path . 'tn_' . $o_filesTwig->Name);
+														break;
+														default:
+															imagepng($o_virtual_image, $s_path . 'tn_' . $o_filesTwig->Name, 0); /* 0 for no compression */
+														break;
+													}
+												}
+											}
+											
+											if ( (array_key_exists('ShowInDetailView', $a_settings)) && (array_key_exists('ShowInDetailViewMaxWidth', $a_settings)) ) {
+												if ($a_settings['ShowInDetailView'] == true) {
+													$s_extension = strtolower(pathinfo($s_path . $o_filesTwig->Name, PATHINFO_EXTENSION));
+													$o_virtual_image = $this->fphp_resizeImage($s_path . $o_filesTwig->Name, $a_settings['ShowInDetailViewMaxWidth']);
+													
+													/* create the physical thumbnail image to its destination */
+													switch ($s_extension) {
+														case 'jpg':
+														case 'jpeg':
+															imagejpeg($o_virtual_image, $s_path . 'dv_' . $o_filesTwig->Name, 100); /* 100 for best quality */
+														break;
+														case 'bmp':
+															imagebmp($o_virtual_image, $s_path . 'dv_' . $o_filesTwig->Name); /* (PHP 7 >= 7.2.0) */
+														break;
+														case 'gif':
+															imagegif($o_virtual_image, $s_path . 'dv_' . $o_filesTwig->Name);
+														break;
+														default:
+															imagepng($o_virtual_image, $s_path . 'dv_' . $o_filesTwig->Name, 0); /* 0 for no compression */
+														break;
+													}
+												}
+											}
+										}
+									}
 								}
 								
 								/* check if versioning is activated */
@@ -5851,9 +6127,27 @@ abstract class forestBranch extends forestRootBranch {
 					$s_path = './trunk/' . $s_path . 'fphp_files/' . $s_folder . '/';
 					
 					if (is_dir($s_path)) {
+						/* delete file if exists */
 						if (file_exists($s_path . $this->Twig->Name)) {
+							/* delete file */
 							if (!(@unlink($s_path . $this->Twig->Name))) {
 								throw new forestException(0x10001422, array($s_path . $this->Twig->Name));
+							}
+						}
+						
+						/* delete file thumbnail if exists */
+						if (file_exists($s_path . 'tn_' . $this->Twig->Name)) {
+							/* delete file */
+							if (!(@unlink($s_path . 'tn_' . $this->Twig->Name))) {
+								throw new forestException(0x10001422, array($s_path . 'tn_' . $this->Twig->Name));
+							}
+						}
+						
+						/* delete file 'show in detail view' if exists */
+						if (file_exists($s_path . 'dv_' . $this->Twig->Name)) {
+							/* delete file */
+							if (!(@unlink($s_path . 'dv_' . $this->Twig->Name))) {
+								throw new forestException(0x10001422, array($s_path . 'dv_' . $this->Twig->Name));
 							}
 						}
 					}
@@ -5900,6 +6194,96 @@ abstract class forestBranch extends forestRootBranch {
 					}
 					
 					throw new forestException(0x10001425, array($s_fileName));
+				}
+				
+				/* flag to know if we also need to replace a thumbnail and a showview picture file */
+				$b_thumbnail = false;
+				$b_showview = false;
+				$s_thumbnailMaxWidth = "";
+				$s_showviewMaxWidth = "";
+				
+				/* read all tablefields of table */
+				foreach ($o_glob->TablefieldsDictionary as $o_tableFieldProperties) {
+					/* iterate all tablefields matching posted table uuid as sub constraint key and form element is FILEDIALOG */
+					if ( ($o_tableFieldProperties->TableUUID == $_POST['sys_fphp_subConstraintKey']) && ($o_tableFieldProperties->FormElementName == \fPHP\Forms\forestFormElement::FILEDIALOG) ) {
+						/* get json encoded settings as array */
+						$s_JSONEncodedSettings = str_replace('&quot;', '"', $o_tableFieldProperties->JSONEncodedSettings);
+						$a_settings = json_decode($s_JSONEncodedSettings, true);
+						
+						/* if ONLY one tablefield has form element 'file' and json settings with 'Thumbnail' or 'ShowInDetailView' as 'true' */
+						if ( (array_key_exists('Thumbnail', $a_settings)) || (array_key_exists('ShowInDetailView', $a_settings)) ) {
+							/* already one tablefield with 'Thumbnail' or 'ShowInDetailView' as 'true' found */
+							if ( ($b_thumbnail) || ($b_showview) ) {
+								$b_thumbnail = false;
+								$b_showview = false;
+								break;
+							}
+							
+							/* 'Thumbnail' as 'true' found */
+							if ( (array_key_exists('Thumbnail', $a_settings)) && (array_key_exists('ThumbnailMaxWidth', $a_settings)) ) {
+								if ($a_settings['Thumbnail'] == true) {
+									$b_thumbnail = true;
+									$s_thumbnailMaxWidth = $a_settings['ThumbnailMaxWidth'];
+								}
+							}
+								
+							
+							/* 'ShowInDetailView' as 'true' found */
+							if ( (array_key_exists('ShowInDetailView', $a_settings)) && (array_key_exists('ShowInDetailViewMaxWidth', $a_settings)) ) {
+								if ($a_settings['ShowInDetailView'] == true) {
+									$b_showview = true;
+									$s_showviewMaxWidth = $a_settings['ShowInDetailViewMaxWidth'];
+								}
+							}
+						}
+					}
+				}
+				
+				/* create thumbnail or showindetailview picture */
+				if ( ($b_thumbnail) || ($b_showview) ) {
+					if ($b_thumbnail) {
+						$s_extension = strtolower(pathinfo($s_path . $s_newFilename, PATHINFO_EXTENSION));
+						$o_virtual_image = $this->fphp_resizeImage($s_path . $s_newFilename, $s_thumbnailMaxWidth);
+						
+						/* create the physical thumbnail image to its destination */
+						switch ($s_extension) {
+							case 'jpg':
+							case 'jpeg':
+								imagejpeg($o_virtual_image, $s_path . 'tn_' . $s_newFilename, 100); /* 100 for best quality */
+							break;
+							case 'bmp':
+								imagebmp($o_virtual_image, $s_path . 'tn_' . $s_newFilename); /* (PHP 7 >= 7.2.0) */
+							break;
+							case 'gif':
+								imagegif($o_virtual_image, $s_path . 'tn_' . $s_newFilename);
+							break;
+							default:
+								imagepng($o_virtual_image, $s_path . 'tn_' . $s_newFilename, 0); /* 0 for no compression */
+							break;
+						}
+					}
+					
+					if ($b_showview) {
+						$s_extension = strtolower(pathinfo($s_path . $s_newFilename, PATHINFO_EXTENSION));
+						$o_virtual_image = $this->fphp_resizeImage($s_path . $s_newFilename, $s_showviewMaxWidth);
+						
+						/* create the physical thumbnail image to its destination */
+						switch ($s_extension) {
+							case 'jpg':
+							case 'jpeg':
+								imagejpeg($o_virtual_image, $s_path . 'dv_' . $s_newFilename, 100); /* 100 for best quality */
+							break;
+							case 'bmp':
+								imagebmp($o_virtual_image, $s_path . 'dv_' . $s_newFilename); /* (PHP 7 >= 7.2.0) */
+							break;
+							case 'gif':
+								imagegif($o_virtual_image, $s_path . 'dv_' . $s_newFilename);
+							break;
+							default:
+								imagepng($o_virtual_image, $s_path . 'dv_' . $s_newFilename, 0); /* 0 for no compression */
+							break;
+						}
+					}
 				}
 				
 				/* check if versioning is activated */
@@ -6083,6 +6467,12 @@ abstract class forestBranch extends forestRootBranch {
 				$o_hidden = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::HIDDEN);
 				$o_hidden->Id = 'sys_fphp_editFileKey';
 				$o_hidden->Value = $o_glob->Temp->{'editFileKey'};
+				$o_glob->PostModalForm->FormElements->Add($o_hidden);
+				
+				/* create hidden element to table UUID */
+				$o_hidden = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::HIDDEN);
+				$o_hidden->Id = 'sys_fphp_subConstraintKey';
+				$o_hidden->Value = $o_glob->Temp->{'subConstraintKey'};
 				$o_glob->PostModalForm->FormElements->Add($o_hidden);
 			}
 		}
@@ -7282,9 +7672,27 @@ abstract class forestBranch extends forestRootBranch {
 		$s_path = './trunk/' . $s_path . 'fphp_files/' . $s_folder . '/';
 		
 		if (is_dir($s_path)) {
+			/* delete file if exists */
 			if (file_exists($s_path . $p_o_file->Name)) {
+				/* delete file */
 				if (!(@unlink($s_path . $p_o_file->Name))) {
 					throw new forestException(0x10001422, array($s_path . $p_o_file->Name));
+				}
+			}
+			
+			/* delete file thumbnail if exists */
+			if (file_exists($s_path . 'tn_' . $p_o_file->Name)) {
+				/* delete file */
+				if (!(@unlink($s_path . 'tn_' . $p_o_file->Name))) {
+					throw new forestException(0x10001422, array($s_path . 'tn_' . $p_o_file->Name));
+				}
+			}
+			
+			/* delete file 'show in detail view' if exists */
+			if (file_exists($s_path . 'dv_' . $p_o_file->Name)) {
+				/* delete file */
+				if (!(@unlink($s_path . 'dv_' . $p_o_file->Name))) {
+					throw new forestException(0x10001422, array($s_path . 'dv_' . $p_o_file->Name));
 				}
 			}
 		}
@@ -7690,6 +8098,126 @@ abstract class forestBranch extends forestRootBranch {
 	}
 	
 	/**
+	 * function to resize an image/picture file
+	 * please use imagedestroy with the return object to set memory space free if you do not longer need the image resource
+	 *
+	 * @param string $p_s_sourceFile	full-path to image/picture file
+	 *
+	 * @return image resource as virutal object
+	 *
+	 * @throws forestException if error occurs
+	 * @access protected
+	 * @static no
+	 */
+	protected function fphp_resizeImage($p_s_sourceFile, $p_i_maxWidth) {
+		$b_image_found = false;
+		
+		if (file_exists($p_s_sourceFile)) {
+			$s_extension = strtolower(pathinfo($p_s_sourceFile, PATHINFO_EXTENSION));
+			
+			/* read the source image */
+			$o_source_image = null;
+			
+			switch ($s_extension) {
+				case 'jpg':
+				case 'jpeg':
+					$o_source_image = imagecreatefromjpeg($p_s_sourceFile);
+				break;
+				case 'bmp':
+					$o_source_image = imagecreatefrombmp($p_s_sourceFile); /* (PHP 7 >= 7.2.0) */
+				break;
+				case 'gif':
+					$o_source_image = imagecreatefromgif($p_s_sourceFile);
+				break;
+				default:
+					$o_source_image = imagecreatefrompng($p_s_sourceFile);
+				break;
+			}
+			
+			if ($o_source_image != null) {
+				$i_width = imagesx($o_source_image);
+				$i_height = imagesy($o_source_image);
+				
+				if ($i_width > $i_height) {
+					$i_desired_width = intval($p_i_maxWidth);
+					
+					if ($i_desired_width <= 0) {
+						$i_desired_width = $i_width;
+					}
+					
+					/* find the "desired height" of this thumbnail, relative to the desired width  */
+					$i_desired_height = floor($i_height * ($i_desired_width / $i_width));
+					
+					
+				} else {
+					$i_desired_height = intval($p_i_maxWidth);
+					
+					if ($i_desired_height <= 0) {
+						$i_desired_height = $i_height;
+					}
+					
+					/* find the "desired_width" of this thumbnail, relative to the desired height  */
+					$i_desired_width = floor($i_width * ($i_desired_height / $i_height));
+				}
+				
+				/* create a new, "virtual" image */
+				$o_virtual_image = imagecreatetruecolor($i_desired_width, $i_desired_height);
+				
+				/* copy source image at a resized size */
+				imagecopyresampled($o_virtual_image, $o_source_image, 0, 0, 0, 0, $i_desired_width, $i_desired_height, $i_width, $i_height);
+				
+				/* read detailed image information, to know how we handle different orientation settings */
+				$a_exif = exif_read_data($p_s_sourceFile);
+				
+				if (array_key_exists('Orientation', $a_exif)) {
+					switch($a_exif['Orientation']) {
+						case 1: /* nothing */
+						break;
+
+						case 2: /* horizontal flip */
+							imageflip($o_virtual_image, IMG_FLIP_HORIZONTAL);
+						break;
+						
+						case 3: /* 180 rotate left */
+							$o_virtual_image = imagerotate ($o_virtual_image, 180, 0);
+						break;
+						
+						case 4: /* vertical flip */
+							imageflip($o_virtual_image, IMG_FLIP_VERTICAL);
+						break;
+						
+						case 5: /* vertical flip + 90 rotate right */
+							imageflip($o_virtual_image, IMG_FLIP_VERTICAL);
+							$o_virtual_image = imagerotate ($o_virtual_image, -90, 0);
+						break;
+						
+						case 6: /* 90 rotate right */
+							$o_virtual_image = imagerotate ($o_virtual_image, -90, 0);
+						break;
+						
+						case 7: /* horizontal flip + 90 rotate right */
+							imageflip($o_virtual_image, IMG_FLIP_HORIZONTAL);  
+							$o_virtual_image = imagerotate ($o_virtual_image, -90, 0);
+						break;
+						
+						case 8: /* 90 rotate left */
+							$o_virtual_image = imagerotate ($o_virtual_image, 90, 0);
+						break;
+					}
+				}
+				
+				$b_image_found = true;
+			}
+		}
+		
+		if (!$b_image_found) {
+			$o_virtual_image = null;
+		}
+		
+		return $o_virtual_image;
+	}
+	
+	/**
 	 * function to create a thumbnail of an stored image
 	 *
 	 * @return null
@@ -7723,80 +8251,30 @@ abstract class forestBranch extends forestRootBranch {
 			
 			if (is_dir($s_path)) {
 				if (file_exists($s_path . $o_filesTwig->Name)) {
-					$s_filepath = $s_path . $o_filesTwig->Name;
-					$s_extension = strtolower(pathinfo($s_filepath, PATHINFO_EXTENSION));
+					$s_extension = strtolower(pathinfo($s_path . $o_filesTwig->Name, PATHINFO_EXTENSION));
+					$o_virtual_image = $this->fphp_resizeImage($s_path . $o_filesTwig->Name, $a_parameters['fphp_thumbnail_width']);
 					
-					/* read the source image */
-					$o_source_image = null;
+					/* create the physical thumbnail image to its destination */
+					header('Content-type: image/' . $s_extension);
 					
 					switch ($s_extension) {
 						case 'jpg':
 						case 'jpeg':
-							$o_source_image = imagecreatefromjpeg($s_filepath);
+							imagejpeg($o_virtual_image);
 						break;
 						case 'bmp':
-							$o_source_image = imagecreatefrombmp($s_filepath); /* (PHP 7 >= 7.2.0) */
+							imagebmp($o_virtual_image); /* (PHP 7 >= 7.2.0) */
 						break;
 						case 'gif':
-							$o_source_image = imagecreatefromgif($s_filepath);
+							imagegif($o_virtual_image);
 						break;
 						default:
-							$o_source_image = imagecreatefrompng($s_filepath);
+							imagepng($o_virtual_image);
 						break;
 					}
 					
-					if ($o_source_image != null) {
-						$i_width = imagesx($o_source_image);
-						$i_height = imagesy($o_source_image);
-						
-						if ($i_width > $i_height) {
-							$i_desired_width = intval($a_parameters['fphp_thumbnail_width']);
-							
-							if ($i_desired_width <= 0) {
-								$i_desired_width = $i_width;
-							}
-							
-							/* find the "desired height" of this thumbnail, relative to the desired width  */
-							$i_desired_height = floor($i_height * ($i_desired_width / $i_width));
-						} else {
-							$i_desired_height = intval($a_parameters['fphp_thumbnail_width']);
-							
-							if ($i_desired_height <= 0) {
-								$i_desired_height = $i_height;
-							}
-							
-							/* find the "desired_width" of this thumbnail, relative to the desired height  */
-							$i_desired_width = floor($i_width * ($i_desired_height / $i_height));
-						}
-						
-						/* create a new, "virtual" image */
-						$o_virtual_image = imagecreatetruecolor($i_desired_width, $i_desired_height);
-						
-						/* copy source image at a resized size */
-						imagecopyresampled($o_virtual_image, $o_source_image, 0, 0, 0, 0, $i_desired_width, $i_desired_height, $i_width, $i_height);
-						
-						/* create the physical thumbnail image to its destination */
-						header('Content-type: image/' . $s_extension);
-						
-						switch ($s_extension) {
-							case 'jpg':
-							case 'jpeg':
-								imagejpeg($o_virtual_image);
-							break;
-							case 'bmp':
-								imagebmp($o_virtual_image); /* (PHP 7 >= 7.2.0) */
-							break;
-							case 'gif':
-								imagegif($o_virtual_image);
-							break;
-							default:
-								imagepng($o_virtual_image);
-							break;
-						}
-						
-						$b_image_found = true;
-						imagedestroy($o_virtual_image);
-					}
+					$b_image_found = true;
+					imagedestroy($o_virtual_image);
 				}
 			}
 		}

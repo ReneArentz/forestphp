@@ -6,10 +6,10 @@
  *
  * @category    forestPHP Framework
  * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2019 forestPHP Framework
+ * @copyright   (c) 2021 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.0 stable
+ * @version     1.0.1 stable
  * @link        http://www.forestphp.de/
  * @object-id   0x1 0000A
  * @since       File available since Release 0.1.0 alpha
@@ -27,6 +27,7 @@
  * 		1.0.0 stable	renatus		2020-02-11	added MongoDB support
  * 		1.0.0 stable	renatus		2020-02-11	removed string type definition in function parameters because of E_RECOVERABLE_ERROR
  * 		1.0.0 stable	renatus		2020-02-14	changes constants because of conflict with php system constants
+ * 		1.0.1 stable	renatus		2021-04-09	removed get_magic_quotes_gpc(), has become obsolete
  */
 
 namespace fPHP\Base;
@@ -782,7 +783,7 @@ abstract class forestSQLQueryAbstract {
 			$p_s_value = addslashes($p_s_value);
 			
 			/*  when magic_quotes are on, all ' (single-quote), " (double quote), \ (backslash) and NULL's are escaped with a backslash automatically. */
-			if ( (get_magic_quotes_gpc()) || ($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway == forestBase::MSSQL) || ($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway == forestBase::SQLite3) || ($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway == forestBase::PGSQL) || ($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway == forestBase::OCISQL) || ($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway == forestBase::MongoDB) ) {
+			if ( ($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway == forestBase::MSSQL) || ($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway == forestBase::SQLite3) || ($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway == forestBase::PGSQL) || ($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway == forestBase::OCISQL) || ($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway == forestBase::MongoDB) ) {
 				/* un-quotes a quoted string */
 				$p_s_value = stripslashes($p_s_value);
 			}
@@ -1535,6 +1536,7 @@ class forestSQLAlter extends forestSQLQueryAbstract {
 	
 	private $Columns;
 	private $Constraints;
+	private $NewTableName;
 	
 	/* Properties */
 	
@@ -1556,6 +1558,7 @@ class forestSQLAlter extends forestSQLQueryAbstract {
 		
 		$this->Columns = new forestObject(new forestObjectList('forestSQLColumnStructure'), false);
 		$this->Constraints = new forestObject(new forestObjectList('forestSQLConstraint'), false);
+		$this->NewTableName = new forestString;
 	}
 	
 	/**
@@ -1570,421 +1573,439 @@ class forestSQLAlter extends forestSQLQueryAbstract {
 	public function __toString() {
 		$s_foo = '';
 		
-		switch ($this->BaseGateway->value) {
-			case forestBase::MariaSQL:
-				$s_foo = 'ALTER TABLE ' . '`' . $this->Table->value . '`' . ' ';
-				
-				if ( ($this->Columns->value->Count() <= 0) && ($this->Constraints->value->Count() <= 0) ) {
-					throw new forestException('Columns and Constraints object lists are empty');
-				} else {
-					if ($this->Columns->value->Count() > 0) {
-						$s_lastKey = $this->Columns->value->LastKey();
-			
-						foreach ($this->Columns->value as $s_key => $o_column) {
-							if ($s_key == $s_lastKey) {
-								$s_foo .= $o_column;
-							} else {
-								$s_foo .= $o_column . ', ';
-							}
-						}
-					} else if ($this->Constraints->value->Count() > 0) {
-						$s_lastKey = $this->Constraints->value->LastKey();
-			
-						foreach ($this->Constraints->value as $s_key => $o_constraint) {
-							if ($s_key == $s_lastKey) {
-								$s_foo .= $o_constraint;
-							} else {
-								$s_foo .= $o_constraint . ', ';
-							}
-						}
-					}
-				}
-			break;
-			case forestBase::SQLite3:
-				if (!( ($this->Columns->value->Count()) xor ($this->Constraints->value->Count()) )) {
-					throw new forestException('Columns and Constraints object lists are both empty or both set');
-				} else {
-					if ($this->Columns->value->Count() >= 1) {
-						$s_lastKey = $this->Columns->value->LastKey();
-						$o_changeColumn = null;
-						$a_deleteColumns = null;
-						
-						foreach ($this->Columns->value as $s_key => $o_column) {
-							$s_foo .= 'ALTER TABLE ' . '`' . $this->Table->value . '`' . ' ';
-							
-							if ($o_column->AlterOperation == 'CHANGE') {
-								if ($this->Columns->value->Count() > 1) {
-									throw new forestException('Columns object lists must contain only one item for CHANGE operation');
-								}
-								
-								$o_changeColumn = $o_column;
-								break;
-							}
-							
-							if ($o_column->AlterOperation == 'DROP') {
-								if ($a_deleteColumns == null) {
-									$a_deleteColumns = array();
-								}
-								
-								$a_deleteColumns[] = $o_column;
-							}
-							
-							if ($o_column->AlterOperation == 'ADD') {
-								$s_foo .= 'ADD ';
-							}
-							
-							if ($s_key == $s_lastKey) {
-								$s_foo .= $o_column;
-							} else {
-								$s_foo .= $o_column . ';;;';
-							}
-						}
-						
-						if ( ($o_changeColumn != null) || ($a_deleteColumns != null) ) {
-							$s_foo = '';
-							
-							/* get twig object of current table */
-							$s_tempTable = $this->Table->value;
-							\fPHP\Helper\forestStringLib::RemoveTablePrefix($s_tempTable);
-							$s_fooTwig = '\\fPHP\\Twigs\\' . $s_tempTable . 'Twig';
-							$o_tempTwig = new $s_fooTwig;
-							
-							/* get all tablefields of current table */
-							$o_glob = \fPHP\Roots\forestGlobals::init();
-							$o_tablefieldTwig = new \fPHP\Twigs\tablefieldTwig;
-							
-							$a_sqlAdditionalFilter = array(array('column' => 'TableUUID', 'value' => $o_tempTwig->fphp_TableUUID, 'operator' => '=', 'filterOperator' => 'AND'), array('column' => 'SqlTypeUUID', 'value' => 'NULL', 'operator' => 'IS NOT', 'filterOperator' => 'AND'));
-							$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
-							$o_tablefields = $o_tablefieldTwig->GetAllRecords(true);
-							$o_glob->Temp->Del('SQLAdditionalFilter');
-							
-							$a_columns = array(
-								'Id' => array(
-									'columnType' => 'integer [int]',
-									'constraints' => array('NOT NULL', 'PRIMARY KEY', 'AUTO_INCREMENT')
-								),
-								'UUID' => array(
-									'columnType' => 'text [36]',
-									'constraints' => array('NOT NULL', 'UNIQUE')
-								)
-							);
-							
-							$a_columnsNew = array('Id', 'UUID');
-							$a_columnsOld = array('Id', 'UUID');
-							
-							/* check identifier column */
-							if (in_array('Identifier', $o_tempTwig->fphp_Mapping)) {
-								$a_columns['Identifier'] = array(
-									'columnType' => 'text [255]',
-									'constraints' => array('NOT NULL', 'UNIQUE')
-								);
-								
-								$a_columnsNew[] = 'Identifier';
-								$a_columnsOld[] = 'Identifier';
-							}
-							
-							foreach ($o_tablefields->Twigs as $o_tablefield) {
-								/* ignore forestCombination, dropzone and form field */
-								if ((strval($o_tablefield->ForestDataUUID) == 'forestCombination') || (strval($o_tablefield->FormElementUUID) == \fPHP\Forms\forestFormElement::DROPZONE) || (strval($o_tablefield->FormElementUUID) == \fPHP\Forms\forestFormElement::FORM)) {
-									continue;
-								}
-								
-								if ( ($a_deleteColumns != null) && (in_array($o_tablefield->FieldName, $a_deleteColumns)) ) {
-									continue;
-								} else if ( ($o_changeColumn != null) && ($o_tablefield->FieldName == $o_changeColumn->Name) ) {
-									$a_columns[$o_changeColumn->NewName] = array('columnType' => strval($o_tablefield->SqlTypeUUID), 'constraints' => array('NULL'));
-									$a_columnsNew[] = $o_changeColumn->NewName;
-									$a_columnsOld[] = $o_changeColumn->Name;
-								} else {
-									$a_columns[$o_tablefield->FieldName] = array('columnType' => strval($o_tablefield->SqlTypeUUID), 'constraints' => array('NULL'));
-									$a_columnsNew[] = $o_tablefield->FieldName;
-									$a_columnsOld[] = $o_tablefield->FieldName;
-								}
-							}
-							
-							/* check created column */
-							if ( (in_array('Created', $o_tempTwig->fphp_Mapping)) && (!in_array('Created', $a_deleteColumns)) ) {
-								$a_columns['Created'] = array(
-									'columnType' => 'datetime',
-									'constraints' => array('NULL')
-								);
-								
-								$a_columnsNew[] = 'Created';
-								$a_columnsOld[] = 'Created';
-							}
-							
-							/* check createdby column */
-							if ( (in_array('CreatedBy', $o_tempTwig->fphp_Mapping)) && (!in_array('CreatedBy', $a_deleteColumns)) ) {
-								$a_columns['CreatedBy'] = array(
-									'columnType' => 'text [36]',
-									'constraints' => array('NULL')
-								);
-								
-								$a_columnsNew[] = 'CreatedBy';
-								$a_columnsOld[] = 'CreatedBy';
-							}
-							
-							/* check modified column */
-							if ( (in_array('Modified', $o_tempTwig->fphp_Mapping)) && (!in_array('Modified', $a_deleteColumns)) ) {
-								$a_columns['Modified'] = array(
-									'columnType' => 'datetime',
-									'constraints' => array('NULL')
-								);
-								
-								$a_columnsNew[] = 'Modified';
-								$a_columnsOld[] = 'Modified';
-							}
-							
-							/* check modifiedby column */
-							if ( (in_array('ModifiedBy', $o_tempTwig->fphp_Mapping)) && (!in_array('ModifiedBy', $a_deleteColumns)) ) {
-								$a_columns['ModifiedBy'] = array(
-									'columnType' => 'text [36]',
-									'constraints' => array('NULL')
-								);
-								
-								$a_columnsNew[] = 'ModifiedBy';
-								$a_columnsOld[] = 'ModifiedBy';
-							}
-							
-							/* CREATE TABLE forestphp_'table' (all columns with column new name) */
-							$o_queryNew = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::CREATE, 'forestphp_' . $this->Table->value);
-				
-							foreach ($a_columns as $s_name => $a_info) {
-								$o_column = new \fPHP\Base\forestSQLColumnStructure($o_queryNew);
-									$o_column->Name = $s_name;
-									
-									$s_columnType = null;
-									$i_columnLength = null;
-									$i_columnDecimalLength = null;
-									\fPHP\Base\forestSQLQuery::ColumnTypeAllocation($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, strval($a_info['columnType']), $s_columnType, $i_columnLength, $i_columnDecimalLength);
-									
-									$o_column->ColumnType = $s_columnType;
-									if ($i_columnLength != null) { $o_column->ColumnTypeLength = $i_columnLength; }
-									if ($i_columnDecimalLength != null) { $o_column->ColumnTypeDecimalLength = $i_columnDecimalLength; }
-									$o_column->AlterOperation = 'ADD';
-									
-									if (array_key_exists('constraints', $a_info)) {
-										foreach ($a_info['constraints'] as $s_constraint) {
-											$s_constraintType = null;
-											\fPHP\Base\forestSQLQuery::ConstraintTypeAllocation($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, strval($s_constraint), $s_constraintType);
-											
-											$o_column->ConstraintList->Add($s_constraintType);
-											
-											if ( ($s_constraint == 'DEFAULT') && (array_key_exists('constraintDefaultValue', $a_info)) ) {
-												$o_column->ConstraintDefaultValue = $a_info['constraintDefaultValue'];
-											}
-										}
-									}
-									
-								$o_queryNew->Query->Columns->Add($o_column);
-							}				
-							
-							/* Create table does not return a value */
-							//$o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_queryNew, false, false);
-							$s_foo .= strval($o_queryNew) . ';;;';
-							
-							/* INSERT INTO forestphp_'table' (all columns with column new name) SELECT (all columns with column old name) FROM 'table' */
-							$o_queryInsert = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::INSERT, 'forestphp_' . $this->Table->value);
-							$s_query = 'INSERT INTO `forestphp_' . $this->Table->value . '` (`' . implode('`,`', $a_columnsNew) . '`) SELECT `' . implode('`,`', $a_columnsOld) . '` FROM `' . $this->Table->value . '`';
-							$o_queryInsert->SetQuery($s_query);
-							//$o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_queryInsert, false, false);
-							$s_foo .= $s_query . ';;;';
-							
-							/* DROP 'table' */
-							$o_queryDrop = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::DROP, $this->Table->value);
-							//$o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_queryDrop, false, false);
-							$s_foo .= strval($o_queryDrop) . ';;;';
-							
-							/* ALTER TABLE forestphp_'table' RENAME TO 'table' */
-							$o_queryAlter = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::ALTER, 'forestphp_' . $this->Table->value);
-							$s_query = 'ALTER TABLE `forestphp_' . $this->Table->value . '` RENAME TO `' . $this->Table->value . '`';
-							$o_queryAlter->SetQuery($s_query);
-							//$o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_queryAlter, false, false);
-							$s_foo .= $s_query;
-						}
-					} else if ($this->Constraints->value->Count() == 1) {
-						$s_lastKey = $this->Constraints->value->LastKey();
-			
-						foreach ($this->Constraints->value as $s_key => $o_constraint) {
-							if ($s_key == $s_lastKey) {
-								$s_foo .= $o_constraint;
-							} else {
-								$s_foo .= $o_constraint . ', ';
-							}
-						}
+		if (issetStr($this->NewTableName->value)) {
+			switch ($this->BaseGateway->value) {
+				case forestBase::MariaSQL:
+				case forestBase::SQLite3:
+				case forestBase::OCISQL:
+				case forestBase::PGSQL:
+				case forestBase::MongoDB:
+					$s_foo = 'ALTER TABLE ' . '`' . $this->Table->value . '`' . ' RENAME TO '. '`' . $this->NewTableName->value . '`';
+				break;
+				case forestBase::MSSQL:
+					$s_foo = 'EXEC sp_rename \'' . $this->Table->value . '\', \'' . $this->NewTableName->value . '\'';
+				break;
+				default:
+					throw new forestException('BaseGateway[%0] not implemented', array($this->BaseGateway->value));
+				break;
+			}
+		} else {
+			switch ($this->BaseGateway->value) {
+				case forestBase::MariaSQL:
+					$s_foo = 'ALTER TABLE ' . '`' . $this->Table->value . '`' . ' ';
+					
+					if ( ($this->Columns->value->Count() <= 0) && ($this->Constraints->value->Count() <= 0) ) {
+						throw new forestException('Columns and Constraints object lists are empty');
 					} else {
-						throw new forestException('Constraints object lists must contain only one item');
-					}
-				}
-			break;
-			case forestBase::MSSQL:
-				$s_foo = 'ALTER TABLE ' . '[' . $this->Table->value . ']' . ' ';
+						if ($this->Columns->value->Count() > 0) {
+							$s_lastKey = $this->Columns->value->LastKey();
 				
-				if ( ($this->Columns->value->Count() <= 0) && ($this->Constraints->value->Count() <= 0) ) {
-					throw new forestException('Columns and Constraints object lists are empty');
-				} else {
-					if ($this->Columns->value->Count() > 0) {
-						$b_once = false;
-						$s_lastKey = $this->Columns->value->LastKey();
-			
-						foreach ($this->Columns->value as $s_key => $o_column) {
-							if ($o_column->AlterOperation == 'ADD') {
-								if (!$b_once) {
-									$s_foo .= 'ADD ';
-									$b_once = true;
-								}
-							} else if ($o_column->AlterOperation == 'CHANGE') {
-								$s_foo = '';
-								
-								if (issetStr($o_column->NewName)) {
-									$s_foo .= 'EXEC sp_rename \'[' . $this->Table->value . '].[' . $o_column->Name . ']\', \'' . $o_column->NewName . '\', \'COLUMN\';;;';
-								}
-								
-								$s_foo .= 'ALTER TABLE ' . '[' . $this->Table->value . ']' . ' ALTER ';
-							} else if ($o_column->AlterOperation == 'DROP') {
-								if (!$b_once) {
-									$s_foo .= 'DROP ';
-									$b_once = true;
-								}
-							}
-							
-							if ($s_key == $s_lastKey) {
-								$s_foo .= $o_column;
-							} else {
-								if ($o_column->AlterOperation == 'CHANGE') {
-									$s_foo .= $o_column . ';;;';
+							foreach ($this->Columns->value as $s_key => $o_column) {
+								if ($s_key == $s_lastKey) {
+									$s_foo .= $o_column;
 								} else {
 									$s_foo .= $o_column . ', ';
 								}
 							}
-						}
-					} else if ($this->Constraints->value->Count() > 0) {
-						$s_foo = '';
-						
-						$s_lastKey = $this->Constraints->value->LastKey();
-			
-						foreach ($this->Constraints->value as $s_key => $o_constraint) {
-							if ($s_key == $s_lastKey) {
-								$s_foo .= $o_constraint;
-							} else {
-								$s_foo .= $o_constraint . ';;;';
-							}
-						}
-					}
-				}
-			break;
-			case forestBase::PGSQL:
-				$s_foo = 'ALTER TABLE ' . '"' . $this->Table->value . '"' . ' ';
+						} else if ($this->Constraints->value->Count() > 0) {
+							$s_lastKey = $this->Constraints->value->LastKey();
 				
-				if ( ($this->Columns->value->Count() <= 0) && ($this->Constraints->value->Count() <= 0) ) {
-					throw new forestException('Columns and Constraints object lists are empty');
-				} else {
-					if ($this->Columns->value->Count() > 0) {
-						$s_lastKey = $this->Columns->value->LastKey();
-						
-						if ($this->Columns->value->{0}->AlterOperation == 'CHANGE') {
-							if (issetStr($this->Columns->value->{0}->NewName)) {
-								$s_foo = 'ALTER TABLE ' . '"' . $this->Table->value . '"' . ' RENAME COLUMN "' . $this->Columns->value->{0}->Name . '" TO "' . $this->Columns->value->{0}->NewName . '";;;' . $s_foo;
-							}
-						}
-						
-						foreach ($this->Columns->value as $s_key => $o_column) {
-							if ($s_key == $s_lastKey) {
-								$s_foo .= $o_column;
-							} else {
-								$s_foo .= $o_column . ', ';
-							}
-						}
-					} else if ($this->Constraints->value->Count() > 0) {
-						$s_lastKey = $this->Constraints->value->LastKey();
-			
-						foreach ($this->Constraints->value as $s_key => $o_constraint) {
-							if ($o_constraint->Constraint == 'INDEX') {
-								$s_foo = '';
-							}
-							
-							if ($s_key == $s_lastKey) {
-								$s_foo .= $o_constraint;
-							} else {
-								if ($o_constraint->Constraint == 'INDEX') {
-									$s_foo .= $o_constraint . ';;;';
+							foreach ($this->Constraints->value as $s_key => $o_constraint) {
+								if ($s_key == $s_lastKey) {
+									$s_foo .= $o_constraint;
 								} else {
 									$s_foo .= $o_constraint . ', ';
 								}
 							}
 						}
 					}
-				}
-			break;
-			case forestBase::OCISQL:
-			case forestBase::MongoDB:
-				$s_foo = 'ALTER TABLE ' . '"' . $this->Table->value . '"' . ' ';
-				
-				if ( ($this->Columns->value->Count() <= 0) && ($this->Constraints->value->Count() <= 0) ) {
-					throw new forestException('Columns and Constraints object lists are empty');
-				} else {
-					if ($this->Columns->value->Count() > 0) {
-						$b_closeAdd = false;
-						$b_closeModify = false;
-						$b_closeDrop = false;
-						
-						if ($this->Columns->value->{0}->AlterOperation == 'ADD') {
-							$s_foo .= 'ADD (';
-							$b_closeAdd = true;
-						}
-						
-						if ($this->Columns->value->{0}->AlterOperation == 'CHANGE') {
-							$s_foo .= 'MODIFY (';
-							$b_closeModify = true;
+				break;
+				case forestBase::SQLite3:
+					if (!( ($this->Columns->value->Count()) xor ($this->Constraints->value->Count()) )) {
+						throw new forestException('Columns and Constraints object lists are both empty or both set');
+					} else {
+						if ($this->Columns->value->Count() >= 1) {
+							$s_lastKey = $this->Columns->value->LastKey();
+							$o_changeColumn = null;
+							$a_deleteColumns = null;
 							
-							if (issetStr($this->Columns->value->{0}->NewName)) {
-								$s_foo = 'ALTER TABLE ' . '"' . $this->Table->value . '"' . ' RENAME COLUMN "' . $this->Columns->value->{0}->Name . '" TO "' . $this->Columns->value->{0}->NewName . '";;;' . $s_foo;
+							foreach ($this->Columns->value as $s_key => $o_column) {
+								$s_foo .= 'ALTER TABLE ' . '`' . $this->Table->value . '`' . ' ';
+								
+								if ($o_column->AlterOperation == 'CHANGE') {
+									if ($this->Columns->value->Count() > 1) {
+										throw new forestException('Columns object lists must contain only one item for CHANGE operation');
+									}
+									
+									$o_changeColumn = $o_column;
+									break;
+								}
+								
+								if ($o_column->AlterOperation == 'DROP') {
+									if ($a_deleteColumns == null) {
+										$a_deleteColumns = array();
+									}
+									
+									$a_deleteColumns[] = $o_column;
+								}
+								
+								if ($o_column->AlterOperation == 'ADD') {
+									$s_foo .= 'ADD ';
+								}
+								
+								if ($s_key == $s_lastKey) {
+									$s_foo .= $o_column;
+								} else {
+									$s_foo .= $o_column . ';;;';
+								}
 							}
-						}
-						
-						if ($this->Columns->value->{0}->AlterOperation == 'DROP') {
-							$s_foo .= 'DROP (';
-							$b_closeDrop = true;
-						}
-						
-						$s_lastKey = $this->Columns->value->LastKey();
-						
-						
-						foreach ($this->Columns->value as $s_key => $o_column) {
-							if ($s_key == $s_lastKey) {
-								$s_foo .= $o_column;
-							} else {
-								$s_foo .= $o_column . ', ';
-							}
-						}
-						
-						if ( ($b_closeAdd) || ($b_closeModify) || ($b_closeDrop) ) {
-							$s_foo .= ')';
-						}
-					} else if ($this->Constraints->value->Count() > 0) {
-						$s_lastKey = $this->Constraints->value->LastKey();
-			
-						foreach ($this->Constraints->value as $s_key => $o_constraint) {
-							if ($o_constraint->Constraint == 'INDEX') {
+							
+							if ( ($o_changeColumn != null) || ($a_deleteColumns != null) ) {
 								$s_foo = '';
+								
+								/* get twig object of current table */
+								$s_tempTable = $this->Table->value;
+								\fPHP\Helper\forestStringLib::RemoveTablePrefix($s_tempTable);
+								$s_fooTwig = '\\fPHP\\Twigs\\' . $s_tempTable . 'Twig';
+								$o_tempTwig = new $s_fooTwig;
+								
+								/* get all tablefields of current table */
+								$o_glob = \fPHP\Roots\forestGlobals::init();
+								$o_tablefieldTwig = new \fPHP\Twigs\tablefieldTwig;
+								
+								$a_sqlAdditionalFilter = array(array('column' => 'TableUUID', 'value' => $o_tempTwig->fphp_TableUUID, 'operator' => '=', 'filterOperator' => 'AND'), array('column' => 'SqlTypeUUID', 'value' => 'NULL', 'operator' => 'IS NOT', 'filterOperator' => 'AND'));
+								$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+								$o_tablefields = $o_tablefieldTwig->GetAllRecords(true);
+								$o_glob->Temp->Del('SQLAdditionalFilter');
+								
+								$a_columns = array(
+									'Id' => array(
+										'columnType' => 'integer [int]',
+										'constraints' => array('NOT NULL', 'PRIMARY KEY', 'AUTO_INCREMENT')
+									),
+									'UUID' => array(
+										'columnType' => 'text [36]',
+										'constraints' => array('NOT NULL', 'UNIQUE')
+									)
+								);
+								
+								$a_columnsNew = array('Id', 'UUID');
+								$a_columnsOld = array('Id', 'UUID');
+								
+								/* check identifier column */
+								if (in_array('Identifier', $o_tempTwig->fphp_Mapping)) {
+									$a_columns['Identifier'] = array(
+										'columnType' => 'text [255]',
+										'constraints' => array('NOT NULL', 'UNIQUE')
+									);
+									
+									$a_columnsNew[] = 'Identifier';
+									$a_columnsOld[] = 'Identifier';
+								}
+								
+								foreach ($o_tablefields->Twigs as $o_tablefield) {
+									/* ignore forestCombination, dropzone and form field */
+									if ((strval($o_tablefield->ForestDataUUID) == 'forestCombination') || (strval($o_tablefield->FormElementUUID) == \fPHP\Forms\forestFormElement::DROPZONE) || (strval($o_tablefield->FormElementUUID) == \fPHP\Forms\forestFormElement::FORM)) {
+										continue;
+									}
+									
+									if ( ($a_deleteColumns != null) && (in_array($o_tablefield->FieldName, $a_deleteColumns)) ) {
+										continue;
+									} else if ( ($o_changeColumn != null) && ($o_tablefield->FieldName == $o_changeColumn->Name) ) {
+										$a_columns[$o_changeColumn->NewName] = array('columnType' => strval($o_tablefield->SqlTypeUUID), 'constraints' => array('NULL'));
+										$a_columnsNew[] = $o_changeColumn->NewName;
+										$a_columnsOld[] = $o_changeColumn->Name;
+									} else {
+										$a_columns[$o_tablefield->FieldName] = array('columnType' => strval($o_tablefield->SqlTypeUUID), 'constraints' => array('NULL'));
+										$a_columnsNew[] = $o_tablefield->FieldName;
+										$a_columnsOld[] = $o_tablefield->FieldName;
+									}
+								}
+								
+								/* check created column */
+								if ( (in_array('Created', $o_tempTwig->fphp_Mapping)) && (!in_array('Created', $a_deleteColumns)) ) {
+									$a_columns['Created'] = array(
+										'columnType' => 'datetime',
+										'constraints' => array('NULL')
+									);
+									
+									$a_columnsNew[] = 'Created';
+									$a_columnsOld[] = 'Created';
+								}
+								
+								/* check createdby column */
+								if ( (in_array('CreatedBy', $o_tempTwig->fphp_Mapping)) && (!in_array('CreatedBy', $a_deleteColumns)) ) {
+									$a_columns['CreatedBy'] = array(
+										'columnType' => 'text [36]',
+										'constraints' => array('NULL')
+									);
+									
+									$a_columnsNew[] = 'CreatedBy';
+									$a_columnsOld[] = 'CreatedBy';
+								}
+								
+								/* check modified column */
+								if ( (in_array('Modified', $o_tempTwig->fphp_Mapping)) && (!in_array('Modified', $a_deleteColumns)) ) {
+									$a_columns['Modified'] = array(
+										'columnType' => 'datetime',
+										'constraints' => array('NULL')
+									);
+									
+									$a_columnsNew[] = 'Modified';
+									$a_columnsOld[] = 'Modified';
+								}
+								
+								/* check modifiedby column */
+								if ( (in_array('ModifiedBy', $o_tempTwig->fphp_Mapping)) && (!in_array('ModifiedBy', $a_deleteColumns)) ) {
+									$a_columns['ModifiedBy'] = array(
+										'columnType' => 'text [36]',
+										'constraints' => array('NULL')
+									);
+									
+									$a_columnsNew[] = 'ModifiedBy';
+									$a_columnsOld[] = 'ModifiedBy';
+								}
+								
+								/* CREATE TABLE forestphp_'table' (all columns with column new name) */
+								$o_queryNew = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::CREATE, 'forestphp_' . $this->Table->value);
+					
+								foreach ($a_columns as $s_name => $a_info) {
+									$o_column = new \fPHP\Base\forestSQLColumnStructure($o_queryNew);
+										$o_column->Name = $s_name;
+										
+										$s_columnType = null;
+										$i_columnLength = null;
+										$i_columnDecimalLength = null;
+										\fPHP\Base\forestSQLQuery::ColumnTypeAllocation($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, strval($a_info['columnType']), $s_columnType, $i_columnLength, $i_columnDecimalLength);
+										
+										$o_column->ColumnType = $s_columnType;
+										if ($i_columnLength != null) { $o_column->ColumnTypeLength = $i_columnLength; }
+										if ($i_columnDecimalLength != null) { $o_column->ColumnTypeDecimalLength = $i_columnDecimalLength; }
+										$o_column->AlterOperation = 'ADD';
+										
+										if (array_key_exists('constraints', $a_info)) {
+											foreach ($a_info['constraints'] as $s_constraint) {
+												$s_constraintType = null;
+												\fPHP\Base\forestSQLQuery::ConstraintTypeAllocation($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, strval($s_constraint), $s_constraintType);
+												
+												$o_column->ConstraintList->Add($s_constraintType);
+												
+												if ( ($s_constraint == 'DEFAULT') && (array_key_exists('constraintDefaultValue', $a_info)) ) {
+													$o_column->ConstraintDefaultValue = $a_info['constraintDefaultValue'];
+												}
+											}
+										}
+										
+									$o_queryNew->Query->Columns->Add($o_column);
+								}				
+								
+								/* Create table does not return a value */
+								//$o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_queryNew, false, false);
+								$s_foo .= strval($o_queryNew) . ';;;';
+								
+								/* INSERT INTO forestphp_'table' (all columns with column new name) SELECT (all columns with column old name) FROM 'table' */
+								$o_queryInsert = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::INSERT, 'forestphp_' . $this->Table->value);
+								$s_query = 'INSERT INTO `forestphp_' . $this->Table->value . '` (`' . implode('`,`', $a_columnsNew) . '`) SELECT `' . implode('`,`', $a_columnsOld) . '` FROM `' . $this->Table->value . '`';
+								$o_queryInsert->SetQuery($s_query);
+								//$o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_queryInsert, false, false);
+								$s_foo .= $s_query . ';;;';
+								
+								/* DROP 'table' */
+								$o_queryDrop = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::DROP, $this->Table->value);
+								//$o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_queryDrop, false, false);
+								$s_foo .= strval($o_queryDrop) . ';;;';
+								
+								/* ALTER TABLE forestphp_'table' RENAME TO 'table' */
+								$o_queryAlter = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::ALTER, 'forestphp_' . $this->Table->value);
+								$s_query = 'ALTER TABLE `forestphp_' . $this->Table->value . '` RENAME TO `' . $this->Table->value . '`';
+								$o_queryAlter->SetQuery($s_query);
+								//$o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_queryAlter, false, false);
+								$s_foo .= $s_query;
 							}
-							
-							if ($s_key == $s_lastKey) {
-								$s_foo .= $o_constraint;
-							} else {
-								if ($o_constraint->Constraint == 'INDEX') {
-									$s_foo .= $o_constraint . ';;;';
+						} else if ($this->Constraints->value->Count() == 1) {
+							$s_lastKey = $this->Constraints->value->LastKey();
+				
+							foreach ($this->Constraints->value as $s_key => $o_constraint) {
+								if ($s_key == $s_lastKey) {
+									$s_foo .= $o_constraint;
 								} else {
 									$s_foo .= $o_constraint . ', ';
 								}
 							}
+						} else {
+							throw new forestException('Constraints object lists must contain only one item');
 						}
 					}
-				}
-			break;
-			default:
-				throw new forestException('BaseGateway[%0] not implemented', array($this->BaseGateway->value));
-			break;
+				break;
+				case forestBase::MSSQL:
+					$s_foo = 'ALTER TABLE ' . '[' . $this->Table->value . ']' . ' ';
+					
+					if ( ($this->Columns->value->Count() <= 0) && ($this->Constraints->value->Count() <= 0) ) {
+						throw new forestException('Columns and Constraints object lists are empty');
+					} else {
+						if ($this->Columns->value->Count() > 0) {
+							$b_once = false;
+							$s_lastKey = $this->Columns->value->LastKey();
+				
+							foreach ($this->Columns->value as $s_key => $o_column) {
+								if ($o_column->AlterOperation == 'ADD') {
+									if (!$b_once) {
+										$s_foo .= 'ADD ';
+										$b_once = true;
+									}
+								} else if ($o_column->AlterOperation == 'CHANGE') {
+									$s_foo = '';
+									
+									if (issetStr($o_column->NewName)) {
+										$s_foo .= 'EXEC sp_rename \'[' . $this->Table->value . '].[' . $o_column->Name . ']\', \'' . $o_column->NewName . '\', \'COLUMN\';;;';
+									}
+									
+									$s_foo .= 'ALTER TABLE ' . '[' . $this->Table->value . ']' . ' ALTER ';
+								} else if ($o_column->AlterOperation == 'DROP') {
+									if (!$b_once) {
+										$s_foo .= 'DROP ';
+										$b_once = true;
+									}
+								}
+								
+								if ($s_key == $s_lastKey) {
+									$s_foo .= $o_column;
+								} else {
+									if ($o_column->AlterOperation == 'CHANGE') {
+										$s_foo .= $o_column . ';;;';
+									} else {
+										$s_foo .= $o_column . ', ';
+									}
+								}
+							}
+						} else if ($this->Constraints->value->Count() > 0) {
+							$s_foo = '';
+							
+							$s_lastKey = $this->Constraints->value->LastKey();
+				
+							foreach ($this->Constraints->value as $s_key => $o_constraint) {
+								if ($s_key == $s_lastKey) {
+									$s_foo .= $o_constraint;
+								} else {
+									$s_foo .= $o_constraint . ';;;';
+								}
+							}
+						}
+					}
+				break;
+				case forestBase::PGSQL:
+					$s_foo = 'ALTER TABLE ' . '"' . $this->Table->value . '"' . ' ';
+					
+					if ( ($this->Columns->value->Count() <= 0) && ($this->Constraints->value->Count() <= 0) ) {
+						throw new forestException('Columns and Constraints object lists are empty');
+					} else {
+						if ($this->Columns->value->Count() > 0) {
+							$s_lastKey = $this->Columns->value->LastKey();
+							
+							if ($this->Columns->value->{0}->AlterOperation == 'CHANGE') {
+								if (issetStr($this->Columns->value->{0}->NewName)) {
+									$s_foo = 'ALTER TABLE ' . '"' . $this->Table->value . '"' . ' RENAME COLUMN "' . $this->Columns->value->{0}->Name . '" TO "' . $this->Columns->value->{0}->NewName . '";;;' . $s_foo;
+								}
+							}
+							
+							foreach ($this->Columns->value as $s_key => $o_column) {
+								if ($s_key == $s_lastKey) {
+									$s_foo .= $o_column;
+								} else {
+									$s_foo .= $o_column . ', ';
+								}
+							}
+						} else if ($this->Constraints->value->Count() > 0) {
+							$s_lastKey = $this->Constraints->value->LastKey();
+				
+							foreach ($this->Constraints->value as $s_key => $o_constraint) {
+								if ($o_constraint->Constraint == 'INDEX') {
+									$s_foo = '';
+								}
+								
+								if ($s_key == $s_lastKey) {
+									$s_foo .= $o_constraint;
+								} else {
+									if ($o_constraint->Constraint == 'INDEX') {
+										$s_foo .= $o_constraint . ';;;';
+									} else {
+										$s_foo .= $o_constraint . ', ';
+									}
+								}
+							}
+						}
+					}
+				break;
+				case forestBase::OCISQL:
+				case forestBase::MongoDB:
+					$s_foo = 'ALTER TABLE ' . '"' . $this->Table->value . '"' . ' ';
+					
+					if ( ($this->Columns->value->Count() <= 0) && ($this->Constraints->value->Count() <= 0) ) {
+						throw new forestException('Columns and Constraints object lists are empty');
+					} else {
+						if ($this->Columns->value->Count() > 0) {
+							$b_closeAdd = false;
+							$b_closeModify = false;
+							$b_closeDrop = false;
+							
+							if ($this->Columns->value->{0}->AlterOperation == 'ADD') {
+								$s_foo .= 'ADD (';
+								$b_closeAdd = true;
+							}
+							
+							if ($this->Columns->value->{0}->AlterOperation == 'CHANGE') {
+								$s_foo .= 'MODIFY (';
+								$b_closeModify = true;
+								
+								if (issetStr($this->Columns->value->{0}->NewName)) {
+									$s_foo = 'ALTER TABLE ' . '"' . $this->Table->value . '"' . ' RENAME COLUMN "' . $this->Columns->value->{0}->Name . '" TO "' . $this->Columns->value->{0}->NewName . '";;;' . $s_foo;
+								}
+							}
+							
+							if ($this->Columns->value->{0}->AlterOperation == 'DROP') {
+								$s_foo .= 'DROP (';
+								$b_closeDrop = true;
+							}
+							
+							$s_lastKey = $this->Columns->value->LastKey();
+							
+							
+							foreach ($this->Columns->value as $s_key => $o_column) {
+								if ($s_key == $s_lastKey) {
+									$s_foo .= $o_column;
+								} else {
+									$s_foo .= $o_column . ', ';
+								}
+							}
+							
+							if ( ($b_closeAdd) || ($b_closeModify) || ($b_closeDrop) ) {
+								$s_foo .= ')';
+							}
+						} else if ($this->Constraints->value->Count() > 0) {
+							$s_lastKey = $this->Constraints->value->LastKey();
+				
+							foreach ($this->Constraints->value as $s_key => $o_constraint) {
+								if ($o_constraint->Constraint == 'INDEX') {
+									$s_foo = '';
+								}
+								
+								if ($s_key == $s_lastKey) {
+									$s_foo .= $o_constraint;
+								} else {
+									if ($o_constraint->Constraint == 'INDEX') {
+										$s_foo .= $o_constraint . ';;;';
+									} else {
+										$s_foo .= $o_constraint . ', ';
+									}
+								}
+							}
+						}
+					}
+				break;
+				default:
+					throw new forestException('BaseGateway[%0] not implemented', array($this->BaseGateway->value));
+				break;
+			}
 		}
 		
 		return $s_foo;

@@ -539,7 +539,7 @@ class forestFile {
 		/* get directory content of current page fphp_files directory */
 		$a_dirContent = scandir('./trunk/' . $s_path . 'fphp_files/');
 		
-		/* if we have not 258 directories */
+		/* if we have not 258 directories (with '.' and '..') */
 		if (count($a_dirContent) != 258) {
 			for ($i = 0; $i < 256; $i++) {
 				/* hex folder name */

@@ -184,7 +184,13 @@ class forestSQLQuerytoMongoDBQuery {
 		$a_return['mongodbCommandType'] = self::COMMAND;
 		$a_return['mongodbCommand'] = array();
 		
-		if ($p_o_sqlQuery->Columns->Count() > 0) {
+		if (issetStr($p_o_sqlQuery->NewTableName)) {
+			/* rename collection command */
+			$a_return['mongodbCommand'][] = new \MongoDB\Driver\Command([
+				'renameCollection' => $p_s_datasource . '.' . $a_return['mongodbCollection'],
+				'to' => $p_s_datasource . '.' . $p_o_sqlQuery->NewTableName
+			]);
+		} else if ($p_o_sqlQuery->Columns->Count() > 0) {
 			$a_return['mongodbCommandType'] = self::BULKWRITE;
 			
 			/* alter operation ADD is not necessary for mongodb */

@@ -6,10 +6,10 @@
  *
  * @category    forestPHP Framework
  * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2019 forestPHP Framework
+ * @copyright   (c) 2021 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.0 stable
+ * @version     1.0.1 stable
  * @link        http://www.forestphp.de/
  * @object-id   0x1 00015
  * @since       File available since Release 0.1.1 alpha
@@ -28,7 +28,9 @@
  * 		0.7.0 beta	renatus		2020-01-03	added money-format display
  * 		0.9.0 beta	renatus		2020-01-27	added checkout message in readonly mode
  * 		0.9.0 beta	renatus		2020-01-29	changes for bootstrap 4
- * 		1.0.0 beta	renatus		2020-02-13	added MongoDB support by breaking up SQL-Join Queries
+ * 		1.0.0 stable	renatus		2020-02-13	added MongoDB support by breaking up SQL-Join Queries
+ * 		1.0.1 stable	renatus		2021-04-10	added support for handling forestLookup table field with datalist/list form element
+ * 		1.0.1 stable	renatus		2021-04-11	added support for thumbnail and detailview image preview
  */
 
 namespace fPHP\Forms;
@@ -61,6 +63,10 @@ class forestForm {
 	private $FormModalSubForm;
 	private $CheckoutMessage;
 	private $FormFooterElements;
+	private $BeforeForm;
+	private $AfterForm;
+	private $BeforeFormRightAlign;
+	private $AfterFormRightAlign;
 	
 	/* Properties */
 	
@@ -92,6 +98,10 @@ class forestForm {
 		$this->FormModalSubForm = new forestString;
 		$this->CheckoutMessage = new forestString;
 		$this->FormFooterElements = new forestObject(new forestObjectList('forestFormElement'), false);
+		$this->BeforeForm = new forestString;
+		$this->AfterForm = new forestString;
+		$this->BeforeFormRightAlign = new forestBool(false);
+		$this->AfterFormRightAlign = new forestBool(false);
 		
 		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
@@ -209,7 +219,13 @@ class forestForm {
 				}
 			}
 			
-			/* render identifier - readonly */
+			/* get tablefields of current record */
+			$a_sqlAdditionalFilter = array(array('column' => 'TableUUID', 'value' => $o_tableTwig->UUID, 'operator' => '=', 'filterOperator' => 'AND'), array('column' => 'FieldName', 'value' => \fPHP\Forms\forestFormElement::FORM, 'operator' => '<>', 'filterOperator' => 'AND'));
+			$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+			$o_tableFields = $o_tablefieldTwig->GetAllRecords(true);
+			$o_glob->Temp->Del('SQLAdditionalFilter');
+			
+			/* render identifier and/or ShowInDetailView pciture - readonly */
 			if ($this->FormObject->value->ReadonlyAll) {
 				/* if identifier is configured */
 				if (issetStr($o_glob->TablesInformation[$p_o_twig->fphp_TableUUID]['Identifier']->PrimaryValue)) {
@@ -224,14 +240,81 @@ class forestForm {
 						$this->FormElements->value->Add($o_formElement);
 					}
 				}
+				
+				/* flag to know if we also need to render showview picture file */
+				$b_showview = false;
+				$s_showviewField = null;
+				
+				/* read all tablefields of table */
+				foreach ($o_glob->TablefieldsDictionary as $o_tableFieldProperties) {
+					/* iterate all tablefields matching current table uuid and form element is FILEDIALOG */
+					if ( ($o_tableFieldProperties->TableUUID == $o_tableTwig->UUID) && ($o_tableFieldProperties->FormElementName == \fPHP\Forms\forestFormElement::FILEDIALOG) ) {
+						/* get json encoded settings as array */
+						$s_JSONEncodedSettings = str_replace('&quot;', '"', $o_tableFieldProperties->JSONEncodedSettings);
+						$a_settings = json_decode($s_JSONEncodedSettings, true);
+						
+						/* if ONLY one tablefield has form element 'file' and json settings with 'Thumbnail' or 'ShowInDetailView' as 'true' */
+						if (array_key_exists('ShowInDetailView', $a_settings)) {
+							/* already one tablefield with 'ShowInDetailView' as 'true' found */
+							if ($b_showview) {
+								$b_showview = false;
+								break;
+							}
+							
+							/* 'ShowInDetailView' as 'true' found */
+							if ( (array_key_exists('ShowInDetailView', $a_settings)) && (array_key_exists('ShowInDetailViewMaxWidth', $a_settings)) ) {
+								if ($a_settings['ShowInDetailView'] == true) {
+									$s_showviewField = $o_tableFieldProperties->FieldName;
+									$b_showview = true;
+								}
+							}
+						}
+					}
+				}
+				
+				/* render showview picture file */
+				if ($b_showview) {
+					$o_formElement = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::DESCRIPTION);
+					$o_formElement->Id = 'readonly_' . $p_o_twig->fphp_Table . 'ShowInDetailViewImage';
+					$o_formElement->Label = '';
+					
+					/* get showview picture record */
+					$o_filesTwig = new \fPHP\Twigs\filesTwig;
+					
+					if ($o_filesTwig->GetRecord(array($p_o_twig->{$s_showviewField}))) {
+						$s_folder = substr(pathinfo($o_filesTwig->Name, PATHINFO_FILENAME), 6, 2);
+						
+						$s_path = '';
+
+						if (count($o_glob->URL->Branches) > 0) {
+							foreach($o_glob->URL->Branches as $s_branch) {
+								$s_path .= $s_branch . '/';
+							}
+						}
+						
+						$s_path .= $o_glob->URL->Branch . '/';
+						
+						$s_path = './trunk/' . $s_path . 'fphp_files/' . $s_folder . '/';
+						
+						if (is_dir($s_path)) {
+							if (file_exists($s_path . 'dv_' . $o_filesTwig->Name)) {
+								/* show thumbnail picture file */
+								$o_formElement->Description = '<a href="' . $s_path . $o_filesTwig->Name . '" target="_blank" title="' . $o_filesTwig->DisplayName . '"><img src="' . $s_path . 'dv_' . $o_filesTwig->Name . '" alt="image could not be rendered" title="' . $o_filesTwig->DisplayName . '"></a>';
+							} else {
+								$o_formElement->Description = '<img src="./images/sys_fphp/image_not_found.png" alt="image could not be rendered" title="' . $o_filesTwig->DisplayName . '">';
+							}
+						}
+					}
+					
+					if ($o_firstTab != null) {
+						$o_firstTab->FormElements->Add($o_formElement);
+					} else {
+						$this->FormElements->value->Add($o_formElement);
+					}
+				}
 			}
 			
-			/* get tablefields and iterate them */
-			$a_sqlAdditionalFilter = array(array('column' => 'TableUUID', 'value' => $o_tableTwig->UUID, 'operator' => '=', 'filterOperator' => 'AND'), array('column' => 'FieldName', 'value' => \fPHP\Forms\forestFormElement::FORM, 'operator' => '<>', 'filterOperator' => 'AND'));
-			$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
-			$o_tableFields = $o_tablefieldTwig->GetAllRecords(true);
-			$o_glob->Temp->Del('SQLAdditionalFilter');
-			
+			/* iterate each table field */
 			foreach ($o_tableFields->Twigs as $o_tableField) {
 				$s_forestdataName = '';
 				
@@ -310,7 +393,19 @@ class forestForm {
 						/* create options array for lookup field */
 						if (is_object($p_o_twig->{$o_tableField->FieldName})) {
 							if (is_a($p_o_twig->{$o_tableField->FieldName}, '\\fPHP\Helper\\forestLookupData')) {
-								$o_formElement->Options = $p_o_twig->{$o_tableField->FieldName}->CreateOptionsArray();
+								/* if we use lookup data with list form element, we use key value as key and value */
+								if ($o_formElement->getType() == forestformElement::LISTTXT) {
+									$a_foo = array();
+									
+									foreach ($p_o_twig->{$o_tableField->FieldName}->CreateOptionsArray() as $s_key => $s_value) {
+										$a_foo[$s_key] = $s_key;
+									}
+									
+									$o_formElement->Options = $a_foo;
+									$o_formElement->AutoComplete = false;
+								} else {
+									$o_formElement->Options = $p_o_twig->{$o_tableField->FieldName}->CreateOptionsArray();
+								}
 							}
 						}
 					}
@@ -340,7 +435,12 @@ class forestForm {
 								$s_value = $p_o_twig->{$o_tableField->FieldName}->ToString();
 							}
 						} else if (is_a($p_o_twig->{$o_tableField->FieldName}, '\\fPHP\Helper\\forestLookupData')) {
-							$s_value = $p_o_twig->{$o_tableField->FieldName}->PrimaryValue;
+							/* if lookup data is used with form element 'list', get value with stored unique key */
+							if ($o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_' . $o_tableField->FieldName}->FormElementName == \fPHP\Forms\forestFormElement::LISTTXT) {
+								$s_value = $p_o_twig->{$o_tableField->FieldName}->__toString();
+							} else {
+								$s_value = $p_o_twig->{$o_tableField->FieldName}->PrimaryValue;
+							}
 						} else {
 							$s_value = strval($p_o_twig->{$o_tableField->FieldName});
 							
@@ -1059,6 +1159,18 @@ class forestForm {
 			$s_foo .= $this->CheckoutMessage->value . "\n";
 		}
 		
+		/* render something before form */
+		if (issetStr($this->BeforeForm->value)) {
+			if ($this->BeforeFormRightAlign->value) {
+				$s_foo .= '<div class="text-right" style="margin-bottom: 5px;">' . "\n";
+			} else {
+				$s_foo .= '<div style="margin-bottom: 5px;">' . "\n";
+			}
+			
+			$s_foo .= $this->BeforeForm->value . "\n";
+			$s_foo .= '</div>' . "\n";
+		}
+		
 		/* render tabs */
 		if ($this->FormTabConfiguration->value->Tab) {
 			$this->FormTabConfiguration->value->CheckIsset();
@@ -1076,6 +1188,18 @@ class forestForm {
 		} else {
 			/* render form elements */
 			$this->PrintFormElements($this->FormElements->value, $s_foo);
+		}
+		
+		/* render something after form, but before sub form */
+		if (issetStr($this->AfterForm->value)) {
+			if ($this->AfterFormRightAlign->value) {
+				$s_foo .= '<div class="text-right" style="margin-bottom: 5px;">' . "\n";
+			} else {
+				$s_foo .= '<div style="margin-bottom: 5px;">' . "\n";
+			}
+			
+			$s_foo .= $this->AfterForm->value . "\n";
+			$s_foo .= '</div>' . "\n";
 		}
 		
 		/* render modal footer */

@@ -496,24 +496,21 @@ abstract class forestRootBranch {
 				if (! ($this->Twig->GetRecord(array($_POST['sys_fphp_identifierKey']))) ) {
 					throw new forestException(0x10001401, array($this->Twig->fphp_Table));
 				} else {
-					/* delete permission records linked to this action */
-					$o_tableTwig = new \fPHP\Twigs\tableTwig;
-		
-					$a_sqlAdditionalFilter = array(array('column' => 'Identifier', 'value' => $this->Twig->UUID, 'operator' => '=', 'filterOperator' => 'AND'));
-					$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
-					$o_tables = $o_tableTwig->GetAllRecords(true);
-					$o_glob->Temp->Del('SQLAdditionalFilter');
-					
-					foreach ($o_tables->Twigs as $o_table) {
-						/* clear identifier column of table record */
-						$o_table->Identifier = 'NULL';
-						
-						/* edit table record */
-						$i_result = $o_table->UpdateRecord();
-						
-						/* evaluate result */
-						if ($i_result == -1) {
-							throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+					/* check if identifier is used in any table */
+					foreach ($o_glob->TablesInformation as $a_tableInfo) {
+						/* if identifier is in use, we abort deletion and tell that it cannot be deleted until branch is using it with its records */
+						if ($a_tableInfo['Identifier']->PrimaryValue == $this->Twig->UUID) {
+							$s_branchTitle = '';
+							
+							/* get branch title */
+							foreach ($o_glob->BranchTree['Id'] as $a_branchInfo) {
+								if ($a_branchInfo['Table']->PrimaryValue == $o_glob->Tables[$a_tableInfo['Name']]) {
+									$s_branchTitle = $o_glob->GetTranslation($a_branchInfo['Title'], 1);
+									break;
+								}
+							}
+							
+							throw new forestException(0x10001F17, array($s_branchTitle));
 						}
 					}
 					
@@ -564,6 +561,11 @@ abstract class forestRootBranch {
 			/* add new branch record form */
 			$o_glob->PostModalForm = new \fPHP\Forms\forestForm($this->Twig, true);
 			$o_glob->PostModalForm->FormModalConfiguration->ModalTitle = $o_glob->GetTranslation('NewModalTitle', 1);
+			
+			/* delete StorageSpace-element */
+			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_branch_StorageSpace')) {
+				throw new forestException('Cannot delete form element with Id[sys_fphp_branch_StorageSpace].');
+			}
 			
 			/* delete NavigationOrder-element */
 			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_branch_NavigationOrder')) {
@@ -863,6 +865,11 @@ abstract class forestRootBranch {
 			
 			$o_glob->PostModalForm->FormFooterElements->Add($o_hidden);
 			
+			/* delete StorageSpace-element */
+			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_branch_StorageSpace')) {
+				throw new forestException('Cannot delete form element with Id[sys_fphp_branch_StorageSpace].');
+			}
+			
 			/* delete Name-element */
 			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_branch_Name')) {
 				throw new forestException('Cannot delete form element with Id[sys_fphp_branch_Name].');
@@ -931,6 +938,52 @@ abstract class forestRootBranch {
 		/* create modal read only form */
 		$o_glob->PostModalForm = new \fPHP\Forms\forestForm($this->Twig, true, true);
 		$o_glob->PostModalForm->FormModalConfiguration->ModalTitle = $o_glob->URL->BranchTitle . ' Branch';
+		
+		/* check for fphp_files folder */
+		$i_parentBranchId = $o_glob->URL->BranchId;
+			
+		/* with our branchId we start a loop for all parent branches to get our necessary path for linking */
+		do {
+			$a_branches[] = $o_glob->BranchTree['Id'][$i_parentBranchId]['Name'];
+			$i_parentBranchId = $o_glob->BranchTree['Id'][$i_parentBranchId]['ParentBranch'];
+		} while ($i_parentBranchId != 0);
+		
+		$a_branches = array_reverse($a_branches);
+		$s_link = './trunk';
+		
+		/* create link path */
+		foreach($a_branches as $s_branch) {
+			$s_link .= '/' . $s_branch;
+		}
+		
+		/* variable to save branch storage space */
+		$i_sum = 0;
+		
+		/* fphp_files folder must exist and be a directory */
+		if ( (file_exists($s_link . '/fphp_files')) && (is_dir($s_link . '/fphp_files')) ) {
+			foreach (scandir($s_link . '/fphp_files') as $subfolder) {
+				if ( (is_dir($s_link . '/fphp_files/' . $subfolder)) && ($subfolder != ".") && ($subfolder != "..") ) {
+					foreach (scandir($s_link . '/fphp_files/' . $subfolder) as $file) {
+						if ( ($file != ".") && ($file != "..") ) {
+							$i_sum += filesize($s_link . '/fphp_files/' . $subfolder . '/' . $file);
+						}
+					}
+				}
+			}
+		}
+		
+		/* delete StorageSpace-element if branch has no files */
+		if ($i_sum < 1) {
+			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('readonly_sys_fphp_branch_StorageSpace')) {
+				throw new forestException('Cannot delete form element with Id[sys_fphp_branch_StorageSpace].');
+			}
+		} else {
+			$o_storageSpaceElement = $o_glob->PostModalForm->GetFormElementByFormId('readonly_sys_fphp_branch_StorageSpace');
+			
+			if ($o_storageSpaceElement != null) {
+				$o_storageSpaceElement->Value = getNiceFileSize($i_sum, false);
+			}
+		}
 		
 		/* delete Name-element */
 		if (!$o_glob->PostModalForm->DeleteFormElementByFormId('readonly_sys_fphp_branch_Name')) {
@@ -1013,6 +1066,11 @@ abstract class forestRootBranch {
 		
 		$s_subFormItemContent = new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEWITEMCONTENT, array($s_newButton, $s_subTableHead, $s_subTableRows));
 		$s_subFormItems .= new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEWITEM, array('actions' . $this->Twig->fphp_Table, 'Actions' . ' (' . $o_actions->Twigs->Count() . ')', ' show', $s_subFormItemContent));
+		
+		/* edit link */
+		$s_editButton = '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'editBranch') . '" class="btn btn-lg btn-light" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="fas fa-edit"></span></a><br>' . "\n";
+		$o_glob->PostModalForm->BeforeForm = $s_editButton;
+		$o_glob->PostModalForm->BeforeFormRightAlign = true;
 		
 		/* use template to render and add actions for modal form of branch record */
 		$o_glob->PostModalForm->FormModalSubForm = strval(new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEW, array($s_subFormItems)));
@@ -1622,6 +1680,7 @@ abstract class forestRootBranch {
 		}
 		
 		$s_nextAction = 'init';
+		$s_nextActionAfterReload = null;
 		$o_saveTwig = $this->Twig;
 		$this->Twig = new \fPHP\Twigs\tablefieldTwig;
 		
@@ -1992,9 +2051,38 @@ abstract class forestRootBranch {
 						throw new forestException(0x10001F02, array($_POST['sys_fphp_tablefield_JSONEncodedSettings']));
 					}
 					
-					/* if no json setting for Id is available, add it automatically */
-					if (!array_key_exists('Id', $a_settings)) {
-						$a_settings['Id'] = $o_tableTwig->Name . '_' . $this->Twig->FieldName;
+					/* memory validation rule from json settings */
+					$a_validationRule['rule'] = null;
+					$a_validationRule['ruleParam01'] = null;
+					$a_validationRule['ruleParam02'] = null;
+					$a_validationRule['ruleAutoRequired'] = null;
+					
+					/* if no json setting for Id is available, add it automatically or handle validation rule if it is present */
+					if ( (!array_key_exists('Id', $a_settings)) || (array_key_exists('ValidationRule', $a_settings)) ) {
+						if (!array_key_exists('Id', $a_settings)) {
+							$a_settings['Id'] = $o_tableTwig->Name . '_' . $this->Twig->FieldName;
+						}
+						
+						if (array_key_exists('ValidationRule', $a_settings)) {
+							$a_validationRule['rule'] = $a_settings['ValidationRule'];
+							unset($a_settings['ValidationRule']);
+						}
+						
+						if (array_key_exists('ValidationRuleParam01', $a_settings)) {
+							$a_validationRule['ruleParam01'] = $a_settings['ValidationRuleParam01'];
+							unset($a_settings['ValidationRuleParam01']);
+						}
+						
+						if (array_key_exists('ValidationRuleParam02', $a_settings)) {
+							$a_validationRule['ruleParam02'] = $a_settings['ValidationRuleParam02'];
+							unset($a_settings['ValidationRuleParam02']);
+						}
+						
+						if (array_key_exists('ValidationRuleAutoRequired', $a_settings)) {
+							$a_validationRule['ruleAutoRequired'] = $a_settings['ValidationRuleAutoRequired'];
+							unset($a_settings['ValidationRuleAutoRequired']);
+						}
+						
 						$_POST['sys_fphp_tablefield_JSONEncodedSettings'] = json_encode($a_settings, JSON_UNESCAPED_SLASHES );
 						$this->Twig->JSONEncodedSettings = strval($_POST['sys_fphp_tablefield_JSONEncodedSettings']);
 					}
@@ -2043,6 +2131,86 @@ abstract class forestRootBranch {
 						throw new forestException(0x10001402);
 					} else if ($i_result == 1) {
 						$o_glob->SystemMessages->Add(new forestException(0x10001F04));
+						
+						/* add validation rule from input json settings if not null */
+						if ($a_validationRule['rule'] != null) {
+							$o_tablefieldValidationRuleTwig = new \fPHP\Twigs\tablefield_validationruleTwig;
+							$o_tablefieldValidationRuleTwig->TablefieldUUID = $this->Twig->UUID;
+							
+							/* find validation rule by name */
+							$o_getValidationruleTwig = new \fPHP\Twigs\validationruleTwig;
+							
+							if ($o_getValidationruleTwig->GetRecordPrimary(array($a_validationRule['rule']), array('Name'))) {
+								$o_tablefieldValidationRuleTwig->ValidationruleUUID = $o_getValidationruleTwig->UUID;
+							
+								/* check if validation rule is valid for new tablefield */
+								$o_validationruleTwig = new \fPHP\Twigs\validationruleTwig;
+								
+								$o_formelement_validationruleTwig = new \fPHP\Twigs\formelement_validationruleTwig;
+								
+								if (! ($o_validationruleTwig->GetRecordPrimary(array('any'), array('Name'))) ) {
+									throw new forestException(0x10001401, array($o_validationruleTwig->fphp_Table));
+								}
+								
+								if (! $o_formelement_validationruleTwig->GetRecord(array($this->Twig->FormElementUUID->PrimaryValue, $o_validationruleTwig->UUID))) {
+									if (! $o_formelement_validationruleTwig->GetRecord(array($this->Twig->FormElementUUID->PrimaryValue, $o_tablefieldValidationRuleTwig->ValidationruleUUID->PrimaryValue))) {
+										throw new forestException(0x10001F0F, array($this->Twig->FormElementUUID, $o_tablefieldValidationRuleTwig->ValidationruleUUID));
+									}
+								}
+								
+								/* add validation rule parameters if not null */
+								if ( ($a_validationRule['ruleParam01'] == null) && ($a_validationRule['ruleParam02'] == null) ) {
+									/* auto set param 01 to 'true' if you enter one of these validation rules */
+									if (
+										($a_validationRule['rule'] == 'required') || 
+										($a_validationRule['rule'] == 'email') || 
+										($a_validationRule['rule'] == 'url') || 
+										($a_validationRule['rule'] == 'digits') || 
+										($a_validationRule['rule'] == 'number') || 
+										($a_validationRule['rule'] == 'fphp_month') || 
+										($a_validationRule['rule'] == 'fphp_week') || 
+										($a_validationRule['rule'] == 'fphp_dateISO') || 
+										($a_validationRule['rule'] == 'fphp_time') || 
+										($a_validationRule['rule'] == 'dateISO') || 
+										($a_validationRule['rule'] == 'fphp_dateDMYpoint') || 
+										($a_validationRule['rule'] == 'fphp_dateDMYslash') || 
+										($a_validationRule['rule'] == 'fphp_dateMDYslash') || 
+										($a_validationRule['rule'] == 'fphp_datetime') || 
+										($a_validationRule['rule'] == 'fphp_datetimeISO') || 
+										($a_validationRule['rule'] == 'fphp_dateinterval') || 
+										($a_validationRule['rule'] == 'fphp_password') || 
+										($a_validationRule['rule'] == 'fphp_username') || 
+										($a_validationRule['rule'] == 'fphp_onlyletters')
+									) {
+										$o_tablefieldValidationRuleTwig->ValidationRuleParam01 = 'true';
+									}
+								}
+								
+								if ($a_validationRule['ruleParam01'] != null) {
+									$o_tablefieldValidationRuleTwig->ValidationRuleParam01 = $a_validationRule['ruleParam01'];
+								}
+								
+								if ($a_validationRule['ruleParam02'] != null) {
+									$o_tablefieldValidationRuleTwig->ValidationRuleParam02 = $a_validationRule['ruleParam02'];
+								}
+								
+								if ($a_validationRule['ruleAutoRequired'] != null) {
+									$o_tablefieldValidationRuleTwig->ValidationRuleRequired = $a_validationRule['ruleAutoRequired'];
+								}
+								
+								/* create validation rule for new tabelfield */
+								$i_result = $o_tablefieldValidationRuleTwig->InsertRecord();;
+								
+								/* evaluate result */
+								if ($i_result == -1) {
+									throw new forestException(0x10001403, array($o_glob->Temp->{'UniqueIssue'}));
+								} else if ($i_result == 0) {
+									throw new forestException(0x10001402);
+								} else if ($i_result == 1) {
+									/* nothing to do */
+								}
+							}
+						}
 						
 						/* execute dbms create column if sql type is not empty */
 						if (issetStr($this->Twig->SqlTypeUUID->PrimaryValue)) {
@@ -2228,6 +2396,7 @@ abstract class forestRootBranch {
 						$o_file->ReplaceContent( strval(new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::CREATENEWBRANCHWITHTWIG, array($o_branchTwig->Name, $s_tableName, $s_filter, $s_standardView, $s_keepFilter))) );
 						
 						$s_nextAction = 'RELOADBRANCH';
+						$s_nextActionAfterReload = 'viewTwig';
 					}
 				}
 			}
@@ -2242,7 +2411,7 @@ abstract class forestRootBranch {
 		}
 		
 		$this->Twig = $o_saveTwig;
-		$this->SetNextAction($s_nextAction);
+		$this->SetNextAction($s_nextAction, $s_nextActionAfterReload);
 	}
 
 	/**
@@ -2277,6 +2446,36 @@ abstract class forestRootBranch {
 			
 			/* save old info columns value for later check */
 			$i_oldInfoColumns = $this->Twig->InfoColumns;
+			
+			/* get View-element data and check for invalid columns */
+			if (array_key_exists('sys_fphp_table_View[]', $_POST)) {
+				$a_options = explode(';', $_POST['sys_fphp_table_View[]']);
+				
+				foreach ($a_options as $s_tablefieldUUID) {
+					$o_tablefieldTwig = null;
+					
+					foreach ($o_glob->TablefieldsDictionary as $o_foundTablefieldTwig) {
+						if ($s_tablefieldUUID == $o_foundTablefieldTwig->UUID) {
+							$o_tablefieldTwig = $o_foundTablefieldTwig;
+							break;
+						}
+					}
+					
+					if ($o_tablefieldTwig != null) {
+						/* delete forestCombination which not starts with SUM( CNT(, FILENAME( and FILEVERSION( */
+						if ($o_tablefieldTwig->ForestDataName == 'forestCombination') {
+							$s_JSONEncodedSettings = str_replace('&quot;', '"', $o_tablefieldTwig->JSONEncodedSettings);
+							$a_settings = json_decode($s_JSONEncodedSettings, true);
+							
+							if (!( (\fPHP\Helper\forestStringLib::StartsWith($a_settings['forestCombination'], 'SUM(')) || (\fPHP\Helper\forestStringLib::StartsWith($a_settings['forestCombination'], 'CNT(')) || (\fPHP\Helper\forestStringLib::StartsWith($a_settings['forestCombination'], 'FILENAME(')) || (\fPHP\Helper\forestStringLib::StartsWith($a_settings['forestCombination'], 'FILEVERSION(')) )) {
+								unset($a_options[$s_key]);
+							}
+						}
+					}
+				}
+				
+				$_POST['sys_fphp_table_View[]'] = implode(';', $a_options);
+			}
 			
 			$this->TransferPOST_Twig();
 			
@@ -2516,6 +2715,11 @@ abstract class forestRootBranch {
 			
 			$o_glob->PostModalForm->FormFooterElements->Add($o_hidden);
 			
+			/* delete StorageSpace-element */
+			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_StorageSpace')) {
+				throw new forestException('Cannot delete form element with Id[sys_fphp_table_StorageSpace].');
+			}
+			
 			/* delete Identifier-element */
 			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_Identifier')) {
 				throw new forestException('Cannot delete form element with Id[sys_fphp_table_Identifier].');
@@ -2529,6 +2733,27 @@ abstract class forestRootBranch {
 			/* delete SortOrder-element */
 			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_SortOrder')) {
 				throw new forestException('Cannot delete form element with Id[sys_fphp_table_SortOrder].');
+			}
+			
+			/* get View-element */
+			$o_viewElement = $o_glob->PostModalForm->GetFormElementByFormId('sys_fphp_table_View[]');
+			
+			if ($o_viewElement != null) {
+				$a_options = $o_viewElement->Options;
+				
+				foreach ($a_options as $s_key => $s_value) {
+					/* skip forestCombination which not starts with SUM( CNT(, FILENAME( and FILEVERSION( */
+					if ( ($o_glob->TablefieldsDictionary->Exists($this->Twig->Name . '_' . $s_key)) && ($o_glob->TablefieldsDictionary->{$this->Twig->Name . '_' . $s_key}->ForestDataName == 'forestCombination') ) {
+						$s_JSONEncodedSettings = str_replace('&quot;', '"', $o_glob->TablefieldsDictionary->{$this->Twig->Name . '_' . $s_key}->JSONEncodedSettings);
+						$a_settings = json_decode($s_JSONEncodedSettings, true);
+						
+						if (!( (\fPHP\Helper\forestStringLib::StartsWith($a_settings['forestCombination'], 'SUM(')) || (\fPHP\Helper\forestStringLib::StartsWith($a_settings['forestCombination'], 'CNT(')) || (\fPHP\Helper\forestStringLib::StartsWith($a_settings['forestCombination'], 'FILENAME(')) || (\fPHP\Helper\forestStringLib::StartsWith($a_settings['forestCombination'], 'FILEVERSION(')) )) {
+							unset($a_options[$s_key]);
+						}
+					}
+				}
+				
+				$o_viewElement->Options = $a_options;
 			}
 		}
 		
@@ -2588,6 +2813,52 @@ abstract class forestRootBranch {
 		$o_glob->PostModalForm = new \fPHP\Forms\forestForm($this->Twig, true, true);
 		$o_glob->PostModalForm->FormModalConfiguration->ModalTitle = $o_glob->URL->BranchTitle . ' Twig';
 		
+		/* check for fphp_files folder */
+		$i_parentBranchId = $o_glob->URL->BranchId;
+			
+		/* with our branchId we start a loop for all parent branches to get our necessary path for linking */
+		do {
+			$a_branches[] = $o_glob->BranchTree['Id'][$i_parentBranchId]['Name'];
+			$i_parentBranchId = $o_glob->BranchTree['Id'][$i_parentBranchId]['ParentBranch'];
+		} while ($i_parentBranchId != 0);
+		
+		$a_branches = array_reverse($a_branches);
+		$s_link = './trunk';
+		
+		/* create link path */
+		foreach($a_branches as $s_branch) {
+			$s_link .= '/' . $s_branch;
+		}
+		
+		/* variable to save branch storage space */
+		$i_sum = 0;
+		
+		/* fphp_files folder must exist and be a directory */
+		if ( (file_exists($s_link . '/fphp_files')) && (is_dir($s_link . '/fphp_files')) ) {
+			foreach (scandir($s_link . '/fphp_files') as $subfolder) {
+				if ( (is_dir($s_link . '/fphp_files/' . $subfolder)) && ($subfolder != ".") && ($subfolder != "..") ) {
+					foreach (scandir($s_link . '/fphp_files/' . $subfolder) as $file) {
+						if ( ($file != ".") && ($file != "..") ) {
+							$i_sum += filesize($s_link . '/fphp_files/' . $subfolder . '/' . $file);
+						}
+					}
+				}
+			}
+		}
+		
+		/* delete StorageSpace-element if branch has no files */
+		if ($i_sum < 1) {
+			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('readonly_sys_fphp_table_StorageSpace')) {
+				throw new forestException('Cannot delete form element with Id[sys_fphp_table_StorageSpace].');
+			}
+		} else {
+			$o_storageSpaceElement = $o_glob->PostModalForm->GetFormElementByFormId('readonly_sys_fphp_table_StorageSpace');
+			
+			if ($o_storageSpaceElement != null) {
+				$o_storageSpaceElement->Value = getNiceFileSize($i_sum, false);
+			}
+		}
+		
 		/* delete Unique-element */
 		if (!$o_glob->PostModalForm->DeleteFormElementByFormId('readonly_sys_fphp_table_Unique[]')) {
 			throw new forestException('Cannot delete form element with Id[sys_fphp_table_Unique[]].');
@@ -2597,6 +2868,11 @@ abstract class forestRootBranch {
 		if (!$o_glob->PostModalForm->DeleteFormElementByFormId('readonly_sys_fphp_table_SortOrder')) {
 			throw new forestException('Cannot delete form element with Id[sys_fphp_table_SortOrder].');
 		}
+		
+		/* edit link */
+		$s_editButton = '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'editTwig') . '" class="btn btn-lg btn-light" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="fas fa-edit"></span></a><br>' . "\n";
+		$o_glob->PostModalForm->BeforeForm = $s_editButton;
+		$o_glob->PostModalForm->BeforeFormRightAlign = true;
 		
 		/* add tablefields, translations, unique keys, sort orders, sub constraints and sub constraint tablefields for modal form */
 		$o_glob->PostModalForm->FormModalSubForm = strval($this->ListTwigProperties($this->Twig));
@@ -2617,8 +2893,13 @@ abstract class forestRootBranch {
 	protected function transferTwigAction() {
 		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
-		/* check if standard twig is a system object */
-		if ( ($this->Twig != null) && ($this->Twig->fphp_SystemTable) ) {
+		$a_systemBranches = array(
+			'account','forestdata','forestphp','formelement','index','language','log','permission','role','root',
+			'session','settings','sqltype','systemmessage','translation','trunk','user','useradmin','usergroup','validationrule'
+		);
+		
+		/* check if standard twig is a system object, even as root */
+		if ( (in_array($o_glob->URL->Branch, $a_systemBranches)) || ( ($this->Twig != null) && ( ($this->Twig->fphp_SystemTable) || (\fPHP\Helper\forestStringLib::StartsWith($this->Twig->fphp_Table, 'sys_fphp_')) ) ) ) {
 			throw new forestException(0x10001F16);
 		}
 		
@@ -2666,8 +2947,12 @@ abstract class forestRootBranch {
 			$o_glob->Temp->Del('SQLAdditionalFilter');
 			
 			$a_options = array();
-			
+
 			foreach($o_branches->Twigs as $o_branch) {
+				if (in_array($o_branch->Name, $a_systemBranches)) {
+					continue;
+				}
+				
 				$a_options[$o_branch->Title . ' (' . $o_branch->Name . ')'] = $o_branch->Id;
 			}
 			
@@ -2705,83 +2990,11 @@ abstract class forestRootBranch {
 				$o_targetBranch = $this->Twig;
 			}
 			
-			/* edit translations */
-			$o_translationTwig = new \fPHP\Twigs\translationTwig;
-			$a_sqlAdditionalFilter = array(array('column' => 'BranchId', 'value' => $o_sourceBranch->Id, 'operator' => '=', 'filterOperator' => 'AND'));
-			$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
-			$o_translations = $o_translationTwig->GetAllRecords(true);
-			$o_glob->Temp->Del('SQLAdditionalFilter');
-			
-			foreach ($o_translations->Twigs as $o_translation) {
-				/* edit translation branch id */
-				$o_translation->BranchId = $o_targetBranch->Id;
-				
-				/* edit translation recrod */
-				$i_result = $o_translation->UpdateRecord();
-				
-				/* evaluate result */
-				if ($i_result == -1) {
-					throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
-				}
-			}
-			
-			/* edit files */
-			$o_filesTwig = new \fPHP\Twigs\filesTwig;
-			$a_sqlAdditionalFilter = array(array('column' => 'BranchId', 'value' => $o_sourceBranch->Id, 'operator' => '=', 'filterOperator' => 'AND'));
-			$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
-			$o_files = $o_filesTwig->GetAllRecords(true);
-			$o_glob->Temp->Del('SQLAdditionalFilter');
-			
-			foreach ($o_files->Twigs as $o_file) {
-				/* edit translation branch id */
-				$o_file->BranchId = $o_targetBranch->Id;
-				
-				/* edit translation recrod */
-				$i_result = $o_file->UpdateRecord();
-				
-				/* evaluate result */
-				if ($i_result == -1) {
-					throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
-				}
-			}
-			
-			/* transfer files */
-			/* generate source path */
-			$o_glob->SetVirtualTarget($o_sourceBranch->Id);
-			$s_sourcePath = '';
-			
-			if (count($o_glob->URL->VirtualBranches) > 0) {
-				foreach($o_glob->URL->VirtualBranches as $s_value) {
-					$s_sourcePath .= $s_value . '/';
-				}
-			} else {
-				$s_sourcePath .= $o_glob->URL->VirtualBranch . '/';
-			}
-			
-			$s_sourcePath = './trunk/' . $s_sourcePath . 'fphp_files/';
-			
-			/* generate target path */
-			$o_glob->SetVirtualTarget($o_targetBranch->Id);
-			$s_targetPath = '';
-			
-			if (count($o_glob->URL->VirtualBranches) > 0) {
-				foreach($o_glob->URL->VirtualBranches as $s_value) {
-					$s_targetPath .= $s_value . '/';
-				}
-			} else {
-				$s_targetPath .= $o_glob->URL->VirtualBranch . '/';
-			}
-			
-			$s_targetPath = './trunk/' . $s_targetPath . 'fphp_files/';
-			
-			\fPHP\Helper\forestFile::CopyRecursive($s_sourcePath, $s_targetPath);
-			\fPHP\Helper\forestFile::RemoveDirectoryRecursive($s_sourcePath);
-			
 			/* edit branches */
 			$o_targetBranch->Table = $o_sourceBranch->Table->PrimaryValue;
 			$o_sourceBranch->Table = 'NULL';
 			
-			/* edit source branch recrod */
+			/* edit source branch record */
 			$i_result = $o_sourceBranch->UpdateRecord();
 			
 			/* evaluate result */
@@ -2789,7 +3002,7 @@ abstract class forestRootBranch {
 				throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
 			}
 			
-			/* edit target branch recrod */
+			/* edit target branch record */
 			$i_result = $o_targetBranch->UpdateRecord();
 			
 			/* evaluate result */
@@ -2873,13 +3086,153 @@ abstract class forestRootBranch {
 				throw new forestException(0x10001401, array($o_tableTwig->fphp_Table));
 			}
 			
-			$s_tableName = $o_tableTwig->Name;
-			\fPHP\Helper\forestStringLib::RemoveTablePrefix($s_tableName);
+			$o_tableTwig->Name = 'fphp_' . $o_targetBranch->Name;
+			$s_tableName = $o_targetBranch->Name;
 			
 			$o_file = new \fPHP\Helper\forestFile($s_targetPath);
 			$o_file->ReplaceContent( strval(new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::CREATENEWBRANCHWITHTWIG, array($o_targetBranch->Name, $s_tableName, $s_filter, $s_standardView, $s_keepFilter))) );
 			
+			/* rename table */
+			$o_queryAlter = new \fPHP\Base\forestSQLQuery($o_glob->Base->{$o_glob->ActiveBase}->BaseGateway, \fPHP\Base\forestSQLQuery::ALTER, 'fphp_' . $o_sourceBranch->Name);
+			$o_queryAlter->Query->NewTableName = $o_tableTwig->Name;
+			$o_glob->Base->{$o_glob->ActiveBase}->FetchQuery($o_queryAlter, false, false);
+			
+			/* rename table name in sys_fphp_table */
+			$i_result = $o_tableTwig->UpdateRecord();
+			
+			/* evaluate result */
+			if ($i_result == -1) {
+				throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+			}
+			
+			/* edit files */
+			$o_filesTwig = new \fPHP\Twigs\filesTwig;
+			$a_sqlAdditionalFilter = array(array('column' => 'BranchId', 'value' => $o_sourceBranch->Id, 'operator' => '=', 'filterOperator' => 'AND'));
+			$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+			$o_files = $o_filesTwig->GetAllRecords(true);
+			$o_glob->Temp->Del('SQLAdditionalFilter');
+			
+			foreach ($o_files->Twigs as $o_file) {
+				/* edit translation branch id */
+				$o_file->BranchId = $o_targetBranch->Id;
+				
+				/* edit translation recrod */
+				$i_result = $o_file->UpdateRecord();
+				
+				/* evaluate result */
+				if ($i_result == -1) {
+					throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+				}
+			}
+			
+			/* transfer files */
+			/* generate source path */
+			$o_glob->SetVirtualTarget($o_sourceBranch->Id);
+			$s_sourcePath = '';
+			
+			if (count($o_glob->URL->VirtualBranches) > 0) {
+				foreach ($o_glob->URL->VirtualBranches as $s_value) {
+					$s_sourcePath .= $s_value . '/';
+				}
+			} else {
+				$s_sourcePath .= $o_glob->URL->VirtualBranch . '/';
+			}
+			
+			$s_sourcePath = './trunk/' . $s_sourcePath . 'fphp_files/';
+			
+			/* generate target path */
+			$o_glob->SetVirtualTarget($o_targetBranch->Id);
+			$s_targetPath = '';
+			
+			if (count($o_glob->URL->VirtualBranches) > 0) {
+				foreach ($o_glob->URL->VirtualBranches as $s_value) {
+					$s_targetPath .= $s_value . '/';
+				}
+			} else {
+				$s_targetPath .= $o_glob->URL->VirtualBranch . '/';
+			}
+			
+			$s_targetPath = './trunk/' . $s_targetPath . 'fphp_files/';
+			
+			\fPHP\Helper\forestFile::CopyRecursive($s_sourcePath, $s_targetPath);
+			\fPHP\Helper\forestFile::RemoveDirectoryRecursive($s_sourcePath);
+			
+			/* rename old table name to new table name in all twig files, because of lookup use */
+			$a_dirContent = scandir('./twigs/');
+			
+			foreach ($a_dirContent as $s_twigFile) {
+				if ( (!is_dir('./twigs/' . $s_twigFile)) && ($s_twigFile != '.') && ($s_twigFile != '..') ) {
+					$s_fileContent = file_get_contents('./twigs/' . $s_twigFile);
+					
+					if ( (!(strpos($s_fileContent, '\'fphp_' . $o_sourceBranch->Name . '\'') === false)) || (!(strpos($s_fileContent, $o_sourceBranch->Name . 'Twig') === false)) ) {
+						file_put_contents('./twigs/' . $s_twigFile, str_replace(array('\'fphp_' . $o_sourceBranch->Name . '\'', $o_sourceBranch->Name . 'Twig'), array('\'fphp_' . $o_targetBranch->Name . '\'', $o_targetBranch->Name . 'Twig'), $s_fileContent));
+					}
+				}
+			}
+			
+			/* rename twig file */
+			if (file_exists('./twigs/' . $o_sourceBranch->Name . 'Twig.php')) {
+				rename('./twigs/' . $o_sourceBranch->Name . 'Twig.php', './twigs/' . $o_targetBranch->Name . 'Twig.php');
+			}
+			
+			/* all work for transfer twig has been done */
 			$o_glob->SystemMessages->Add(new forestException(0x10001F0C));
+			
+			/* rename each occurence of old table name with new table name in sys_fphp_tablefield in json settings */
+			/* all occurences in json encoded settings have 'old table name + a special character' which must be replaced */
+			$a_specialCharacters = array('{[(_)]}', '"', '$', ')');
+			
+			foreach ($a_specialCharacters as $s_specialCharacter) {
+				$o_tablefieldTwig = new \fPHP\Twigs\tablefieldTwig;
+				$a_sqlAdditionalFilter = array(array('column' => 'JSONEncodedSettings', 'value' => '%fphp_' . $o_sourceBranch->Name . $s_specialCharacter . '%', 'operator' => 'LIKE', 'filterOperator' => 'AND', 'escapeMarkedUnderscore' => true));
+				$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+				$o_tablefields = $o_tablefieldTwig->GetAllRecords(true);
+				$o_glob->Temp->Del('SQLAdditionalFilter');
+				
+				if ($s_specialCharacter == '{[(_)]}') {
+					$s_specialCharacter = '_';
+				} else if ($s_specialCharacter == '"') {
+					$s_specialCharacter = '&quot;';
+				}
+				
+				foreach ($o_tablefields->Twigs as $o_tablefield) {
+					/* look for string part we want to replace, so we do not update every single tablefield */
+					if (!(strpos($o_tablefield->JSONEncodedSettings, 'fphp_' . $o_sourceBranch->Name . $s_specialCharacter) === false)) {
+						/* edit tablefield json encoded settings */
+						$o_tablefield->JSONEncodedSettings = str_replace( '&quot;', '"', str_replace('fphp_' . $o_sourceBranch->Name . $s_specialCharacter, 'fphp_' . $o_targetBranch->Name . $s_specialCharacter, $o_tablefield->JSONEncodedSettings) );
+						
+						/* edit tablefield recrod */
+						$i_result = $o_tablefield->UpdateRecord();
+						
+						/* evaluate result */
+						if ($i_result == -1) {
+							throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+						}
+					}
+				}
+			}
+			
+			/* edit translations */
+			$o_translationTwig = new \fPHP\Twigs\translationTwig;
+			$a_sqlAdditionalFilter = array(array('column' => 'BranchId', 'value' => $o_sourceBranch->Id, 'operator' => '=', 'filterOperator' => 'AND'));
+			$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
+			$o_translations = $o_translationTwig->GetAllRecords(true);
+			$o_glob->Temp->Del('SQLAdditionalFilter');
+			
+			foreach ($o_translations->Twigs as $o_translation) {
+				/* edit translation branch id */
+				$o_translation->BranchId = $o_targetBranch->Id;
+				
+				/* edit translation recrod */
+				$i_result = $o_translation->UpdateRecord();
+				
+				/* evaluate result */
+				if ($i_result == -1) {
+					throw new forestException(0x10001405, array($o_glob->Temp->{'UniqueIssue'}));
+				}
+			}
+			
+			$s_nextAction = 'RELOADBRANCH';
 		}
 		
 		if (isset($this->KeepFilter)) {
@@ -4435,6 +4788,7 @@ abstract class forestRootBranch {
 		
 		$s_nextAction = 'init';
 		$s_nextActionAfterReload = null;
+		$a_nextParameters = null;
 		$o_saveTwig = $this->Twig;
 		$this->Twig = new \fPHP\Twigs\tablefieldTwig;
 		$o_tableTwig = new \fPHP\Twigs\tableTwig;
@@ -4539,15 +4893,44 @@ abstract class forestRootBranch {
 				throw new forestException(0x10001F02, array($_POST['sys_fphp_tablefield_JSONEncodedSettings']));
 			}
 			
+			/* memory validation rule from json settings */
+			$a_validationRule['rule'] = null;
+			$a_validationRule['ruleParam01'] = null;
+			$a_validationRule['ruleParam02'] = null;
+			$a_validationRule['ruleAutoRequired'] = null;
+			
 			/* if no json setting for Id is available, add it automatically */
-			if (!array_key_exists('Id', $a_settings)) {
-				$s_table = $o_tableTwig->Name;
-				
-				if (array_key_exists('sys_fphp_subconstraintKey', $_POST)) {
-					$s_table = $o_subconstraintTwig->fphp_Table;
+			if ( (!array_key_exists('Id', $a_settings)) || (array_key_exists('ValidationRule', $a_settings)) ) {
+				if (!array_key_exists('Id', $a_settings)) {
+					$s_table = $o_tableTwig->Name;
+					
+					if (array_key_exists('sys_fphp_subconstraintKey', $_POST)) {
+						$s_table = $o_subconstraintTwig->fphp_Table;
+					}
+					
+					$a_settings['Id'] = $s_table . '_' . $this->Twig->FieldName;
 				}
 				
-				$a_settings['Id'] = $s_table . '_' . $this->Twig->FieldName;
+				if (array_key_exists('ValidationRule', $a_settings)) {
+					$a_validationRule['rule'] = $a_settings['ValidationRule'];
+					unset($a_settings['ValidationRule']);
+				}
+				
+				if (array_key_exists('ValidationRuleParam01', $a_settings)) {
+					$a_validationRule['ruleParam01'] = $a_settings['ValidationRuleParam01'];
+					unset($a_settings['ValidationRuleParam01']);
+				}
+				
+				if (array_key_exists('ValidationRuleParam02', $a_settings)) {
+					$a_validationRule['ruleParam02'] = $a_settings['ValidationRuleParam02'];
+					unset($a_settings['ValidationRuleParam02']);
+				}
+				
+				if (array_key_exists('ValidationRuleAutoRequired', $a_settings)) {
+					$a_validationRule['ruleAutoRequired'] = $a_settings['ValidationRuleAutoRequired'];
+					unset($a_settings['ValidationRuleAutoRequired']);
+				}
+				
 				$_POST['sys_fphp_tablefield_JSONEncodedSettings'] = json_encode($a_settings, JSON_UNESCAPED_SLASHES );
 				$this->Twig->JSONEncodedSettings = strval($_POST['sys_fphp_tablefield_JSONEncodedSettings']);
 			}
@@ -4602,11 +4985,94 @@ abstract class forestRootBranch {
 				throw new forestException(0x10001402);
 			} else if ($i_result == 1) {
 				$o_glob->SystemMessages->Add(new forestException(0x10001404));
-				$s_nextAction = 'viewTwig';
+				
+				/* add validation rule from input json settings if not null */
+				if ($a_validationRule['rule'] != null) {
+					$o_tablefieldValidationRuleTwig = new \fPHP\Twigs\tablefield_validationruleTwig;
+					$o_tablefieldValidationRuleTwig->TablefieldUUID = $this->Twig->UUID;
+					
+					/* find validation rule by name */
+					$o_getValidationruleTwig = new \fPHP\Twigs\validationruleTwig;
+					
+					if ($o_getValidationruleTwig->GetRecordPrimary(array($a_validationRule['rule']), array('Name'))) {
+						$o_tablefieldValidationRuleTwig->ValidationruleUUID = $o_getValidationruleTwig->UUID;
+					
+						/* check if validation rule is valid for new tablefield */
+						$o_validationruleTwig = new \fPHP\Twigs\validationruleTwig;
+						
+						$o_formelement_validationruleTwig = new \fPHP\Twigs\formelement_validationruleTwig;
+						
+						if (! ($o_validationruleTwig->GetRecordPrimary(array('any'), array('Name'))) ) {
+							throw new forestException(0x10001401, array($o_validationruleTwig->fphp_Table));
+						}
+						
+						if (! $o_formelement_validationruleTwig->GetRecord(array($this->Twig->FormElementUUID->PrimaryValue, $o_validationruleTwig->UUID))) {
+							if (! $o_formelement_validationruleTwig->GetRecord(array($this->Twig->FormElementUUID->PrimaryValue, $o_tablefieldValidationRuleTwig->ValidationruleUUID->PrimaryValue))) {
+								throw new forestException(0x10001F0F, array($this->Twig->FormElementUUID, $o_tablefieldValidationRuleTwig->ValidationruleUUID));
+							}
+						}
+						
+						/* add validation rule parameters if not null */
+						if ( ($a_validationRule['ruleParam01'] == null) && ($a_validationRule['ruleParam02'] == null) ) {
+							/* auto set param 01 to 'true' if you enter one of these validation rules */
+							if (
+								($a_validationRule['rule'] == 'required') || 
+								($a_validationRule['rule'] == 'email') || 
+								($a_validationRule['rule'] == 'url') || 
+								($a_validationRule['rule'] == 'digits') || 
+								($a_validationRule['rule'] == 'number') || 
+								($a_validationRule['rule'] == 'fphp_month') || 
+								($a_validationRule['rule'] == 'fphp_week') || 
+								($a_validationRule['rule'] == 'fphp_dateISO') || 
+								($a_validationRule['rule'] == 'fphp_time') || 
+								($a_validationRule['rule'] == 'dateISO') || 
+								($a_validationRule['rule'] == 'fphp_dateDMYpoint') || 
+								($a_validationRule['rule'] == 'fphp_dateDMYslash') || 
+								($a_validationRule['rule'] == 'fphp_dateMDYslash') || 
+								($a_validationRule['rule'] == 'fphp_datetime') || 
+								($a_validationRule['rule'] == 'fphp_datetimeISO') || 
+								($a_validationRule['rule'] == 'fphp_dateinterval') || 
+								($a_validationRule['rule'] == 'fphp_password') || 
+								($a_validationRule['rule'] == 'fphp_username') || 
+								($a_validationRule['rule'] == 'fphp_onlyletters')
+							) {
+								$o_tablefieldValidationRuleTwig->ValidationRuleParam01 = 'true';
+							}
+						}
+						
+						if ($a_validationRule['ruleParam01'] != null) {
+							$o_tablefieldValidationRuleTwig->ValidationRuleParam01 = $a_validationRule['ruleParam01'];
+						}
+						
+						if ($a_validationRule['ruleParam02'] != null) {
+							$o_tablefieldValidationRuleTwig->ValidationRuleParam02 = $a_validationRule['ruleParam02'];
+						}
+						
+						if ($a_validationRule['ruleAutoRequired'] != null) {
+							$o_tablefieldValidationRuleTwig->ValidationRuleRequired = $a_validationRule['ruleAutoRequired'];
+						}
+						
+						/* create validation rule for new tabelfield */
+						$i_result = $o_tablefieldValidationRuleTwig->InsertRecord();;
+						
+						/* evaluate result */
+						if ($i_result == -1) {
+							throw new forestException(0x10001403, array($o_glob->Temp->{'UniqueIssue'}));
+						} else if ($i_result == 0) {
+							throw new forestException(0x10001402);
+						} else if ($i_result == 1) {
+							/* nothing to do */
+						}
+					}
+				}
+				
+				$s_nextAction = 'RELOADBRANCH';
+				$s_nextActionAfterReload = 'newTwigField';
 				
 				if ($o_glob->Security->SessionData->Exists('lastView')) {
 					if ($o_glob->Security->SessionData->{'lastView'} == forestBranch::DETAIL) {
 						$s_nextAction = null;
+						$s_nextActionAfterReload = null;
 					}
 				}
 				
@@ -4644,6 +5110,9 @@ abstract class forestRootBranch {
 					
 					/* update twig file */
 					$this->doTwigFile($o_tableTwig);
+				} else {
+					$a_nextParameters = array();
+					$a_nextParameters['rootSubConstraintKey'] = $_POST['sys_fphp_subconstraintKey'];
 				}
 			}
 		}
@@ -4657,7 +5126,7 @@ abstract class forestRootBranch {
 		}
 		
 		$this->Twig = $o_saveTwig;
-		$this->SetNextAction($s_nextAction, $s_nextActionAfterReload);
+		$this->SetNextAction($s_nextAction, $s_nextActionAfterReload, $a_nextParameters);
 	}
 
 	/**
@@ -4956,6 +5425,7 @@ abstract class forestRootBranch {
 		}
 		
 		$s_nextAction = 'init';
+		$s_nextActionAfterReload = null;
 		$o_saveTwig = $this->Twig;
 		$this->Twig = new \fPHP\Twigs\tablefieldTwig;
 		$o_tableTwig = new \fPHP\Twigs\tableTwig;
@@ -5084,8 +5554,9 @@ abstract class forestRootBranch {
 				
 				$o_glob->SystemMessages->Add(new forestException(0x10001427));
 				
-				/* do not call next action if a twig field has been deleted */
-				$s_nextAction = null;
+				/* reload branch and call viewTwig if a twig field has been deleted */
+				$s_nextAction = 'RELOADBRANCH';
+				$s_nextActionAfterReload = 'viewTwig';
 				
 				/* cleanup tablefield relations */
 				$this->cleanupTwigFieldAfterDeletion($o_tableTwig, $this->Twig);
@@ -5132,7 +5603,7 @@ abstract class forestRootBranch {
 		}
 		
 		$this->Twig = $o_saveTwig;
-		$this->SetNextAction($s_nextAction);
+		$this->SetNextAction($s_nextAction, $s_nextActionAfterReload);
 	}
 
 	/**
@@ -5672,10 +6143,30 @@ abstract class forestRootBranch {
 			$s_subFormItems .= new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEWITEM, array('tablefield_validationrules' . $this->Twig->fphp_Table, $o_glob->GetTranslation('ValidationRules', 0), ' show', $s_subFormItemContent));
 			
 			/* go back link */
-			$s_goBackButton = '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'viewTwig') . '" class="btn btn-lg btn-primary" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnBack', 1) . '"><span class="fas fa-arrow-left"></span></a><br>' . "\n";
+			$s_goBackButton = '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'viewTwig') . '" class="btn btn-lg btn-light" title="' . $o_glob->GetTranslation('btnBack', 1) . '"><span class="fas fa-arrow-left"></span></a>&nbsp;' . "\n";
+			
+			/* edit link */
+			$a_parameters = $o_glob->URL->Parameters;
+			unset($a_parameters['newKey']);
+			unset($a_parameters['viewKey']);
+			unset($a_parameters['editKey']);
+			unset($a_parameters['deleteKey']);
+			unset($a_parameters['editSubKey']);
+			unset($a_parameters['deleteSubKey']);
+			unset($a_parameters['deleteFileKey']);
+			unset($a_parameters['subConstraintKey']);
+			unset($a_parameters['rootSubConstraintKey']);
+			$a_parameters['editKey'] = $this->Twig->UUID;
+			if ( ($o_glob->Temp->Exists('rootSubConstraintKey')) && ($o_glob->Temp->{'rootSubConstraintKey'} != null) ) {
+				$a_parameters['rootSubConstraintKey'] = $o_glob->Temp->{'rootSubConstraintKey'};
+			}
+			$s_editButton = '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'editTwigField', $a_parameters) . '" class="btn btn-lg btn-light" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="fas fa-edit"></span></a><br>' . "\n";
+			
+			$o_glob->PostModalForm->BeforeForm = $s_goBackButton . $s_editButton;
+			$o_glob->PostModalForm->BeforeFormRightAlign = true;
 			
 			/* add sub constraints and files for modal form */
-			$o_glob->PostModalForm->FormModalSubForm = $s_goBackButton . strval(new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEW, array($s_subFormItems)));
+			$o_glob->PostModalForm->FormModalSubForm = strval(new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEW, array($s_subFormItems)));
 		}
 		
 		$this->Twig = $o_saveTwig;
@@ -5997,6 +6488,11 @@ abstract class forestRootBranch {
 			/* add validation rules for manual created form elements */
 			$o_glob->PostModalForm->FormObject->ValRules->Add(new \fPHP\Forms\forestFormValidationRule('sys_fphp_table_uniqueName', 'required', 'true'));
 			
+			/* delete StorageSpace-element */
+			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_StorageSpace')) {
+				throw new forestException('Cannot delete form element with Id[sys_fphp_table_StorageSpace].');
+			}
+			
 			/* delete SortOrder-element */
 			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_SortOrder')) {
 				throw new forestException('Cannot delete form element with Id[sys_fphp_table_SortOrder].');
@@ -6243,6 +6739,11 @@ abstract class forestRootBranch {
 				/* add validation rules for manual created form elements */
 				$o_glob->PostModalForm->FormObject->ValRules->Add(new \fPHP\Forms\forestFormValidationRule('sys_fphp_table_uniqueName', 'required', 'true'));
 				
+				/* delete StorageSpace-element */
+				if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_StorageSpace')) {
+					throw new forestException('Cannot delete form element with Id[sys_fphp_table_StorageSpace].');
+				}
+				
 				/* delete SortOrder-element */
 				if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_SortOrder')) {
 					throw new forestException('Cannot delete form element with Id[sys_fphp_table_SortOrder].');
@@ -6465,6 +6966,11 @@ abstract class forestRootBranch {
 			
 			/* add validation rules for manual created form elements */
 			$o_glob->PostModalForm->FormObject->ValRules->Add(new \fPHP\Forms\forestFormValidationRule('sys_fphp_table_sortDirection', 'required', 'true'));
+			
+			/* delete StorageSpace-element */
+			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_StorageSpace')) {
+				throw new forestException('Cannot delete form element with Id[sys_fphp_table_StorageSpace].');
+			}
 			
 			/* delete Unique-element */
 			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_Unique[]')) {
@@ -6713,6 +7219,11 @@ abstract class forestRootBranch {
 				/* add validation rules for manual created form elements */
 				$o_glob->PostModalForm->FormObject->ValRules->Add(new \fPHP\Forms\forestFormValidationRule('sys_fphp_table_sortDirection', 'required', 'true'));
 				
+				/* delete StorageSpace-element */
+				if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_StorageSpace')) {
+					throw new forestException('Cannot delete form element with Id[sys_fphp_table_StorageSpace].');
+				}
+				
 				/* delete SortOrder-element */
 				if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_table_Unique[]')) {
 					throw new forestException('Cannot delete form element with Id[sys_fphp_table_Unique[]].');
@@ -6913,9 +7424,29 @@ abstract class forestRootBranch {
 			if (!$o_glob->PostModalForm->DeleteFormElementByFormId('sys_fphp_subconstraint_Order')) {
 				throw new forestException('Cannot delete form element with Id[sys_fphp_subconstraint_Order].');
 			}
+			
+			/* filter out all sytem tables starting with 'sys_fphp_' */
+			$o_formElementSubTableUUID = $o_glob->PostModalForm->GetFormElementByFormId('sys_fphp_subconstraint_SubTableUUID');
+			
+			if ($o_formElementSubTableUUID != null) {
+				$a_options = $o_formElementSubTableUUID->Options;
+				
+				foreach ($a_options as $s_key => $s_value) {
+					if (\fPHP\Helper\forestStringLib::StartsWith($s_key, 'sys_fphp_')) {
+						unset($a_options[$s_key]);
+					}
+				}
+				
+				$o_formElementSubTableUUID->Options = $a_options;
+			}
 		} else {
 			/* check posted data for new sub constraint record */
 			$this->TransferPOST_Twig();
+			
+			/* block any table which name starts with 'sys_fphp_' */
+			if (\fPHP\Helper\forestStringLib::StartsWith($o_glob->TablesInformation[$this->Twig->SubTableUUID->PrimaryValue]['Name'], 'sys_fphp_')) {
+				throw new forestException(0x10001F16);
+			}
 			
 			/* test increase of next value, if it is set */
 			if (issetStr($this->Twig->IdentifierStart)) {

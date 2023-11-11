@@ -19,12 +19,20 @@ forestPHP follows the **MVC model** and sets some conventions to keep the develo
 Following **database systems** are supported by forestPHP:
 
 * MariaDB/MySQL
+* SQLite3
+* MSSQL
+* OracleDB
+* PostgreSQL
+* MongoDB
 
 At the core of forestPHP measures have been taken to implement **security best practices** and to maximize the security of a web application. This helps prevent attacks such as SQL injection, CRFS, XSS, and form manipulation.
 
 forestPHP framework will be released under the **GPLv3 license** and the **MIT license**. Thus it is freely possible to use forestPHP in other projects - projects with free software or in commercial projects.
 
 ## Releases
+
+### 1.0.1 (stable)
+New features: Settings for samesite cookie, Images with thumbnail and detail view support, forestLookup table field with datalist/list form element, Add optional validation rule with json settings, Supporting rename table, forestDateTime will be compared for uniqueness check functionality, Options to block images incoming with ctrl+v and auto resize images with drag and drop in richtext element
 
 ### 1.0.0 (stable)
 New features: Database Support extended to: SQLite3 + MSSQL + OracleDB + PostgreSQL + MongoDB, Tested on linux, Issues resolved, Backward Compatibility to PHP 5.x, Preparation for Statistics
