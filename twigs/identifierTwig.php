@@ -23,6 +23,7 @@ class identifierTwig extends forestTwig {
 	private $IdentifierStart;
 	private $IdentifierNext;
 	private $IdentifierIncrement;
+	private $UseAsSortColumn;
 	
 	/* Properties */
 	
@@ -35,6 +36,7 @@ class identifierTwig extends forestTwig {
 		$this->IdentifierStart = new forestString;
 		$this->IdentifierNext = new forestString;
 		$this->IdentifierIncrement = new forestInt;
+		$this->UseAsSortColumn = new forestBool;
 		
 		/* forestTwig system fields */
 		$this->fphp_Table->value = 'sys_fphp_identifier';
@@ -42,7 +44,7 @@ class identifierTwig extends forestTwig {
 		$this->fphp_Unique->value = array('UUID','IdentifierName');
 		$this->fphp_SortOrder->value->Add(true, 'IdentifierName');
 		$this->fphp_Interval->value = 50;
-		$this->fphp_View->value = array('IdentifierName','IdentifierStart','IdentifierNext','IdentifierIncrement');
+		$this->fphp_View->value = array('IdentifierName','IdentifierStart','IdentifierNext','IdentifierIncrement','UseAsSortColumn');
 		$this->fphp_FillMapping(get_object_vars($this));
 	}
 }

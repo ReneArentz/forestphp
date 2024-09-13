@@ -7,30 +7,31 @@
  * this abstract class also can hold one record at a time
  *
  * @category    forestPHP Framework
- * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2021 forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestany.net>
+ * @copyright   (c) 2024 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.1 stable
- * @link        http://www.forestphp.de/
+ * @version     1.1.0 stable
+ * @link        https://forestany.net
  * @object-id   0x1 0000C
  * @since       File available since Release 0.1.0 alpha
  * @deprecated  -
  *
- * @version log Version		Developer	Date		Comment
- * 		0.1.0 alpha	renatus		2019-08-04	first build
- * 		0.1.1 alpha	renatus		2019-08-10	added tablefield caching
- * 		0.1.2 alpha	renatus		2019-08-27	added sort and limit
- * 		0.1.5 alpha	renatus		2019-10-04	added sub-records
- * 		0.1.5 alpha	renatus		2019-10-06	added sub-constraint
- * 		0.1.5 alpha	renatus		2019-10-08	added caching
- * 		0.1.5 alpha	renatus		2019-10-09	added forestLooukp and forestCombination
- * 		0.4.0 beta	renatus		2019-11-22	do not add system table flag protection if you are root user
- * 		0.7.0 beta	renatus		2020-01-03	added identifier column as standard like id and uuid
- * 		0.7.0 beta	renatus		2020-01-03	added FILEVERSION and FILENAME commands to forestCombination
- * 		0.9.0 beta	renatus		2020-01-29	optimized ImplementFilter for search on filename
- * 		1.0.0 stable	renatus		2020-02-13	added MongoDB support by breaking up SQL-Join Queries
- * 		1.0.1 stable	renatus		2021-04-09	added support comparing forestDateTime object for check uniqueness functionality
+ * @version log Version			Developer	Date		Comment
+ * 				0.1.0 alpha		renea		2019-08-04	first build
+ * 				0.1.1 alpha		renea		2019-08-10	added tablefield caching
+ * 				0.1.2 alpha		renea		2019-08-27	added sort and limit
+ * 				0.1.5 alpha		renea		2019-10-04	added sub-records
+ * 				0.1.5 alpha		renea		2019-10-06	added sub-constraint
+ * 				0.1.5 alpha		renea		2019-10-08	added caching
+ * 				0.1.5 alpha		renea		2019-10-09	added forestLooukp and forestCombination
+ * 				0.4.0 beta		renea		2019-11-22	do not add system table flag protection if you are root user
+ * 				0.7.0 beta		renea		2020-01-03	added identifier column as standard like id and uuid
+ * 				0.7.0 beta		renea		2020-01-03	added FILEVERSION and FILENAME commands to forestCombination
+ * 				0.9.0 beta		renea		2020-01-29	optimized ImplementFilter for search on filename
+ * 				1.0.0 stable	renea		2020-02-13	added MongoDB support by breaking up SQL-Join Queries
+ * 				1.0.1 stable	renea		2021-04-09	added support comparing forestDateTime object for check uniqueness functionality
+ * 				1.1.0 stable	renea		2024-03-05	UpdateRecord - only if Id and Identifier are changed at the same time, it is allowed to change Id primary
  */
 
 namespace fPHP\Twigs;
@@ -2456,6 +2457,7 @@ abstract class forestTwig {
 	 * update record in table, you cannot modify primary key, with modify of unique fields optional
 	 *
 	 * @param bool $p_b_modifyUnique  true - assume and set values for unique fields, false - keep unique key fields unchanged or let them handle by dbms
+	 * @param bool $p_b_modifyIdPrimary  true - allow change of Id primary(only if Id and Identifier are changed at the same time), false - keep Id primary unchanged or let them handle by dbms
 	 *
 	 * @return integer  -1 - unique issue, 0 - could not update record, 1 - record update successful
 	 *
@@ -2463,7 +2465,7 @@ abstract class forestTwig {
 	 * @access public
 	 * @static no
 	 */
-	public function UpdateRecord($p_b_modifyUnique = true) {
+	public function UpdateRecord($p_b_modifyUnique = true, $p_b_modifyIdPrimary = false) {
 		$o_glob = \fPHP\Roots\forestGlobals::init();
 		$b_field_has_changed = false;
 		$a_columns = array();
@@ -2473,7 +2475,12 @@ abstract class forestTwig {
 		} else {
 			$a_columns = $this->fphp_Mapping->value;
 		}
-		
+
+		/* only if Id and Identifier are changed at the same time, it is allowed to change Id primary */
+		if ( ($p_b_modifyIdPrimary) && (!( (in_array('Id', $a_columns)) && (count($a_columns) == 2) && (in_array('Identifier', $a_columns)) )) ) {
+			throw new forestException('UpdateRecord does not allow executing query changing \'Id\' primary field');
+		}
+
 		/* check if any field has changed compared to the record image */
 		foreach ($a_columns as $s_field) {
 			if (!$this->fphp_RecordImage->value->Exists($s_field)) {
@@ -2504,7 +2511,7 @@ abstract class forestTwig {
 		
 		/* read out twig fields to get values for insert query */
 		foreach ($a_columns as $s_field) {
-			if ( (!in_array($s_field, $this->fphp_Primary->value)) && ( ($p_b_modifyUnique) || (!in_array($s_field, $this->fphp_Unique->value)) ) ) {
+			if ( ( ($p_b_modifyIdPrimary) || (!in_array($s_field, $this->fphp_Primary->value)) ) && ( ($p_b_modifyUnique) || (!in_array($s_field, $this->fphp_Unique->value)) ) ) {
 				$o_columnValue = new \fPHP\Base\forestSQLColumnValue($o_queryUpdate);
 					$o_columnValue->Column = $s_field;
 					$o_columnValue->Value = $o_columnValue->ParseValue($this->{$s_field});

@@ -2,19 +2,20 @@
  * javascript library for fphp_validation module with jQuery Validate
  *
  * @category    forestPHP Framework
- * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2019 forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestany.net>
+ * @copyright   (c) 2024 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.0 stable
- * @link        http://www.forestphp.de/
+ * @version     1.1.0 stable
+ * @link        https://forestany.net
  * @object-id   0x2 00002
  * @since       File available since Release 0.1.3 alpha
  * @deprecated  -
  *
- * @version log Version     Developer Date        Comment
- *              0.1.3 alpha	renatus		2019-08-15	added to framework
- *              0.9.0 beta	renatus		2020-01-27	changes for bootstrap 4
+ * @version log Version			Developer	Date		Comment
+ * 				0.1.3 alpha		renea		2019-08-15	added to framework
+ * 				0.9.0 beta		renea		2020-01-27	changes for bootstrap 4
+ * 				1.1.0 stable	renea		2024-08-10	changes for bootstrap 5
  */
 $.fn.ReplaceCommaWithDot = function() {
 	return this.each(function() {
@@ -55,6 +56,7 @@ function fphp_apply_data_validator(p_o_options) {
 				s_message = '<div class="invalid-tooltip">' + s_message + '</div>';
 				
 				if (!b_tooltip) {
+					$element.nextAll('.invalid-tooltip').remove();
 					$element.after(s_message);
 					
 					b_tooltip = true;

@@ -20,34 +20,8 @@ class formelementBranch extends forestBranch {
 	
 	/* Methods */
 	
-	protected function initBranch() {
-		$this->Filter->value = true;
-		$this->StandardView = forestBranch::LISTVIEW;
-		$this->KeepFilter->value = false;
-		
-		$this->Twig = new \fPHP\Twigs\formelementTwig();
-	}
-	
-	protected function init() {
-		$o_glob = \fPHP\Roots\forestGlobals::init();
-		
-		if ($this->StandardView == forestBranch::DETAIL) {
-			$this->GenerateView();
-		} else if ($this->StandardView == forestBranch::LISTVIEW) {
-			$this->GenerateListView();
-		} else if ($this->StandardView == forestBranch::FLEX) {
-			if ( ($o_glob->Security->SessionData->Exists('lastView')) && ($o_glob->URL->LastBranchId == $o_glob->URL->BranchId) ) {
-				if ($o_glob->Security->SessionData->{'lastView'} == forestBranch::LISTVIEW) {
-					$this->GenerateView();
-				} else if ($o_glob->Security->SessionData->{'lastView'} == forestBranch::DETAIL) {
-					$this->GenerateListView();
-				} else {
-					$this->GenerateFlexView();
-				}
-			} else {
-				$this->GenerateFlexView();
-			}
-		}
+	protected function initAction() {
+		$this->Init();
 	}
 	
 		protected function beforeViewAction() {
@@ -90,7 +64,7 @@ class formelementBranch extends forestBranch {
 			if ( ($o_glob->Temp->Exists('newKey')) && ($o_glob->Temp->{'newKey'} != null) && ($o_glob->Temp->Exists('subConstraintKey')) && ($o_glob->Temp->{'subConstraintKey'} != null) ) {
 				/* add new sub record */
 				$this->RenderNewSubRecordForm();
-				$this->StandardView = forestBranch::DETAIL; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
+				$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[\fPHP\Branches\forestBranch::DETAIL]; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
 			} else {
 				/* add new record */
 				$o_glob->PostModalForm = new \fPHP\Forms\forestForm($this->Twig, true);
@@ -153,7 +127,7 @@ class formelementBranch extends forestBranch {
 					$o_glob->SystemMessages->Add(new \fPHP\Roots\forestException(0x10001404));
 				}
 				
-				$this->StandardView = forestBranch::DETAIL; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
+				$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[\fPHP\Branches\forestBranch::DETAIL]; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
 			} else {
 				/* check posted data for new record */
 				
@@ -199,14 +173,6 @@ class formelementBranch extends forestBranch {
 				
 				/* handle uploads */
 				$this->TransferFILES_Twig();
-			}
-		}
-		
-		if (isset($this->KeepFilter)) {
-			if ($this->KeepFilter->value) {
-				if ($o_glob->Security->SessionData->Exists('last_filter')) {
-					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
-				}
 			}
 		}
 		
@@ -295,7 +261,7 @@ class formelementBranch extends forestBranch {
 				$o_hidden->Value = $o_glob->Temp->{'deleteSubKey'};
 				$o_glob->PostModalForm->FormElements->Add($o_hidden);
 				
-				$this->StandardView = forestBranch::DETAIL; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
+				$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[\fPHP\Branches\forestBranch::DETAIL]; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
 			}
 		} else {
 			/* delete record */
@@ -433,15 +399,7 @@ class formelementBranch extends forestBranch {
 				
 				$o_glob->SystemMessages->Add(new \fPHP\Roots\forestException(0x10001427));
 				
-				$this->StandardView = forestBranch::DETAIL; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
-			}
-		}
-		
-		if (isset($this->KeepFilter)) {
-			if ($this->KeepFilter->value) {
-				if ($o_glob->Security->SessionData->Exists('last_filter')) {
-					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
-				}
+				$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[\fPHP\Branches\forestBranch::DETAIL]; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
 			}
 		}
 		
@@ -488,6 +446,10 @@ class formelementBranch extends forestBranch {
 	protected function additionalListSubRecordsAction(\fPHP\Twigs\forestTwig $p_o_twig, $p_b_readonly, &$p_s_subFormItems, &$p_b_firstSubElement) {
 		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
+		/* get table info, needed for general accoridon id -> based on table name */
+		$s_tableUUID = $o_glob->Tables[$p_o_twig->fphp_Table];
+		$s_tableName = array_search($s_tableUUID, $o_glob->Tables);
+
 		/* look for forestdata */
 		$o_formelement_forestdataTwig = new \fPHP\Twigs\formelement_forestdataTwig;
 		
@@ -526,7 +488,7 @@ class formelementBranch extends forestBranch {
 				unset($a_parameters['deleteSubKey']);
 				$a_parameters['deleteSubKey'] = 'forestdata~' . $o_formelement_forestdata->formelementUUID . '~' . $o_formelement_forestdata->forestdataUUID;
 				
-				$s_subTableRows .=  '<td><a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="fas fa-trash text-danger"></span></a></td>' . "\n";
+				$s_subTableRows .=  '<td><a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="bi bi-trash-fill text-danger"></span></a></td>' . "\n";
 			}
 			
 			$s_subTableRows .=  '</tr>' . "\n";
@@ -544,7 +506,7 @@ class formelementBranch extends forestBranch {
 			unset($a_parameters['subConstraintKey']);
 			$a_parameters['newKey'] = $p_o_twig->UUID;
 			$a_parameters['subConstraintKey'] = 'forestdata';
-			$s_newButton = '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'new', $a_parameters) . '" class="btn btn-light" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="fas fa-plus text-success"></span></a>' . "\n";
+			$s_newButton = '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'new', $a_parameters) . '" class="btn btn-light" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="bi bi-plus-circle-fill text-success"></span></a>' . "\n";
 		} else {
 			$s_newButton = '';
 		}
@@ -557,7 +519,7 @@ class formelementBranch extends forestBranch {
 		}
 		
 		$s_subFormItemContent = new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEWITEMCONTENT, array($s_newButton, $s_subTableHead, $s_subTableRows));
-		$p_s_subFormItems .= new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEWITEM, array('subforestdata', $o_glob->GetTranslation('forestData') . ' (' . $o_formelement_forestdatas->Twigs->Count() . ')', $s_firstElement, $s_subFormItemContent));
+		$p_s_subFormItems .= new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEWITEM, array('subforestdata', $o_glob->GetTranslation('forestData') . ' (' . $o_formelement_forestdatas->Twigs->Count() . ')', $s_firstElement, $s_subFormItemContent, $s_tableName));
 		
 		/* look for sqltype */
 		$o_formelement_sqltypeTwig = new \fPHP\Twigs\formelement_sqltypeTwig;
@@ -597,7 +559,7 @@ class formelementBranch extends forestBranch {
 				unset($a_parameters['deleteSubKey']);
 				$a_parameters['deleteSubKey'] = 'sqltype~' . $o_formelement_sqltype->formelementUUID . '~' . $o_formelement_sqltype->sqltypeUUID;
 				
-				$s_subTableRows .=  '<td><a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="fas fa-trash text-danger"></span></a></td>' . "\n";
+				$s_subTableRows .=  '<td><a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="bi bi-trash-fill text-danger"></span></a></td>' . "\n";
 			}
 			
 			$s_subTableRows .=  '</tr>' . "\n";
@@ -615,7 +577,7 @@ class formelementBranch extends forestBranch {
 			unset($a_parameters['subConstraintKey']);
 			$a_parameters['newKey'] = $p_o_twig->UUID;
 			$a_parameters['subConstraintKey'] = 'sqltype';
-			$s_newButton = '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'new', $a_parameters) . '" class="btn btn-light" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="fas fa-plus text-success"></span></a>' . "\n";
+			$s_newButton = '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'new', $a_parameters) . '" class="btn btn-light" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="bi bi-plus-circle-fill text-success"></span></a>' . "\n";
 		} else {
 			$s_newButton = '';
 		}
@@ -628,7 +590,7 @@ class formelementBranch extends forestBranch {
 		}
 		
 		$s_subFormItemContent = new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEWITEMCONTENT, array($s_newButton, $s_subTableHead, $s_subTableRows));
-		$p_s_subFormItems .= new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEWITEM, array('subsqltype', $o_glob->GetTranslation('SQLTypes') . ' (' . $o_formelement_sqltypes->Twigs->Count() . ')', $s_firstElement, $s_subFormItemContent));
+		$p_s_subFormItems .= new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEWITEM, array('subsqltype', $o_glob->GetTranslation('SQLTypes') . ' (' . $o_formelement_sqltypes->Twigs->Count() . ')', $s_firstElement, $s_subFormItemContent, $s_tableName));
 		
 		/* look for validationrule */
 		$o_formelement_validationruleTwig = new \fPHP\Twigs\formelement_validationruleTwig;
@@ -668,7 +630,7 @@ class formelementBranch extends forestBranch {
 				unset($a_parameters['deleteSubKey']);
 				$a_parameters['deleteSubKey'] = 'validationrule~' . $o_formelement_validationrule->formelementUUID . '~' . $o_formelement_validationrule->validationruleUUID;
 				
-				$s_subTableRows .=  '<td><a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="fas fa-trash text-danger"></span></a></td>' . "\n";
+				$s_subTableRows .=  '<td><a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="bi bi-trash-fill text-danger"></span></a></td>' . "\n";
 			}
 			
 			$s_subTableRows .=  '</tr>' . "\n";
@@ -686,7 +648,7 @@ class formelementBranch extends forestBranch {
 			unset($a_parameters['subConstraintKey']);
 			$a_parameters['newKey'] = $p_o_twig->UUID;
 			$a_parameters['subConstraintKey'] = 'validationrule';
-			$s_newButton = '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'new', $a_parameters) . '" class="btn btn-light" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="fas fa-plus text-success"></span></a>' . "\n";
+			$s_newButton = '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'new', $a_parameters) . '" class="btn btn-light" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="bi bi-plus-circle-fill text-success"></span></a>' . "\n";
 		} else {
 			$s_newButton = '';
 		}
@@ -699,7 +661,7 @@ class formelementBranch extends forestBranch {
 		}
 		
 		$s_subFormItemContent = new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEWITEMCONTENT, array($s_newButton, $s_subTableHead, $s_subTableRows));
-		$p_s_subFormItems .= new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEWITEM, array('validationrule', $o_glob->GetTranslation('ValidationRules') . ' (' . $o_formelement_validationrules->Twigs->Count() . ')', $s_firstElement, $s_subFormItemContent));
+		$p_s_subFormItems .= new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEWITEM, array('validationrule', $o_glob->GetTranslation('ValidationRules') . ' (' . $o_formelement_validationrules->Twigs->Count() . ')', $s_firstElement, $s_subFormItemContent, $s_tableName));
 	}
 
 	/* overwrite - render modal form for new sub record */

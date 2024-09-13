@@ -6,50 +6,60 @@
  * all functions can be overwritten for user specific use case
  *
  * @category    forestPHP Framework
- * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2021 forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestany.net>
+ * @copyright   (c) 2024 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.1 stable
- * @link        http://www.forestphp.de/
+ * @version     1.1.0 stable
+ * @link        https://forestany.net
  * @object-id   0x1 00014
  * @since       File available since Release 0.1.0 alpha
  * @deprecated  -
  *
- * @version log Version		Developer	Date		Comment
- * 		0.1.0 alpha	renatus		2019-08-04	first build
- * 		0.1.1 alpha	renatus		2019-08-07	added view property and landing page function
- * 		0.1.2 alpha	renatus		2019-08-23	added list view and view functionalities + CRUD actions
- * 		0.1.3 alpha	renatus		2019-09-05	added formkey and validationrules
- * 		0.1.4 alpha	renatus		2019-09-20	added file upload and cleanup functionality
- * 		0.1.4 alpha	renatus		2019-09-23	added dropzone and richtext functionality
- * 		0.1.5 alpha	renatus		2019-10-02	added sort functionality
- * 		0.1.5 alpha	renatus		2019-10-04	added moveUp and moveDown functionality
- * 		0.1.5 alpha	renatus		2019-10-05	added Captcha and thumbnail functionality
- * 		0.1.5 alpha	renatus		2019-10-08	added forestLookup and forestCombination functionality
- * 		0.2.0 beta	renatus		2019-10-25	added forestRootBranch inheritance and activated RootMenu rendering
- * 		0.4.0 beta	renatus		2019-11-13	added login, logout and signIn functionality
- * 		0.4.0 beta	renatus		2019-11-18	added permission checks to all standard actions
- * 		0.5.0 beta	renatus		2019-11-17	added checkin action
- * 		0.5.0 beta	renatus		2019-11-28	added checkout action
- * 		0.5.0 beta	renatus		2019-12-02	added honeypot fields functionality
- * 		0.5.0 beta	renatus		2019-12-04	added verification of checked out elements on all standard actions
- * 		0.5.0 beta	renatus		2019-12-17	added info columns
- * 		0.5.0 beta	renatus		2019-12-18	added versioning
- * 		0.5.0 beta	renatus		2019-12-19	added restoreFile action
- * 		0.7.0 beta	renatus		2020-01-02	added identifier display and money-format
- * 		0.8.0 beta	renatus		2020-01-14	added fphp_flex functionality and actions
- * 		0.8.0 beta	renatus		2020-01-16	added log functionality
- * 		0.8.0 beta	renatus		2020-01-17	added account record creation on sign in action
- * 		0.9.0 beta	renatus		2020-01-28	transferred FilterForm from forestGlobals to forestBranch class
- * 		0.9.0 beta	renatus		2020-01-29	changes for bootstrap 4
- * 		1.0.0 stable	renatus		2020-02-13	added MongoDB support by breaking up SQL-Join Queries
- * 		1.0.0 stable	renatus		2020-02-14	changes constants because of conflict with php system constants
- * 		1.0.0 stable	renatus		2020-02-14	added FilenameFromField functionality for FILE elements
- * 		1.0.0 stable	renatus		2020-02-14	break up checkout twig definition and function call in one line, because of 5.x back compatiblity
- * 		1.0.1 stable	renatus		2021-04-09	create new function to resize an image, make it usable for thumbnail action and other purposes
- * 		1.0.1 stable	renatus		2021-04-10	added support for handling forestLookup table field with datalist/list form element
- * 		1.0.1 stable	renatus		2021-04-11	added support for thumbnail and detailview image preview
+ * @version log Version			Developer	Date		Comment
+ * 				0.1.0 alpha		renea		2019-08-04	first build
+ * 				0.1.1 alpha		renea		2019-08-07	added view property and landing page function
+ * 				0.1.2 alpha		renea		2019-08-23	added list view and view functionalities + CRUD actions
+ * 				0.1.3 alpha		renea		2019-09-05	added formkey and validationrules
+ * 				0.1.4 alpha		renea		2019-09-20	added file upload and cleanup functionality
+ * 				0.1.4 alpha		renea		2019-09-23	added dropzone and richtext functionality
+ * 				0.1.5 alpha		renea		2019-10-02	added sort functionality
+ * 				0.1.5 alpha		renea		2019-10-04	added moveUp and moveDown functionality
+ * 				0.1.5 alpha		renea		2019-10-05	added Captcha and thumbnail functionality
+ * 				0.1.5 alpha		renea		2019-10-08	added forestLookup and forestCombination functionality
+ * 				0.2.0 beta		renea		2019-10-25	added forestRootBranch inheritance and activated RootMenu rendering
+ * 				0.4.0 beta		renea		2019-11-13	added login, logout and signIn functionality
+ * 				0.4.0 beta		renea		2019-11-18	added permission checks to all standard actions
+ * 				0.5.0 beta		renea		2019-11-17	added checkin action
+ * 				0.5.0 beta		renea		2019-11-28	added checkout action
+ * 				0.5.0 beta		renea		2019-12-02	added honeypot fields functionality
+ * 				0.5.0 beta		renea		2019-12-04	added verification of checked out elements on all standard actions
+ * 				0.5.0 beta		renea		2019-12-17	added info columns
+ * 				0.5.0 beta		renea		2019-12-18	added versioning
+ * 				0.5.0 beta		renea		2019-12-19	added restoreFile action
+ * 				0.7.0 beta		renea		2020-01-02	added identifier display and money-format
+ * 				0.8.0 beta		renea		2020-01-14	added fphp_flex functionality and actions
+ * 				0.8.0 beta		renea		2020-01-16	added log functionality
+ * 				0.8.0 beta		renea		2020-01-17	added account record creation on sign in action
+ * 				0.9.0 beta		renea		2020-01-28	transferred FilterForm from forestGlobals to forestBranch class
+ * 				0.9.0 beta		renea		2020-01-29	changes for bootstrap 4
+ * 				1.0.0 stable	renea		2020-02-13	added MongoDB support by breaking up SQL-Join Queries
+ * 				1.0.0 stable	renea		2020-02-14	changes constants because of conflict with php system constants
+ * 				1.0.0 stable	renea		2020-02-14	added FilenameFromField functionality for FILE elements
+ * 				1.0.0 stable	renea		2020-02-14	break up checkout twig definition and function call in one line, because of 5.x back compatiblity
+ * 				1.0.1 stable	renea		2021-04-09	create new function to resize an image, make it usable for thumbnail action and other purposes
+ * 				1.0.1 stable	renea		2021-04-10	added support for handling forestLookup table field with datalist/list form element
+ * 				1.0.1 stable	renea		2021-04-11	added support for thumbnail and detailview image preview
+ * 				1.1.0 stable	renea		2023-11-02	removed branch settings from class, because we have all this information in the database
+ * 				1.1.0 stable	renea		2023-11-02	removed abstract forestBranch methods, because they are not necessary anymore
+ * 				1.1.0 stable	renea		2023-11-02	added action chain processing, which makes it possible to use branch templates easily
+ * 				1.1.0 stable	renea		2023-11-02	created general Init method for all branches
+ * 				1.1.0 stable	renea		2024-03-03	relocate standard view into database
+ * 				1.1.0 stable	renea		2024-03-03	added slide gallery view
+ * 				1.1.0 stable	renea		2024-04-05	added slide calender view
+ * 				1.1.0 stable	renea		2024-08-08	added static page functionality
+ * 				1.1.0 stable	renea		2024-08-10	use identifier column to move records up or down
+ * 				1.1.0 stable	renea		2024-08-10	changes for bootstrap 5
  */
 
 namespace fPHP\Branches;
@@ -69,29 +79,22 @@ abstract class forestBranch extends forestRootBranch {
 	use \fPHP\Roots\forestData;
 
 	/* Fields */
-	
-	const LISTVIEW = 'list';
-	const DETAIL = 'detail';
-	const FLEX = 'flex';
-	
+
 	protected $Twig;
 	protected $NextAction;
-	protected $Filter;
-	protected $StandardView;
-	protected $KeepFilter;
-	protected $OriginalView;
-	
 	private $FilterForm;
 	
+	const LIST = 'List';
+	const DETAIL = 'Detail';
+	const SLIDEGALLERY = 'Slide Gallery';
+	const SLIDECALENDER = 'Slide Calender';
+	const SECTIONCOUNTER = 'Section Counter';
+	const FLEX = 'Flex';
+	const STATICPAGE = 'Static Page';
+
 	/* Properties */
 	
 	/* Methods */
-	
-	/* every class which inherits forestTwig must implement initBranch-function */
-	abstract protected function initBranch();
-	
-	/* every class which inherits forestBranch must implement init-function */
-	abstract protected function init();
 	
 	/**
 	 * constructor of forestBranch class
@@ -103,23 +106,10 @@ abstract class forestBranch extends forestRootBranch {
 	 * @static no
 	 */
 	public function __construct() {
-		$this->NextAction = new forestBool;
-		$this->Filter = new forestBool;
-		$this->KeepFilter = new forestBool;
-		
-		$this->FilterForm = new forestObject('forestForm');
-		
-		/* call initBranch method to set branch properties within forestBranch objects */
-		$this->initBranch();
-				
-		if (!isset($this->StandardView)) {
-			$this->StandardView = \fPHP\Branches\forestBranch::LISTVIEW;
-		}
-	
 		$o_glob = \fPHP\Roots\forestGlobals::init();
-		
-		$this->OriginalView = $this->StandardView;
-		$o_glob->OriginalView = $this->OriginalView;
+
+		$this->NextAction = new forestBool;
+		$this->FilterForm = new forestObject('forestForm');
 		
 		if (!$o_glob->FastProcessing) {
 			/* init navigation object */
@@ -167,13 +157,13 @@ abstract class forestBranch extends forestRootBranch {
 			if (!isset($this->Twig)) {
 				$s_foo = '\\fPHP\\Twigs\\' . $o_glob->URL->Branch . 'Twig';
 				
-				if (\fPHP\Roots\forestAutoLoad::IsReadable('./twigs/' . $s_foo . '.php')) {
+				if (\fPHP\Roots\forestAutoLoad::IsReadable('./twigs/' . $o_glob->URL->Branch . 'Twig.php')) {
 					$this->Twig = new $s_foo;
 				} else {
 					$this->Twig = null;
 					
-					if (isset($this->Filter)) {
-						$this->Filter->value = false;
+					if ($o_glob->BranchTree['Id'][$o_glob->URL->BranchId]['Filter']) {
+						$o_glob->BranchTree['Id'][$o_glob->URL->BranchId]['Filter'] = false;
 					}
 				}
 			}
@@ -183,15 +173,15 @@ abstract class forestBranch extends forestRootBranch {
 		}
 		
 		/* handle branch's action */
-		$s_action = $o_glob->URL->Action;		
+		$s_action = $o_glob->URL->Action;
 		
 		if (!issetStr($s_action)) {
 			$o_glob->URL->Action = 'init';
 		}
 		
 		/* if filter-flag of branch object is true we init our global filter mask */
-		if (isset($this->Filter)) {
-			if ( ($this->Filter->value) && (!$o_glob->FastProcessing) ) {
+		if ($o_glob->BranchTree['Id'][$o_glob->URL->BranchId]['Filter']) {
+			if ( ($o_glob->BranchTree['Id'][$o_glob->URL->BranchId]['Filter']) && (!$o_glob->FastProcessing) && (isset($this->Twig)) ) {
 				$this->InitFilter();
 			}
 		}
@@ -199,10 +189,18 @@ abstract class forestBranch extends forestRootBranch {
 		do {
 			$this->NextAction->value = false;
 			
-			/* if standard action is 'init' we do not need to attach .'Action' to it */
-			$s_action = ($o_glob->URL->Action == 'init') ? $o_glob->URL->Action : $o_glob->URL->Action . 'Action';
+			/* add 'Action' constant and call method */
+			$s_action = $o_glob->URL->Action . 'Action';
 			$this->$s_action();
-			
+
+			/* keep filter settings  */
+			if ( ($s_action != 'initAction') && ($s_action != 'logoutAction') && ($o_glob->BranchTree['Id'][$o_glob->URL->BranchId]['KeepFilter']) ) {
+				if ($o_glob->Security->SessionData->Exists('last_filter')) {
+					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
+				}
+			}
+
+			/* if not fast processing, do manual commit if transaction is active */
 			if (!$o_glob->FastProcessing) {
 				global $b_transaction_active;
 				if ($b_transaction_active) {
@@ -236,11 +234,103 @@ abstract class forestBranch extends forestRootBranch {
 					}
 				}
 			}
-			
+
 			/* init global filter mask again, because we do not know how many actions are going to be handled in this do-while-loop */
-			if (isset($this->Filter)) {
-				if (($this->NextAction->value) && ($this->Filter->value) && (!$o_glob->FastProcessing)) {
+			if ($o_glob->BranchTree['Id'][$o_glob->URL->BranchId]['Filter']) {
+				if ( ($this->NextAction->value) && ($o_glob->BranchTree['Id'][$o_glob->URL->BranchId]['Filter']) && (!$o_glob->FastProcessing) && (isset($this->Twig)) ) {
 					$this->InitFilter();
+				}
+			}
+
+			/* check if we must process an action chain */
+			if ($o_glob->ProcessingActionChain) {
+				/* get value of global action chain */
+				$a_actionChain = $o_glob->ActionChain;
+
+				/* check if we have open action steps in the chain */
+				if (array_key_exists($o_glob->ActionChainStepNumber, $a_actionChain)) {
+					/* get action chain step and set all the parameters */
+					$o_glob->ActionChainStep = $a_actionChain[$o_glob->ActionChainStepNumber++];
+					$a_branchTree = $o_glob->BranchTree;
+
+					/* set next action */
+					if ($o_glob->ActionChainStep['action'] == 'RELOADBRANCH') {
+						/* end action chain processing */
+						$o_glob->ProcessingActionChain = false;
+
+						$this->SetNextAction($o_glob->ActionChainStep['action'], $o_glob->ActionChainStep['actionAfterReload']);
+					} else if ($o_glob->ActionChainStep['action'] != 'PARENTBRANCH') {
+						$this->SetNextAction($o_glob->ActionChainStep['action']);
+					}
+					
+					/* go to parent branch */
+					if ($o_glob->ActionChainStep['action'] == 'PARENTBRANCH') {
+						/* update url information */
+						$s_parentBranchName = $o_glob->BranchTree['Id'][$o_glob->BranchTree['Id'][$o_glob->URL->BranchId]['ParentBranch']]['Name'];
+						$o_glob->URL->OverwriteURL(\fPHP\Helper\forestLink::Link($s_parentBranchName, 'init'));
+					} else if (array_key_exists('data', $o_glob->ActionChainStep)) { /* handle action chain step data part */
+						if ( (count($o_glob->ActionChainStep['data']) == 2) && (array_key_first($o_glob->ActionChainStep['data']) == 'urlParameterNames') && (array_key_last($o_glob->ActionChainStep['data']) == 'urlParameterValues') ) {
+							/* we are just calling an action with url parameters */
+							$a_parameters = array_combine($o_glob->ActionChainStep['data']['urlParameterNames'], $o_glob->ActionChainStep['data']['urlParameterValues']);
+
+							/* merge url parameter values with remember values in global temp */
+							foreach ($a_parameters as $s_key => $o_data) {
+								if ((is_string($o_data)) && (\fPHP\Helper\forestStringLib::StartsWith($o_data, 'ActionChain_'))) {
+									foreach ($o_glob->Temp as $s_tempKey => $o_tempValue) {
+										if ($o_data == $s_tempKey) {	
+											$a_parameters[$s_key] = $o_tempValue;
+										}
+									}
+								} else if (is_array($o_data)) { /* check second level within url parameter values */
+									foreach ($o_data as $s_subKey => $o_subData) {
+										if ((is_string($o_subData)) && (\fPHP\Helper\forestStringLib::StartsWith($o_subData, 'ActionChain_'))) {
+											foreach ($o_glob->Temp as $s_tempKey => $o_tempValue) {
+												if ($o_subData == $s_tempKey) {	
+													$a_parameters[$s_key][$s_subKey] = $o_tempValue;
+												}
+											}
+										}
+									}
+								}
+							}
+
+							$o_glob->URL->OverwriteURL(\fPHP\Helper\forestLink::Link($o_glob->URL->Branch, $o_glob->URL->Action, $a_parameters));
+						} else {
+							/* set post data */
+							$o_glob->IsPost = true;
+							$_POST = array();
+							$_POST = $o_glob->ActionChainStep['data'];
+							
+							/* merge post data with remember values in global temp */
+							foreach ($_POST as $s_key => $o_data) {
+								if ((is_string($o_data)) && (\fPHP\Helper\forestStringLib::StartsWith($o_data, 'ActionChain_'))) {
+									foreach ($o_glob->Temp as $s_tempKey => $o_tempValue) {
+										if ($o_data == $s_tempKey) {	
+											$_POST[$s_key] = $o_tempValue;
+										}
+									}
+								} else if (is_array($o_data)) { /* check second level within post data */
+									foreach ($o_data as $s_subKey => $o_subData) {
+										if (\fPHP\Helper\forestStringLib::StartsWith($o_subData, 'ActionChain_')) {
+											foreach ($o_glob->Temp as $s_tempKey => $o_tempValue) {
+												if ($o_subData == $s_tempKey) {	
+													$_POST[$s_key][$s_subKey] = $o_tempValue;
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					} else {
+						/* unset post */
+						$o_glob->IsPost = false;
+					}
+
+					$this->NextAction->value = true;
+				} else {
+					/* end action chain processing */
+					$o_glob->ProcessingActionChain = false;
 				}
 			}
 		} while ($this->NextAction->value);
@@ -268,8 +358,7 @@ abstract class forestBranch extends forestRootBranch {
 	protected function SetNextAction($p_s_nextAction, $p_s_nextActionAfterReload = null, $p_a_nextParameters = null, $p_s_nextAnchor = null) {
 		if ($p_s_nextAction != null) {
 			$o_glob = \fPHP\Roots\forestGlobals::init();
-			$a_branchTree = $o_glob->BranchTree;
-			
+						
 			if ($p_s_nextAction == 'RELOADBRANCH') {
 				/* before we reload branch page, we need to commit all transactions */
 				if (!$o_glob->FastProcessing) {
@@ -279,18 +368,28 @@ abstract class forestBranch extends forestRootBranch {
 					}
 				}
 				
-				header('Location: '. \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, $p_s_nextActionAfterReload, $p_a_nextParameters, $p_s_nextAnchor));
+				/* only do reload if we are not within an action chain */
+				if (!$o_glob->ProcessingActionChain) {
+					header('Location: '. \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, $p_s_nextActionAfterReload, $p_a_nextParameters, $p_s_nextAnchor));
+				}
+			} else {
+				$a_branchTree = $o_glob->BranchTree;
+
+				/* check if action really exists */
+				if ( (!array_key_exists($p_s_nextAction, $a_branchTree['Id'][$o_glob->URL->BranchId]['actions']['Name'])) && (!array_key_exists($p_s_nextAction, $a_branchTree['Zero']['actions']['Name'])) ) {
+					throw new forestException('Action[%0] with BranchId[%1] could not be found', array($p_s_nextAction, $o_glob->URL->BranchId));
+				}
+				
+				$o_glob->URL->Action = $p_s_nextAction;
+				
+				if (array_key_exists($o_glob->URL->Action, $a_branchTree['Id'][$o_glob->URL->BranchId]['actions']['Name'])) {
+					$o_glob->URL->ActionId = $a_branchTree['Id'][$o_glob->URL->BranchId]['actions']['Name'][$o_glob->URL->Action];
+				} else {
+					$o_glob->URL->ActionId = $a_branchTree['Zero']['actions']['Name'][$o_glob->URL->Action];
+				}
+
+				$this->NextAction->value = true;
 			}
-			
-			/* check if action really exists */
-			if (!array_key_exists($p_s_nextAction, $a_branchTree['Id'][$o_glob->URL->BranchId]['actions']['Name'])) {
-				throw new forestException('Action[%0] with BranchId[%1] could not be found', array($p_s_nextAction, $o_glob->URL->BranchId));
-			}
-			
-			$o_glob->URL->Action = $p_s_nextAction;
-			$o_glob->URL->ActionId = $a_branchTree['Id'][$o_glob->URL->BranchId]['actions']['Name'][$p_s_nextAction];
-			
-			$this->NextAction->value = true;
 		}
 	}
 	
@@ -372,8 +471,7 @@ abstract class forestBranch extends forestRootBranch {
 		$o_button = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::BUTTON);
 		$o_button->Class = 'btn btn-light';
 		$o_button->Id = 'filterSubmit';
-		$o_button->ButtonText = '<span class="fas fa-search"></span>';
-		$o_button->WrapSpanClass = 'input-group-btn';
+		$o_button->ButtonText = '<span class="bi bi-search"></span>';
 		
 		$this->FilterForm->FormElements->Add($o_filterInput);
 		$this->FilterForm->FormElements->Add($o_filterInputColumn);
@@ -474,7 +572,8 @@ abstract class forestBranch extends forestRootBranch {
 	protected function HandleFormKey($p_s_formId = 'NULL', $p_b_postChain = false) {
 		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
-		if ($o_glob->Trunk->FormKey) {
+		/*  only execute form key if it is activated in the trunk settings and we do not processing an action chain */
+		if ( ($o_glob->Trunk->FormKey) && (!$o_glob->ProcessingActionChain) ) {
 			/* delete old invalid form keys */
 			$o_DIFormKey = new \fPHP\Helper\forestDateInterval($o_glob->Trunk->FormKeyInterval);
 			$o_nowFormKey = new \fPHP\Helper\forestDateTime($o_glob->Trunk->DateTimeSqlFormat);
@@ -610,6 +709,36 @@ abstract class forestBranch extends forestRootBranch {
 			}
 		}
 	}
+
+	/**
+	 * handle processing chain functionality to store values into global temp
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access protected
+	 * @static no
+	 */
+	protected function HandleProcessingActionChain() {
+		$o_glob = \fPHP\Roots\forestGlobals::init();
+		
+		if ($o_glob->ProcessingActionChain) {
+			$a_actionChainStep = $o_glob->ActionChainStep;
+
+			if (array_key_exists('remember', $a_actionChainStep)) {
+				foreach ($a_actionChainStep['remember'] as $s_key =>  $s_value) {
+					if (\fPHP\Helper\forestStringLib::StartsWith($s_value, 'LU_')) { /* note that we have a lookup field */
+						$s_value = substr($s_value, 3);
+						$o_glob->Temp->Add( $this->Twig->{$s_value}->PrimaryValue, $s_key );
+					} else if (($s_value == 'Id') || ($s_value == 'UUID')) { /* call Id and UUID directly */
+						$o_glob->Temp->Add( $this->Twig->{$s_value}, $s_key );
+					} else { /* use GetFieldValue method from Twig class */
+						$o_glob->Temp->Add( $this->Twig->GetFieldValue($s_value), $s_key );
+					}
+				}
+			}
+		}
+	}
 	
 	/**
 	 * help function to create a new entry in the log
@@ -626,7 +755,7 @@ abstract class forestBranch extends forestRootBranch {
 	protected function CreateLogEntry($p_s_message = null, \fPHP\Twigs\forestTwig $p_o_twig = null) {
 		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
-		$a_newActions = array('new','signUp');
+		$a_newActions = array('new','signUp','createStaticPage');
 		$a_editActions = array('checkin','checkout','edit','editFlex','moveDown','moveUp','replaceFile','restoreFile','login','logout');
 		$a_deleteActions = array('delete','truncateTwig');
 		
@@ -670,7 +799,89 @@ abstract class forestBranch extends forestRootBranch {
 		$i_result = $o_logTwig->InsertRecord();
 	}
 	
+
+	/**
+	 * handle init action
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access protected
+	 * @static no
+	 */
+	protected function Init() {
+		$o_glob = \fPHP\Roots\forestGlobals::init();
+		
+		if (!isset($this->Twig)) {
+			$this->GenerateLandingPage();
+		} else if (strval($o_glob->StandardView) == \fPHP\Branches\forestBranch::DETAIL) {
+			$this->GenerateView();
+		} else if (strval($o_glob->StandardView) == \fPHP\Branches\forestBranch::LIST) {
+			$this->GenerateListView();
+		} else if (strval($o_glob->StandardView) == \fPHP\Branches\forestBranch::SLIDEGALLERY) {
+			if ( ($o_glob->Security->SessionData->Exists('lastView')) && ($o_glob->URL->LastBranchId == $o_glob->URL->BranchId) ) {
+				if ($o_glob->Security->SessionData->{'lastView'} == \fPHP\Branches\forestBranch::LIST) {
+					$this->GenerateView();
+				} else if ($o_glob->Security->SessionData->{'lastView'} == \fPHP\Branches\forestBranch::DETAIL) {
+					$this->GenerateListView();
+				} else {
+					$this->GenerateSlideGalleryView();
+				}
+			} else {
+				$this->GenerateSlideGalleryView();
+			}
+		} else if (strval($o_glob->StandardView) == \fPHP\Branches\forestBranch::SLIDECALENDER) {
+			if ( ($o_glob->Security->SessionData->Exists('lastView')) && ($o_glob->URL->LastBranchId == $o_glob->URL->BranchId) ) {
+				if ($o_glob->Security->SessionData->{'lastView'} == \fPHP\Branches\forestBranch::LIST) {
+					$this->GenerateView();
+				} else if ($o_glob->Security->SessionData->{'lastView'} == \fPHP\Branches\forestBranch::DETAIL) {
+					$this->GenerateListView();
+				} else {
+					$this->GenerateSlideCalenderView();
+				}
+			} else {
+				$this->GenerateSlideCalenderView();
+			}
+		} else if (strval($o_glob->StandardView) == \fPHP\Branches\forestBranch::SECTIONCOUNTER) {
+			if ( ($o_glob->Security->SessionData->Exists('lastView')) && ($o_glob->URL->LastBranchId == $o_glob->URL->BranchId) ) {
+				if ($o_glob->Security->SessionData->{'lastView'} == \fPHP\Branches\forestBranch::LIST) {
+					$this->GenerateView();
+				} else if ($o_glob->Security->SessionData->{'lastView'} == \fPHP\Branches\forestBranch::DETAIL) {
+					$this->GenerateListView();
+				} else {
+					$this->GenerateSectionCounterView();
+				}
+			} else {
+				$this->GenerateSectionCounterView();
+			}
+		} else if (strval($o_glob->StandardView) == \fPHP\Branches\forestBranch::FLEX) {
+			if ( ($o_glob->Security->SessionData->Exists('lastView')) && ($o_glob->URL->LastBranchId == $o_glob->URL->BranchId) ) {
+				if ($o_glob->Security->SessionData->{'lastView'} == \fPHP\Branches\forestBranch::LIST) {
+					$this->GenerateView();
+				} else if ($o_glob->Security->SessionData->{'lastView'} == \fPHP\Branches\forestBranch::DETAIL) {
+					$this->GenerateListView();
+				} else {
+					$this->GenerateFlexView();
+				}
+			} else {
+				$this->GenerateFlexView();
+			}
+		} else if (strval($o_glob->StandardView) == \fPHP\Branches\forestBranch::STATICPAGE) {
+			if ( ($o_glob->Security->SessionData->Exists('lastView')) && ($o_glob->URL->LastBranchId == $o_glob->URL->BranchId) ) {
+				if ($o_glob->Security->SessionData->{'lastView'} == \fPHP\Branches\forestBranch::LIST) {
+					$this->GenerateView();
+				} else if ($o_glob->Security->SessionData->{'lastView'} == \fPHP\Branches\forestBranch::DETAIL) {
+					$this->GenerateListView();
+				} else {
+					$this->GenerateStaticPageView();
+				}
+			} else {
+				$this->GenerateStaticPageView();
+			}
+		}
+	}
 	
+
 	/**
 	 * generates landing page
 	 *
@@ -700,7 +911,8 @@ abstract class forestBranch extends forestRootBranch {
 	protected function loginAction() {
 		$o_glob = \fPHP\Roots\forestGlobals::init();
 		$s_nextAction = 'init';
-		
+		$s_nextActionAfterReload = null;
+
 		if ($o_glob->Security->UserUUID != $o_glob->Trunk->UUIDGuest->PrimaryValue) {
 			throw new forestException(0x1000143E);
 		}
@@ -744,7 +956,7 @@ abstract class forestBranch extends forestRootBranch {
 			$o_submitElement = $o_glob->PostModalForm->GetFormElementByFormId('sys_fphp_SubmitStandard');
 			
 			if ($o_submitElement != null) {
-				$o_submitElement->ButtonText = '<span class="fas fa-check"></span> Login';
+				$o_submitElement->ButtonText = '<span class="bi bi-check-lg h5"></span> Login';
 			}
 			
 			/* add hidden target branch for automatic forwarding */
@@ -866,7 +1078,9 @@ abstract class forestBranch extends forestRootBranch {
 					$s_branch = $_POST['sys_fphp_targetBranch'];
 					$s_action = null;
 					$a_parameters = array();
-					
+					$a_parameterKeys = array();
+					$a_parameterValues = array();
+
 					/* target action in post data */
 					if (array_key_exists('sys_fphp_targetAction', $_POST)) {
 						$s_action = $_POST['sys_fphp_targetAction'];
@@ -894,19 +1108,12 @@ abstract class forestBranch extends forestRootBranch {
 					exit;
 				} else {
 					$s_nextAction = 'RELOADBRANCH';
+					$s_nextActionAfterReload = 'init';
 				}
 			}
 		}
 		
-		if (isset($this->KeepFilter)) {
-			if ($this->KeepFilter->value) {
-				if ($o_glob->Security->SessionData->Exists('last_filter')) {
-					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
-				}
-			}
-		}
-		
-		$this->SetNextAction($s_nextAction);
+		$this->SetNextAction($s_nextAction, $s_nextActionAfterReload);
 	}
 	
 	/**
@@ -924,7 +1131,7 @@ abstract class forestBranch extends forestRootBranch {
 		$o_glob->Security->Logout();
 		
 		header('Location: ./');
-		exit();
+		exit;
 	}
 	
 	/**
@@ -955,7 +1162,7 @@ abstract class forestBranch extends forestRootBranch {
 			$o_username->ValMessage = $o_glob->GetTranslation('formUsernameValMessage');
 			$o_username->Required = true;
 			$o_username->Description = $o_glob->GetTranslation('formUsernameHint');
-			$o_username->DescriptionClass = 'text-right text-info';
+			$o_username->DescriptionClass = 'text-end text-info';
 			$o_glob->PostModalForm->FormElements->Add($o_username);
 			
 			/* add email field */
@@ -975,7 +1182,7 @@ abstract class forestBranch extends forestRootBranch {
 			$o_password->ValMessage = $o_glob->GetTranslation('formPasswordValMessage');
 			$o_password->Required = true;
 			$o_password->Description = $o_glob->GetTranslation('formPasswordHint');
-			$o_password->DescriptionClass = 'text-right text-info';
+			$o_password->DescriptionClass = 'text-end text-info';
 			$o_glob->PostModalForm->FormElements->Add($o_password);
 			
 			/* add password repeat field */
@@ -986,7 +1193,7 @@ abstract class forestBranch extends forestRootBranch {
 			$o_passwordRepeat->ValMessage = $o_glob->GetTranslation('formPasswordRepeatValMessage');
 			$o_passwordRepeat->Required = true;
 			$o_passwordRepeat->Description = $o_glob->GetTranslation('formPasswordHint');
-			$o_passwordRepeat->DescriptionClass = 'text-right text-info';
+			$o_passwordRepeat->DescriptionClass = 'text-end text-info';
 			$o_glob->PostModalForm->FormElements->Add($o_passwordRepeat);
 			
 			/* query captcha form element */
@@ -1017,7 +1224,7 @@ abstract class forestBranch extends forestRootBranch {
 			$o_submitElement = $o_glob->PostModalForm->GetFormElementByFormId('sys_fphp_SubmitStandard');
 			
 			if ($o_submitElement != null) {
-				$o_submitElement->ButtonText = '<span class="fas fa-check"></span> ' . $s_title;
+				$o_submitElement->ButtonText = '<span class="bi bi-check-lg h5"></span> ' . $s_title;
 			}
 		} else {
 			if (array_key_exists('sys_fphp_signUp_Captcha', $_POST)) {
@@ -1128,14 +1335,6 @@ abstract class forestBranch extends forestRootBranch {
 			}
 		}
 		
-		if (isset($this->KeepFilter)) {
-			if ($this->KeepFilter->value) {
-				if ($o_glob->Security->SessionData->Exists('last_filter')) {
-					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
-				}
-			}
-		}
-		
 		$this->SetNextAction('init');
 	}
 	
@@ -1155,8 +1354,8 @@ abstract class forestBranch extends forestRootBranch {
 		$o_records = $this->Twig->GetAllViewRecords();
 		$o_glob->BackupLimit();
 		
-		$o_options = '<div class="btn-group d-none d-xl-flex">' . "\n" . '<div class="btn-group-lg">' . "\n";
-		$o_options_dropdown = '<div class="dropdown d-xl-none dropright">' . "\n" . '<button class="btn btn-light btn-lg" type="button" data-toggle="dropdown"><span class="fas fa-ellipsis-h"></span></button>' . "\n" . '<div class="dropdown-menu btn-actions-collapse">';
+		$o_options = '<div class="d-none d-xl-flex">' . "\n" . '<div class="btn-group btn-group-lg">' . "\n";
+		$o_options_dropdown = '<div class="dropdown d-xl-none dropend mb-2">' . "\n" . '<button class="btn btn-light btn-lg" type="button" data-bs-toggle="dropdown"><span class="bi bi-gear-fill"></span></button>' . "\n" . '<div class="dropdown-menu btn-actions-collapse">';
 
 		/* new link */
 		$a_parameters = $o_glob->URL->Parameters;
@@ -1170,8 +1369,8 @@ abstract class forestBranch extends forestRootBranch {
 		unset($a_parameters['subConstraintKey']);
 		
 		if ($o_glob->Security->CheckUserPermission(null, 'new')) {
-			$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'new', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="fas fa-plus text-success"></span></a>' . "\n";
-			$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'new', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="fas fa-plus text-success"></span></a>' . '<br>' . "\n";
+			$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'new', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="bi bi-plus-circle-fill text-success"></span></a>' . "\n";
+			$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'new', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="bi bi-plus-circle-fill h4 text-success"></span></a>' . '<br>' . "\n";
 		}
 
 		/* edit link */
@@ -1187,8 +1386,8 @@ abstract class forestBranch extends forestRootBranch {
 		$a_parameters['editKey'] = 'inserteditkey';
 		
 		if ($o_glob->Security->CheckUserPermission(null, 'edit')) {
-			$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'edit', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'Edit" class="btn btn-light a-button-edit-record disabled" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="fas fa-edit"></span></a>' . "\n";
-			$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'edit', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'Edit" class="btn btn-light a-button-edit-record disabled" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="fas fa-edit"></span></a>' . '<br>' . "\n";
+			$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'edit', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'Edit" class="btn btn-light a-button-edit-record disabled" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="bi bi-pencil-square"></span></a>' . "\n";
+			$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'edit', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'Edit" class="btn btn-light a-button-edit-record disabled" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="bi bi-pencil-square h4"></span></a>' . '<br>' . "\n";
 		}
 
 		/* delete link */
@@ -1204,13 +1403,26 @@ abstract class forestBranch extends forestRootBranch {
 		$a_parameters['deleteKey'] = 'insertdeletekey';
 		
 		if ($o_glob->Security->CheckUserPermission(null, 'delete')) {
-			$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'Delete" class="btn btn-light a-button-delete-record disabled" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="fas fa-trash text-danger"></span></a>' . "\n";
-			$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'Delete" class="btn btn-light a-button-delete-record disabled" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="fas fa-trash text-danger"></span></a>' . '<br>' . "\n";
+			$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'Delete" class="btn btn-light a-button-delete-record disabled" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="bi bi-trash-fill text-danger"></span></a>' . "\n";
+			$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'Delete" class="btn btn-light a-button-delete-record disabled" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="bi bi-trash-fill h4 text-danger"></span></a>' . '<br>' . "\n";
 		}
 
-		/* check if we have SortColumn set for current branch */
+		/* variable for identifier twig */
+		$o_identifierTwig = null;
+
+		/* check if identifier is configured */
+		if (issetStr($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['Identifier']->PrimaryValue)) {
+			$o_identifierTwig = new \fPHP\Twigs\identifierTwig;
+			
+			/* get identifier record */
+			if (! ($o_identifierTwig->GetRecord(array($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['Identifier']->PrimaryValue))) ) {
+				throw new forestException(0x10001401, array($o_identifierTwig->fphp_Table));
+			}
+		}
+
+		/* check if we have SortColumn set for current branch or identifier is set as use as sort column */
 		if (array_key_exists($this->Twig->fphp_TableUUID, $o_glob->TablesInformation)) {
-			if (issetStr($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['SortColumn']->PrimaryValue)) {
+			if ( (issetStr($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['SortColumn']->PrimaryValue)) || ( ($o_identifierTwig != null) && ($o_identifierTwig->UseAsSortColumn) ) ) {
 				/* move up link */
 				$a_parameters = $o_glob->URL->Parameters;
 				unset($a_parameters['newKey']);
@@ -1224,8 +1436,8 @@ abstract class forestBranch extends forestRootBranch {
 				$a_parameters['editKey'] = 'inserteditkey';
 				
 				if ($o_glob->Security->CheckUserPermission(null, 'moveUp')) {
-					$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'moveUp', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'MoveUp" class="btn btn-light a-button-moveUp-record disabled" title="' . $o_glob->GetTranslation('btnMoveUpText', 1) . '"><span class="fas fa-caret-up"></span></a>' . "\n";
-					$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'moveUp', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'MoveUp" class="btn btn-light a-button-moveUp-record disabled" title="' . $o_glob->GetTranslation('btnMoveUpText', 1) . '"><span class="fas fa-caret-up"></span></a>' . '<br>' . "\n";
+					$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'moveUp', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'MoveUp" class="btn btn-light a-button-moveUp-record disabled" title="' . $o_glob->GetTranslation('btnMoveUpText', 1) . '"><span class="bi bi-caret-up-fill"></span></a>' . "\n";
+					$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'moveUp', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'MoveUp" class="btn btn-light a-button-moveUp-record disabled" title="' . $o_glob->GetTranslation('btnMoveUpText', 1) . '"><span class="bi bi-caret-up-fill h4"></span></a>' . '<br>' . "\n";
 				}
 
 				/* move down link */
@@ -1241,8 +1453,8 @@ abstract class forestBranch extends forestRootBranch {
 				$a_parameters['editKey'] = 'inserteditkey';
 				
 				if ($o_glob->Security->CheckUserPermission(null, 'moveDown')) {
-					$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'moveDown', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'MoveDown" class="btn btn-light a-button-moveDown-record disabled" title="' . $o_glob->GetTranslation('btnMoveDownText', 1) . '"><span class="fas fa-caret-down"></span></a>' . "\n";
-					$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'moveDown', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'MoveDown" class="btn btn-light a-button-moveDown-record disabled" title="' . $o_glob->GetTranslation('btnMoveDownText', 1) . '"><span class="fas fa-caret-down"></span></a>' . '<br>' . "\n";
+					$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'moveDown', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'MoveDown" class="btn btn-light a-button-moveDown-record disabled" title="' . $o_glob->GetTranslation('btnMoveDownText', 1) . '"><span class="bi bi-caret-down-fill"></span></a>' . "\n";
+					$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'moveDown', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'MoveDown" class="btn btn-light a-button-moveDown-record disabled" title="' . $o_glob->GetTranslation('btnMoveDownText', 1) . '"><span class="bi bi-caret-down-fill h4"></span></a>' . '<br>' . "\n";
 				}
 			}
 		}
@@ -1262,8 +1474,8 @@ abstract class forestBranch extends forestRootBranch {
 			$a_parameters['editKey'] = 'insertcheckoutkey';
 			
 			if ($o_glob->Security->CheckUserPermission(null, 'checkout')) {
-				$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkout', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'Checkout" class="btn btn-light a-button-checkout-record disabled" title="' . $o_glob->GetTranslation('btnCheckoutText', 1) . '"><span class="fas fa-lock text-warning"></span></a>' . "\n";
-				$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkout', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'Checkout" class="btn btn-light a-button-checkout-record disabled" title="' . $o_glob->GetTranslation('btnCheckoutText', 1) . '"><span class="fas fa-lock text-warning"></span></a>' . '<br>' . "\n";
+				$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkout', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'Checkout" class="btn btn-light a-button-checkout-record disabled" title="' . $o_glob->GetTranslation('btnCheckoutText', 1) . '"><span class="bi bi-lock-fill text-warning"></span></a>' . "\n";
+				$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkout', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'Checkout" class="btn btn-light a-button-checkout-record disabled" title="' . $o_glob->GetTranslation('btnCheckoutText', 1) . '"><span class="bi bi-lock-fill h4 text-warning"></span></a>' . '<br>' . "\n";
 			}
 			
 			/* checkin link */
@@ -1279,8 +1491,8 @@ abstract class forestBranch extends forestRootBranch {
 			$a_parameters['editKey'] = 'insertcheckinkey';
 			
 			if ($o_glob->Security->CheckUserPermission(null, 'checkin')) {
-				$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkin', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'Checkin" class="btn btn-light a-button-checkin-record disabled" title="' . $o_glob->GetTranslation('btnCheckinText', 1) . '"><span class="fas fa-lock-open text-primary"></span></a>' . "\n";
-				$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkin', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'Checkin" class="btn btn-light a-button-checkin-record disabled" title="' . $o_glob->GetTranslation('btnCheckinText', 1) . '"><span class="fas fa-lock-open text-primary"></span></a>' . '<br>' . "\n";
+				$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkin', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'Checkin" class="btn btn-light a-button-checkin-record disabled" title="' . $o_glob->GetTranslation('btnCheckinText', 1) . '"><span class="bi bi-unlock-fill text-primary"></span></a>' . "\n";
+				$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkin', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'Checkin" class="btn btn-light a-button-checkin-record disabled" title="' . $o_glob->GetTranslation('btnCheckinText', 1) . '"><span class="bi bi-unlock-fill h4 text-primary"></span></a>' . '<br>' . "\n";
 			}
 		}
 		
@@ -1297,8 +1509,8 @@ abstract class forestBranch extends forestRootBranch {
 		$a_parameters['viewKey'] = 'insertviewkey';
 		
 		if ($o_glob->Security->CheckUserPermission(null, 'view')) {
-			$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'view', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'View" class="btn btn-light a-button-view-record disabled" title="' . $o_glob->GetTranslation('btnViewText', 1) . '"><span class="fas fa-search-plus"></span></a>' . "\n";
-			$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'view', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'View" class="btn btn-light a-button-view-record disabled" title="' . $o_glob->GetTranslation('btnViewText', 1) . '"><span class="fas fa-search-plus"></span></a>' . '<br>'. "\n";
+			$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'view', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'View" class="btn btn-light a-button-view-record disabled" title="' . $o_glob->GetTranslation('btnViewText', 1) . '"><span class="bi bi-search"></span></a>' . "\n";
+			$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'view', $a_parameters) . '" id="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'View" class="btn btn-light a-button-view-record disabled" title="' . $o_glob->GetTranslation('btnViewText', 1) . '"><span class="bi bi-search h4"></span></a>' . '<br>'. "\n";
 		}
 
 		/* details link */
@@ -1312,13 +1524,13 @@ abstract class forestBranch extends forestRootBranch {
 		unset($a_parameters['subConstraintKey']);
 		
 		if ($o_glob->Security->CheckUserPermission(null, 'view')) {
-			$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, (($this->OriginalView == \fPHP\Branches\forestBranch::LISTVIEW) ? 'view' : null), $a_parameters) . '" class="btn btn-light"><span class="fas fa-info-circle text-info" title="' . $o_glob->GetTranslation('btnDetailsText', 1) . '"></span></a>' . "\n";
-			$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, (($this->OriginalView == \fPHP\Branches\forestBranch::LISTVIEW) ? 'view' : null), $a_parameters) . '" class="btn btn-light"><span class="fas fa-info-circle text-info" title="' . $o_glob->GetTranslation('btnDetailsText', 1) . '"></span></a>' . '<br>' . "\n";
+			$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, (($o_glob->OriginalView == \fPHP\Branches\forestBranch::LIST) ? 'view' : null), $a_parameters) . '" class="btn btn-light"><span class="bi bi-info-circle-fill text-info" title="' . $o_glob->GetTranslation('btnDetailsText', 1) . '"></span></a>' . "\n";
+			$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, (($o_glob->OriginalView == \fPHP\Branches\forestBranch::LIST) ? 'view' : null), $a_parameters) . '" class="btn btn-light"><span class="bi bi-info-circle-fill h4 text-info" title="' . $o_glob->GetTranslation('btnDetailsText', 1) . '"></span></a>' . '<br>' . "\n";
 		}
 		
 		/* add columns link */
-		$o_options .= '<a href="#" class="btn btn-light modal-call" data-modal-call="#' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'ListViewAddColumns" title="' . $o_glob->GetTranslation('btnAddColumnsText', 1) . '"><span class="fas fa-cog"></span></a>' . "\n";
-		$o_options_dropdown .= '<a href="#" class="btn btn-light modal-call" data-modal-call="#' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'ListViewAddColumns" title="' . $o_glob->GetTranslation('btnAddColumnsText', 1) . '"><span class="fas fa-cog"></span></a>' . '<br>' . "\n";
+		$o_options .= '<a href="#" class="btn btn-light modal-call" data-modal-call="#' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'ListViewAddColumns" title="' . $o_glob->GetTranslation('btnAddColumnsText', 1) . '"><span class="bi bi-node-plus-fill"></span></a>' . "\n";
+		$o_options_dropdown .= '<a href="#" class="btn btn-light modal-call" data-modal-call="#' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . 'ListViewAddColumns" title="' . $o_glob->GetTranslation('btnAddColumnsText', 1) . '"><span class="bi bi-node-plus-fill h4"></span></a>' . '<br>' . "\n";
 		
 		$o_options .= '</div>' . "\n" . '</div>' . "\n";
 		$o_options_dropdown .= '</div>' . "\n" . '</div>' . "\n";
@@ -1365,7 +1577,7 @@ abstract class forestBranch extends forestRootBranch {
 			}
 			
 			if ($s_forestData == 'forestCombination') {
-				$s_tableHead .= '<th><div class="btn-group"><a href="#" class="btn btn-light">' . $o_glob->GetTranslation('sort' . $s_columnHead) . '</a></div></th>' . "\n";
+				$s_tableHead .= '<th><div class="btn-group"><a href="#" class="btn btn-light text-nowrap">' . $o_glob->GetTranslation('sort' . $s_columnHead) . '</a></div></th>' . "\n";
 			} else {
 				$s_tableHead .= '<th>' . $o_glob->GetSort($s_columnHead)->ToString($o_glob->GetTranslation('sort' . $s_columnHead)) . '</th>' . "\n";
 			}
@@ -1382,7 +1594,7 @@ abstract class forestBranch extends forestRootBranch {
 					$o_checkoutTwig = new \fPHP\Twigs\checkoutTwig;
 					
 					if ($o_checkoutTwig->GetRecordPrimary(array($o_record->UUID), array('ForeignUUID'))) {
-						$s_tableRows .= ' class="bg-warning"';
+						$s_tableRows .= ' class="table-warning"';
 					}
 					
 					$s_tableRows .= ' data-fphp_uuid="' . $o_glob->URL->Branch . $o_glob->URL->Action . $this->Twig->fphp_Table . ';' . $o_record->UUID;
@@ -1448,7 +1660,7 @@ abstract class forestBranch extends forestRootBranch {
 		$this->RenderSearchForm($s_searchForm, $s_searchTerms);
 		
 		$o_glob->RestoreLimit();
-		$o_glob->Security->SessionData->Add(\fPHP\Branches\forestBranch::LISTVIEW, 'lastView');
+		$o_glob->Security->SessionData->Add(\fPHP\Branches\forestBranch::LIST, 'lastView');
 		
 		$o_listViewOptionsTop = new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::LISTVIEWOPTIONSTOP, array( $o_options, strval($o_glob->Limit), $s_searchForm, $s_searchTerms, strval($o_addColumnsForm) ));
 		$o_listViewOptionsDown = new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::LISTVIEWOPTIONSDOWN, array($o_options, strval($o_glob->Limit)));
@@ -1478,9 +1690,9 @@ abstract class forestBranch extends forestRootBranch {
 		if ( ($p_s_formElement == \fPHP\Forms\forestFormElement::CHECKBOX) && ($o_glob->TablefieldsDictionary->{$p_s_dictionaryKey}->ForestDataName == 'forestBool') ) {
 			/* render checkbox value as icons */
 			if (boolval($p_o_record->{$p_s_column}) == true) {
-				$p_s_value = '<span class="fas fa-check text-success"></span>';
+				$p_s_value = '<span class="bi bi-check-lg h5 text-success"></span>';
 			} else {
-				$p_s_value = '<span class="fas fa-times text-danger"></span>';
+				$p_s_value = '<span class="bi bi-x-lg text-danger"></span>';
 			}
 		} else if ($p_s_formElement == \fPHP\Forms\forestFormElement::WEEK) {
 			/* render calender week value */
@@ -1514,7 +1726,7 @@ abstract class forestBranch extends forestRootBranch {
 		} else if ($p_s_formElement == \fPHP\Forms\forestFormElement::URL) {
 			/* render url value as usable link element */
 			if (issetStr($p_o_record->{$p_s_column})) {
-				$p_s_value = '<a href="' . $p_o_record->{$p_s_column} . '" target="_blank" title="' . $p_o_record->{$p_s_column} . '"><span class="fas fa-link"></span></a>';
+				$p_s_value = '<a href="' . $p_o_record->{$p_s_column} . '" target="_blank" title="' . $p_o_record->{$p_s_column} . '"><span class="bi bi-link-45deg h5"></span></a>';
 			}
 		} else if ($p_s_formElement == \fPHP\Forms\forestFormElement::COLOR) {
 			/* render color value by showing a small rectangle with the color as background color */
@@ -1593,7 +1805,7 @@ abstract class forestBranch extends forestRootBranch {
 						
 						if (!$b_thumbnail) {
 							/* render file as downloadable link element */
-							$p_s_value = '<a href="' . $s_path . $o_filesTwig->Name . '" target="_blank" title="' . $o_filesTwig->DisplayName . '" download="' . $o_filesTwig->DisplayName . '"><span class="fas fa-file"></span></a>';
+							$p_s_value = '<a href="' . $s_path . $o_filesTwig->Name . '" target="_blank" title="' . $o_filesTwig->DisplayName . '" download="' . $o_filesTwig->DisplayName . '"><span class="bi bi-file-earmark-fill"></span></a>';
 						}
 					}
 				}
@@ -1625,7 +1837,7 @@ abstract class forestBranch extends forestRootBranch {
 										$p_s_value .= ' ';
 										
 										if (!empty($a_valueOptions)) {
-											$p_s_value .= '<span class="badge badge-primary">';
+											$p_s_value .= '<span class="badge text-bg-primary">';
 										}
 										
 										$p_s_value .= (($b_isAssocOpt) ? $s_optgroup_option_label : $s_optgroup_option_value);
@@ -1641,7 +1853,7 @@ abstract class forestBranch extends forestRootBranch {
 								$p_s_value .= ' ';
 										
 								if (!empty($a_valueOptions)) {
-									$p_s_value .= '<span class="badge badge-primary">';
+									$p_s_value .= '<span class="badge text-bg-primary">';
 								}
 								
 								$p_s_value .= (($b_isAssoc) ? $s_option_label : $s_option_value);
@@ -1673,7 +1885,7 @@ abstract class forestBranch extends forestRootBranch {
 							$p_s_value .= ' ';
 							
 							if ($i_results > 1) {
-								$p_s_value .= '<span class="badge badge-primary">';
+								$p_s_value .= '<span class="badge text-bg-primary">';
 							}
 							
 							$p_s_value .= (($b_isAssoc) ? $s_option_label : $s_option_value);
@@ -1839,7 +2051,7 @@ abstract class forestBranch extends forestRootBranch {
 		$p_o_form->FormTabConfiguration->loadJSON($s_formObjectJSONsettings);
 		
 		/* because it switches back to detail view when original is detail */
-		if ($this->OriginalView != $this->StandardView) {
+		if ($o_glob->OriginalView != strval($o_glob->StandardView)) {
 			$s_action = 'view';
 		} else {
 			$s_action = $o_glob->URL->Action;
@@ -1967,7 +2179,7 @@ abstract class forestBranch extends forestRootBranch {
 			
 			$o_button = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::BUTTON);
 			$o_button->loadJSON($o_formelementTwig->JSONEncodedSettings);
-			$o_button->Class = 'btn btn-success btn-default pull-right button-modal-call-add-column';
+			$o_button->Class = 'btn btn-success btn-default button-modal-call-add-column';
 			$o_button->Data = 'form_id="' . $p_o_form->FormObject->Id . '"';
 			$o_button->ButtonText = htmlspecialchars_decode($o_button->ButtonText);
 			$p_o_form->FormFooterElements->Add($o_button);
@@ -1999,119 +2211,504 @@ abstract class forestBranch extends forestRootBranch {
 	protected function RenderSearchForm(&$p_s_searchForm, &$p_s_searchTerms) {
 		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
-		if (isset($this->Filter)) {
-			if ($this->Filter->value) {
-				$p_s_searchForm .= strval($this->FilterForm->FormObject);
-				
-				$p_s_searchForm .= '
-				<div class="input-group">
-					<div class="input-group-btn filter-panel dropright">
-						<button type="button" class="btn btn-light dropdown-toggle" data-toggle="dropdown">
-							<span id="filterDropDownButton">' . $o_glob->GetTranslation('FilterDropDownText', 1) . '</span> <span class="caret"></span>
-						</button>
-						<div class="dropdown-menu">';
-							
-							$b_columns = false;
-							
-							/* if identifier is configured */
-							if (issetStr($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['Identifier']->PrimaryValue)) {
-								$p_s_searchForm .= '<a href="#Identifier" class="dropdown-item">' . $o_glob->GetTranslation('sortIdentifier') . '</a>';
-								$b_columns = true;
-							}
-							
-							foreach ($this->Twig->fphp_Mapping as $s_column) {
-								/* skip fields which are already used within filter */
-								if ($o_glob->Security->SessionData->Exists('filter')) {
-									if ( (in_array($s_column, array_keys($o_glob->Security->SessionData->{'filter'}))) || (in_array('FilterAllColumns', array_keys($o_glob->Security->SessionData->{'filter'}))) ) {
-										continue;
-									}
-								}
-								
-								/* skip standard Id + UUID column */
-								if ( ($s_column != 'Id') && ($s_column != 'UUID') ) {
-									/* add only tablefields which have a configuration in the database */
-									if ($o_glob->TablefieldsDictionary->Exists($this->Twig->fphp_Table . '_' . $s_column)) {
-										/* skip forestLookup and Password fields */
-										if ( ($o_glob->TablefieldsDictionary->{$this->Twig->fphp_Table . '_' . $s_column}->ForestDataName != 'forestLookup') && ($o_glob->TablefieldsDictionary->{$this->Twig->fphp_Table . '_' . $s_column}->FormElementName != \fPHP\Forms\forestFormElement::PASSWORD) ) {
-											$p_s_searchForm .= '<a href="#' . $s_column . '" class="dropdown-item">' . $o_glob->GetTranslation('sort' . $s_column) . '</a>';
-											$b_columns = true;
-										}
-									}
-								}
-							}
-							
-							/* if info columns are configured */
-							$i_infoColumns = $o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['InfoColumns'];
+		if ($o_glob->BranchTree['Id'][$o_glob->URL->BranchId]['Filter']) {
+			$p_s_searchForm .= strval($this->FilterForm->FormObject);
 			
-							if ($i_infoColumns == 10) {
-								$p_s_searchForm .= '<a href="#Created" class="dropdown-item">' . $o_glob->GetTranslation('sortCreated') . '</a>';
-								$p_s_searchForm .= '<a href="#CreatedBy" class="dropdown-item">' . $o_glob->GetTranslation('sortCreatedBy') . '</a>';
-								$b_columns = true;
-							} else if ($i_infoColumns == 100) {
-								$p_s_searchForm .= '<a href="#Modified" class="dropdown-item">' . $o_glob->GetTranslation('sortModified') . '</a>';
-								$p_s_searchForm .= '<a href="#ModifiedBy" class="dropdown-item">' . $o_glob->GetTranslation('sortModifiedBy') . '</a>';
-								$b_columns = true;
-							} else if ($i_infoColumns == 1000) {
-								$p_s_searchForm .= '<a href="#Created" class="dropdown-item">' . $o_glob->GetTranslation('sortCreated') . '</a>';
-								$p_s_searchForm .= '<a href="#CreatedBy" class="dropdown-item">' . $o_glob->GetTranslation('sortCreatedBy') . '</a>';
-								$p_s_searchForm .= '<a href="#Modified" class="dropdown-item">' . $o_glob->GetTranslation('sortModified') . '</a>';
-								$p_s_searchForm .= '<a href="#ModifiedBy" class="dropdown-item">' . $o_glob->GetTranslation('sortModifiedBy') . '</a>';
-								$b_columns = true;
-							}
-							
-							$b_all = true;
-							
-							/* if we are using at least one column for filtering, we cannot use option to filter "all columns" anymore */
-							if ($o_glob->Security->SessionData->Exists('filter')) {
-								if (count($o_glob->Security->SessionData->{'filter'}) > 0) {
-									$b_all = false;
-								}
-							}
-							
-							if ($b_all) {
-								$p_s_searchForm .= '<div class="dropdown-divider"></div>
-								<a href="#FilterAllColumns" class="dropdown-item">' . $o_glob->GetTranslation('FilterAllColumnsText', 1) . '</a>';
-							}
-							
-							/* if we have no columns, add disabled option that all columns are in use right now */
-							if (!$b_columns) {
-								$p_s_searchForm .= '<a href="#" class="dropdown-item disabled">' . $o_glob->GetTranslation('FilterAllColumnsUsedText', 1) . '</a>';
-							}
-							
-						$p_s_searchForm .= '</div>
-					</div>' . "\n";
-				
-				foreach ($this->FilterForm->FormElements as $o_formElement) {
-					$p_s_searchForm .= strval($o_formElement);
-				}
-				
-				$p_s_searchForm .= '</div>' . "\n";
-				$p_s_searchForm .= '</form>' . "\n";
-				
-				/* render currently used filter values and show them as labels next to search form */
-				if ($o_glob->Security->SessionData->Exists('filter')) {
-					foreach ($o_glob->Security->SessionData->{'filter'} as $s_filterColumn => $s_filterValue) {
-						if ($o_glob->TablefieldsDictionary->Exists($this->Twig->fphp_Table . '_' . $s_filterColumn)) {
-							if ($o_glob->TablefieldsDictionary->{$this->Twig->fphp_Table . '_' . $s_filterColumn}->FormElementName == \fPHP\Forms\forestFormElement::PASSWORD) {
+			$p_s_searchForm .= '
+			<div class="input-group filter-panel dropend">
+				<button type="button" class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+					<span id="filterDropDownButton">' . $o_glob->GetTranslation('FilterDropDownText', 1) . '</span> <span class="caret"></span>
+				</button>
+				<ul class="dropdown-menu">';
+					
+					$b_columns = false;
+					
+					/* if identifier is configured */
+					if (issetStr($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['Identifier']->PrimaryValue)) {
+						$p_s_searchForm .= '<li><a href="#Identifier" class="dropdown-item">' . $o_glob->GetTranslation('sortIdentifier') . '</a></li>';
+						$b_columns = true;
+					}
+					
+					foreach ($this->Twig->fphp_Mapping as $s_column) {
+						/* skip fields which are already used within filter */
+						if ($o_glob->Security->SessionData->Exists('filter')) {
+							if ( (in_array($s_column, array_keys($o_glob->Security->SessionData->{'filter'}))) || (in_array('FilterAllColumns', array_keys($o_glob->Security->SessionData->{'filter'}))) ) {
 								continue;
 							}
 						}
 						
-						/* translate user uuid to user name */
-						if ( ($s_filterColumn == 'CreatedBy') || ($s_filterColumn == 'ModifiedBy') ) {
-							$s_filterValue = $o_glob->GetUserNameByUUID($s_filterValue);
+						/* skip standard Id + UUID column */
+						if ( ($s_column != 'Id') && ($s_column != 'UUID') ) {
+							/* add only tablefields which have a configuration in the database */
+							if ($o_glob->TablefieldsDictionary->Exists($this->Twig->fphp_Table . '_' . $s_column)) {
+								/* skip forestLookup and Password fields */
+								if ( ($o_glob->TablefieldsDictionary->{$this->Twig->fphp_Table . '_' . $s_column}->ForestDataName != 'forestLookup') && ($o_glob->TablefieldsDictionary->{$this->Twig->fphp_Table . '_' . $s_column}->FormElementName != \fPHP\Forms\forestFormElement::PASSWORD) ) {
+									$p_s_searchForm .= '<li><a href="#' . $s_column . '" class="dropdown-item">' . $o_glob->GetTranslation('sort' . $s_column) . '</a></li>';
+									$b_columns = true;
+								}
+							}
 						}
-						
-						$s_displayFilterColumn = $o_glob->GetTranslation('sort' . $s_filterColumn);
-						$s_filterValue = htmlspecialchars($s_filterValue, ( ENT_QUOTES | ENT_HTML5 ));
-						$p_s_searchTerms .= '<a href="#' . $s_filterColumn . '"><button type="button" class="btn btn-primary"><span class="fas fa-times text-dark"></span> ' . (($s_filterColumn == 'FilterAllColumns') ? '<span class="fas fa-asterisk"></span> ' : $s_displayFilterColumn) . ': ' . $s_filterValue . '</button></a>' . "\n";
 					}
+					
+					/* if info columns are configured */
+					$i_infoColumns = $o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['InfoColumns'];
+	
+					if ($i_infoColumns == 10) {
+						$p_s_searchForm .= '<li><a href="#Created" class="dropdown-item">' . $o_glob->GetTranslation('sortCreated') . '</a></li>';
+						$p_s_searchForm .= '<li><a href="#CreatedBy" class="dropdown-item">' . $o_glob->GetTranslation('sortCreatedBy') . '</a></li>';
+						$b_columns = true;
+					} else if ($i_infoColumns == 100) {
+						$p_s_searchForm .= '<li><a href="#Modified" class="dropdown-item">' . $o_glob->GetTranslation('sortModified') . '</a></li>';
+						$p_s_searchForm .= '<li><a href="#ModifiedBy" class="dropdown-item">' . $o_glob->GetTranslation('sortModifiedBy') . '</a></li>';
+						$b_columns = true;
+					} else if ($i_infoColumns == 1000) {
+						$p_s_searchForm .= '<li><a href="#Created" class="dropdown-item">' . $o_glob->GetTranslation('sortCreated') . '</a></li>';
+						$p_s_searchForm .= '<li><a href="#CreatedBy" class="dropdown-item">' . $o_glob->GetTranslation('sortCreatedBy') . '</a></li>';
+						$p_s_searchForm .= '<li><a href="#Modified" class="dropdown-item">' . $o_glob->GetTranslation('sortModified') . '</a></li>';
+						$p_s_searchForm .= '<li><a href="#ModifiedBy" class="dropdown-item">' . $o_glob->GetTranslation('sortModifiedBy') . '</a></li>';
+						$b_columns = true;
+					}
+					
+					$b_all = true;
+					
+					/* if we are using at least one column for filtering, we cannot use option to filter "all columns" anymore */
+					if ($o_glob->Security->SessionData->Exists('filter')) {
+						if (count($o_glob->Security->SessionData->{'filter'}) > 0) {
+							$b_all = false;
+						}
+					}
+					
+					if ($b_all) {
+						$p_s_searchForm .= '<li><hr class="dropdown-divider"></li>
+						<li><a href="#FilterAllColumns" class="dropdown-item">' . $o_glob->GetTranslation('FilterAllColumnsText', 1) . '</a></li>';
+					}
+					
+					/* if we have no columns, add disabled option that all columns are in use right now */
+					if (!$b_columns) {
+						$p_s_searchForm .= '<li><a href="#" class="dropdown-item disabled">' . $o_glob->GetTranslation('FilterAllColumnsUsedText', 1) . '</a></li>';
+					}
+					
+				$p_s_searchForm .= '</ul>' . "\n";
+			
+			foreach ($this->FilterForm->FormElements as $o_formElement) {
+				$p_s_searchForm .= strval($o_formElement);
+			}
+			
+			$p_s_searchForm .= '</div>' . "\n";
+			$p_s_searchForm .= '</form>' . "\n";
+			
+			/* render currently used filter values and show them as labels next to search form */
+			if ($o_glob->Security->SessionData->Exists('filter')) {
+				foreach ($o_glob->Security->SessionData->{'filter'} as $s_filterColumn => $s_filterValue) {
+					if ($o_glob->TablefieldsDictionary->Exists($this->Twig->fphp_Table . '_' . $s_filterColumn)) {
+						if ($o_glob->TablefieldsDictionary->{$this->Twig->fphp_Table . '_' . $s_filterColumn}->FormElementName == \fPHP\Forms\forestFormElement::PASSWORD) {
+							continue;
+						}
+					}
+					
+					/* translate user uuid to user name */
+					if ( ($s_filterColumn == 'CreatedBy') || ($s_filterColumn == 'ModifiedBy') ) {
+						$s_filterValue = $o_glob->GetUserNameByUUID($s_filterValue);
+					}
+					
+					$s_displayFilterColumn = $o_glob->GetTranslation('sort' . $s_filterColumn);
+					$s_filterValue = htmlspecialchars($s_filterValue, ( ENT_QUOTES | ENT_HTML5 ));
+					$p_s_searchTerms .= '<a href="#' . $s_filterColumn . '"><button type="button" class="btn btn-primary"><span class="bi bi-x-lg text-dark"></span> ' . (($s_filterColumn == 'FilterAllColumns') ? '<span class="bi bi-asterisk"></span> ' : $s_displayFilterColumn) . ': ' . $s_filterValue . '</button></a>' . "\n";
 				}
 			}
 		}
 	}
 	
+
+	/**
+	 * generates slide gallery view
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access protected
+	 * @static no
+	 */
+	protected function GenerateSlideGalleryView($p_o_twig = null, $p_s_slideGalleryMarginTop = '') {
+		$o_glob = \fPHP\Roots\forestGlobals::init();
+		
+		$s_branch = $o_glob->URL->Branch;
+		$a_branches = $o_glob->URL->Branches;
+
+		/* get all records with limit settings */
+		if ($p_o_twig != null) {
+			$o_records = $p_o_twig->GetAllRecords();
+			$s_branch = $o_glob->URL->VirtualBranch;
+			$a_branches = $o_glob->URL->VirtualBranches;
+		} else {
+			$o_records = $this->Twig->GetAllRecords();
+		}
+		
+		$o_glob->BackupLimit();
+		
+		$b_first = true;
+		
+		$s_slideGalleryIndicators = '';
+		$s_slideGalleryIndicatorNumber = 0;
+		$s_slideGalleryItems = '';
+		
+		/* render table rows as carousel gallery elements */
+		if ($o_records->Twigs->Count() > 0) {
+			foreach ($o_records->Twigs as $o_record) {
+				if ($b_first) {
+					$s_slideGalleryIndicators .= '<button type="button" data-bs-target="#carousel' . $s_branch . 'Indicators" data-bs-slide-to="' . $s_slideGalleryIndicatorNumber++ . '" class="active" aria-current="true" aria-label="' . $o_record->Title . '"></button>' . "\n";
+				} else {
+					$s_slideGalleryIndicators .= '<button type="button" data-bs-target="#carousel' . $s_branch . 'Indicators" data-bs-slide-to="' . $s_slideGalleryIndicatorNumber++ . '" aria-label="' . $o_record->Title . '"></button>' . "\n";
+				}
+
+				if ($b_first) {
+					$s_slideGalleryItems .= '<div class="carousel-item active">' . "\n";
+				} else {
+					$s_slideGalleryItems .= '<div class="carousel-item">' . "\n";
+				}
+
+				if ($b_first) {
+					$b_first = false;
+				}
+
+				/* render slide picture */
+				$o_filesTwig = new \fPHP\Twigs\filesTwig;
+				
+				if ($o_filesTwig->GetRecord(array($o_record->Slide))) {
+					$s_folder = substr(pathinfo($o_filesTwig->Name, PATHINFO_FILENAME), 6, 2);
+					
+					$s_path = '';
+
+					if (count($a_branches) > 0) {
+						foreach($a_branches as $s_foo) {
+							$s_path .= $s_foo . '/';
+						}
+					}
+					
+					if ($p_o_twig == null) {
+						$s_path .= $s_branch . '/';
+					}
+					
+					$s_path = './trunk/' . $s_path . 'fphp_files/' . $s_folder . '/';
+					
+					if (is_dir($s_path)) {
+						if (file_exists($s_path . $o_filesTwig->Name)) {
+							/* check if we have activated render option within json settings of file field, to create other size version of the file/picture in runtime */
+							$b_render = false;
+
+							if ($p_o_twig == null) {
+								$s_JSONEncodedSettings = str_replace('&quot;', '"', $o_glob->TablefieldsDictionary->{$this->Twig->fphp_Table . '_Slide'}->JSONEncodedSettings);
+							} else {
+								$s_JSONEncodedSettings = str_replace('&quot;', '"', $o_glob->TablefieldsDictionary->{$p_o_twig->fphp_Table . '_Slide'}->JSONEncodedSettings);
+							}
+
+							$a_settings = json_decode($s_JSONEncodedSettings, true);
+							
+							if (array_key_exists('Accept', $a_settings)) {
+								if ( (\fPHP\Helper\forestStringLib::StartsWith($a_settings['Accept'], 'image/')) || (\fPHP\Helper\forestStringLib::StartsWith($a_settings['Accept'], 'IMAGE/')) ) {
+									if (array_key_exists('Render', $a_settings)) {
+										if ($a_settings['Render'] == true) {
+											if (array_key_exists('RenderMaxWidth', $a_settings)) {
+												/* render file as picture with other size */
+												$s_slideGalleryItems .= '<img src="' . \fPHP\Helper\forestLink::Link($s_branch, 'fphp_imageThumbnail', array('fphp_thumbnail' => $o_filesTwig->UUID, 'fphp_thumbnail_width' => $a_settings['RenderMaxWidth'])) . '" class="d-block w-100" alt="' . $o_filesTwig->DisplayName . '" title="' . $o_record->Title . '">' . "\n";
+												$b_render = true;
+											}
+										}
+									}
+								}
+							}
+							
+							if (!$b_render) {
+								/* render file as picture as it is */
+								$s_slideGalleryItems .= '<img src="' . $s_path . $o_filesTwig->Name . '" class="d-block w-100" alt="' . $o_filesTwig->DisplayName . '" title="' . $o_record->Title . '">' . "\n";
+							}
+						}
+					}
+				}
+
+				$s_slideGalleryItems .= '</div>' . "\n";
+			}
+		} else {
+			/* no records found */
+			$o_glob->SystemMessages->Add(new forestException(0x10001400));
+		}
+		
+		$o_glob->RestoreLimit();
+		
+		if ($p_o_twig != null) {
+			/* use template to render general carousel gallery view and return content */
+			return new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SLIDEGALLERYVIEWPART, array($s_branch, $p_s_slideGalleryMarginTop, $s_slideGalleryIndicators, $s_slideGalleryItems));
+		} else {
+			$o_options = '<div class="d-none d-xl-flex">' . "\n" . '<div class="btn-group btn-group-lg">' . "\n";
+			$o_options_dropdown = '<div class="dropdown d-xl-none dropend mb-2">' . "\n" . '<button class="btn btn-light btn-lg" type="button" data-bs-toggle="dropdown"><span class="bi bi-gear-fill"></span></button>' . "\n" . '<div class="dropdown-menu btn-actions-collapse">';
 	
+			/* list link */
+			if ($o_glob->Security->CheckUserPermission(null, 'view')) {
+				$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($s_branch, (($o_glob->OriginalView == \fPHP\Branches\forestBranch::LIST) ? null : 'view')) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="bi bi-card-list h4 text-info"></span></a>' . "\n";
+				$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($s_branch, (($o_glob->OriginalView == \fPHP\Branches\forestBranch::LIST) ? null : 'view')) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="bi bi-card-list h4 text-info"></span></a>' . "\n";
+			}
+	
+			$o_options .= '</div>' . "\n" . '</div>' . "\n";
+			$o_options_dropdown .= '</div>' . "\n" . '</div>' . "\n";
+			
+			$o_options = $o_options . $o_options_dropdown;
+
+			$o_glob->Security->SessionData->Add(\fPHP\Branches\forestBranch::SLIDEGALLERY, 'lastView');
+		
+			/* create carousel gallery view top and down elements */
+			$o_viewOptionsTop = new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::VIEWOPTIONSTOP, array( $o_options, '', '', '' ));
+			$o_viewOptionsDown = new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::VIEWOPTIONSDOWN, array( $o_options, '' ));
+		
+			/* use template to render general carousel gallery view and store it under global templates */
+			$o_glob->Templates->Add(new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SLIDEGALLERYVIEW, array($o_viewOptionsTop, $s_branch, $s_slideGalleryIndicators, $s_slideGalleryItems, $o_viewOptionsDown)), $s_branch . 'SlideGalleryView');
+		}
+	}
+	
+
+	/**
+	 * generates slide calender view
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access protected
+	 * @static no
+	 */
+	protected function GenerateSlideCalenderView($p_o_twig = null, $p_s_slideCalenderMarginTop = '') {
+		$o_glob = \fPHP\Roots\forestGlobals::init();
+		
+		$s_branch = $o_glob->URL->Branch;
+		$i_branchId = $o_glob->URL->BranchId;
+
+		/* get all records with limit settings */
+		if ($p_o_twig != null) {
+			$o_records = $p_o_twig->GetAllRecords();
+			$s_branch = $o_glob->URL->VirtualBranch;
+			$i_branchId = $o_glob->URL->VirtualBranchId;
+		} else {
+			$o_records = $this->Twig->GetAllRecords();
+		}
+		
+		$o_glob->BackupLimit();
+		
+		$s_carouselAdditionalClass = 'h-auto p-3 ' . $p_s_slideCalenderMarginTop;
+		$s_slideCalenderItems = '';
+		$a_months = array();
+
+		/* render table rows as carousel calender elements */
+		if ($o_records->Twigs->Count() > 0) {
+			foreach ($o_records->Twigs as $o_record) {
+				$a_months[$o_record->Start->ToString('Y_m')][] = $o_record;
+			}
+			
+			foreach ($a_months as $s_year_month => $o_records) {
+				$s_slideCalenderItems .= '<div id="carousel_' . $s_year_month . '" class="carousel-item">' . "\n";
+
+				$a_year_month = explode('_', $s_year_month);
+
+				$s_month = '';
+
+				switch ($a_year_month[1]) {
+					case '01': $s_month = 'monthJanuary'; break;
+					case '02': $s_month = 'monthFebruary'; break;
+					case '03': $s_month = 'monthMarch'; break;
+					case '04': $s_month = 'monthApril'; break;
+					case '05': $s_month = 'monthMay'; break;
+					case '06': $s_month = 'monthJune'; break;
+					case '07': $s_month = 'monthJuly'; break;
+					case '08': $s_month = 'monthAugust'; break;
+					case '09': $s_month = 'monthSeptember'; break;
+					case '10': $s_month = 'monthOctober'; break;
+					case '11': $s_month = 'monthNovember'; break;
+					case '12': $s_month = 'monthDecember'; break;
+				}
+
+				$s_slideCalenderItems .= "\t" . '<h1 class="display-4 text-dark w-75 m-auto mb-2">' . $a_year_month[0] . ' ' . $o_glob->GetTranslation($s_month, 1) . '</h1>' . "\n";
+
+				$s_slideCalenderItems .= "\t" . '<table class="table table-striped w-75 m-auto">' . "\n";
+				$s_slideCalenderItems .= "\t\t" . '<thead class="table-dark">' . "\n";
+				$s_slideCalenderItems .= "\t\t\t" . '<tr>' . "\n";
+				$s_slideCalenderItems .= "\t\t\t\t" . '<th scope="col">' . $o_glob->GetTranslation('sortDate', $i_branchId) . '</th>' . "\n";
+				$s_slideCalenderItems .= "\t\t\t\t" . '<th scope="col">' . $o_glob->GetTranslation('sortEvent', $i_branchId) . '</th>' . "\n";
+				$s_slideCalenderItems .= "\t\t\t" . '</tr>' . "\n";
+				$s_slideCalenderItems .= "\t\t" . '</thead>' . "\n";
+				$s_slideCalenderItems .= "\t\t" . '<tbody>' . "\n";
+				
+				foreach ($o_records as $o_record) {
+					$s_slideCalenderItems .= "\t\t\t" . '<tr>' . "\n";
+					
+					$s_span_start = '';
+					$s_span_end = '';
+
+					if ($o_record->Highlight) {
+						$s_span_start .= '<b>';
+					}
+
+					if ($o_record->Italic) {
+						$s_span_start .= '<i>';
+					}
+
+					if (issetStr($o_record->Color)) {
+						$s_span_start .= '<span class="' . $o_record->Color . '">';
+						$s_span_end .= '</span>';
+					}
+
+					if ($o_record->Italic) {
+						$s_span_end .= '</i>';
+					}
+
+					if ($o_record->Highlight) {
+						$s_span_end .= '</b>';
+					}
+
+					if (issetStr($o_record->End)) {
+						$s_slideCalenderItems .= "\t\t\t\t" . '<td>' . $s_span_start . $o_record->Start->ToString($o_glob->Trunk->DateFormat) . '-' . $o_record->End->ToString($o_glob->Trunk->DateFormat) . $s_span_end . '</td>' . "\n";
+					} else {
+						$i_weekday = intval($o_record->Start->ToString('w'));
+						$s_weekday = '';
+
+						switch ($i_weekday) {
+							case 0: $s_weekday = $o_glob->GetTranslation('dayShortSunday', 1); break;
+							case 1: $s_weekday = $o_glob->GetTranslation('dayShortMonday', 1); break;
+							case 2: $s_weekday = $o_glob->GetTranslation('dayShortTuesday', 1); break;
+							case 3: $s_weekday = $o_glob->GetTranslation('dayShortWednesday', 1); break;
+							case 4: $s_weekday = $o_glob->GetTranslation('dayShortThursday', 1); break;
+							case 5: $s_weekday = $o_glob->GetTranslation('dayShortFriday', 1); break;
+							case 6: $s_weekday = $o_glob->GetTranslation('dayShortSaturday', 1); break;
+						}
+
+						if (issetStr($s_weekday)) {
+							$s_weekday .= ' | ';
+						}
+
+						$s_start = substr($o_record->Start, 0, -3);
+
+						$s_slideCalenderItems .= "\t\t\t\t" . '<td>' . $s_span_start . $s_weekday . $s_start . $s_span_end . '</td>' . "\n";
+					}
+
+					$s_slideCalenderItems .= "\t\t\t\t" . '<td>' . $s_span_start . $o_record->Event . $s_span_end . '</td>' . "\n";
+					$s_slideCalenderItems .= "\t\t\t" . '</tr>' . "\n";
+				}
+
+				$s_slideCalenderItems .= "\t\t" . '</tbody>' . "\n";
+				$s_slideCalenderItems .= "\t" . '</table><br>' . "\n";
+				$s_slideCalenderItems .= '</div>' . "\n";
+			}
+		} else {
+			/* no records found */
+			$o_glob->SystemMessages->Add(new forestException(0x10001400));
+
+			$s_carouselAdditionalClass = '';
+		}
+		
+		$o_glob->RestoreLimit();
+		
+		if ($p_o_twig != null) {
+			/* use template to render general carousel calender view and return content */
+			return new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SLIDECALENDERVIEWPART, array($s_branch, $s_carouselAdditionalClass, $s_slideCalenderItems));
+		} else {
+			$o_options = '<div class="d-none d-xl-flex">' . "\n" . '<div class="btn-group btn-group-lg">' . "\n";
+			$o_options_dropdown = '<div class="dropdown d-xl-none dropend mb-2">' . "\n" . '<button class="btn btn-light btn-lg" type="button" data-bs-toggle="dropdown"><span class="bi bi-gear-fill"></span></button>' . "\n" . '<div class="dropdown-menu btn-actions-collapse">';
+
+			/* list link */
+			if ($o_glob->Security->CheckUserPermission(null, 'view')) {
+				$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($s_branch, (($o_glob->OriginalView == \fPHP\Branches\forestBranch::LIST) ? null : 'view')) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="bi bi-card-list h4 text-info"></span></a>' . "\n";
+				$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($s_branch, (($o_glob->OriginalView == \fPHP\Branches\forestBranch::LIST) ? null : 'view')) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="bi bi-card-list h4 text-info"></span></a>' . "\n";
+			}
+
+			$o_options .= '</div>' . "\n" . '</div>' . "\n";
+			$o_options_dropdown .= '</div>' . "\n" . '</div>' . "\n";
+			
+			$o_options = $o_options . $o_options_dropdown;
+
+			$o_glob->Security->SessionData->Add(\fPHP\Branches\forestBranch::SLIDECALENDER, 'lastView');
+		
+			/* create carousel calender view top and down elements */
+			$o_viewOptionsTop = new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::VIEWOPTIONSTOP, array( $o_options, '', '', '' ));
+			$o_viewOptionsDown = new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::VIEWOPTIONSDOWN, array( $o_options, '' ));
+			
+			/* use template to render general carousel calender view and store it under global templates */
+			$o_glob->Templates->Add(new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SLIDECALENDERVIEW, array($o_viewOptionsTop, $s_branch, $s_carouselAdditionalClass, $s_slideCalenderItems, $o_viewOptionsDown)), $s_branch . 'SlideCalenderView');
+		}
+	}
+
+
+	/**
+	 * generates section counter view
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access protected
+	 * @static no
+	 */
+	protected function GenerateSectionCounterView($p_o_twig = null, $p_s_sectionCounterMarginTop = '') {
+		$o_glob = \fPHP\Roots\forestGlobals::init();
+		
+		$s_branch = $o_glob->URL->Branch;
+		$a_branches = $o_glob->URL->Branches;
+
+		/* get all records with limit settings */
+		if ($p_o_twig != null) {
+			$o_records = $p_o_twig->GetAllRecords();
+			$s_branch = $o_glob->URL->VirtualBranch;
+			$a_branches = $o_glob->URL->VirtualBranches;
+		} else {
+			$o_records = $this->Twig->GetAllRecords();
+		}
+		
+		$o_glob->BackupLimit();
+		
+		$s_counters = '';
+		$b_restartCounters = false;
+
+		/* render table rows as section counters */
+		if ($o_records->Twigs->Count() > 0) {
+			foreach ($o_records->Twigs as $o_record) {
+				$s_counters .= new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SECTIONCOUNTERVIEWCARD, array($s_branch, $o_record->CounterValue, (!issetStr($o_record->Prefix) ? '' : $o_record->Prefix), (!issetStr($o_record->Suffix) ? '' : $o_record->Suffix), $o_record->Text, $o_record->Icon));
+				$s_counters .= "\n";
+				
+				if ($o_record->RestartCounters) {
+					$b_restartCounters = true;
+				}				
+			}
+		} else {
+			/* no records found */
+			$o_glob->SystemMessages->Add(new forestException(0x10001400));
+		}
+		
+		$o_glob->RestoreLimit();
+		
+		if ($p_o_twig != null) {
+			/* use template to render general section counter view and return content */
+			return new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SECTIONCOUNTERVIEWPART, array($s_branch, $s_counters, $p_s_sectionCounterMarginTop, ($b_restartCounters) ? '' : '//'));
+		} else {
+			$o_options = '<div class="d-none d-xl-flex">' . "\n" . '<div class="btn-group btn-group-lg">' . "\n";
+			$o_options_dropdown = '<div class="dropdown d-xl-none dropend mb-2">' . "\n" . '<button class="btn btn-light btn-lg" type="button" data-bs-toggle="dropdown"><span class="bi bi-gear-fill"></span></button>' . "\n" . '<div class="dropdown-menu btn-actions-collapse">';
+	
+			/* list link */
+			if ($o_glob->Security->CheckUserPermission(null, 'view')) {
+				$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($s_branch, (($o_glob->OriginalView == \fPHP\Branches\forestBranch::LIST) ? null : 'view')) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="bi bi-card-list h4 text-info"></span></a>' . "\n";
+				$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($s_branch, (($o_glob->OriginalView == \fPHP\Branches\forestBranch::LIST) ? null : 'view')) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="bi bi-card-list h4 text-info"></span></a>' . "\n";
+			}
+	
+			$o_options .= '</div>' . "\n" . '</div>' . "\n";
+			$o_options_dropdown .= '</div>' . "\n" . '</div>' . "\n";
+			
+			$o_options = $o_options . $o_options_dropdown;
+
+			$o_glob->Security->SessionData->Add(\fPHP\Branches\forestBranch::SECTIONCOUNTER, 'lastView');
+		
+			/* create section counter top and down elements */
+			$o_viewOptionsTop = new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::VIEWOPTIONSTOP, array( $o_options, '', '', '' ));
+			$o_viewOptionsDown = new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::VIEWOPTIONSDOWN, array( $o_options, '' ));
+		
+			/* use template to render general section counter and store it under global templates */
+			$o_glob->Templates->Add(new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SECTIONCOUNTERVIEW, array($o_viewOptionsTop, $s_branch, $s_counters, $o_viewOptionsDown)), $s_branch . 'SectionCounterView');
+		}
+	}
+
+
 	/**
 	 * generates flex view
 	 *
@@ -2124,13 +2721,13 @@ abstract class forestBranch extends forestRootBranch {
 	protected function GenerateFlexView() {
 		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
-		$o_options = '<div class="btn-group d-none d-xl-flex">' . "\n" . '<div class="btn-group-lg">' . "\n";
-		$o_options_dropdown = '<div class="dropdown d-xl-none dropright">' . "\n" . '<button class="btn btn-light btn-lg" type="button" data-toggle="dropdown"><span class="fas fa-ellipsis-h"></span></button>' . "\n" . '<div class="dropdown-menu btn-actions-collapse">';
+		$o_options = '<div class="d-none d-xl-flex">' . "\n" . '<div class="btn-group btn-group-lg">' . "\n";
+		$o_options_dropdown = '<div class="dropdown d-xl-none dropend mb-2">' . "\n" . '<button class="btn btn-light btn-lg" type="button" data-bs-toggle="dropdown"><span class="bi bi-gear-fill"></span></button>' . "\n" . '<div class="dropdown-menu btn-actions-collapse">';
 
 		/* list link */
 		if ($o_glob->Security->CheckUserPermission(null, 'view')) {
-			$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, (($this->OriginalView == \fPHP\Branches\forestBranch::LISTVIEW) ? null : 'view')) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="fas fa-th-list text-info"></span></a>' . "\n";
-			$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, (($this->OriginalView == \fPHP\Branches\forestBranch::LISTVIEW) ? null : 'view')) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="fas fa-th-list text-info"></span></a>' . "\n";
+			$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, (($o_glob->OriginalView == \fPHP\Branches\forestBranch::LIST) ? null : 'view')) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="bi bi-card-list h4 text-info"></span></a>' . "\n";
+			$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, (($o_glob->OriginalView == \fPHP\Branches\forestBranch::LIST) ? null : 'view')) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="bi bi-card-list h4 text-info"></span></a>' . "\n";
 		}
 
 		$o_options .= '</div>' . "\n" . '</div>' . "\n";
@@ -2337,10 +2934,10 @@ abstract class forestBranch extends forestRootBranch {
 			/* close general flex element */
 			$o_flexViewElements .= '</div>';
 			
-			$o_options = '<div class="btn-group">' . "\n";
+			$o_options = '<div class="btn-group btn-group-lg">' . "\n";
 		
 			/* back link */
-			$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnBack', 1) . '"><span class="fas fa-th-large text-info"></span></a>' . "\n";
+			$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnBack', 1) . '"><span class="bi bi-card-list text-info"></span></a>' . "\n";
 			
 			$o_options .= '</div>' . "\n";
 			
@@ -2353,6 +2950,451 @@ abstract class forestBranch extends forestRootBranch {
 		}
 	}
 	
+
+	/**
+	 * generates static page view
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access protected
+	 * @static no
+	 */
+	protected function GenerateStaticPageView() {
+		$o_glob = \fPHP\Roots\forestGlobals::init();
+		
+		/* check if we have a twig for a static page */
+		$s_fields = $this->Twig->ShowFields(false);
+
+		if ((!\fPHP\Helper\forestStringLib::Contains($s_fields, 'Section')) || (!\fPHP\Helper\forestStringLib::Contains($s_fields, 'Identifier')) || (!\fPHP\Helper\forestStringLib::Contains($s_fields, 'Content')) || (!\fPHP\Helper\forestStringLib::Contains($s_fields, 'Background')) || (!\fPHP\Helper\forestStringLib::Contains($s_fields, 'BackgroundColor')) || (!\fPHP\Helper\forestStringLib::Contains($s_fields, 'Type')) || (!\fPHP\Helper\forestStringLib::Contains($s_fields, 'Source'))) {
+			throw new forestException(0x10001441);
+		}
+
+		/* get all records with limit settings */
+		$o_records = $this->Twig->GetAllRecords();
+		$o_glob->BackupLimit();
+		
+		$s_start = '';
+
+		$s_headFile = './trunk/trunkHeadLeaf.php';
+									
+		if (\fPHP\Roots\forestAutoLoad::IsReadable($s_headFile)) {
+			/* read trunk head leaf */
+			$s_headFile = file_get_contents($s_headFile, true);
+			/* add bg-dark class to body */
+			//$s_headFile = str_replace('<body', '<body class="bg-secondary"', $s_headFile);
+			/* remove any php content */
+			$s_start .= preg_replace('#<\?php(.*?)\?>#Usi', '', $s_headFile) . "\n";
+		} else {
+			throw new forestException('\'./trunk/trunkHeadLeaf.php\' could not be found');
+		}
+
+		$b_logoParameter = false;
+		$b_showLogo = false;
+		$b_showBackButton = true;
+
+		/* check if parameter 'link' with value 'no' or if 'logo' with value 'yes' exists */
+		foreach ($o_glob->URL->Parameters as $s_key => $s_value) {
+			if ($s_key == 'logo') {
+				$b_logoParameter = true;
+			}
+
+			if (($s_key == 'logo') && ($s_value == 'yes')) {
+				$b_showLogo = true;
+			}
+
+			if (($s_key == 'link') && ($s_value == 'no')) {
+				$b_showBackButton = false;
+			}
+		}
+		
+		/* no logo parameter in current request and logo file exists, we show a logo */
+		if ((!$b_logoParameter) && (\fPHP\Roots\forestAutoLoad::IsReadable('./files/logo.png'))) {
+			$b_showLogo = true;
+		}
+
+		$s_start .= "\n" . '<header>' . "\n";
+		
+		/* render navigation for static page view */
+		$s_start .= '<nav id="' . $o_glob->URL->Branch . 'StaticPageNav" class="navbar navbar-expand-xl bg-dark fixed-top" data-bs-theme="dark">' . "\n";
+		$s_start .= "\t" . '<div class="container-fluid">' . "\n";
+		$s_start .= "\t\t" . '<a class="navbar-brand align-middle" href="#">';
+		
+		/* add logo to nav title */
+		if ($b_showLogo) {
+			$s_start .= '<span><img src="./files/logo.png" class="d-inline-block" alt="_logo not found_" height="44"></span>&nbsp;';
+		}
+		
+		$s_start .= '<span class="align-middle text-nowrap d-none d-xl-inline">' . $o_glob->URL->BranchTitle . '</span></a>' . "\n";
+		$s_start .= "\t\t" . '<button class="navbar-toggler collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#fphp_navbar" aria-controls="fphp_navbar" aria-expanded="false" aria-label="Toggle navigation">' . "\n";
+		/* alternative icon */
+		/* $s_start .= "\t\t\t" . '<span class="navbar-toggler-icon"></span>' . "\n"; */
+		$s_start .= "\t\t\t" . '<span> </span>' . "\n";
+		$s_start .= "\t\t\t" . '<span> </span>' . "\n";
+		$s_start .= "\t\t\t" . '<span> </span>' . "\n";
+		$s_start .= "\t\t" . '</button>' . "\n";
+		$s_start .= "\t\t" . '<div class="collapse navbar-collapse" id="fphp_navbar">' . "\n";
+		$s_start .= "\t\t\t" . '<ul class="nav nav-pills ml-auto w-100 justify-content-end navbar-nav navbar-nav-scroll">' . "\n";
+
+		/* render back button */
+		if ($b_showBackButton) {
+			$s_start .= "\t\t\t\t" . '<li class="nav-item">
+				<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, (($o_glob->OriginalView == \fPHP\Branches\forestBranch::LIST) ? null : 'view')) . '" class="nav-link text-nowrap" role="button" title="' . $o_glob->GetTranslation('btnBack', 1) . '">
+					<button class="btn btn-sm btn-danger" type="button" title="' . $o_glob->GetTranslation('btnBack', 1) . '">
+						<span class="bi bi-back"></span>
+					</button>
+				</a>
+			</li>' . "\n";
+		}
+
+		/* render nav pill elements */
+		if ($o_records->Twigs->Count() > 0) {
+			foreach ($o_records->Twigs as $o_record) {
+				$s_start .= "\t\t\t\t" . '<li class="nav-item"><a href="#scrollspyToSection' . $o_record->Identifier . '" class="nav-link text-nowrap" title="' . $o_record->Section . '">' . $o_record->Section . '</a></li>' . "\n";
+			}
+		}
+
+		$s_start .= "\t\t\t" . '</ul>' . "\n";
+		$s_start .= "\t\t" . '</div>' . "\n";
+		$s_start .= "\t" . '</div>' . "\n";
+		$s_start .= '</nav>' . "\n";
+
+		$s_staticPageContent = '';
+
+		/* render table rows as flex elements */
+		if ($o_records->Twigs->Count() > 0) {
+			
+			$s_styles = "\t" . '<style>' . "\n";
+
+			foreach ($o_records->Twigs as $o_record) {
+				$s_styles .= "\t\t" . '.section' . $o_record->Identifier . ' {' . "\n";
+
+				if (issetStr($o_record->Background)) {
+					$b_backgroundFound = false;
+
+					$o_filesTwig = new \fPHP\Twigs\filesTwig;
+				
+					if ($o_filesTwig->GetRecord(array($o_record->Background))) {
+						$s_folder = substr(pathinfo($o_filesTwig->Name, PATHINFO_FILENAME), 6, 2);
+						
+						$s_path = '';
+
+						if (count($o_glob->URL->Branches) > 0) {
+							foreach($o_glob->URL->Branches as $s_branch) {
+								$s_path .= $s_branch . '/';
+							}
+						}
+						
+						$s_path .= $o_glob->URL->Branch . '/';
+						
+						$s_path = './trunk/' . $s_path . 'fphp_files/' . $s_folder . '/';
+						
+						if (is_dir($s_path)) {
+							if (file_exists($s_path . $o_filesTwig->Name)) {
+								$b_backgroundFound = true;
+								$s_styles .= "\t\t\t" . 'background: url(' . $s_path . $o_filesTwig->Name . ');' . "\n";
+							}
+						}
+					}
+
+					if (!$b_backgroundFound) {
+						$s_styles .= "\t\t\t" . 'background-color: ' . $o_record->BackgroundColor . ';' . "\n";
+					}
+				} else {
+					$s_styles .= "\t\t\t" . 'background-color: ' . $o_record->BackgroundColor . ';' . "\n";
+				}
+
+				$s_styles .= "\t\t\t" . '' . "\n";
+				$s_styles .= "\t\t\t" . 'background-size: cover;' . "\n";
+				$s_styles .= "\t\t\t" . 'background-repeat: no-repeat;' . "\n";
+				$s_styles .= "\t\t\t" . 'background-attachment: fixed;' . "\n";
+				$s_styles .= "\t\t\t" . 'background-position: center;' . "\n";
+				$s_styles .= "\t\t\t" . 'height: 100vh;' . "\n";
+				$s_styles .= "\t\t\t" . 'margin: 0 auto;' . "\n";
+				$s_styles .= "\t\t\t" . 'position: relative;' . "\n";
+				
+				$s_styles .= "\t\t" . '}' . "\n";
+			}
+
+			$s_styles .= "\t" . '</style>' . "\n";
+
+			$s_staticPageContent .= $s_styles;
+
+			$s_staticPageContent .= "\n" . '</header>' . "\n";
+
+			$s_staticPageContent .= "\n" . '<main class="flex-shrink-0">' . "\n";
+
+			$s_staticPageContent .= "\t" . '<div class="container-fluid container-fluid-section" data-bs-spy="scroll" data-bs-target="#' . $o_glob->URL->Branch . 'StaticPageNav" data-bs-smooth-scroll="true">' . "\n";
+			
+			foreach ($o_records->Twigs as $o_record) {
+				$s_staticPageContent .= "\t\t" . '<section class="section' . $o_record->Identifier . ' mb-3" id="scrollspyToSection' . $o_record->Identifier . '">' . "\n";
+				$s_staticPageContent .= "\t\t\t" . '<div class="container-xl container-xl-section h-100 overflow-auto">' . "\n";
+
+				$s_headingAlign = ((\fPHP\Helper\forestStringLib::GetNumericPartOfIdentifier($o_record->Identifier) % 2 == 0) ? 'text-end' : 'text-start');
+
+				$s_staticPageContent .= "\t\t\t\t" . '<div class="display-4 ' . $s_headingAlign . ' p-4 bg-info rounded bg-opacity-90">' . $o_record->Section . '</div>' . "\n";
+				
+				$b_contentAvailable = false;
+
+				if (issetStr($o_record->Content)) {
+					$b_contentAvailable = true;
+					$s_staticPageContent .= "\t\t\t\t" . '<div class="h-auto mt-3 p-3 shadow bg-body-tertiary rounded bg-opacity-90">' . "\n";
+
+					$s_foo = $o_record->Content;
+					$s_foo = str_replace('&amp;', '&', $s_foo);
+					$s_foo = str_replace('&gt;', '>', $s_foo);
+					$s_foo = str_replace('&lt;', '<', $s_foo);
+					$s_foo = str_replace('&aquota;', '"', $s_foo);
+					$s_foo = htmlspecialchars_decode($s_foo, ( ENT_QUOTES | ENT_HTML5 ));
+					
+					/* only look for picture references if type is 'picture library(10)' and a source is set */
+					if ( ($o_record->Type == 10) && (issetStr($o_record->Source)) ) {
+						$o_glob->SetVirtualTarget(intval($o_record->Source->PrimaryValue));
+
+						$s_pictureLibraryBranch = $o_glob->BranchTree['Id'][$o_record->Source->PrimaryValue]['Name'];
+						$s_pictureLibraryTwig = '\\fPHP\\Twigs\\' . $s_pictureLibraryBranch . 'Twig';
+				
+						if (\fPHP\Roots\forestAutoLoad::IsReadable('./twigs/' . $s_pictureLibraryBranch . 'Twig.php')) {
+							$o_pictureLibraryTwig = new $s_pictureLibraryTwig;
+
+							preg_match_all('/\[[^\[\]]*\|[^\[\]]*\|\d+\]/s', $s_foo, $a_matches);
+							
+							if (!empty($a_matches[0])) {
+								foreach ($a_matches[0] as $s_pictureReference) {
+									$a_pictureReference = explode('|', substr($s_pictureReference, 1, -1));
+									
+									if (count($a_pictureReference) != 4) {
+										continue;
+									}
+
+									$s_pictureID = $a_pictureReference[0];
+									$s_pictureField = $a_pictureReference[1];
+									$s_pictureTitleField = $a_pictureReference[2];
+									$s_pictureWidth = $a_pictureReference[3];
+
+									/* richtext can give us many trash, so we must cut this trash from the values we want */
+									if (\fPHP\Helper\forestStringLib::Contains($s_pictureID, '<')) {
+										$s_pictureID = strstr($s_pictureID, '<', true);
+									}
+
+									if (\fPHP\Helper\forestStringLib::Contains($s_pictureField, '<')) {
+										$s_pictureField = strstr($s_pictureField, '<', true);
+									}
+
+									if (\fPHP\Helper\forestStringLib::Contains($s_pictureTitleField, '<')) {
+										$s_pictureTitleField = strstr($s_pictureTitleField, '<', true);
+									}
+
+									$s_image = '<a href="./files/image_not_found.png" target="_blank"><img src="./files/image_not_found.png" class="img-thumbnail" width="' . $s_pictureWidth . '"></a>';
+
+									if ($o_pictureLibraryTwig->GetRecordPrimary(array($s_pictureID), array('Identifier'))) {
+										/* render picture from picture library */
+										$o_filesTwig = new \fPHP\Twigs\filesTwig;
+
+										if ($o_filesTwig->GetRecord(array($o_pictureLibraryTwig->{$s_pictureField}))) {
+											$s_folder = substr(pathinfo($o_filesTwig->Name, PATHINFO_FILENAME), 6, 2);
+											
+											$s_path = '';
+
+											if (count($o_glob->URL->VirtualBranches) > 0) {
+												foreach($o_glob->URL->VirtualBranches as $s_branch) {
+													$s_path .= $s_branch . '/';
+												}
+											}
+											
+											/* not necessary for virtual branch */
+											/* $s_path .= $o_glob->URL->VirtualBranch . '/'; */
+											
+											$s_path = './trunk/' . $s_path . 'fphp_files/' . $s_folder . '/';
+											
+											if (is_dir($s_path)) {
+												if (file_exists($s_path . $o_filesTwig->Name)) {
+													/* render file as picture as it is with custom width settings */
+													$s_image = '<a href="' . $s_path . $o_filesTwig->Name . '" target="_blank"><img src="' . $s_path . $o_filesTwig->Name . '" class="img-thumbnail" alt="' . $o_filesTwig->DisplayName . '" title="' . $o_pictureLibraryTwig->{$s_pictureTitleField} . '" width="' . $s_pictureWidth . '"></a>';
+												}
+											}
+										}
+									}
+
+									/* replace picture reference with picture from library */
+									$s_foo = str_replace($s_pictureReference, $s_image, $s_foo);
+								}
+							}
+						}
+					}
+
+					preg_match_all('/\[[^\[\]]*]/s', $s_foo, $a_matches);
+						
+					if (!empty($a_matches[0])) {
+						foreach ($a_matches[0] as $s_contentCode) {
+							$a_contentCode = explode('|', substr($s_contentCode, 1, -1));
+							
+							if (count($a_contentCode) == 2) { /* link to other section */
+								$s_sectionID = $a_contentCode[0];
+								$s_text = $a_contentCode[1];
+								
+								/* richtext can give us many trash, so we must cut this trash from the values we want */
+								if (\fPHP\Helper\forestStringLib::Contains($s_sectionID, '<')) {
+									$s_sectionID = strstr($s_sectionID, '<', true);
+								}
+
+								if (\fPHP\Helper\forestStringLib::Contains($s_text, '<')) {
+									$s_text = strstr($s_text, '<', true);
+								}
+
+								$s_content = '<a href="#scrollspyToSection' . $s_sectionID . '">' . $s_text . '</a>';
+
+								/* replace link reference with content */
+								$s_foo = str_replace($s_contentCode, $s_content, $s_foo);
+							} else if (count($a_contentCode) == 4) { /* mailto */
+								$s_mail = $a_contentCode[0];
+								$s_subject = $a_contentCode[1];
+								$s_body = $a_contentCode[2];
+								$s_buttonSizeOrText = $a_contentCode[3];
+								
+								/* richtext can give us many trash, so we must cut this trash from the values we want */
+								if (\fPHP\Helper\forestStringLib::Contains($s_mail, '<')) {
+									$s_mail = strstr($s_mail, '<', true);
+								}
+
+								if (\fPHP\Helper\forestStringLib::Contains($s_subject, '<')) {
+									$s_subject = strstr($s_subject, '<', true);
+								}
+
+								if (\fPHP\Helper\forestStringLib::Contains($s_body, '<')) {
+									$s_body = strstr($s_body, '<', true);
+								}
+
+								if (\fPHP\Helper\forestStringLib::Contains($s_buttonSizeOrText, '<')) {
+									$s_buttonSizeOrText = strstr($s_buttonSizeOrText, '<', true);
+								}
+
+								/* generate random hash */
+								$s_hash = $o_glob->Security->GenRandomHash();
+								
+								if ( ($s_buttonSizeOrText == 'h1') || ($s_buttonSizeOrText == 'h2')  || ($s_buttonSizeOrText == 'h3')  || ($s_buttonSizeOrText == 'h4') || ($s_buttonSizeOrText == 'h5') || ($s_buttonSizeOrText == 'h6') ) {
+									$s_buttonSizeOrText = '<button type="button" class="btn btn-light" id="' . $s_hash . '"><span class="bi-envelope-at-fill ' . $s_buttonSizeOrText . '"></span></button>';
+								}
+
+								/* replace new line characters */
+								$s_body = str_replace('\\\\n', '%0D%0A', $s_body);
+
+								/* replace white space characters */
+								$s_subject = str_replace(' ', '%20', $s_subject);
+								$s_body = str_replace(' ', '%20', $s_body);
+
+								/* mailto string */
+								$s_mailTo = 'mailto:' . $s_mail . '?subject=' . htmlspecialchars($s_subject, ( ENT_QUOTES | ENT_HTML5 )) . '&body=' . htmlspecialchars($s_body, ( ENT_QUOTES | ENT_HTML5 ));
+								/* obfuscate mailto string */
+								$s_obfuscatedMailTo = \fPHP\Helper\forestStringLib::ObfuscateString($s_mailTo);
+								/* prepare javascript function to undo obfuscation of mailto string */
+								$s_content = $s_buttonSizeOrText . '<script>fphp_undoObfuscatedString(\'' . $s_obfuscatedMailTo . '\', \'' . $s_hash . '\');</script>';
+
+								/* replace mailto reference with content */
+								$s_foo = str_replace($s_contentCode, $s_content, $s_foo);
+							} else if (count($a_contentCode) == 5) { /* embed media */
+								$s_file = $a_contentCode[0];
+								$s_fileType = $a_contentCode[1];
+								$s_ratio = $a_contentCode[2];
+								$s_width = $a_contentCode[3];
+								$s_height = $a_contentCode[4];
+								
+								/* richtext can give us many trash, so we must cut this trash from the values we want */
+								if (\fPHP\Helper\forestStringLib::Contains($s_file, '<')) {
+									$s_file = strstr($s_file, '<', true);
+								}
+
+								if (\fPHP\Helper\forestStringLib::Contains($s_fileType, '<')) {
+									$s_fileType = strstr($s_fileType, '<', true);
+								}
+
+								if (\fPHP\Helper\forestStringLib::Contains($s_ratio, '<')) {
+									$s_ratio = strstr($s_ratio, '<', true);
+								}
+
+								if (\fPHP\Helper\forestStringLib::Contains($s_width, '<')) {
+									$s_width = strstr($s_width, '<', true);
+								}
+
+								if (\fPHP\Helper\forestStringLib::Contains($s_height, '<')) {
+									$s_height = strstr($s_height, '<', true);
+								}
+
+								$s_content = '<div class="ratio ratio-' . $s_ratio . '" style="width: ' . $s_width . 'px; height: ' . $s_height . 'px;">';
+								$s_content .= '<video width="' . $s_width . '" height="' . $s_height . '" controls>';
+								$s_content .= '<source src="' . $s_file . '" type="' . $s_fileType . '">';
+								$s_content .= 'Your browser does not support the video element.';
+								$s_content .= '</video>';
+								$s_content .= '</div>';
+
+								/* replace mailto reference with content */
+								$s_foo = str_replace($s_contentCode, $s_content, $s_foo);
+							} else {
+								continue;
+							}
+						}
+					}
+					
+					$s_staticPageContent .= $s_foo . "\n";
+					
+					$s_staticPageContent .= "\t\t\t\t" . '</div>' . "\n";
+				}
+
+				if ( ($o_record->Type == 100) && (issetStr($o_record->Source)) ) { /* render slide gallery part */
+					$o_glob->SetVirtualTarget(intval($o_record->Source->PrimaryValue));
+
+					$s_slideGalleryBranch = $o_glob->BranchTree['Id'][$o_record->Source->PrimaryValue]['Name'];
+					$s_slideGalleryTwig = '\\fPHP\\Twigs\\' . $s_slideGalleryBranch . 'Twig';
+			
+					if (\fPHP\Roots\forestAutoLoad::IsReadable('./twigs/' . $s_slideGalleryBranch . 'Twig.php')) {
+						$o_slideGalleryTwig = new $s_slideGalleryTwig;
+						$s_staticPageContent .= $this->GenerateSlideGalleryView( $o_slideGalleryTwig, 'mt-3 ' );
+					}
+				} else if ( ($o_record->Type == 1000) && (issetStr($o_record->Source)) ) { /* render slide calender part */
+					$s_staticPageContent .= "\t\t\t\t" . '<div class="h-auto mt-3 p-3 shadow bg-body-tertiary rounded bg-opacity-90">' . "\n";
+					
+					$o_glob->SetVirtualTarget(intval($o_record->Source->PrimaryValue));
+
+					$s_slideCalenderBranch = $o_glob->BranchTree['Id'][$o_record->Source->PrimaryValue]['Name'];
+					$s_slideCalenderTwig = '\\fPHP\\Twigs\\' . $s_slideCalenderBranch . 'Twig';
+			
+					if (\fPHP\Roots\forestAutoLoad::IsReadable('./twigs/' . $s_slideCalenderBranch . 'Twig.php')) {
+						$o_slideCalenderTwig = new $s_slideCalenderTwig;
+						$s_staticPageContent .= $this->GenerateSlideCalenderView( $o_slideCalenderTwig, 'mt-3 ' );
+					}
+
+					$s_staticPageContent .= "\t\t\t\t" . '</div>' . "\n";
+				} else if ( ($o_record->Type == 10000) && (issetStr($o_record->Source)) ) { /* render section counter part */
+					$o_glob->SetVirtualTarget(intval($o_record->Source->PrimaryValue));
+
+					$s_sectionCounterBranch = $o_glob->BranchTree['Id'][$o_record->Source->PrimaryValue]['Name'];
+					$s_sectionCounterTwig = '\\fPHP\\Twigs\\' . $s_sectionCounterBranch . 'Twig';
+			
+					if (\fPHP\Roots\forestAutoLoad::IsReadable('./twigs/' . $s_sectionCounterBranch . 'Twig.php')) {
+						$p_sectionCounterTwig = new $s_sectionCounterTwig;
+						$s_staticPageContent .= $this->GenerateSectionCounterView( $p_sectionCounterTwig, 'mt-3 ' );
+					}
+				}
+				
+				$s_staticPageContent .= "\t\t\t" . '</div>' . "\n";
+				$s_staticPageContent .= "\t\t" . '</section>' . "\n";
+			}
+
+			$s_staticPageContent .= "\t" . '</div>' . "\n";
+
+			$s_staticPageContent .= "\n" . '</main>' . "\n";
+		} else {
+			/* no records found */
+			$o_glob->SystemMessages->Add(new forestException(0x10001400));
+		}
+		
+		$o_glob->RestoreLimit();
+		$o_glob->Security->SessionData->Add(\fPHP\Branches\forestBranch::STATICPAGE, 'lastView');
+		
+		/* use template to render general static page view */
+		$o_glob->Templates->Add(new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::STATICPAGEVIEW, array($s_start, $s_staticPageContent)), $o_glob->URL->Branch . 'StaticPageView');
+	}
+
 	
 	/**
 	 * generates detail view
@@ -2382,13 +3424,13 @@ abstract class forestBranch extends forestRootBranch {
 		$s_subRecords = '';
 		
 		if ($o_records->Twigs->Count() > 0) {
-			$o_options = '<div class="btn-group d-none d-xl-flex">' . "\n" . '<div class="btn-group-lg">' . "\n";
-			$o_options_dropdown = '<div class="dropdown d-xl-none dropright">' . "\n" . '<button class="btn btn-light btn-lg" type="button" data-toggle="dropdown"><span class="fas fa-ellipsis-h"></span></button>' . "\n" . '<div class="dropdown-menu btn-actions-collapse">';
+			$o_options = '<div class="d-none d-xl-flex">' . "\n" . '<div class="btn-group btn-group-lg">' . "\n";
+			$o_options_dropdown = '<div class="dropdown d-xl-none dropend mb-2">' . "\n" . '<button class="btn btn-light btn-lg" type="button" data-bs-toggle="dropdown"><span class="bi bi-gear-fill"></span></button>' . "\n" . '<div class="dropdown-menu btn-actions-collapse">';
 
 			/* new link */
 			if ($o_glob->Security->CheckUserPermission(null, 'new')) {
-				$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'new') . '" class="btn btn-light"  title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="fas fa-plus text-success"></span></a>' . "\n";
-				$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'new') . '" class="btn btn-light"  title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="fas fa-plus text-success"></span></a>' . '<br>' . "\n";
+				$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'new') . '" class="btn btn-light"  title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="bi bi-plus-circle-fill text-success"></span></a>' . "\n";
+				$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'new') . '" class="btn btn-light"  title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="bi bi-plus-circle-fill h4 text-success"></span></a>' . '<br>' . "\n";
 			}
 
 			/* edit link */
@@ -2404,19 +3446,19 @@ abstract class forestBranch extends forestRootBranch {
 			$a_parameters['editKey'] = $o_records->Twigs->{0}->UUID;
 			
 			if ($o_glob->Security->CheckUserPermission(null, 'edit')) {
-				$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'edit', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="fas fa-edit"></span></a>' . "\n";
-				$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'edit', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="fas fa-edit"></span></a>' . '<br>' . "\n";
+				$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'edit', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="bi bi-pencil-square"></span></a>' . "\n";
+				$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'edit', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="bi bi-pencil-square h4"></span></a>' . '<br>' . "\n";
 			}
 
 			/* delete link */
 			if ($o_glob->Security->CheckUserPermission(null, 'delete')) {
-				$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete', array('deleteKey' => $o_records->Twigs->{0}->UUID)) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="fas fa-trash text-danger"></span></a>' . "\n";
-				$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete', array('deleteKey' => $o_records->Twigs->{0}->UUID)) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="fas fa-trash text-danger"></span></a>' . '<br>' . "\n";
+				$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete', array('deleteKey' => $o_records->Twigs->{0}->UUID)) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="bi bi-trash-fill text-danger"></span></a>' . "\n";
+				$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete', array('deleteKey' => $o_records->Twigs->{0}->UUID)) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="bi bi-trash-fill h4 text-danger"></span></a>' . '<br>' . "\n";
 			}
 
 			/* check if we have SortColumn set for current branch */
-			if (array_key_exists($this->Twig->fphp_TableUUID, $o_glob->TablesInformation)) {
-				if (issetStr($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['SortColumn'])) {
+			//if (array_key_exists($this->Twig->fphp_TableUUID, $o_glob->TablesInformation)) {
+				//if (issetStr($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['SortColumn'])) {
 					/* move up link */
 					/*$a_parameters = $o_glob->URL->Parameters;
 					unset($a_parameters['newKey']);
@@ -2430,8 +3472,8 @@ abstract class forestBranch extends forestRootBranch {
 					$a_parameters['editKey'] = $o_records->Twigs->{0}->UUID;
 					
 					if ($o_glob->Security->CheckUserPermission(null, 'moveUp')) {
-						$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'moveUp', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnMoveUpText', 1) . '"><span class="fas fa-caret-up"></span></a>' . "\n";
-						$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'moveUp', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnMoveUpText', 1) . '"><span class="fas fa-caret-up"></span></a>' . '<br>' . "\n";
+						$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'moveUp', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnMoveUpText', 1) . '"><span class="bi bi-caret-up-fill"></span></a>' . "\n";
+						$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'moveUp', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnMoveUpText', 1) . '"><span class="bi bi-caret-up-fill h4"></span></a>' . '<br>' . "\n";
 					}*/
 
 					/* move down link */
@@ -2447,11 +3489,11 @@ abstract class forestBranch extends forestRootBranch {
 					$a_parameters['editKey'] = $o_records->Twigs->{0}->UUID;
 					
 					if ($o_glob->Security->CheckUserPermission(null, 'moveDown')) {
-						$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'moveDown', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnMoveDownText', 1) . '"><span class="fas fa-caret-down"></span></a>' . "\n";
-						$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'moveDown', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnMoveDownText', 1) . '"><span class="fas fa-caret-down"></span></a>' . '<br>' . "\n";
+						$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'moveDown', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnMoveDownText', 1) . '"><span class="bi bi-caret-down-fill"></span></a>' . "\n";
+						$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'moveDown', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnMoveDownText', 1) . '"><span class="bi bi-caret-down-fill h4"></span></a>' . '<br>' . "\n";
 					}*/
-				}
-			}
+				//}
+			//}
 			
 			/* check versioning settings of twig */
 			if ($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['Versioning'] > 1) {
@@ -2471,8 +3513,8 @@ abstract class forestBranch extends forestRootBranch {
 					$a_parameters['editKey'] = $o_records->Twigs->{0}->UUID;
 					
 					if ($o_glob->Security->CheckUserPermission(null, 'checkout')) {
-						$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkout', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnCheckoutText', 1) . '"><span class="fas fa-lock text-warning"></span></a>' . "\n";
-						$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkout', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnCheckoutText', 1) . '"><span class="fas fa-lock text-warning"></span></a>' . '<br>' . "\n";
+						$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkout', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnCheckoutText', 1) . '"><span class="bi bi-lock-fill text-warning"></span></a>' . "\n";
+						$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkout', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnCheckoutText', 1) . '"><span class="bi bi-lock-fill h4 text-warning"></span></a>' . '<br>' . "\n";
 					}
 				} else {
 					/* checkin link */
@@ -2488,16 +3530,16 @@ abstract class forestBranch extends forestRootBranch {
 					$a_parameters['editKey'] = $o_records->Twigs->{0}->UUID;
 					
 					if ($o_glob->Security->CheckUserPermission(null, 'checkin')) {
-						$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkin', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnCheckinText', 1) . '"><span class="fas fa-lock-open text-primary"></span></a>' . "\n";
-						$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkin', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnCheckinText', 1) . '"><span class="fas fa-lock-open text-primary"></span></a>' . '<br>' . "\n";
+						$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkin', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnCheckinText', 1) . '"><span class="bi bi-unlock-fill text-primary"></span></a>' . "\n";
+						$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkin', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnCheckinText', 1) . '"><span class="bi bi-unlock-fill h4 text-primary"></span></a>' . '<br>' . "\n";
 					}
 				}
 			}
 			
 			/* list link */
 			if ($o_glob->Security->CheckUserPermission(null, 'view')) {
-				$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, ((($this->OriginalView == \fPHP\Branches\forestBranch::LISTVIEW) || ($this->OriginalView == \fPHP\Branches\forestBranch::FLEX)) ? null : 'view')) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="fas fa-th-list text-info"></span></a>' . "\n";
-				$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, ((($this->OriginalView == \fPHP\Branches\forestBranch::LISTVIEW) || ($this->OriginalView == \fPHP\Branches\forestBranch::FLEX)) ? null : 'view')) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="fas fa-th-list text-info"></span></a>' . '<br>' . "\n";
+				$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, (($o_glob->OriginalView != \fPHP\Branches\forestBranch::DETAIL) ? null : 'view')) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="bi bi-card-list text-info"></span></a>' . "\n";
+				$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, (($o_glob->OriginalView != \fPHP\Branches\forestBranch::DETAIL) ? null : 'view')) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="bi bi-card-list h4 text-info"></span></a>' . '<br>' . "\n";
 			}
 
 			$o_options .= '</div>' . "\n" . '</div>' . "\n";
@@ -2515,27 +3557,27 @@ abstract class forestBranch extends forestRootBranch {
 			/* render sub records */
 			$s_subRecords = $this->ListSubRecords($o_records->Twigs->{0});
 		} else {
-			$o_options = '<div class="btn-group d-none d-xl-flex">' . "\n" . '<div class="btn-group-lg">' . "\n";
-			$o_options_dropdown = '<div class="dropdown d-xl-none dropright">' . "\n" . '<button class="btn btn-light btn-lg dropdown-toggle" type="button" data-toggle="dropdown">Actions</button>' . "\n" . '<div class="dropdown-menu btn-actions-collapse">';
+			$o_options = '<div class="d-none d-xl-flex">' . "\n" . '<div class="btn-group btn-group-lg">' . "\n";
+			$o_options_dropdown = '<div class="dropdown d-xl-none dropend mb-2">' . "\n" . '<button class="btn btn-light btn-lg dropdown-toggle" type="button" data-bs-toggle="dropdown">Actions</button>' . "\n" . '<div class="dropdown-menu btn-actions-collapse">';
 			
 			if ($o_glob->Security->CheckUserPermission(null, 'new')) {
-				$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'new') . '" class="btn btn-light"  title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="fas fa-plus text-success"></span></a>' . "\n";
-				$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'new') . '" class="btn btn-light"  title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="fas fa-plus text-success"></span></a>' . '<br>' . "\n";
+				$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'new') . '" class="btn btn-light"  title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="bi bi-plus-circle-fill text-success"></span></a>' . "\n";
+				$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'new') . '" class="btn btn-light"  title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="bi bi-plus-circle-fill h4 text-success"></span></a>' . '<br>' . "\n";
 			}
 			
 			if ($o_glob->Security->CheckUserPermission(null, 'edit')) {
-				$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'edit') . '" class="btn btn-light disabled"  title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="fas fa-edit"></span></a>' . "\n";
-				$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'edit') . '" class="btn btn-light disabled"  title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="fas fa-edit"></span></a>' . '<br>' . "\n";
+				$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'edit') . '" class="btn btn-light disabled"  title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="bi bi-pencil-square"></span></a>' . "\n";
+				$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'edit') . '" class="btn btn-light disabled"  title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="bi bi-pencil-square h4"></span></a>' . '<br>' . "\n";
 			}
 			
 			if ($o_glob->Security->CheckUserPermission(null, 'delete')) {
-				$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete') . '" class="btn btn-light disabled"  title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="fas fa-trash text-danger"></span></a>' . "\n";
-				$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete') . '" class="btn btn-light disabled"  title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="fas fa-trash text-danger"></span></a>' . '<br>' . "\n";
+				$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete') . '" class="btn btn-light disabled"  title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="bi bi-trash-fill text-danger"></span></a>' . "\n";
+				$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete') . '" class="btn btn-light disabled"  title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="bi bi-trash-fill h4 text-danger"></span></a>' . '<br>' . "\n";
 			}
 			
 			if ($o_glob->Security->CheckUserPermission(null, 'view')) {
-				$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, (($this->OriginalView == \fPHP\Branches\forestBranch::LISTVIEW) ? null : 'view')) . '" class="btn btn-light"  title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="fas fa-th-list text-info"></span></a>' . "\n";
-				$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, (($this->OriginalView == \fPHP\Branches\forestBranch::LISTVIEW) ? null : 'view')) . '" class="btn btn-light"  title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="fas fa-th-list text-info"></span></a>' . '<br>' . "\n";
+				$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, (($o_glob->OriginalView == \fPHP\Branches\forestBranch::LIST) ? null : 'view')) . '" class="btn btn-light"  title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="bi bi-card-list text-info"></span></a>' . "\n";
+				$o_options_dropdown .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, (($o_glob->OriginalView == \fPHP\Branches\forestBranch::LIST) ? null : 'view')) . '" class="btn btn-light"  title="' . $o_glob->GetTranslation('btnListText', 1) . '"><span class="bi bi-card-list h4 text-info"></span></a>' . '<br>' . "\n";
 			}
 			
 			$o_options .= '</div>' . "\n" . '</div>' . "\n";
@@ -2747,7 +3789,7 @@ abstract class forestBranch extends forestRootBranch {
 							$o_checkoutTwig = new \fPHP\Twigs\checkoutTwig;
 							
 							if ($o_checkoutTwig->GetRecordPrimary(array($o_subRecord->UUID), array('ForeignUUID'))) {
-								$s_subTableRows .= ' class="bg-warning"';
+								$s_subTableRows .= ' class="table-warning"';
 							}
 							
 							$s_subTableRows .= '>' . "\n";
@@ -2844,7 +3886,7 @@ abstract class forestBranch extends forestRootBranch {
 								$a_parameters['subConstraintKey'] = $o_subconstraint->UUID;
 								
 								if ($o_glob->Security->CheckUserPermission(null, 'edit')) {
-									$s_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'edit', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="fas fa-edit"></span></a>' . "\n";
+									$s_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'edit', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="bi bi-pencil-square"></span></a>' . "\n";
 								}
 
 								if ($i_files > 0) {
@@ -2862,7 +3904,7 @@ abstract class forestBranch extends forestRootBranch {
 									$a_parameters['subConstraintKey'] = $o_subconstraint->UUID;
 									
 									if ($o_glob->Security->CheckUserPermission(null, 'viewFiles')) {
-										$s_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'viewFiles', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnViewFilesText', 1) . '"><span class="fas fa-file"></span></a>' . "\n";
+										$s_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'viewFiles', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnViewFilesText', 1) . '"><span class="bi bi-file-earmark-fill"></span></a>' . "\n";
 									}
 								}
 								
@@ -2884,7 +3926,7 @@ abstract class forestBranch extends forestRootBranch {
 										$a_parameters['editKey'] = $o_subRecord->UUID;
 										
 										if ($o_glob->Security->CheckUserPermission(null, 'checkout')) {
-											$s_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkout', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnCheckoutText', 1) . '"><span class="fas fa-lock text-warning"></span></a>';
+											$s_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkout', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnCheckoutText', 1) . '"><span class="bi bi-lock-fill text-warning"></span></a>';
 										}
 									} else {
 										/* checkin link */
@@ -2900,7 +3942,7 @@ abstract class forestBranch extends forestRootBranch {
 										$a_parameters['editKey'] = $o_subRecord->UUID;
 										
 										if ($o_glob->Security->CheckUserPermission(null, 'checkin')) {
-											$s_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkin', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnCheckinText', 1) . '"><span class="fas fa-lock-open text-primary"></span></a>';
+											$s_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkin', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnCheckinText', 1) . '"><span class="bi bi-unlock-fill text-primary"></span></a>';
 										}
 									}
 								}
@@ -2917,7 +3959,7 @@ abstract class forestBranch extends forestRootBranch {
 								$a_parameters['deleteSubKey'] = $o_subRecord->UUID;
 								
 								if ($o_glob->Security->CheckUserPermission(null, 'delete')) {
-									$s_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="fas fa-trash text-danger"></span></a>' . "\n";
+									$s_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="bi bi-trash-fill text-danger"></span></a>' . "\n";
 								}
 							} else {
 								if ($i_files > 0) {
@@ -2935,7 +3977,7 @@ abstract class forestBranch extends forestRootBranch {
 									$a_parameters['subConstraintKey'] = $o_subconstraint->UUID;
 									
 									if ($o_glob->Security->CheckUserPermission(null, 'viewFiles')) {
-										$s_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'viewFiles', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnViewFilesText', 1) . '"><span class="fas fa-file"></span></a>' . "\n";
+										$s_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'viewFiles', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnViewFilesText', 1) . '"><span class="bi bi-file-earmark-fill"></span></a>' . "\n";
 									}
 								} else {
 									$s_options .= '-';
@@ -2973,12 +4015,12 @@ abstract class forestBranch extends forestRootBranch {
 							$a_parameters['subConstraintKey'] = $o_subconstraint->UUID;
 							
 							if ($o_glob->Security->CheckUserPermission(null, 'new')) {
-								$s_newButton = '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'new', $a_parameters) . '" class="btn btn-light" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="fas fa-plus text-success"></span></a>' . "\n";
+								$s_newButton = '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'new', $a_parameters) . '" class="btn btn-light" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="bi bi-plus-circle-fill text-success"></span></a>' . "\n";
 							}
 						}
 						
 						$s_subFormItemContent = new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEWITEMCONTENT, array($s_newButton, $s_subTableHead, $s_subTableRows));
-						$s_subFormItems .= new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEWITEM, array('sub' . $s_tempTable, $o_glob->GetTranslation($o_glob->BranchTree['Id'][$o_glob->BranchTree['Name'][$s_tempTable]]['Title'], 1) . ' ' . $o_glob->GetTranslation('Lines', 1) . ' (' . $o_subRecords->Twigs->Count() . ')', $s_firstElement, $s_subFormItemContent));
+						$s_subFormItems .= new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEWITEM, array('sub' . $s_tempTable, $o_glob->GetTranslation($o_glob->BranchTree['Id'][$o_glob->BranchTree['Name'][$s_tempTable]]['Title'], 1) . ' ' . $o_glob->GetTranslation('Lines', 1) . ' (' . $o_subRecords->Twigs->Count() . ')', $s_firstElement, $s_subFormItemContent, $s_tableName));
 					}
 				}
 				
@@ -3022,7 +4064,7 @@ abstract class forestBranch extends forestRootBranch {
 						$o_checkoutTwig = new \fPHP\Twigs\checkoutTwig;
 						
 						if ($o_checkoutTwig->GetRecordPrimary(array($o_file->UUID), array('ForeignUUID'))) {
-							$s_subTableRows .= ' class="bg-warning"';
+							$s_subTableRows .= ' class="table-warning"';
 						}
 							
 						$s_subTableRows .= '>' . "\n";
@@ -3087,7 +4129,7 @@ abstract class forestBranch extends forestRootBranch {
 						
 						if (is_dir($s_path)) {
 							if (file_exists($s_path . $o_file->Name)) {
-								$s_value = '<a href="' . $s_path . $o_file->Name . '" target="_blank" class="btn btn-light" title="' . $o_file->DisplayName . '" download="' . $o_file->DisplayName . '"><span class="fas fa-download"></span></a>' . "\n";
+								$s_value = '<a href="' . $s_path . $o_file->Name . '" target="_blank" class="btn btn-light" title="' . $o_file->DisplayName . '" download="' . $o_file->DisplayName . '"><span class="bi bi-file-earmark-arrow-down-fill"></span></a>' . "\n";
 							}
 						}
 						
@@ -3117,7 +4159,7 @@ abstract class forestBranch extends forestRootBranch {
 							$a_parameters['subConstraintKey'] = $p_o_twig->fphp_TableUUID;
 							
 							if ($o_glob->Security->CheckUserPermission(null, 'viewFilesHistory')) {
-								$s_options .=  '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'viewFilesHistory', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnHistoryText', 1) . ' (' . $i_historyFiles . ')"><span class="fas fa-history"></span></a>' . "\n";
+								$s_options .=  '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'viewFilesHistory', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnHistoryText', 1) . ' (' . $i_historyFiles . ')"><span class="bi bi-clock-history"></span></a>' . "\n";
 							}
 						}
 						
@@ -3137,7 +4179,7 @@ abstract class forestBranch extends forestRootBranch {
 							$a_parameters['subConstraintKey'] = $p_o_twig->fphp_TableUUID;
 							
 							if ($o_glob->Security->CheckUserPermission(null, 'replaceFile')) {
-								$s_options .=  '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'replaceFile', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnUploadText', 1) . '"><span class="fas fa-upload"></span></a>' . "\n";
+								$s_options .=  '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'replaceFile', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnUploadText', 1) . '"><span class="bi bi-file-earmark-arrow-up-fill"></span></a>' . "\n";
 							}
 							
 							/* check versioning settings of twig */
@@ -3158,7 +4200,7 @@ abstract class forestBranch extends forestRootBranch {
 									$a_parameters['editKey'] = $o_file->UUID;
 									
 									if ($o_glob->Security->CheckUserPermission(null, 'checkout')) {
-										$s_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkout', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnCheckoutText', 1) . '"><span class="fas fa-lock text-warning"></span></a>';
+										$s_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkout', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnCheckoutText', 1) . '"><span class="bi bi-lock-fill text-warning"></span></a>';
 									}
 								} else {
 									/* checkin link */
@@ -3174,7 +4216,7 @@ abstract class forestBranch extends forestRootBranch {
 									$a_parameters['editKey'] = $o_file->UUID;
 									
 									if ($o_glob->Security->CheckUserPermission(null, 'checkin')) {
-										$s_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkin', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnCheckinText', 1) . '"><span class="fas fa-lock-open text-primary"></span></a>';
+										$s_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkin', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnCheckinText', 1) . '"><span class="bi bi-unlock-fill text-primary"></span></a>';
 									}
 								}
 							}
@@ -3189,7 +4231,7 @@ abstract class forestBranch extends forestRootBranch {
 							$a_parameters['deleteFileKey'] = $o_file->UUID;
 							
 							if ($o_glob->Security->CheckUserPermission(null, 'delete')) {
-								$s_options .=  '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="fas fa-trash text-danger"></span></a>' . "\n";
+								$s_options .=  '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="bi bi-trash-fill text-danger"></span></a>' . "\n";
 							}
 						}
 
@@ -3207,13 +4249,13 @@ abstract class forestBranch extends forestRootBranch {
 					}
 					
 					$s_subFormItemContent = new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEWITEMCONTENT, array('', $s_subTableHead, $s_subTableRows));
-					$s_subFormItems .= new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEWITEM, array('subfiles', $o_glob->GetTranslation('Files', 1) . ' (' . $o_files->Twigs->Count() . ')', $s_firstElement, $s_subFormItemContent));
+					$s_subFormItems .= new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEWITEM, array('subfiles', $o_glob->GetTranslation('Files', 1) . ' (' . $o_files->Twigs->Count() . ')', $s_firstElement, $s_subFormItemContent, $s_tableName));
 				}
 			}
 		}
 		
 		/* use template to render sub constraints and files of a record */
-		return new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEW, array($s_subFormItems));
+		return new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEW, array($s_tableName, $s_subFormItems));
 	}
 	
 	
@@ -3252,11 +4294,11 @@ abstract class forestBranch extends forestRootBranch {
 				$o_options = null;
 				
 				if ($o_glob->Security->CheckUserPermission(null, 'edit')) {
-					$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'edit', array('editKey' => $s_viewKey)) . '" class="btn btn-light btn-lg" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="fas fa-edit"></span></a>' . "\n";
+					$o_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'edit', array('editKey' => $s_viewKey)) . '" class="btn btn-light btn-lg" title="' . $o_glob->GetTranslation('btnEditText', 1) . '"><span class="bi bi-pencil-square"></span></a>' . "\n";
 				}
 			
 				if ($o_glob->Security->CheckUserPermission(null, 'delete')) {
-					$o_options .= ' <a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete', array('deleteKey' => $s_viewKey)) . '" class="btn btn-light btn-lg" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="fas fa-trash text-danger"></span></a>' . "\n";
+					$o_options .= ' <a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete', array('deleteKey' => $s_viewKey)) . '" class="btn btn-light btn-lg" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="bi bi-trash-fill text-danger"></span></a>' . "\n";
 				}
 				
 				$o_glob->PostModalForm->BeforeForm = $o_options;
@@ -3270,17 +4312,57 @@ abstract class forestBranch extends forestRootBranch {
 					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
 				}
 				
-				$this->StandardView = \fPHP\Branches\forestBranch::LISTVIEW; /* because it only makes sense if we stay in list view, when we open modal read only form for record */
+				$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[\fPHP\Branches\forestBranch::LIST]; /* because it only makes sense if we stay in list view, when we open modal read only form for record */
 				$this->SetNextAction('init');
 			}
 		} else {
-			if ($this->StandardView == \fPHP\Branches\forestBranch::DETAIL) {
+			if (strval($o_glob->StandardView) == \fPHP\Branches\forestBranch::DETAIL) {
 				$this->GenerateListView();
-			} else if ($this->StandardView == \fPHP\Branches\forestBranch::LISTVIEW) {
+			} else if (strval($o_glob->StandardView) == \fPHP\Branches\forestBranch::LIST) {
 				$this->GenerateView();
-			} else if ($this->StandardView == \fPHP\Branches\forestBranch::FLEX) {
+			} else if (strval($o_glob->StandardView) == \fPHP\Branches\forestBranch::SLIDEGALLERY) {
 				if ($o_glob->Security->SessionData->Exists('lastView')) {
-					if ( ($o_glob->Security->SessionData->{'lastView'} == \fPHP\Branches\forestBranch::LISTVIEW) || ($o_glob->Security->SessionData->{'lastView'} == \fPHP\Branches\forestBranch::DETAIL) ) {
+					if ($o_glob->Security->SessionData->{'lastView'} != \fPHP\Branches\forestBranch::SLIDEGALLERY) {
+						$this->GenerateView();
+					} else {
+						$this->GenerateListView();
+					}
+				} else {
+					$this->GenerateListView();
+				}
+			} else if (strval($o_glob->StandardView) == \fPHP\Branches\forestBranch::SLIDECALENDER) {
+				if ($o_glob->Security->SessionData->Exists('lastView')) {
+					if ($o_glob->Security->SessionData->{'lastView'} != \fPHP\Branches\forestBranch::SLIDECALENDER) {
+						$this->GenerateView();
+					} else {
+						$this->GenerateListView();
+					}
+				} else {
+					$this->GenerateListView();
+				}
+			} else if (strval($o_glob->StandardView) == \fPHP\Branches\forestBranch::SECTIONCOUNTER) {
+				if ($o_glob->Security->SessionData->Exists('lastView')) {
+					if ($o_glob->Security->SessionData->{'lastView'} != \fPHP\Branches\forestBranch::SECTIONCOUNTER) {
+						$this->GenerateView();
+					} else {
+						$this->GenerateListView();
+					}
+				} else {
+					$this->GenerateListView();
+				}
+			} else if (strval($o_glob->StandardView) == \fPHP\Branches\forestBranch::FLEX) {
+				if ($o_glob->Security->SessionData->Exists('lastView')) {
+					if ($o_glob->Security->SessionData->{'lastView'} != \fPHP\Branches\forestBranch::FLEX) {
+						$this->GenerateView();
+					} else {
+						$this->GenerateListView();
+					}
+				} else {
+					$this->GenerateListView();
+				}
+			} else if (strval($o_glob->StandardView) == \fPHP\Branches\forestBranch::STATICPAGE) {
+				if ($o_glob->Security->SessionData->Exists('lastView')) {
+					if ($o_glob->Security->SessionData->{'lastView'} != \fPHP\Branches\forestBranch::STATICPAGE) {
 						$this->GenerateView();
 					} else {
 						$this->GenerateListView();
@@ -3342,7 +4424,12 @@ abstract class forestBranch extends forestRootBranch {
 				if ($o_files->Twigs->Count() == 0) {
 					/* add description element to show that no files exists for sub record */
 					$o_description = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::DESCRIPTION);
-					$o_description->Description = '<div class="alert alert-info">' . $o_glob->GetTranslation('NoFiles', 1) . '</div>';
+					
+					$o_description->Description = '<div class="alert alert-primary alert-dismissible fade show" role="alert">' .
+						'<div><span class="bi bi-info-circle-fill h5"></span>&nbsp;' . $o_glob->GetTranslation('NoFiles', 1) . "\n" . '</div>' . "\n" .
+						'<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' . "\n" .
+					'</div>' . "\n";
+
 					$o_description->NoFormGroup = true;
 					
 					$o_glob->PostModalForm->FormElements->Add($o_description);
@@ -3350,7 +4437,7 @@ abstract class forestBranch extends forestRootBranch {
 					$p_b_readonly = false;
 					
 					if ($o_glob->Security->SessionData->Exists('lastView')) {
-						if ($o_glob->Security->SessionData->{'lastView'} == \fPHP\Branches\forestBranch::LISTVIEW) {
+						if ($o_glob->Security->SessionData->{'lastView'} == \fPHP\Branches\forestBranch::LIST) {
 							$p_b_readonly = true;
 						}
 					}
@@ -3387,7 +4474,7 @@ abstract class forestBranch extends forestRootBranch {
 						$o_checkoutTwig = new \fPHP\Twigs\checkoutTwig;
 						
 						if ($o_checkoutTwig->GetRecordPrimary(array($o_file->UUID), array('ForeignUUID'))) {
-							$s_subTableRows .= ' class="bg-warning"';
+							$s_subTableRows .= ' class="table-warning"';
 						}
 							
 						$s_subTableRows .= '>' . "\n";
@@ -3452,7 +4539,7 @@ abstract class forestBranch extends forestRootBranch {
 						
 						if (is_dir($s_path)) {
 							if (file_exists($s_path . $o_file->Name)) {
-								$s_value = '<a href="' . $s_path . $o_file->Name . '" target="_blank" class="btn btn-light" title="' . $o_file->DisplayName . '" download="' . $o_file->DisplayName . '"><span class="fas fa-download"></span></a>' . "\n";
+								$s_value = '<a href="' . $s_path . $o_file->Name . '" target="_blank" class="btn btn-light" title="' . $o_file->DisplayName . '" download="' . $o_file->DisplayName . '"><span class="bi bi-file-earmark-arrow-down-fill"></span></a>' . "\n";
 							}
 						}
 						
@@ -3482,7 +4569,7 @@ abstract class forestBranch extends forestRootBranch {
 							$a_parameters['subConstraintKey'] = $o_subconstraintTwig->UUID;
 							
 							if ($o_glob->Security->CheckUserPermission(null, 'viewFilesHistory')) {
-								$s_options .=  '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'viewFilesHistory', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnHistoryText', 1) . ' (' . $i_historyFiles . ')"><span class="fas fa-history"></span></a>' . "\n";
+								$s_options .=  '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'viewFilesHistory', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnHistoryText', 1) . ' (' . $i_historyFiles . ')"><span class="bi bi-clock-history"></span></a>' . "\n";
 							}
 						}
 						
@@ -3502,7 +4589,7 @@ abstract class forestBranch extends forestRootBranch {
 							$a_parameters['subConstraintKey'] = $o_subconstraintTwig->UUID;
 							
 							if ($o_glob->Security->CheckUserPermission(null, 'replaceFile')) {
-								$s_options .=  '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'replaceFile', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnUploadText', 1) . '"><span class="fas fa-upload"></span></a>' . "\n";
+								$s_options .=  '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'replaceFile', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnUploadText', 1) . '"><span class="bi bi-file-earmark-arrow-up-fill"></span></a>' . "\n";
 							}
 							
 							/* check versioning settings of twig */
@@ -3523,7 +4610,7 @@ abstract class forestBranch extends forestRootBranch {
 									$a_parameters['editKey'] = $o_file->UUID;
 									
 									if ($o_glob->Security->CheckUserPermission(null, 'checkout')) {
-										$s_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkout', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnCheckoutText', 1) . '"><span class="fas fa-lock text-warning"></span></a>';
+										$s_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkout', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnCheckoutText', 1) . '"><span class="bi bi-lock-fill text-warning"></span></a>';
 									}
 								} else {
 									/* checkin link */
@@ -3539,7 +4626,7 @@ abstract class forestBranch extends forestRootBranch {
 									$a_parameters['editKey'] = $o_file->UUID;
 									
 									if ($o_glob->Security->CheckUserPermission(null, 'checkin')) {
-										$s_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkin', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnCheckinText', 1) . '"><span class="fas fa-lock-open text-primary"></span></a>';
+										$s_options .= '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'checkin', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnCheckinText', 1) . '"><span class="bi bi-unlock-fill text-primary"></span></a>';
 									}
 								}
 							}
@@ -3554,7 +4641,7 @@ abstract class forestBranch extends forestRootBranch {
 							$a_parameters['deleteFileKey'] = $o_file->UUID;
 							
 							if ($o_glob->Security->CheckUserPermission(null, 'delete')) {
-								$s_options .=  '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="fas fa-trash text-danger"></span></a>' . "\n";
+								$s_options .=  '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="bi bi-trash-fill text-danger"></span></a>' . "\n";
 							}
 						}
 
@@ -3569,7 +4656,7 @@ abstract class forestBranch extends forestRootBranch {
 					/* add description element to show existing files for sub record */
 					/* use template to render files of a record */
 					$o_description = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::DESCRIPTION);
-					$o_description->Description = strval(new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEW, array($s_subFormItemContent)));
+					$o_description->Description = strval(new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEW, array($o_glob->PostModalForm->FormObject->Id, $s_subFormItemContent)));
 					$o_description->NoFormGroup = true;
 					
 					$o_glob->PostModalForm->FormElements->Add($o_description);
@@ -3582,7 +4669,7 @@ abstract class forestBranch extends forestRootBranch {
 		}
 		
 		if ($o_glob->Security->SessionData->Exists('lastView')) {
-			$this->StandardView = $o_glob->Security->SessionData->{'lastView'};
+			$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[$o_glob->Security->SessionData->{'lastView'}];
 		}
 		
 		$this->SetNextAction('init');
@@ -3647,7 +4734,12 @@ abstract class forestBranch extends forestRootBranch {
 			if ($o_files->Twigs->Count() == 0) {
 				/* add description element to show that no files exists for sub record */
 				$o_description = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::DESCRIPTION);
-				$o_description->Description = '<div class="alert alert-info">' . $o_glob->GetTranslation('NoFiles', 1) . '</div>';
+				
+				$o_description->Description = '<div class="alert alert-primary alert-dismissible fade show" role="alert">' .
+					'<div><span class="bi bi-info-circle-fill h5"></span>&nbsp;' . $o_glob->GetTranslation('NoFiles', 1) . "\n" . '</div>' . "\n" .
+					'<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' . "\n" .
+				'</div>' . "\n";
+
 				$o_description->NoFormGroup = true;
 				
 				$o_glob->PostModalForm->FormElements->Add($o_description);
@@ -3655,7 +4747,7 @@ abstract class forestBranch extends forestRootBranch {
 				$p_b_readonly = false;
 				
 				if ($o_glob->Security->SessionData->Exists('lastView')) {
-					if ($o_glob->Security->SessionData->{'lastView'} == \fPHP\Branches\forestBranch::LISTVIEW) {
+					if ($o_glob->Security->SessionData->{'lastView'} == \fPHP\Branches\forestBranch::LIST) {
 						$p_b_readonly = true;
 					}
 				}
@@ -3751,7 +4843,7 @@ abstract class forestBranch extends forestRootBranch {
 					
 					if (is_dir($s_path)) {
 						if (file_exists($s_path . $o_file->Name)) {
-							$s_value = '<a href="' . $s_path . $o_file->Name . '" target="_blank" class="btn btn-light" title="' . $o_file->DisplayName . '" download="' . $o_file->DisplayName . '"><span class="fas fa-download"></span></a>' . "\n";
+							$s_value = '<a href="' . $s_path . $o_file->Name . '" target="_blank" class="btn btn-light" title="' . $o_file->DisplayName . '" download="' . $o_file->DisplayName . '"><span class="bi bi-file-earmark-arrow-down-fill"></span></a>' . "\n";
 						}
 					}
 					
@@ -3773,7 +4865,7 @@ abstract class forestBranch extends forestRootBranch {
 						$a_parameters['subConstraintKey'] = $s_tableUUID;
 						
 						if ($o_glob->Security->CheckUserPermission(null, 'restoreFile')) {
-							$s_options .=  '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'restoreFile', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnRestoreText', 1) . '"><span class="fas fa-redo"></span></a>' . "\n";
+							$s_options .=  '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'restoreFile', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnRestoreText', 1) . '"><span class="bi bi-arrow-counterclockwise"></span></a>' . "\n";
 						}
 					}
 
@@ -3788,7 +4880,7 @@ abstract class forestBranch extends forestRootBranch {
 				/* add description element to show existing files for sub record */
 				/* use template to render files of a record */
 				$o_description = new \fPHP\Forms\forestFormElement(\fPHP\Forms\forestFormElement::DESCRIPTION);
-				$o_description->Description = strval(new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEW, array($s_subFormItemContent)));
+				$o_description->Description = strval(new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEW, array($o_glob->PostModalForm->FormObject->Id, $s_subFormItemContent)));
 				$o_description->NoFormGroup = true;
 				
 				$o_glob->PostModalForm->FormElements->Add($o_description);
@@ -3800,7 +4892,7 @@ abstract class forestBranch extends forestRootBranch {
 		}
 		
 		if ($o_glob->Security->SessionData->Exists('lastView')) {
-			$this->StandardView = $o_glob->Security->SessionData->{'lastView'};
+			$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[$o_glob->Security->SessionData->{'lastView'}];
 		}
 		
 		$this->SetNextAction('init');
@@ -3837,7 +4929,7 @@ abstract class forestBranch extends forestRootBranch {
 				
 				/* add new sub record */
 				$this->RenderNewSubRecordForm();
-				$this->StandardView = \fPHP\Branches\forestBranch::DETAIL; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
+				$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[\fPHP\Branches\forestBranch::DETAIL]; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
 			} else {
 				/* add new record */
 				$o_glob->PostModalForm = new \fPHP\Forms\forestForm($this->Twig, true);
@@ -3958,7 +5050,7 @@ abstract class forestBranch extends forestRootBranch {
 				$this->TransferFILES_Twig();
 				
 				$this->Twig = $o_glob->HeadTwig;
-				$this->StandardView = \fPHP\Branches\forestBranch::DETAIL; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
+				$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[\fPHP\Branches\forestBranch::DETAIL]; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
 			} else {
 				/* check posted data for new record */
 				$this->TransferPOST_Twig();
@@ -4038,14 +5130,6 @@ abstract class forestBranch extends forestRootBranch {
 				
 				/* handle uploads */
 				$this->TransferFILES_Twig();
-			}
-		}
-		
-		if (isset($this->KeepFilter)) {
-			if ($this->KeepFilter->value) {
-				if ($o_glob->Security->SessionData->Exists('last_filter')) {
-					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
-				}
 			}
 		}
 		
@@ -4455,7 +5539,7 @@ abstract class forestBranch extends forestRootBranch {
 				}
 				
 				$this->Twig = $o_glob->HeadTwig;
-				$this->StandardView = \fPHP\Branches\forestBranch::DETAIL; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
+				$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[\fPHP\Branches\forestBranch::DETAIL]; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
 			} else {
 				/* check posted data for edit record */
 				
@@ -4534,7 +5618,7 @@ abstract class forestBranch extends forestRootBranch {
 				/* edit sub record */
 				$this->HandleFormKey($o_glob->URL->Branch . $o_glob->URL->Action . 'Form', true);
 				$this->RenderEditSubRecordForm();
-				$this->StandardView = \fPHP\Branches\forestBranch::DETAIL; /* because it only makes sense if we stay in detail view, when we open modal read only form for sub record */
+				$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[\fPHP\Branches\forestBranch::DETAIL]; /* because it only makes sense if we stay in detail view, when we open modal read only form for sub record */
 			}
 		}
 		
@@ -4589,14 +5673,6 @@ abstract class forestBranch extends forestRootBranch {
 			$o_hidden->Value = $a_editKeys[0];
 			
 			$o_glob->PostModalForm->FormFooterElements->Add($o_hidden);
-		}
-		
-		if (isset($this->KeepFilter)) {
-			if ($this->KeepFilter->value) {
-				if ($o_glob->Security->SessionData->Exists('last_filter')) {
-					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
-				}
-			}
 		}
 		
 		$this->SetNextAction('init');
@@ -5285,8 +6361,8 @@ abstract class forestBranch extends forestRootBranch {
 									throw new forestException(0x10001418, array($s_column));
 								}
 							} else if ($o_validationRule['Name'] == 'fphp_password') {
-								if ( (issetStr(strval($_POST[$this->Twig->fphp_Table . '_' . $s_column]))) && (!((preg_match("/^[A-Za-z0-9\d=!\-@._*?#§$%&'~:;,]*$/", strval($_POST[$this->Twig->fphp_Table . '_' . $s_column])))
-								&& (preg_match("/[=!\-@._*?#§$%&'~:;,]/", strval($_POST[$this->Twig->fphp_Table . '_' . $s_column])))
+								if ( (issetStr(strval($_POST[$this->Twig->fphp_Table . '_' . $s_column]))) && (!((preg_match("/^[A-Za-z0-9\d=!\-@._*?#ï¿½$%&'~:;,]*$/", strval($_POST[$this->Twig->fphp_Table . '_' . $s_column])))
+								&& (preg_match("/[=!\-@._*?#ï¿½$%&'~:;,]/", strval($_POST[$this->Twig->fphp_Table . '_' . $s_column])))
 								&& (preg_match("/[a-z]/", strval($_POST[$this->Twig->fphp_Table . '_' . $s_column])))
 								&& (preg_match("/[A-Z]/", strval($_POST[$this->Twig->fphp_Table . '_' . $s_column])))
 								&& (preg_match("/\d/", strval($_POST[$this->Twig->fphp_Table . '_' . $s_column]))))) )
@@ -6477,16 +7553,8 @@ abstract class forestBranch extends forestRootBranch {
 			}
 		}
 		
-		if (isset($this->KeepFilter)) {
-			if ($this->KeepFilter->value) {
-				if ($o_glob->Security->SessionData->Exists('last_filter')) {
-					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
-				}
-			}
-		}
-		
 		$this->Twig = $o_glob->HeadTwig;
-		$this->StandardView = \fPHP\Branches\forestBranch::DETAIL; /* because it only makes sense if we stay in detail view, when we open modal read only form for sub record */
+		$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[\fPHP\Branches\forestBranch::DETAIL]; /* because it only makes sense if we stay in detail view, when we open modal read only form for sub record */
 		$this->SetNextAction('init');
 	}
 	
@@ -6709,16 +7777,8 @@ abstract class forestBranch extends forestRootBranch {
 			}
 		}
 		
-		if (isset($this->KeepFilter)) {
-			if ($this->KeepFilter->value) {
-				if ($o_glob->Security->SessionData->Exists('last_filter')) {
-					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
-				}
-			}
-		}
-		
 		$this->Twig = $o_glob->HeadTwig;
-		$this->StandardView = \fPHP\Branches\forestBranch::DETAIL; /* because it only makes sense if we stay in detail view, when we open modal read only form for sub record */
+		$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[\fPHP\Branches\forestBranch::DETAIL]; /* because it only makes sense if we stay in detail view, when we open modal read only form for sub record */
 		$this->SetNextAction('init');
 	}
 	
@@ -6842,16 +7902,8 @@ abstract class forestBranch extends forestRootBranch {
 			}
 		}
 		
-		if (isset($this->KeepFilter)) {
-			if ($this->KeepFilter->value) {
-				if ($o_glob->Security->SessionData->Exists('last_filter')) {
-					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
-				}
-			}
-		}
-		
 		if ($o_glob->Security->SessionData->Exists('lastView')) {
-			$this->StandardView = $o_glob->Security->SessionData->{'lastView'};
+			$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[$o_glob->Security->SessionData->{'lastView'}];
 		}
 		
 		$this->SetNextAction('init');
@@ -6913,16 +7965,8 @@ abstract class forestBranch extends forestRootBranch {
 			}
 		}
 		
-		if (isset($this->KeepFilter)) {
-			if ($this->KeepFilter->value) {
-				if ($o_glob->Security->SessionData->Exists('last_filter')) {
-					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
-				}
-			}
-		}
-		
 		if ($o_glob->Security->SessionData->Exists('lastView')) {
-			$this->StandardView = $o_glob->Security->SessionData->{'lastView'};
+			$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[$o_glob->Security->SessionData->{'lastView'}];
 		}
 		
 		$this->SetNextAction('init');
@@ -7214,7 +8258,7 @@ abstract class forestBranch extends forestRootBranch {
 				$o_hidden->Value = $o_glob->Temp->{'deleteSubKey'};
 				$o_glob->PostModalForm->FormElements->Add($o_hidden);
 				
-				$this->StandardView = \fPHP\Branches\forestBranch::DETAIL; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
+				$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[\fPHP\Branches\forestBranch::DETAIL]; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
 			}
 			
 			/* delete file form */
@@ -7280,7 +8324,7 @@ abstract class forestBranch extends forestRootBranch {
 				$o_hidden->Value = $o_glob->Temp->{'deleteFileKey'};
 				$o_glob->PostModalForm->FormElements->Add($o_hidden);
 				
-				$this->StandardView = \fPHP\Branches\forestBranch::DETAIL; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
+				$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[\fPHP\Branches\forestBranch::DETAIL]; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
 			}
 		} else {
 			/* delete record */
@@ -7369,7 +8413,7 @@ abstract class forestBranch extends forestRootBranch {
 				
 				$o_glob->SystemMessages->Add(new forestException(0x10001427));
 				
-				$this->StandardView = \fPHP\Branches\forestBranch::DETAIL; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
+				$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[\fPHP\Branches\forestBranch::DETAIL]; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
 			}
 			
 			/* delete file */
@@ -7435,15 +8479,7 @@ abstract class forestBranch extends forestRootBranch {
 				
 				$o_glob->SystemMessages->Add(new forestException(0x10001427));
 				
-				$this->StandardView = \fPHP\Branches\forestBranch::DETAIL; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
-			}
-		}
-		
-		if (isset($this->KeepFilter)) {
-			if ($this->KeepFilter->value) {
-				if ($o_glob->Security->SessionData->Exists('last_filter')) {
-					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
-				}
+				$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[\fPHP\Branches\forestBranch::DETAIL]; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
 			}
 		}
 		
@@ -7757,7 +8793,7 @@ abstract class forestBranch extends forestRootBranch {
 		/* check if we have SortColumn set for current branch */
 		if (array_key_exists($this->Twig->fphp_TableUUID, $o_glob->TablesInformation)) {
 			if (issetStr($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['SortColumn']->PrimaryValue)) {
-				if ( ($o_sortColumn = $o_glob->GetTablefieldsDictionaryByUUID($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['SortColumn']->PrimaryValue) ) != null) {
+				if ( ($o_sortColumn = $o_glob->GetTablefieldsDictionaryByUUID($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['SortColumn']->PrimaryValue) ) != null ) {
 					/* check if parameter record exists */
 					if ( ($o_glob->Temp->Exists('editKey')) && ($o_glob->Temp->{'editKey'} != null) ) {
 						/* query record */
@@ -7846,6 +8882,108 @@ abstract class forestBranch extends forestRootBranch {
 						}
 					}
 				}
+			} else if (issetStr($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['Identifier']->PrimaryValue)) { /* check if identifier is configured */
+				$o_identifierTwig = new \fPHP\Twigs\identifierTwig;
+				
+				/* get identifier record */
+				if (! ($o_identifierTwig->GetRecord(array($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['Identifier']->PrimaryValue))) ) {
+					throw new forestException(0x10001401, array($o_identifierTwig->fphp_Table));
+				}
+	
+				/* check if parameter record exists */
+				if ( ($o_glob->Temp->Exists('editKey')) && ($o_glob->Temp->{'editKey'} != null) ) {
+					/* query record */
+					if (! ($this->Twig->GetRecord(array($o_glob->Temp->{'editKey'}))) ) {
+						throw new forestException(0x10001401, array($this->Twig->fphp_Table));
+					}
+					
+					$o_checkoutTwig = new \fPHP\Twigs\checkoutTwig;
+					
+					if ( ($this->Twig->fphp_HasUUID) && ($o_checkoutTwig->GetRecordPrimary(array($this->Twig->UUID), array('ForeignUUID'))) ) {
+						/* check if user is the same user who has checked out the record */
+						if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+							throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+						}
+					}
+					
+					$o_currentRecord = clone $this->Twig;
+					$s_primaryField = 'UUID';
+					
+					if (!$o_currentRecord->fphp_HasUUID) {
+						$s_primaryField = 'Id';
+					}
+					
+					/* get all records, sort by Identifier */
+					$a_sqlAdditionalSorts = array('Identifier' => true);
+					
+					$o_glob->Temp->Add($a_sqlAdditionalSorts, 'SQLAdditionalSorts');
+					$o_records = $this->Twig->GetAllRecords(true);
+					$o_glob->Temp->Del('SQLAdditionalSorts');
+					
+					/* iterate all records */
+					if ($o_records->Twigs->Count() > 0) {
+						$o_lastRecordUUID = null;
+						
+						foreach ($o_records->Twigs as $o_record) {
+							/* get selected record */
+							if ($o_record->{$s_primaryField} == $o_currentRecord->{$s_primaryField}) {
+								/* check if this is the first record */
+								if ($o_lastRecordUUID != null) {
+									/* query record */
+									$s_foo = '\\fPHP\\Twigs\\' . $this->Twig->fphp_Table . 'Twig';
+									\fPHP\Helper\forestStringLib::RemoveTablePrefix($s_foo);
+									$o_lastRecord = new $s_foo;
+									
+									if (! ($o_lastRecord->GetRecord(array($o_lastRecordUUID))) ) {
+										throw new forestException(0x10001401, array($o_lastRecord->fphp_Table));
+									}
+									
+									$o_checkoutTwig = new \fPHP\Twigs\checkoutTwig;
+									
+									if ( ($o_lastRecord->fphp_HasUUID) && ($o_checkoutTwig->GetRecordPrimary(array($o_lastRecord->UUID), array('ForeignUUID'))) ) {
+										/* check if user is the same user who has checked out the record */
+										if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+											throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+										}
+									}
+									
+									/* exchange Identifier value of current record with previous record, use value 'ID_INTERCHANGE' as intermediate value */
+									$i_oldValue = $o_currentRecord->Identifier;
+									$i_newValue = $o_lastRecord->Identifier;
+									
+									/* exchange Id value of current record with next record, use value 0 as intermediate value */
+									$i_oldIdValue = $o_currentRecord->Id;
+									$i_newIdValue = $o_lastRecord->Id;
+
+									$o_currentRecord->Id = 0;
+									$o_currentRecord->Identifier = 'ID_INTERCHANGE';
+									$o_glob->Temp->Add(array('Id', 'Identifier'), 'SQLUpdateColumns');
+									$o_currentRecord->UpdateRecord(true, true);
+									$o_glob->Temp->Del('SQLUpdateColumns');
+									
+									$o_lastRecord->Id = $i_oldIdValue;
+									$o_lastRecord->Identifier = $i_oldValue;
+									$o_glob->Temp->Add(array('Id', 'Identifier'), 'SQLUpdateColumns');
+									$o_lastRecord->UpdateRecord(true, true);
+									$o_glob->Temp->Del('SQLUpdateColumns');
+									
+									$o_currentRecord->Id = $i_newIdValue;
+									$o_currentRecord->Identifier = $i_newValue;
+									$o_glob->Temp->Add(array('Id', 'Identifier'), 'SQLUpdateColumns');
+									$o_currentRecord->UpdateRecord(true, true);
+									$o_glob->Temp->Del('SQLUpdateColumns');
+									
+									$this->CreateLogEntry('record moved up', $o_currentRecord);
+									
+									$o_glob->SystemMessages->Add(new forestException(0x1000142B));
+								}
+							}
+							
+							/* save previous record primary key in help variable */
+							$o_lastRecordUUID = $o_record->{$s_primaryField};
+						}
+					}
+				}
 			}
 		}
 		
@@ -7869,7 +9007,7 @@ abstract class forestBranch extends forestRootBranch {
 		/* check if we have SortColumn set for current branch */
 		if (array_key_exists($this->Twig->fphp_TableUUID, $o_glob->TablesInformation)) {
 			if (issetStr($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['SortColumn']->PrimaryValue)) {
-				if ( ($o_sortColumn = $o_glob->GetTablefieldsDictionaryByUUID($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['SortColumn']->PrimaryValue) ) != null) {
+				if ( ($o_sortColumn = $o_glob->GetTablefieldsDictionaryByUUID($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['SortColumn']->PrimaryValue) ) != null ) {
 					/* check if parameter record exists */
 					if ( ($o_glob->Temp->Exists('editKey')) && ($o_glob->Temp->{'editKey'} != null) ) {
 						/* query record */
@@ -7957,6 +9095,112 @@ abstract class forestBranch extends forestRootBranch {
 										
 										$o_glob->SystemMessages->Add(new forestException(0x1000142C));
 									}
+								}
+							}
+						}
+					}
+				}
+			} else if (issetStr($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['Identifier']->PrimaryValue)) { /* check if identifier is configured */
+				$o_identifierTwig = new \fPHP\Twigs\identifierTwig;
+				
+				/* get identifier record */
+				if (! ($o_identifierTwig->GetRecord(array($o_glob->TablesInformation[$this->Twig->fphp_TableUUID]['Identifier']->PrimaryValue))) ) {
+					throw new forestException(0x10001401, array($o_identifierTwig->fphp_Table));
+				}
+	
+				/* check if parameter record exists */
+				if ( ($o_glob->Temp->Exists('editKey')) && ($o_glob->Temp->{'editKey'} != null) ) {
+					/* query record */
+					if (! ($this->Twig->GetRecord(array($o_glob->Temp->{'editKey'}))) ) {
+						throw new forestException(0x10001401, array($this->Twig->fphp_Table));
+					}
+					
+					$o_checkoutTwig = new \fPHP\Twigs\checkoutTwig;
+					
+					if ( ($this->Twig->fphp_HasUUID) && ($o_checkoutTwig->GetRecordPrimary(array($this->Twig->UUID), array('ForeignUUID'))) ) {
+						/* check if user is the same user who has checked out the record */
+						if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+							throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+						}
+					}
+					
+					$o_currentRecord = clone $this->Twig;
+					$s_primaryField = 'UUID';
+					
+					if (!$o_currentRecord->fphp_HasUUID) {
+						$s_primaryField = 'Id';
+					}
+					
+					/* get all records, sort by Identifier */
+					$a_sqlAdditionalSorts = array('Identifier' => true);
+					
+					$o_glob->Temp->Add($a_sqlAdditionalSorts, 'SQLAdditionalSorts');
+					$o_records = $this->Twig->GetAllRecords(true);
+					$o_glob->Temp->Del('SQLAdditionalSorts');
+					
+					/* iterate all records */
+					if ($o_records->Twigs->Count() > 0) {
+						$o_nextRecordUUID = null;
+						
+						foreach ($o_records->Twigs as $o_key => $o_record) {
+							/* save next record primary key in help variable */
+							if ($o_records->Twigs->Exists($o_key + 1)) {
+								$o_nextRecordUUID = $o_records->Twigs->{$o_key + 1}->{$s_primaryField};
+							} else {
+								$o_nextRecordUUID = null;
+							}
+							
+							/* get selected record */
+							if ($o_record->{$s_primaryField} == $o_currentRecord->{$s_primaryField}) {
+								/* check if this is the last record */
+								if ($o_nextRecordUUID != null) {
+									/* query record */
+									$s_foo = '\\fPHP\\Twigs\\' . $this->Twig->fphp_Table . 'Twig';
+									\fPHP\Helper\forestStringLib::RemoveTablePrefix($s_foo);
+									$o_nextRecord = new $s_foo;
+									
+									if (! ($o_nextRecord->GetRecord(array($o_nextRecordUUID))) ) {
+										throw new forestException(0x10001401, array($o_nextRecord->fphp_Table));
+									}
+									
+									$o_checkoutTwig = new \fPHP\Twigs\checkoutTwig;
+									
+									if ( ($o_nextRecord->fphp_HasUUID) && ($o_checkoutTwig->GetRecordPrimary(array($o_nextRecord->UUID), array('ForeignUUID'))) ) {
+										/* check if user is the same user who has checked out the record */
+										if ($o_glob->Security->UserUUID != $o_checkoutTwig->UserUUID) {
+											throw new forestException(0x1000143A, array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID)));
+										}
+									}
+									
+									/* exchange Identifier value of current record with next record, use value 'ID_INTERCHANGE' as intermediate value */
+									$i_oldValue = $o_currentRecord->Identifier;
+									$i_newValue = $o_nextRecord->Identifier;
+
+									/* exchange Id value of current record with next record, use value 0 as intermediate value */
+									$i_oldIdValue = $o_currentRecord->Id;
+									$i_newIdValue = $o_nextRecord->Id;
+									
+									$o_currentRecord->Id = 0;
+									$o_currentRecord->Identifier = 'ID_INTERCHANGE';
+									$o_glob->Temp->Add(array('Id', 'Identifier'), 'SQLUpdateColumns');
+									$o_currentRecord->UpdateRecord(true, true);
+									$o_glob->Temp->Del('SQLUpdateColumns');
+									
+									$o_nextRecord->Id = $i_oldIdValue;
+									$o_nextRecord->Identifier = $i_oldValue;
+									$o_glob->Temp->Add(array('Id', 'Identifier'), 'SQLUpdateColumns');
+									$o_nextRecord->UpdateRecord(true, true);
+									$o_glob->Temp->Del('SQLUpdateColumns');
+									
+									$o_currentRecord->Id = $i_newIdValue;
+									$o_currentRecord->Identifier = $i_newValue;
+									$o_glob->Temp->Add(array('Id', 'Identifier'), 'SQLUpdateColumns');
+									$o_currentRecord->UpdateRecord(true, true);
+									$o_glob->Temp->Del('SQLUpdateColumns');
+									
+									$this->CreateLogEntry('record moved down', $o_currentRecord);
+									
+									$o_glob->SystemMessages->Add(new forestException(0x1000142C));
 								}
 							}
 						}
@@ -8082,13 +9326,22 @@ abstract class forestBranch extends forestRootBranch {
 		
 		$black = imagecolorallocate($image, 0, 0, 0);
 		$white = imagecolorallocate($image, 255, 255, 255);
-		$textcolors = [$black, $white];
+        $red = imagecolorallocate($image, 255, 0, 0);
+        $green = imagecolorallocate($image, 0, 128, 0);
+        $blue = imagecolorallocate($image, 0, 0, 255);
+        $orange = imagecolorallocate($image, 255, 165, 0);
+        $violet = imagecolorallocate($image, 238, 130, 238);
+        $aqua =  imagecolorallocate($image, 0, 255, 255);
+        $navy = imagecolorallocate($image, 0, 0, 128);
+        $olive = imagecolorallocate($image, 128, 128, 0);
+        $purple = imagecolorallocate($image, 128, 0, 128);
+		$textcolors = [$black, $white, $red, $green, $blue, $orange, $violet, $aqua, $navy, $olive, $purple];
 		 
 		for($i = 0; $i < intval($_SESSION['fphp_captcha_length']); $i++) {
-			$letter_space = 170/intval($_SESSION['fphp_captcha_length']);
+			$letter_space = intval(170/intval($_SESSION['fphp_captcha_length']));
 			$initial = 15;
 
-			imagettftext($image, 24, rand(-15, 15), $initial + $i*$letter_space, rand(25, 45), $textcolors[rand(0, 1)], realpath('./src/LiberationMono-Regular.ttf'), $_SESSION['fphp_captcha'][$i]);
+			imagettftext($image, 24, rand(-15, 15), $initial + $i*$letter_space, rand(25, 45), $textcolors[rand(0, 10)], realpath('./src/LiberationMono-Regular.ttf'), $_SESSION['fphp_captcha'][$i]);
 		}
 		 
 		header('Content-type: image/png');
@@ -8167,9 +9420,10 @@ abstract class forestBranch extends forestRootBranch {
 				imagecopyresampled($o_virtual_image, $o_source_image, 0, 0, 0, 0, $i_desired_width, $i_desired_height, $i_width, $i_height);
 				
 				/* read detailed image information, to know how we handle different orientation settings */
-				$a_exif = exif_read_data($p_s_sourceFile);
+				$a_exif = @exif_read_data($p_s_sourceFile);
 				
-				if (array_key_exists('Orientation', $a_exif)) {
+				/* check if return value is not false, otherwise we have a picture which does not support 'exif_read_data' -> we do not do magic image rotation */
+				if (($a_exif !== false) && (array_key_exists('Orientation', $a_exif))) {
 					switch($a_exif['Orientation']) {
 						case 1: /* nothing */
 						break;
@@ -8281,7 +9535,7 @@ abstract class forestBranch extends forestRootBranch {
 		
 		if (!$b_image_found) {
 			/* read the source image */
-			$o_source_image = imagecreatefrompng('./images/sys_fphp/image_not_found.png');
+			$o_source_image = imagecreatefrompng('./files/image_not_found.png');
 			
 			$i_width = imagesx($o_source_image);
 			$i_height = imagesy($o_source_image);

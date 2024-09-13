@@ -4,24 +4,26 @@
  * the navigation-bar itself is a linked list of navigation-nodes
  *
  * @category    forestPHP Framework
- * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2019 forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestany.net>
+ * @copyright   (c) 2024 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.0 stable
- * @link        http://www.forestphp.de/
+ * @version     1.1.0 stable
+ * @link        https://forestany.net
  * @object-id   0x1 00018
  * @since       File available since Release 0.1.1 alpha
  * @deprecated  -
  *
- * @version log Version		Developer	Date		Comment
- * 		0.1.1 alpha	renatus		2019-08-13	added to framework
- * 		0.2.0 beta	renatus		2019-10-24	added RootMenu to navigation
- * 		0.4.0 beta	renatus		2019-11-14	added login an logout part
- * 		0.4.0 beta	renatus		2019-11-14	added permission check for navigation nodes
- * 		0.8.0 beta	renatus		2020-01-18	activated account link in logout part
- * 		0.9.0 beta	renatus		2020-01-30	changes for bootstrap 4
- * 		0.9.0 beta	renatus		2020-01-30	added Sidebar and FullScreen
+ * @version log Version			Developer	Date		Comment
+ * 				0.1.1 alpha		renea		2019-08-13	added to framework
+ * 				0.2.0 beta		renea		2019-10-24	added RootMenu to navigation
+ * 				0.4.0 beta		renea		2019-11-14	added login an logout part
+ * 				0.4.0 beta		renea		2019-11-14	added permission check for navigation nodes
+ * 				0.8.0 beta		renea		2020-01-18	activated account link in logout part
+ * 				0.9.0 beta		renea		2020-01-30	changes for bootstrap 4
+ * 				0.9.0 beta		renea		2020-01-30	added Sidebar and FullScreen
+ * 				1.1.0 stable	renea		2024-06-09	added optional logo to navbar-brand
+ * 				1.1.0 stable	renea		2024-08-10	changes for bootstrap 5
  */
 
 namespace fPHP\Branches;
@@ -46,6 +48,7 @@ class forestNavigation {
 	private $ParentNavigationNode;
 	private $NavbarAdditionalClass;
 	private $NavbarAlign;
+	private $NavbarTheme;
 	private $NavbarBrandLink;
 	private $NavbarBrandTitle;
 	private $NavbarMaxLevel;
@@ -82,26 +85,27 @@ class forestNavigation {
 	public function __construct() {
 		$this->NavigationNode = new forestObject('forestNavigationNode', false);
 		$this->ParentNavigationNode = new forestObject('forestNavigationNode', false);
-		$this->NavbarAdditionalClass = new forestString('navbar-expand-xl bg-dark navbar-dark');
+		$this->NavbarAdditionalClass = new forestString('navbar-expand-xl bg-dark');
 		$this->NavbarAlign = new forestList(array('fixed-top', 'fixed-bottom'), 'fixed-top');
+		$this->NavbarTheme = new forestString('dark');
 		$this->NavbarBrandLink = new forestString('./');
 		$this->NavbarBrandTitle = new forestString('forestPHP');
 		$this->NavbarMaxLevel = new forestInt(10);
 		
 		$this->NavbarShowLoginPart = new forestBool;
 		$this->NavbarIconClass = new forestString('fphp_nav_icon');
-		$this->NavbarLoginIcon = new forestString('fas fa-sign-in-alt');
+		$this->NavbarLoginIcon = new forestString('bi bi-box-arrow-in-right');
 		$this->NavbarLoginLink = new forestString('./');
 		$this->NavbarLoginTitle = new forestString('Login');
-		$this->NavbarSignUpIcon = new forestString('fas fa-user-plus');
+		$this->NavbarSignUpIcon = new forestString('bi bi-person-fill-add');
 		$this->NavbarSignUpLink = new forestString('./');
 		$this->NavbarSignUpTitle = new forestString('Sign up');
 		
 		$this->NavbarShowLogoutPart = new forestBool;
-		$this->NavbarUserIcon = new forestString('fas fa-user');
+		$this->NavbarUserIcon = new forestString('bi bi-person-square');
 		$this->NavbarUserLink = new forestString('./');
 		$this->NavbarUserTitle = new forestString('User');
-		$this->NavbarLogoutIcon = new forestString('fas fa-sign-out-alt');
+		$this->NavbarLogoutIcon = new forestString('bi bi-door-open-fill');
 		$this->NavbarLogoutLink = new forestString('./');
 		$this->NavbarLogoutTitle = new forestString('Logout');
 	}
@@ -256,11 +260,11 @@ class forestNavigation {
 		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
 		if ($o_glob->Trunk->Navmode == 1) {
-			$this->RenderNavbar();
+			return $this->RenderNavbar();
 		} else if ($o_glob->Trunk->Navmode == 10) {
-			$this->RenderNavSidebar();
+			return $this->RenderNavSidebar();
 		} else if ($o_glob->Trunk->Navmode == 100) {
-			$this->RenderNavFullScreen();
+			return $this->RenderNavFullScreen();
 		}
 	}
 	
@@ -289,64 +293,83 @@ class forestNavigation {
 		if (issetStr($this->NavbarAlign->value)) {
 			$s_navigation .= ' ' . $this->NavbarAlign->value;
 		}
+
+		if (issetStr($this->NavbarTheme->value)) {
+			$s_navigation .= '" data-bs-theme="' . $this->NavbarTheme->value;
+		}
 		
 		$s_navigation .= '">' . "\n";
 		
-			/* render navbar header */
-			$s_navigation .= '<a class="navbar-brand" href="' . $this->NavbarBrandLink->value . '">' . $this->NavbarBrandTitle->value . '</a>' . "\n";
-			$s_navigation .= '<button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#fphp_navbar">' . "\n";
-				$s_navigation .= '<span class="navbar-toggler-icon"></span>' . "\n";
-			$s_navigation .= '</button>' . "\n";
-			
-			$s_navigation .= '<div class="collapse navbar-collapse" id="fphp_navbar">' . "\n";
-				$s_navigation .= '<ul class="navbar-nav mr-auto">' . "\n";
-				
-				/* render root menu */
-				if (issetStr($o_glob->RootMenu)) {
-					$s_navigation .= $o_glob->RootMenu;
+			$s_navigation .= '<div class="container-fluid">' . "\n";
+
+				/* render navbar header */
+				$s_navigation .= '<a class="navbar-brand align-middle" href="' . $this->NavbarBrandLink->value . '">' . "\n";
+		
+				/* add logo to nav title */
+				if (\fPHP\Roots\forestAutoLoad::IsReadable('./files/logo.png')) {
+					$s_navigation .= '<span><img src="./files/logo.png" class="d-inline-block" alt="_logo not found_" height="44"></span>&nbsp;' . "\n";
 				}
 				
-				/* recurse rendering of navigation node elements */
-				if (!is_null($this->ParentNavigationNode->value)) {
-					$this->RenderNavigationRecursive($this->ParentNavigationNode->value, $s_navigation, 0, $i_maxLevel);
-				} else {
-					$this->RenderNavigationRecursive($this->NavigationNode->value, $s_navigation, 0, $i_maxLevel);
-				}
-			
-				$s_navigation .= '</ul>' . "\n";
+				$s_navigation .= '<span class="align-middle text-nowrap d-none d-xl-inline">' . $this->NavbarBrandTitle->value . '</span></a>' . "\n";
+
+				$s_navigation .= '<button class="navbar-toggler collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#fphp_navbar" aria-controls="fphp_navbar" aria-expanded="false" aria-label="Toggle navigation">' . "\n";
+					/* alternative icon */
+					/* $s_navigation .= '<span class="navbar-toggler-icon"></span>' . "\n"; */
+					$s_navigation .= '<span> </span>' . "\n";
+            		$s_navigation .= '<span> </span>' . "\n";
+            		$s_navigation .= '<span> </span>' . "\n";
+				$s_navigation .= '</button>' . "\n";
 				
-				/* render navbar right part */
-				if ( ($this->NavbarShowLoginPart->value) || ($this->NavbarShowLogoutPart->value) ) {
-					$s_navigation .= '<ul class="navbar-nav ml-auto">' . "\n";
-				}
-				
-				if ($this->NavbarShowLoginPart->value) {
-					/* render navbar login part */
-					if ( (issetStr($this->NavbarSignUpLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarSignUpIcon->value)) && (issetStr($this->NavbarSignUpTitle->value)) ) {
-						$s_navigation .= '<li class="nav-item"><a href="' . $this->NavbarSignUpLink->value . '" class="nav-link text-nowrap"><span class="' . $this->NavbarIconClass->value . ' ' . $this->NavbarSignUpIcon->value . '"></span> ' . $this->NavbarSignUpTitle->value . '</a></li>';
+				$s_navigation .= '<div class="collapse navbar-collapse" id="fphp_navbar">' . "\n";
+					$s_navigation .= '<ul class="navbar-nav me-auto navbar-nav-scroll">' . "\n";
+					
+					/* render root menu */
+					if (issetStr($o_glob->RootMenu)) {
+						$s_navigation .= $o_glob->RootMenu;
 					}
 					
-					if ( (issetStr($this->NavbarLoginLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarLoginIcon->value)) && (issetStr($this->NavbarLoginTitle->value)) ) {
-						$s_navigation .= '<li class="nav-item"><a href="' . $this->NavbarLoginLink->value . '" class="nav-link text-nowrap"><span class="' . $this->NavbarIconClass->value . ' ' . $this->NavbarLoginIcon->value . '"></span> ' . $this->NavbarLoginTitle->value . '</a></li>';
+					/* recurse rendering of navigation node elements */
+					if (!is_null($this->ParentNavigationNode->value)) {
+						$this->RenderNavigationRecursive($this->ParentNavigationNode->value, $s_navigation, 0, $i_maxLevel);
+					} else {
+						$this->RenderNavigationRecursive($this->NavigationNode->value, $s_navigation, 0, $i_maxLevel);
 					}
-				} else if ($this->NavbarShowLogoutPart->value) {
-					/* render navbar logout part */
-					if ( (issetStr($this->NavbarUserLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarUserIcon->value)) && (issetStr($this->NavbarUserTitle->value)) ) {
-						$s_navigation .= '<li class="nav-item"><a href="' . $this->NavbarUserLink->value . '" class="nav-link text-nowrap"><span class="' . $this->NavbarIconClass->value . ' ' . $this->NavbarUserIcon->value . '"></span> ' . $this->NavbarUserTitle->value . '</a></li>';
-					}
-					
-					if ( (issetStr($this->NavbarLogoutLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarLogoutIcon->value)) && (issetStr($this->NavbarLogoutTitle->value)) ) {
-						$s_navigation .= '<li class="nav-item"><a href="' . $this->NavbarLogoutLink->value . '" class="nav-link text-nowrap"><span class="' . $this->NavbarIconClass->value . ' ' . $this->NavbarLogoutIcon->value . '"></span> ' . $this->NavbarLogoutTitle->value . '</a></li>';
-					}
-				}
 				
-				if ( ($this->NavbarShowLoginPart->value) || ($this->NavbarShowLogoutPart->value) ) {
 					$s_navigation .= '</ul>' . "\n";
-				}
+					
+					/* render navbar right part */
+					if ( ($this->NavbarShowLoginPart->value) || ($this->NavbarShowLogoutPart->value) ) {
+						$s_navigation .= '<ul class="navbar-nav navbar-right ms-auto">' . "\n";
+					}
+					
+					if ($this->NavbarShowLoginPart->value) {
+						/* render navbar login part */
+						if ( (issetStr($this->NavbarSignUpLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarSignUpIcon->value)) && (issetStr($this->NavbarSignUpTitle->value)) ) {
+							$s_navigation .= '<li class="nav-item"><a href="' . $this->NavbarSignUpLink->value . '" class="nav-link text-nowrap"><span class="' . $this->NavbarIconClass->value . ' ' . $this->NavbarSignUpIcon->value . '"></span> ' . $this->NavbarSignUpTitle->value . '</a></li>';
+						}
+						
+						if ( (issetStr($this->NavbarLoginLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarLoginIcon->value)) && (issetStr($this->NavbarLoginTitle->value)) ) {
+							$s_navigation .= '<li class="nav-item"><a href="' . $this->NavbarLoginLink->value . '" class="nav-link text-nowrap"><span class="' . $this->NavbarIconClass->value . ' ' . $this->NavbarLoginIcon->value . '"></span> ' . $this->NavbarLoginTitle->value . '</a></li>';
+						}
+					} else if ($this->NavbarShowLogoutPart->value) {
+						/* render navbar logout part */
+						if ( (issetStr($this->NavbarUserLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarUserIcon->value)) && (issetStr($this->NavbarUserTitle->value)) ) {
+							$s_navigation .= '<li class="nav-item"><a href="' . $this->NavbarUserLink->value . '" class="nav-link text-nowrap"><span class="' . $this->NavbarIconClass->value . ' ' . $this->NavbarUserIcon->value . '"></span> ' . $this->NavbarUserTitle->value . '</a></li>';
+						}
+						
+						if ( (issetStr($this->NavbarLogoutLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarLogoutIcon->value)) && (issetStr($this->NavbarLogoutTitle->value)) ) {
+							$s_navigation .= '<li class="nav-item"><a href="' . $this->NavbarLogoutLink->value . '" class="nav-link text-nowrap"><span class="' . $this->NavbarIconClass->value . ' ' . $this->NavbarLogoutIcon->value . '"></span> ' . $this->NavbarLogoutTitle->value . '</a></li>';
+						}
+					}
+					
+					if ( ($this->NavbarShowLoginPart->value) || ($this->NavbarShowLogoutPart->value) ) {
+						$s_navigation .= '</ul>' . "\n";
+					}
+				$s_navigation .= '</div>' . "\n";	
 			$s_navigation .= '</div>' . "\n";	
 		$s_navigation .= '</nav>' . "\n";
 		
-		echo $s_navigation;
+		return $s_navigation;
 	}
 	
 	/**
@@ -374,59 +397,78 @@ class forestNavigation {
 		if (issetStr($this->NavbarAlign->value)) {
 			$s_navigation .= ' ' . $this->NavbarAlign->value;
 		}
+
+		if (issetStr($this->NavbarTheme->value)) {
+			$s_navigation .= '" data-bs-theme="' . $this->NavbarTheme->value;
+		}
 		
 		$s_navigation .= '">' . "\n";
-			/* render navbar compass */
-			$s_navigation .= '<a href="#" class="navbar-brand" onclick="fphp_toggleNavsidebar()">' . "\n";
-				$s_navigation .= '<button class="btn btn-sm btn-info" type="button" title="Menu"><span class="fas fa-compass"></span></button>' . "\n";
-			$s_navigation .= '</a>' . "\n";
-			
-			/* render navbar header */
-			$s_navigation .= '<a class="navbar-brand" href="' . $this->NavbarBrandLink->value . '">' . $this->NavbarBrandTitle->value . '</a>' . "\n";
-			
-			$s_navigation .= '<button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#fphp_navbar">' . "\n";
-				$s_navigation .= '<span class="navbar-toggler-icon"></span>' . "\n";
-			$s_navigation .= '</button>' . "\n";
-			
-			$s_navigation .= '<div class="collapse navbar-collapse" id="fphp_navbar">' . "\n";
-				$s_navigation .= '<ul class="navbar-nav">' . "\n";
+
+			$s_navigation .= '<div class="container-fluid">' . "\n";
+
+				/* render navbar compass */
+				$s_navigation .= '<a href="#" class="navbar-brand" onclick="fphp_toggleNavsidebar()">' . "\n";
+					$s_navigation .= '<button class="btn btn-sm btn-info" type="button" title="Menu"><span class="bi bi-compass-fill"></span></button>' . "\n";
+				$s_navigation .= '</a>' . "\n";
 				
-				/* render root menu */
-				if (issetStr($o_glob->RootMenu)) {
-					$s_navigation .= $o_glob->RootMenu;
+				/* render navbar header */
+				$s_navigation .= '<a class="navbar-brand align-middle" href="' . $this->NavbarBrandLink->value . '">' . "\n";
+		
+				/* add logo to nav title */
+				if (\fPHP\Roots\forestAutoLoad::IsReadable('./files/logo.png')) {
+					$s_navigation .= '<span><img src="./files/logo.png" class="d-inline-block" alt="_logo not found_" height="44"></span>&nbsp;' . "\n";
 				}
 				
-				$s_navigation .= '</ul>' . "\n";
+				$s_navigation .= '<span class="align-middle text-nowrap d-none d-xl-inline">' . $this->NavbarBrandTitle->value . '</span></a>' . "\n";
+
+				$s_navigation .= '<button class="navbar-toggler collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#fphp_navbar" aria-controls="fphp_navbar" aria-expanded="false" aria-label="Toggle navigation">' . "\n";
+					/* alternative icon */
+					/* $s_navigation .= '<span class="navbar-toggler-icon"></span>' . "\n"; */
+					$s_navigation .= '<span> </span>' . "\n";
+            		$s_navigation .= '<span> </span>' . "\n";
+            		$s_navigation .= '<span> </span>' . "\n";
+				$s_navigation .= '</button>' . "\n";
 				
-				/* render navbar right part */
-				if ( ($this->NavbarShowLoginPart->value) || ($this->NavbarShowLogoutPart->value) ) {
-					$s_navigation .= '<ul class="navbar-nav ml-auto">' . "\n";
-				}
-				
-				if ($this->NavbarShowLoginPart->value) {
-					/* render navbar login part */
-					if ( (issetStr($this->NavbarSignUpLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarSignUpIcon->value)) && (issetStr($this->NavbarSignUpTitle->value)) ) {
-						$s_navigation .= '<li class="nav-item"><a href="' . $this->NavbarSignUpLink->value . '" class="nav-link text-nowrap"><span class="' . $this->NavbarIconClass->value . ' ' . $this->NavbarSignUpIcon->value . '"></span> ' . $this->NavbarSignUpTitle->value . '</a></li>';
+				$s_navigation .= '<div class="collapse navbar-collapse" id="fphp_navbar">' . "\n";
+					$s_navigation .= '<ul class="navbar-nav">' . "\n";
+					
+					/* render root menu */
+					if (issetStr($o_glob->RootMenu)) {
+						$s_navigation .= $o_glob->RootMenu;
 					}
 					
-					if ( (issetStr($this->NavbarLoginLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarLoginIcon->value)) && (issetStr($this->NavbarLoginTitle->value)) ) {
-						$s_navigation .= '<li class="nav-item"><a href="' . $this->NavbarLoginLink->value . '" class="nav-link text-nowrap"><span class="' . $this->NavbarIconClass->value . ' ' . $this->NavbarLoginIcon->value . '"></span> ' . $this->NavbarLoginTitle->value . '</a></li>';
-					}
-				} else if ($this->NavbarShowLogoutPart->value) {
-					/* render navbar logout part */
-					if ( (issetStr($this->NavbarUserLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarUserIcon->value)) && (issetStr($this->NavbarUserTitle->value)) ) {
-						$s_navigation .= '<li class="nav-item"><a href="' . $this->NavbarUserLink->value . '" class="nav-link text-nowrap"><span class="' . $this->NavbarIconClass->value . ' ' . $this->NavbarUserIcon->value . '"></span> ' . $this->NavbarUserTitle->value . '</a></li>';
-					}
-					
-					if ( (issetStr($this->NavbarLogoutLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarLogoutIcon->value)) && (issetStr($this->NavbarLogoutTitle->value)) ) {
-						$s_navigation .= '<li class="nav-item"><a href="' . $this->NavbarLogoutLink->value . '" class="nav-link text-nowrap"><span class="' . $this->NavbarIconClass->value . ' ' . $this->NavbarLogoutIcon->value . '"></span> ' . $this->NavbarLogoutTitle->value . '</a></li>';
-					}
-				}
-				
-				if ( ($this->NavbarShowLoginPart->value) || ($this->NavbarShowLogoutPart->value) ) {
 					$s_navigation .= '</ul>' . "\n";
-				}
-			$s_navigation .= '</div>' . "\n";	
+					
+					/* render navbar right part */
+					if ( ($this->NavbarShowLoginPart->value) || ($this->NavbarShowLogoutPart->value) ) {
+						$s_navigation .= '<ul class="navbar-nav ms-auto">' . "\n";
+					}
+					
+					if ($this->NavbarShowLoginPart->value) {
+						/* render navbar login part */
+						if ( (issetStr($this->NavbarSignUpLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarSignUpIcon->value)) && (issetStr($this->NavbarSignUpTitle->value)) ) {
+							$s_navigation .= '<li class="nav-item"><a href="' . $this->NavbarSignUpLink->value . '" class="nav-link text-nowrap"><span class="' . $this->NavbarIconClass->value . ' ' . $this->NavbarSignUpIcon->value . '"></span> ' . $this->NavbarSignUpTitle->value . '</a></li>';
+						}
+						
+						if ( (issetStr($this->NavbarLoginLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarLoginIcon->value)) && (issetStr($this->NavbarLoginTitle->value)) ) {
+							$s_navigation .= '<li class="nav-item"><a href="' . $this->NavbarLoginLink->value . '" class="nav-link text-nowrap"><span class="' . $this->NavbarIconClass->value . ' ' . $this->NavbarLoginIcon->value . '"></span> ' . $this->NavbarLoginTitle->value . '</a></li>';
+						}
+					} else if ($this->NavbarShowLogoutPart->value) {
+						/* render navbar logout part */
+						if ( (issetStr($this->NavbarUserLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarUserIcon->value)) && (issetStr($this->NavbarUserTitle->value)) ) {
+							$s_navigation .= '<li class="nav-item"><a href="' . $this->NavbarUserLink->value . '" class="nav-link text-nowrap"><span class="' . $this->NavbarIconClass->value . ' ' . $this->NavbarUserIcon->value . '"></span> ' . $this->NavbarUserTitle->value . '</a></li>';
+						}
+						
+						if ( (issetStr($this->NavbarLogoutLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarLogoutIcon->value)) && (issetStr($this->NavbarLogoutTitle->value)) ) {
+							$s_navigation .= '<li class="nav-item"><a href="' . $this->NavbarLogoutLink->value . '" class="nav-link text-nowrap"><span class="' . $this->NavbarIconClass->value . ' ' . $this->NavbarLogoutIcon->value . '"></span> ' . $this->NavbarLogoutTitle->value . '</a></li>';
+						}
+					}
+					
+					if ( ($this->NavbarShowLoginPart->value) || ($this->NavbarShowLogoutPart->value) ) {
+						$s_navigation .= '</ul>' . "\n";
+					}
+				$s_navigation .= '</div>' . "\n";
+			$s_navigation .= '</div>' . "\n";
 		$s_navigation .= '</nav>' . "\n";
 		
 		$s_navigation .= '<div id="fphp_navsidebarId" class="fphp_navsidebar" style="background: ' . $o_glob->Trunk->NavBackgroundColor . ';">' . "\n";
@@ -441,7 +483,7 @@ class forestNavigation {
 		
 		$s_navigation .= '<div id="fphp_navoverlayId" class="fphp_navoverlay"></div>' . "\n";
 		
-		echo $s_navigation;
+		return $s_navigation;
 	}
 	
 	/**
@@ -469,58 +511,77 @@ class forestNavigation {
 		if (issetStr($this->NavbarAlign->value)) {
 			$s_navigation .= ' ' . $this->NavbarAlign->value;
 		}
+
+		if (issetStr($this->NavbarTheme->value)) {
+			$s_navigation .= '" data-bs-theme="' . $this->NavbarTheme->value;
+		}
 		
 		$s_navigation .= '">' . "\n";
-			/* render navbar compass */
-			$s_navigation .= '<a href="#" class="navbar-brand" onclick="fphp_toggleNavfullscreen(' . $o_glob->Trunk->NavCurtain . ')">' . "\n";
-				$s_navigation .= '<button class="btn btn-sm btn-info" type="button" title="Menu"><span class="fas fa-compass"></span></button>' . "\n";
-			$s_navigation .= '</a>' . "\n";
-			
-			/* render navbar header */
-			$s_navigation .= '<a class="navbar-brand" href="' . $this->NavbarBrandLink->value . '">' . $this->NavbarBrandTitle->value . '</a>' . "\n";
-			
-			$s_navigation .= '<button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#fphp_navbar">' . "\n";
-				$s_navigation .= '<span class="navbar-toggler-icon"></span>' . "\n";
-			$s_navigation .= '</button>' . "\n";
-			
-			$s_navigation .= '<div class="collapse navbar-collapse" id="fphp_navbar">' . "\n";
-				$s_navigation .= '<ul class="navbar-nav">' . "\n";
+
+			$s_navigation .= '<div class="container-fluid">' . "\n";
+
+				/* render navbar compass */
+				$s_navigation .= '<a href="#" class="navbar-brand" onclick="fphp_toggleNavfullscreen(' . $o_glob->Trunk->NavCurtain . ')">' . "\n";
+					$s_navigation .= '<button class="btn btn-sm btn-info" type="button" title="Menu"><span class="bi bi-compass-fill"></span></button>' . "\n";
+				$s_navigation .= '</a>' . "\n";
 				
-				/* render root menu */
-				if (issetStr($o_glob->RootMenu)) {
-					$s_navigation .= $o_glob->RootMenu;
+				/* render navbar header */
+				$s_navigation .= '<a class="navbar-brand align-middle" href="' . $this->NavbarBrandLink->value . '">' . "\n";
+		
+				/* add logo to nav title */
+				if (\fPHP\Roots\forestAutoLoad::IsReadable('./files/logo.png')) {
+					$s_navigation .= '<span><img src="./files/logo.png" class="d-inline-block" alt="_logo not found_" height="44"></span>&nbsp;' . "\n";
 				}
 				
-				$s_navigation .= '</ul>' . "\n";
+				$s_navigation .= '<span class="align-middle text-nowrap d-none d-xl-inline">' . $this->NavbarBrandTitle->value . '</span></a>' . "\n";
 				
-				/* render navbar right part */
-				if ( ($this->NavbarShowLoginPart->value) || ($this->NavbarShowLogoutPart->value) ) {
-					$s_navigation .= '<ul class="navbar-nav ml-auto">' . "\n";
-				}
+				$s_navigation .= '<button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#fphp_navbar">' . "\n";
+					/* alternative icon */
+					/* $s_navigation .= '<span class="navbar-toggler-icon"></span>' . "\n"; */
+					$s_navigation .= '<span> </span>' . "\n";
+            		$s_navigation .= '<span> </span>' . "\n";
+            		$s_navigation .= '<span> </span>' . "\n";
+				$s_navigation .= '</button>' . "\n";
 				
-				if ($this->NavbarShowLoginPart->value) {
-					/* render navbar login part */
-					if ( (issetStr($this->NavbarSignUpLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarSignUpIcon->value)) && (issetStr($this->NavbarSignUpTitle->value)) ) {
-						$s_navigation .= '<li class="nav-item"><a href="' . $this->NavbarSignUpLink->value . '" class="nav-link text-nowrap"><span class="' . $this->NavbarIconClass->value . ' ' . $this->NavbarSignUpIcon->value . '"></span> ' . $this->NavbarSignUpTitle->value . '</a></li>';
+				$s_navigation .= '<div class="collapse navbar-collapse" id="fphp_navbar">' . "\n";
+					$s_navigation .= '<ul class="navbar-nav">' . "\n";
+					
+					/* render root menu */
+					if (issetStr($o_glob->RootMenu)) {
+						$s_navigation .= $o_glob->RootMenu;
 					}
 					
-					if ( (issetStr($this->NavbarLoginLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarLoginIcon->value)) && (issetStr($this->NavbarLoginTitle->value)) ) {
-						$s_navigation .= '<li class="nav-item"><a href="' . $this->NavbarLoginLink->value . '" class="nav-link text-nowrap"><span class="' . $this->NavbarIconClass->value . ' ' . $this->NavbarLoginIcon->value . '"></span> ' . $this->NavbarLoginTitle->value . '</a></li>';
-					}
-				} else if ($this->NavbarShowLogoutPart->value) {
-					/* render navbar logout part */
-					if ( (issetStr($this->NavbarUserLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarUserIcon->value)) && (issetStr($this->NavbarUserTitle->value)) ) {
-						$s_navigation .= '<li class="nav-item"><a href="' . $this->NavbarUserLink->value . '" class="nav-link text-nowrap"><span class="' . $this->NavbarIconClass->value . ' ' . $this->NavbarUserIcon->value . '"></span> ' . $this->NavbarUserTitle->value . '</a></li>';
-					}
-					
-					if ( (issetStr($this->NavbarLogoutLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarLogoutIcon->value)) && (issetStr($this->NavbarLogoutTitle->value)) ) {
-						$s_navigation .= '<li class="nav-item"><a href="' . $this->NavbarLogoutLink->value . '" class="nav-link text-nowrap"><span class="' . $this->NavbarIconClass->value . ' ' . $this->NavbarLogoutIcon->value . '"></span> ' . $this->NavbarLogoutTitle->value . '</a></li>';
-					}
-				}
-				
-				if ( ($this->NavbarShowLoginPart->value) || ($this->NavbarShowLogoutPart->value) ) {
 					$s_navigation .= '</ul>' . "\n";
-				}
+					
+					/* render navbar right part */
+					if ( ($this->NavbarShowLoginPart->value) || ($this->NavbarShowLogoutPart->value) ) {
+						$s_navigation .= '<ul class="navbar-nav ms-auto">' . "\n";
+					}
+					
+					if ($this->NavbarShowLoginPart->value) {
+						/* render navbar login part */
+						if ( (issetStr($this->NavbarSignUpLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarSignUpIcon->value)) && (issetStr($this->NavbarSignUpTitle->value)) ) {
+							$s_navigation .= '<li class="nav-item"><a href="' . $this->NavbarSignUpLink->value . '" class="nav-link text-nowrap"><span class="' . $this->NavbarIconClass->value . ' ' . $this->NavbarSignUpIcon->value . '"></span> ' . $this->NavbarSignUpTitle->value . '</a></li>';
+						}
+						
+						if ( (issetStr($this->NavbarLoginLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarLoginIcon->value)) && (issetStr($this->NavbarLoginTitle->value)) ) {
+							$s_navigation .= '<li class="nav-item"><a href="' . $this->NavbarLoginLink->value . '" class="nav-link text-nowrap"><span class="' . $this->NavbarIconClass->value . ' ' . $this->NavbarLoginIcon->value . '"></span> ' . $this->NavbarLoginTitle->value . '</a></li>';
+						}
+					} else if ($this->NavbarShowLogoutPart->value) {
+						/* render navbar logout part */
+						if ( (issetStr($this->NavbarUserLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarUserIcon->value)) && (issetStr($this->NavbarUserTitle->value)) ) {
+							$s_navigation .= '<li class="nav-item"><a href="' . $this->NavbarUserLink->value . '" class="nav-link text-nowrap"><span class="' . $this->NavbarIconClass->value . ' ' . $this->NavbarUserIcon->value . '"></span> ' . $this->NavbarUserTitle->value . '</a></li>';
+						}
+						
+						if ( (issetStr($this->NavbarLogoutLink->value)) && (issetStr($this->NavbarIconClass->value)) && (issetStr($this->NavbarLogoutIcon->value)) && (issetStr($this->NavbarLogoutTitle->value)) ) {
+							$s_navigation .= '<li class="nav-item"><a href="' . $this->NavbarLogoutLink->value . '" class="nav-link text-nowrap"><span class="' . $this->NavbarIconClass->value . ' ' . $this->NavbarLogoutIcon->value . '"></span> ' . $this->NavbarLogoutTitle->value . '</a></li>';
+						}
+					}
+					
+					if ( ($this->NavbarShowLoginPart->value) || ($this->NavbarShowLogoutPart->value) ) {
+						$s_navigation .= '</ul>' . "\n";
+					}
+				$s_navigation .= '</div>' . "\n";	
 			$s_navigation .= '</div>' . "\n";	
 		$s_navigation .= '</nav>' . "\n";
 		
@@ -542,7 +603,7 @@ class forestNavigation {
 			
 		$s_navigation .= '</div>' . "\n";
 		
-		echo $s_navigation;
+		return $s_navigation;
 	}
 	
 	/**
@@ -576,11 +637,11 @@ class forestNavigation {
 		if ( ($p_o_navigationNode->BranchName == 'index') || ($p_o_navigationNode->Up) ) {
 			if ($p_b_navbar) {
 				/* navigation top level */
-				$p_s_navigation .= '<li class="nav item';
+				$p_s_navigation .= '<li class="nav-link';
 				
 				if ($o_glob->URL->BranchId == $p_o_navigationNode->BranchId) {
 					/* mark active node */
-					$p_s_navigation .= ' active';
+					$p_o_navigationNode->Active = true;
 				}
 				
 				$p_s_navigation .= '">';
@@ -610,17 +671,18 @@ class forestNavigation {
 				$a_classes = array();
 				
 				if ($o_glob->URL->BranchId == $p_o_navigationNode->BranchId) {
-					$a_classes[] = 'active';
+					/* mark active node */
+					$p_o_navigationNode->Active = true;
 				}
 				
 				if (($p_o_navigationNode->NavigationNodes->Count() > 0) && ($p_i_level <= $p_i_maxLevel)) {
 					if ($b_zero) {
-						$a_classes[] = 'nav-item dropdown';
+						$a_classes[] = 'nav-link dropdown';
 					} else {
 						$a_classes[] = 'dropdown-submenu';
 					}
 				} else {
-					$a_classes[] = 'nav-item';
+					$a_classes[] = 'nav-link';
 				}
 				
 				/* render classes of navigation node element */
@@ -645,7 +707,7 @@ class forestNavigation {
 			
 				/* render dropdown item span wrapper */
 				if (($p_o_navigationNode->NavigationNodes->Count() > 0) && ($p_i_level <= $p_i_maxLevel) && (!$b_zero)) {
-					$p_s_navigation .= '<span class="dropdown-item">' . "\n";
+					$p_s_navigation .= '<span class="dropdown-item mb-3">' . "\n";
 				}
 			} else {
 				if ($o_glob->URL->BranchId == $p_o_navigationNode->BranchId) {

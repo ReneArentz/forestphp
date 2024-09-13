@@ -20,34 +20,8 @@ class roleBranch extends forestBranch {
 	
 	/* Methods */
 	
-	protected function initBranch() {
-		$this->Filter->value = true;
-		$this->StandardView = forestBranch::LISTVIEW;
-		$this->KeepFilter->value = false;
-		
-		$this->Twig = new \fPHP\Twigs\roleTwig();
-	}
-	
-	protected function init() {
-		$o_glob = \fPHP\Roots\forestGlobals::init();
-		
-		if ($this->StandardView == forestBranch::DETAIL) {
-			$this->GenerateView();
-		} else if ($this->StandardView == forestBranch::LISTVIEW) {
-			$this->GenerateListView();
-		} else if ($this->StandardView == forestBranch::FLEX) {
-			if ( ($o_glob->Security->SessionData->Exists('lastView')) && ($o_glob->URL->LastBranchId == $o_glob->URL->BranchId) ) {
-				if ($o_glob->Security->SessionData->{'lastView'} == forestBranch::LISTVIEW) {
-					$this->GenerateView();
-				} else if ($o_glob->Security->SessionData->{'lastView'} == forestBranch::DETAIL) {
-					$this->GenerateListView();
-				} else {
-					$this->GenerateFlexView();
-				}
-			} else {
-				$this->GenerateFlexView();
-			}
-		}
+	protected function initAction() {
+		$this->Init();
 	}
 	
 		protected function beforeViewAction() {
@@ -95,7 +69,7 @@ class roleBranch extends forestBranch {
 				
 				/* add new sub record */
 				$this->RenderNewSubRecordForm();
-				$this->StandardView = forestBranch::DETAIL; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
+				$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[\fPHP\Branches\forestBranch::DETAIL]; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
 			} else {
 				/* add new record */
 				$o_glob->PostModalForm = new \fPHP\Forms\forestForm($this->Twig, true);
@@ -108,7 +82,7 @@ class roleBranch extends forestBranch {
 					
 					/* add new sub record */
 					$this->RenderNewSubRecordForm();
-					$this->StandardView = forestBranch::DETAIL; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
+					$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[\fPHP\Branches\forestBranch::DETAIL]; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
 				} else if ( (array_key_exists('sys_fphp_step', $_POST)) && ($_POST['sys_fphp_step'] == 'submit') ) {
 					$this->HandleFormKey($o_glob->URL->Branch . $o_glob->URL->Action . 'Form');
 					
@@ -164,7 +138,7 @@ class roleBranch extends forestBranch {
 						$o_glob->SystemMessages->Add(new \fPHP\Roots\forestException(0x10001404));
 					}
 					
-					$this->StandardView = forestBranch::DETAIL; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
+					$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[\fPHP\Branches\forestBranch::DETAIL]; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
 				}
 			} else {
 				$this->HandleFormKey($o_glob->URL->Branch . $o_glob->URL->Action . 'Form');
@@ -213,14 +187,6 @@ class roleBranch extends forestBranch {
 				
 				/* handle uploads */
 				$this->TransferFILES_Twig();
-			}
-		}
-		
-		if (isset($this->KeepFilter)) {
-			if ($this->KeepFilter->value) {
-				if ($o_glob->Security->SessionData->Exists('last_filter')) {
-					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
-				}
 			}
 		}
 		
@@ -309,7 +275,7 @@ class roleBranch extends forestBranch {
 				$o_hidden->Value = $o_glob->Temp->{'deleteSubKey'};
 				$o_glob->PostModalForm->FormElements->Add($o_hidden);
 				
-				$this->StandardView = forestBranch::DETAIL; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
+				$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[\fPHP\Branches\forestBranch::DETAIL]; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
 			}
 		} else {
 			/* delete record */
@@ -425,15 +391,7 @@ class roleBranch extends forestBranch {
 				
 				$o_glob->SystemMessages->Add(new \fPHP\Roots\forestException(0x10001427));
 				
-				$this->StandardView = forestBranch::DETAIL; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
-			}
-		}
-		
-		if (isset($this->KeepFilter)) {
-			if ($this->KeepFilter->value) {
-				if ($o_glob->Security->SessionData->Exists('last_filter')) {
-					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
-				}
+				$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[\fPHP\Branches\forestBranch::DETAIL]; /* because it only makes sense if we stay in detail view, when we open modal read only form for record */
 			}
 		}
 		
@@ -480,6 +438,10 @@ class roleBranch extends forestBranch {
 	protected function additionalListSubRecordsAction(\fPHP\Twigs\forestTwig $p_o_twig, $p_b_readonly, &$p_s_subFormItems, &$p_b_firstSubElement) {
 		$o_glob = \fPHP\Roots\forestGlobals::init();
 		
+		/* get table info, needed for general accoridon id -> based on table name */
+		$s_tableUUID = $o_glob->Tables[$p_o_twig->fphp_Table];
+		$s_tableName = array_search($s_tableUUID, $o_glob->Tables);
+
 		/* look for permissions */
 		$o_role_permissionTwig = new \fPHP\Twigs\role_permissionTwig;
 		
@@ -518,7 +480,7 @@ class roleBranch extends forestBranch {
 				unset($a_parameters['deleteSubKey']);
 				$a_parameters['deleteSubKey'] = 'permission~' . $o_role_permission->roleUUID . '~' . $o_role_permission->permissionUUID;
 				
-				$s_subTableRows .=  '<td><a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="fas fa-trash text-danger"></span></a></td>' . "\n";
+				$s_subTableRows .=  '<td><a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'delete', $a_parameters) . '" class="btn btn-light" title="' . $o_glob->GetTranslation('btnDeleteText', 1) . '"><span class="bi bi-trash-fill text-danger"></span></a></td>' . "\n";
 			}
 			
 			$s_subTableRows .=  '</tr>' . "\n";
@@ -536,7 +498,7 @@ class roleBranch extends forestBranch {
 			unset($a_parameters['subConstraintKey']);
 			$a_parameters['newKey'] = $p_o_twig->UUID;
 			$a_parameters['subConstraintKey'] = 'permission';
-			$s_newButton = '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'new', $a_parameters) . '" class="btn btn-light" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="fas fa-plus text-success"></span></a>' . "\n";
+			$s_newButton = '<a href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'new', $a_parameters) . '" class="btn btn-light" style="margin-bottom: 5px;" title="' . $o_glob->GetTranslation('btnNewText', 1) . '"><span class="bi bi-plus-circle-fill text-success"></span></a>' . "\n";
 		} else {
 			$s_newButton = '';
 		}
@@ -549,7 +511,7 @@ class roleBranch extends forestBranch {
 		}
 		
 		$s_subFormItemContent = new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEWITEMCONTENT, array($s_newButton, $s_subTableHead, $s_subTableRows));
-		$p_s_subFormItems .= new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEWITEM, array('subpermission', $o_glob->GetTranslation('Permission') . ' (' . $o_role_permissions->Twigs->Count() . ')', $s_firstElement, $s_subFormItemContent));
+		$p_s_subFormItems .= new \fPHP\Branches\forestTemplates(\fPHP\Branches\forestTemplates::SUBLISTVIEWITEM, array('subpermission', $o_glob->GetTranslation('Permission') . ' (' . $o_role_permissions->Twigs->Count() . ')', $s_firstElement, $s_subFormItemContent, $s_tableName));
 	}
 
 	/* overwrite - render modal form for new sub record */

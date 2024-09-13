@@ -5,20 +5,20 @@
  * it will automatically create the twig objects depending on how many records are present in the query result
  *
  * @category    forestPHP Framework
- * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2019 forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestany.net>
+ * @copyright   (c) 2024 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
  * @version     1.0.0 stable
- * @link        http://www.forestphp.de/
+ * @link        https://forestany.net
  * @object-id   0x1 0000D
  * @since       File available since Release 0.1.0 alpha
  * @deprecated  -
  *
- * @version log Version		Developer	Date		Comment
- * 		0.1.0 alpha	renatus		2019-08-04	first build
- * 		0.1.5 alpha	renatus		2019-10-10	added sub-record join twigs
- * 		0.9.0 beta	renatus		2020-01-31	added join column identification, not ending with $, because ocisql has some system columns ending with $
+ * @version log Version			Developer	Date		Comment
+ * 				0.1.0 alpha		renea		2019-08-04	first build
+ * 				0.1.5 alpha		renea		2019-10-10	added sub-record join twigs
+ * 				0.9.0 beta		renea		2020-01-31	added join column identification, not ending with $, because ocisql has some system columns ending with $
  */
 
 namespace fPHP\Twigs;

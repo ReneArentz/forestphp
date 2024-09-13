@@ -3,20 +3,20 @@
  * forestData trait declaring general types of data and for reuse in all fphp classes and mods
  *
  * @category    forestPHP Framework
- * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2019 forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestany.net>
+ * @copyright   (c) 2024 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
  * @version     1.0.0 stable
- * @link        http://www.forestphp.de/
+ * @link        https://forestany.net
  * @object-id   0x1 00003
  * @since       File available since Release 0.1.0 alpha
  * @deprecated  -
  *
- * @version log Version    	Developer	Date		Comment
- * 		0.1.0 alpha	renatus		2019-08-04	first build
- * 		0.1.5 alpha	renatus		2019-10-04	added forestLookup and forestCombination
- * 		0.9.0 beta	renatus		2020-01-28	changes for namespaces
+ * @version log Version    		Developer	Date		Comment
+ * 				0.1.0 alpha		renea		2019-08-04	first build
+ * 				0.1.5 alpha		renea		2019-10-04	added forestLookup and forestCombination
+ * 				0.9.0 beta		renea		2020-01-28	changes for namespaces
  */
 
 namespace fPHP\Roots;
@@ -564,7 +564,11 @@ class forestBool {
 	 */
 	public function __set($p_s_name, $p_o_value) {
 		/* check if parameter is boolean */
-		if (is_bool($p_o_value) || ($p_o_value == 0) || ($p_o_value == 1)) {
+		if (is_bool($p_o_value) || ($p_o_value == 0) || ($p_o_value == 1) || (strtolower($p_o_value) == "true") || (strtolower($p_o_value) == "false")) {
+			if (strtolower($p_o_value) == "false") {
+				$p_o_value = false;
+			}
+			
 			$this->_b_value = boolval($p_o_value);
 			
 			if ($this->_b_value) {

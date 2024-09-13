@@ -2,18 +2,19 @@
  * javascript library for fphp_dropzone module
  *
  * @category    forestPHP Framework
- * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2019 forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestany.net>
+ * @copyright   (c) 2024 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.0 stable
- * @link        http://www.forestphp.de/
+ * @version     1.1.0 stable
+ * @link        https://forestany.net
  * @object-id   0x2 00003
  * @since       File available since Release 0.1.4 alpha
  * @deprecated  -
  *
- * @version log Version     Developer   Date        Comment
- * 		          0.1.4 alpha	renatus		  2019-09-28	added to framework
+ * @version log Version			Developer	Date		Comment
+ * 				0.1.4 alpha		renea		2019-09-28	added to framework
+ * 				1.1.0 stable	renea		2024-08-10	changes for bootstrap 5
  */
 $(function() {
 	
@@ -431,8 +432,8 @@ $(function() {
 			'fileName' : p_s_fileName 
 		});
 		
-		var s_upload_status = '<span id="' + o_JSON_upload['s_uploadStatusIdValue'] + p_s_randomId + '" class="badge badge-secondary">0%</span>';
-		var s_upload_delete = '<span id="' + o_JSON_upload['s_uploadDeleteIdValue'] + p_s_randomId + '" class="fas fa-times text-danger" style="cursor: pointer;"></span>';
+		var s_upload_status = '<span id="' + o_JSON_upload['s_uploadStatusIdValue'] + p_s_randomId + '" class="badge text-bg-secondary">0%</span>';
+		var s_upload_delete = '<span id="' + o_JSON_upload['s_uploadDeleteIdValue'] + p_s_randomId + '" class="bi bi-x-lg text-danger" style="cursor: pointer;"></span>';
 		
 		$(o_JSON_upload['s_dropzoneListId']).append('<li>' + s_upload_status + ' ' + p_s_fileName + ' - (' + (p_s_fileSize / 1024 / 1024).toFixed(2) + ' MB) ' + s_upload_delete + '</li>');
 		

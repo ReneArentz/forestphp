@@ -20,34 +20,8 @@ class validationruleBranch extends forestBranch {
 	
 	/* Methods */
 	
-	protected function initBranch() {
-		$this->Filter->value = true;
-		$this->StandardView = forestBranch::LISTVIEW;
-		$this->KeepFilter->value = false;
-		
-		$this->Twig = new \fPHP\Twigs\validationruleTwig();
-	}
-	
-	protected function init() {
-		$o_glob = \fPHP\Roots\forestGlobals::init();
-		
-		if ($this->StandardView == forestBranch::DETAIL) {
-			$this->GenerateView();
-		} else if ($this->StandardView == forestBranch::LISTVIEW) {
-			$this->GenerateListView();
-		} else if ($this->StandardView == forestBranch::FLEX) {
-			if ( ($o_glob->Security->SessionData->Exists('lastView')) && ($o_glob->URL->LastBranchId == $o_glob->URL->BranchId) ) {
-				if ($o_glob->Security->SessionData->{'lastView'} == forestBranch::LISTVIEW) {
-					$this->GenerateView();
-				} else if ($o_glob->Security->SessionData->{'lastView'} == forestBranch::DETAIL) {
-					$this->GenerateListView();
-				} else {
-					$this->GenerateFlexView();
-				}
-			} else {
-				$this->GenerateFlexView();
-			}
-		}
+	protected function initAction() {
+		$this->Init();
 	}
 	
 		protected function beforeViewAction() {

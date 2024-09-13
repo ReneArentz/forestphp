@@ -2,30 +2,124 @@
  * main css file for all styles deviating from bootstrap standard
  *
  * @category    forestPHP Framework
- * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2019 forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestany.net>
+ * @copyright   (c) 2024 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.0 stable
- * @link        http://www.forestphp.de/
+ * @version     1.1.0 stable
+ * @link        https://forestany.net
  * @object-id   0x2 00000
  * @since       File available since Release 0.1.0 alpha
  * @deprecated  -
  *
- * @version log Version		Developer	Date		Comment
- * 		0.1.0 alpha	renatus		2019-08-04	first build
- * 		0.1.1 alpha	renatus		2019-08-14	added styles for modal, navigation, form and landing page
- * 		0.1.2 alpha	renatus		2019-08-25	added styles for btn-groups and list view
- * 		0.1.4 alpha	renatus		2019-09-19	added styles for dropzone and richtext
- *		0.8.0 beta	renatus		2020-01-08	added styles for fphp_flex
- *		0.9.0 beta	renatus		2020-01-27	changes for bootstrap 4
+ * @version log Version			Developer	Date		Comment
+ * 				0.1.0 alpha		renea		2019-08-04	first build
+ * 				0.1.1 alpha		renea		2019-08-14	added styles for modal, navigation, form and landing page
+ * 				0.1.2 alpha		renea		2019-08-25	added styles for btn-groups and list view
+ * 				0.1.4 alpha		renea		2019-09-19	added styles for dropzone and richtext
+ * 				0.8.0 beta		renea		2020-01-08	added styles for fphp_flex
+ * 				0.9.0 beta		renea		2020-01-27	changes for bootstrap 4
+ * 				1.1.0 stable	renea		2024-02-10	nav pills for static page
+ * 				1.1.0 stable	renea		2024-02-03	added slide gallery view
+ * 				1.1.0 stable	renea		2024-03-05	added slide calender view
+ * 				1.1.0 stable	renea		2024-08-10	changes for bootstrap 5
+ * 				1.1.0 stable	renea		2024-08-15	added opacity classes and navbar X toggler
  */
+
 /* ********************************** */
 /* ************** BODY ************** */
 /* ********************************** */
 body {
-	padding-top: 70px;
+	padding-top: 75px;
 	background: #ffffff;
+}
+
+br.responsive {
+	display: inline;
+}
+
+@media (min-width: 768px) {
+	br.responsive {
+		display: none;
+	}
+}
+
+@media (max-width: 1199.98px) {
+	div.container-fluid.container-fluid-section {
+		padding-left: 0px;
+		padding-right: 0px;
+		margin-left: 0;
+		margin-right: 0;
+		max-width: 100% !important;
+	}
+
+	div.container-xl.container-xl-section {
+		padding-left: 0px;
+		padding-right: 0px;
+		margin-left: 0;
+		margin-right: 0;
+		max-width: 100% !important;
+	}
+}
+
+.bg-opacity-98 {
+	--bs-bg-opacity: 0.98 !important;
+}
+
+.bg-opacity-97 {
+	--bs-bg-opacity: 0.97 !important;
+}
+
+.bg-opacity-96 {
+	--bs-bg-opacity: 0.96 !important;
+}
+
+.bg-opacity-95 {
+	--bs-bg-opacity: 0.95 !important;
+}
+
+.bg-opacity-94 {
+	--bs-bg-opacity: 0.94 !important;
+}
+
+.bg-opacity-93 {
+	--bs-bg-opacity: 0.93 !important;
+}
+
+.bg-opacity-92 {
+	--bs-bg-opacity: 0.92 !important;
+}
+
+.bg-opacity-91 {
+	--bs-bg-opacity: 0.91 !important;
+}
+
+.bg-opacity-90 {
+	--bs-bg-opacity: 0.90 !important;
+}
+
+.bg-opacity-85 {
+	--bs-bg-opacity: 0.85 !important;
+}
+
+.bg-opacity-80 {
+	--bs-bg-opacity: 0.80 !important;
+}
+
+.bg-opacity-70 {
+	--bs-bg-opacity: 0.70 !important;
+}
+
+.bg-opacity-65 {
+	--bs-bg-opacity: 0.65 !important;
+}
+
+.bg-opacity-60 {
+	--bs-bg-opacity: 0.60 !important;
+}
+
+.bg-opacity-55 {
+	--bs-bg-opacity: 0.55 !important;
 }
 
 /* ********************************** */
@@ -41,6 +135,55 @@ body {
 
 .tab-content {
 	margin-top: 10px;
+}
+
+/* ********************************** */
+/* **** NAVIGATION BAR TOGGLER X **** */
+/* ********************************** */
+.navbar-toggler span {
+    display: block;
+    background-color: #4f4f4f;
+    height: 3px;
+    width: 25px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    position: relative;
+    left: 0;
+    opacity: 1;
+    transition: all 0.35s ease-out;
+    transform-origin: center left;
+}
+
+.navbar-toggler span:nth-child(1) {
+    margin-top: 0.3em;
+}
+
+/* animate collapse into X */
+
+.navbar-toggler:not(.collapsed) span:nth-child(1) {
+    transform: translate(15%, -33%) rotate(45deg);
+}
+
+.navbar-toggler:not(.collapsed) span:nth-child(2) {
+    opacity: 0;
+}
+
+.navbar-toggler:not(.collapsed) span:nth-child(3) {
+    transform: translate(15%, 33%) rotate(-45deg) ;
+}
+
+/* animate collapse open into hamburger menu */
+
+.navbar-toggler span:nth-child(1) {
+    transform: translate(0%, 0%) rotate(0deg) ;
+}
+
+.navbar-toggler span:nth-child(2) {
+    opacity: 1;
+}
+
+.navbar-toggler span:nth-child(3) {
+    transform: translate(0%, 0%) rotate(0deg) ;
 }
 
 /* ********************************** */
@@ -65,7 +208,7 @@ body {
 }
 
 .dropdown-submenu-item {
-	margin-left: 0.75em;
+	margin-left: 0.5em;
 	padding: 0em 1em;
 }
 
@@ -75,12 +218,17 @@ body {
 	
 .dropdown-menu-item {
 	display: inline-flex;
-	margin: 0em 0.35em;
+	margin: 0em 0.5em;
 	width: 1em;
 }
 
 .fphp_nav_icon {
 	margin-right: 5px;
+}
+
+.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+    color: #000;
+    background-color: #F8F9FA;
 }
 
 /* ********************************** */
@@ -96,7 +244,7 @@ body {
 	background-color: #111;
 	overflow-x: hidden;
 	transition: 0.5s;
-	margin-top: 55px;
+	margin-top: 75px;
 	overflow-y: auto;
 }
 
@@ -166,9 +314,9 @@ body {
 	height: 150px;
 	text-align: center;
 	margin:1px;
-	display: inline-block;
-	background-color: #343a40;
-	float:left;
+	display: block;
+	background-color: #212529;
+	float: left;
 	line-height: 125px;
 	font-size: 26px;
 	padding: 12px;
@@ -205,7 +353,7 @@ body {
 /* ********************************** */
 /* ********* forestPHP-Form ********* */
 /* ********************************** */
-input[type="datetime-local"],
+/*input[type="datetime-local"],
 input[type="date"],
 input[type="month"],
 input[type="time"],
@@ -214,7 +362,7 @@ input[type="number"],
 input[type="file"]
 {
 	height: auto;
-}
+}*/
 
 .form-inline > .form-group {
 	margin-left: 5px;
@@ -222,13 +370,6 @@ input[type="file"]
 
 .form-inline input[type="checkbox"], .form-inline input[type="radio"] {
 	margin-right: 5px;
-}
-
-/* ********************************** */
-/* ******* forestPHP-ListView ******* */
-/* ********************************** */
-.ui-selectable > .ui-selected {
-	background-color: rgba(0, 0, 0, 0.075);
 }
 
 /* ********************************** */
@@ -286,7 +427,7 @@ div[id$="_fphpFlex_readonly"] {
 }
 
 .dropzoneIcon {
-	font-size: 2.4em;
+	font-size: 3.33em;
 }
 
 #dropzoneListContainer {
@@ -316,4 +457,45 @@ div[id^="fphp_richtext-editor"], div[id*="DivRichtext"] {
 
 .btn-toolbar .btn-group .btn {
 	border: 1px solid #ccc;
+}
+
+/* ****************************************************** */
+/* ******* forestPHP-SlideGallery + SlideCalender ******* */
+/* ****************************************************** */
+.carousel-control-prev-calender > .carousel-control-prev-icon,
+.carousel-control-next-calender > .carousel-control-next-icon,
+.carousel-control-prev-slide > .carousel-control-prev-icon,
+.carousel-control-next-slide > .carousel-control-next-icon
+{
+	height: 100px;
+	width: 100px;
+	outline: black;
+	background-size: 100%, 100%;
+	background-image: none;
+}
+
+.carousel-control-next-calender > .carousel-control-next-icon:after
+{
+	content: '>';
+	font-size: 75px;
+	color: black;
+}
+
+.carousel-control-prev-calender > .carousel-control-prev-icon:after {
+	content: '<';
+	font-size: 75px;
+	color: black;
+}
+
+.carousel-control-next-slide > .carousel-control-next-icon:after
+{
+	content: '>';
+	font-size: 75px;
+	color: white;
+}
+
+.carousel-control-prev-slide > .carousel-control-prev-icon:after {
+	content: '<';
+	font-size: 75px;
+	color: white;
 }

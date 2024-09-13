@@ -4,26 +4,27 @@
  * holding session values, user information, user rights and static functions for fphp framework security
  *
  * @category    forestPHP Framework
- * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2019 forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestany.net>
+ * @copyright   (c) 2024 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.0 stable
- * @link        http://www.forestphp.de/
+ * @version     1.1.0 stable
+ * @link        https://forestany.net
  * @object-id   0x1 00006
  * @since       File available since Release 0.1.0 alpha
  * @deprecated  -
  *
- * @version log Version		Developer	Date		Comment
- * 		0.1.0 alpha	renatus		2019-08-04	first build
- * 		0.1.1 alpha	renatus		2019-08-08	add session and forestDateTime functionality
- * 		0.1.5 alpha	renatus		2019-10-08	added GenerateCaptchaCharacter function
- * 		0.4.0 beta	renatus		2019-11-11	added enhanced user administration functionalities
- * 		0.4.0 beta	renatus		2019-11-12	distinguish between guest and user
- * 		0.4.0 beta	renatus		2019-11-13	added ListUserPermissions and CheckUserPermission functions
- * 		0.8.0 beta	renatus		2020-01-17	added account record access in init() to overwrite language settings
- * 		1.0.0 stable	renatus		2020-02-04	added preparations for statistic validation
- * 		1.0.0 beta	renatus		2020-02-13	added MongoDB support by breaking up SQL-Join Queries
+ * @version log Version			Developer	Date		Comment
+ * 				0.1.0 alpha		renea		2019-08-04	first build
+ * 				0.1.1 alpha		renea		2019-08-08	add session and forestDateTime functionality
+ * 				0.1.5 alpha		renea		2019-10-08	added GenerateCaptchaCharacter function
+ * 				0.4.0 beta		renea		2019-11-11	added enhanced user administration functionalities
+ * 				0.4.0 beta		renea		2019-11-12	distinguish between guest and user
+ * 				0.4.0 beta		renea		2019-11-13	added ListUserPermissions and CheckUserPermission functions
+ * 				0.8.0 beta		renea		2020-01-17	added account record access in init() to overwrite language settings
+ * 				1.0.0 stable	renea		2020-02-04	added preparations for statistic validation
+ * 				1.0.0 stable	renea		2020-02-13	added MongoDB support by breaking up SQL-Join Queries
+ * 				1.1.0 stable	renea		2024-08-01	small changes and removed method GenRandomString, because we are using bin2hex and random_bytes now
  */
 
 namespace fPHP\Security;
@@ -182,7 +183,7 @@ class forestSecurity {
 				$this->SessionData->value->Add($this->SessionUUID->value, 'session_uuid');
 				$this->SessionData->value->Add(forestSecurity::SessionStatusGuest, 'session_status');
 				
-				if ( (strpos($_SERVER['HTTP_USER_AGENT'], 'google') === false) && (!$o_glob->FastProcessing) ) {
+				if ( array_key_exists('HTTP_USER_AGENT', $_SERVER) && (strpos($_SERVER['HTTP_USER_AGENT'], 'google') === false) && (!$o_glob->FastProcessing) ) {
 					/* handle user statistics */
 					$o_statisticTwig = new \fPHP\Twigs\statisticTwig();
 					
@@ -200,7 +201,7 @@ class forestSecurity {
 					$o_countusertoday = $o_statisticTwig->CountUserTodayTimestamp;
 					
 					/* check if we have first visitor of the day */
-					if (date('Ymd', $o_now->ToString('U')) > date('Ymd', $o_countusertoday->ToString('U'))) { //restart daily visitor counter
+					if (date('Ymd', $o_now->ToString('U')) > date('Ymd', $o_countusertoday->ToString('U'))) { /* restart daily visitor counter */
 						if ($p_b_debug) { echo '#12__we have first visitor of the day<br />'; }
 						$o_statisticTwig->CountUserToday = 1;
 						$o_statisticTwig->CountUserTodayTimestamp = new \fPHP\Helper\forestDateTime($o_glob->Trunk->DateTimeSqlFormat);
@@ -277,7 +278,7 @@ class forestSecurity {
 				if ($o_userTwig->Locked) {
 					$this->Logout();
 					header('Location: ./');
-					exit();
+					exit;
 				}
 				
 				if ($o_userTwig->RootUser) {
@@ -698,6 +699,7 @@ class forestSecurity {
 		unset($this->SessionUUID->value);
 		unset($this->SessionData->value);
 		unset($this->SessionId->value);
+		session_unset();
 		@session_destroy();
 	}
 	
@@ -807,50 +809,21 @@ class forestSecurity {
 	 * @static no
 	 */
 	public function GenUUID() {
-		$s_foo = md5(uniqid(mt_rand(), true));
-		$a_blockDelimiter = array(8,13,18,23);
+		$s_foo = bin2hex(random_bytes(16));
+
+		$a_blockDelimiter = array(8,12,16,20);
 		$s_uuid = '';
-		
-		/* replace characters with block delimiter */
+
+		/* add block delimiter characters */
 		for ($i = 0; $i < 32; $i++) {
 			if (in_array($i, $a_blockDelimiter)) {
 				$s_uuid .= '-';
-			} else {
-				$s_uuid .= $s_foo[$i];
 			}
+			
+			$s_uuid .= $s_foo[$i];
 		}
-		
-		/* add 4 random characters because we added 4 block delimiters */
-		$s_uuid .= $this->GenRandomString(4);
 		
 		return $s_uuid;
-	}
-	
-	/**
-	 * generates random string with Hex-Value and length parameters
-	 *
-	 * @param integer $p_s_name  length of random string which will be generated
-	 *
-	 * @return string  random string with length between 1..32
-	 *
-	 * @throws forestException if error occurs
-	 * @access private
-	 * @static no
-	 */
-	private function GenRandomString($p_i_length = 0) {
-		$s_foo = $this->GenRandomHash();
-		
-		if ($p_i_length > 32) {
-  			throw new forestException('The amount of characters cannot be over 32');
-		}
-		
-		if ($p_i_length < 1) {
-  			throw new forestException('The amount of characters cannot be lower than 1');
-		}
-				
-		$s_foo = substr($s_foo, 0, $p_i_length);
-		
-		return $s_foo;
 	}
 	
 	/**
@@ -863,8 +836,7 @@ class forestSecurity {
 	 * @static no
 	 */
 	public function GenRandomHash() {
-		mt_srand((double)microtime()*73291);
-		return md5((time() - 7 * mt_rand(1,9901)) * 9739 / 6581);
+		return bin2hex(random_bytes(16));
 	}
 	
 	/**
@@ -879,7 +851,6 @@ class forestSecurity {
 	public function HashString(&$p_s_value, $p_s_salt, $p_i_loop) {
 		for ($i = 0; $i < $p_i_loop; $i++) {
 			$p_s_value = hash('sha512', $p_s_salt . $p_s_value);
-			$p_s_value = md5($p_s_value . $p_s_salt);
 		}
 	}
 	

@@ -20,34 +20,8 @@ class permissionBranch extends forestBranch {
 	
 	/* Methods */
 	
-	protected function initBranch() {
-		$this->Filter->value = true;
-		$this->StandardView = forestBranch::LISTVIEW;
-		$this->KeepFilter->value = false;
-		
-		$this->Twig = new \fPHP\Twigs\permissionTwig();
-	}
-	
-	protected function init() {
-		$o_glob = \fPHP\Roots\forestGlobals::init();
-		
-		if ($this->StandardView == forestBranch::DETAIL) {
-			$this->GenerateView();
-		} else if ($this->StandardView == forestBranch::LISTVIEW) {
-			$this->GenerateListView();
-		} else if ($this->StandardView == forestBranch::FLEX) {
-			if ( ($o_glob->Security->SessionData->Exists('lastView')) && ($o_glob->URL->LastBranchId == $o_glob->URL->BranchId) ) {
-				if ($o_glob->Security->SessionData->{'lastView'} == forestBranch::LISTVIEW) {
-					$this->GenerateView();
-				} else if ($o_glob->Security->SessionData->{'lastView'} == forestBranch::DETAIL) {
-					$this->GenerateListView();
-				} else {
-					$this->GenerateFlexView();
-				}
-			} else {
-				$this->GenerateFlexView();
-			}
-		}
+	protected function initAction() {
+		$this->Init();
 	}
 	
 		protected function beforeViewAction() {
@@ -267,14 +241,6 @@ class permissionBranch extends forestBranch {
 					throw new \fPHP\Roots\forestException(0x10001402);
 				} else if ($i_result == 1) {
 					$o_glob->SystemMessages->Add(new \fPHP\Roots\forestException(0x10001404));
-				}
-			}
-		}
-		
-		if (isset($this->KeepFilter)) {
-			if ($this->KeepFilter->value) {
-				if ($o_glob->Security->SessionData->Exists('last_filter')) {
-					$o_glob->Security->SessionData->Add($o_glob->Security->SessionData->{'last_filter'}, 'filter');
 				}
 			}
 		}

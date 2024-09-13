@@ -4,19 +4,20 @@
  * action and parameter properties are not necessary to be set at this point of development
  *
  * @category    forestPHP Framework
- * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2019 forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestany.net>
+ * @copyright   (c) 2024 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.0 stable
- * @link        http://www.forestphp.de/
+ * @version     1.1.0 stable
+ * @link        https://forestany.net
  * @object-id   0x1 00019
  * @since       File available since Release 0.1.0 alpha
  * @deprecated  -
  *
- * @version log Version		Developer	Date		Comment
- * 		0.1.1 alpha	renatus		2019-08-14	added to framework
- * 		0.9.0 beta	renatus		2020-01-30	changes for bootstrap 4, Sidebar and FullScreen
+ * @version log Version			Developer	Date		Comment
+ * 				0.1.1 alpha		renea		2019-08-14	added to framework
+ * 				0.9.0 beta		renea		2020-01-30	changes for bootstrap 4, Sidebar and FullScreen
+ * 				1.1.0 stable	renea		2024-08-10	changes for bootstrap 5
  */
 
 namespace fPHP\Branches;
@@ -142,15 +143,27 @@ class forestNavigationNode {
 		if ($this->Navbar->value) {
 			if ( ($this->Zero->value) && (!$this->NoDropDown->value) ) {
 				if ( ($this->NavigationNodes->value->Count() > 0) && ($this->BranchName->value != 'index') && (!$this->Up->value) ) {
-					$s_foo .= ' class="nav-link text-nowrap dropdown-menu-item-title"';
+					if ($this->Active->value) {
+						$s_foo .= ' class="nav-link text-nowrap dropdown-menu-item-title active"';
+					} else {
+						$s_foo .= ' class="nav-link text-nowrap dropdown-menu-item-title"';
+					}
 				} else {
-					$s_foo .= ' class="nav-link text-nowrap"';
+					if ($this->Active->value) {
+						$s_foo .= ' class="nav-link text-nowrap active"';
+					} else {
+						$s_foo .= ' class="nav-link text-nowrap"';
+					}
 				}
 			} else {
 				if ( ($this->NavigationNodes->value->Count() > 0) && ($this->BranchName->value != 'index') ) {
-					$s_foo .= ' class="text-dark text-nowrap"';
+					$s_foo .= ' class="text-secondary-emphasis text-decoration-none text-nowrap"';
 				} else {
-					$s_foo .= ' class="dropdown-item text-nowrap"';
+					if ($this->Active->value) {
+						$s_foo .= ' class="nav-link text-nowrap active"';
+					} else {
+						$s_foo .= ' class="nav-link text-nowrap"';
+					}
 				}
 			}
 		} else {
@@ -179,17 +192,17 @@ class forestNavigationNode {
 					$s_foo .= '<a';
 					
 					if ($this->Zero->value) {
-						$s_foo .= ' class="nav-link text-nowrap dropdown-menu-item" data-toggle="dropdown" id="navbardrop"';
+						$s_foo .= ' class="nav-link text-nowrap dropdown-menu-item" data-bs-toggle="dropdown" id="navbardrop"';
 					} else {
-						$s_foo .= ' class="dropdown-submenu-item text-dark"';
+						$s_foo .= ' class="dropdown-submenu-item text-secondary-emphasis"';
 					}
 					
-					$s_foo .= ' href="#"><span class="fas fa-caret-down"></span></a>';
+					$s_foo .= ' href="#"><span class="bi bi-caret-down"></span></a>';
 				}
 			}
 		} else {
 			/* up navigation element */
-			$s_foo .= '<span class="fphp_nav_icon fas fa-caret-up"></span>' . $this->Title->value . '</a>';
+			$s_foo .= '<span class="fphp_nav_icon bi bi-caret-up"></span>' . $this->Title->value . '</a>';
 		}
 		
 		return $s_foo;

@@ -20,12 +20,8 @@ class useradminBranch extends forestBranch {
 	
 	/* Methods */
 	
-	protected function initBranch() {
-		
-	}
-	
-	protected function init() {
-		$this->GenerateLandingPage();
+	protected function initAction() {
+		$this->Init();
 	}
 }
 ?>

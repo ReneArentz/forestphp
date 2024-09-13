@@ -3,26 +3,34 @@
  * central control class of forestPHP framework for fetch-content and render-content
  *
  * @category    forestPHP Framework
- * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2021 forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestany.net>
+ * @copyright   (c) 2024 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.1 stable
- * @link        http://www.forestphp.de/
+ * @version     1.1.0 stable
+ * @link        https://forestany.net
  * @object-id   0x1 00001
  * @since       File available since Release 0.1.0 alpha
  * @deprecated  -
  *
- * @version log Version		Developer	Date		Comment
- * 		0.1.0 alpha	renatus		2019-08-04	first build
- * 		0.1.1 alpha	renatus		2019-08-09	added trunk, form and systemmessages functionality
- * 		0.1.2 alpha	renatus		2019-08-23	added list and view rendering
- * 		0.1.4 alpha	renatus		2019-09-26	added fphp_upload and fphp_upload_delete to fast-processing actions
- * 		0.1.5 alpha	renatus		2019-10-09	added fphp_captcha and fphp_imageThumbnail to fast-processing actions
- * 		0.4.0 beta	renatus		2019-11-20	added permission checks, user and guest access
- * 		0.7.0 beta	renatus		2020-01-02	added Maintenance Mode
- * 		0.8.0 beta	renatus		2020-01-16	added fphp_flex functionality and log entry on permission denied message
- * 		0.9.0 beta	renatus		2020-01-30	changed render structure
+ * @version log Version			Developer	Date		Comment
+ * 				0.1.0 alpha		renea		2019-08-04	first build
+ * 				0.1.1 alpha		renea		2019-08-09	added trunk, form and systemmessages functionality
+ * 				0.1.2 alpha		renea		2019-08-23	added list and view rendering
+ * 				0.1.4 alpha		renea		2019-09-26	added fphp_upload and fphp_upload_delete to fast-processing actions
+ * 				0.1.5 alpha		renea		2019-10-09	added fphp_captcha and fphp_imageThumbnail to fast-processing actions
+ * 				0.4.0 beta		renea		2019-11-20	added permission checks, user and guest access
+ * 				0.7.0 beta		renea		2020-01-02	added Maintenance Mode
+ * 				0.8.0 beta		renea		2020-01-16	added fphp_flex functionality and log entry on permission denied message
+ * 				0.9.0 beta		renea		2020-01-30	changed render structure
+ * 				1.1.0 stable	renea		2023-11-03	relocate standard view into database
+ * 				1.1.0 stable	renea		2024-02-03	added slide gallery view
+ * 				1.1.0 stable	renea		2024-02-05	added slide calender view
+ * 				1.1.0 stable	renea		2024-03-05	revision of maintenance page
+ * 				1.1.0 stable	renea		2023-05-08	added static page functionality
+ * 				1.1.0 stable	renea		2024-05-08	relocate session regenerate id
+ * 				1.1.0 stable	renea		2024-05-10	added new global variable to skip init page (initLeaf.php)
+ * 				1.1.0 stable	renea		2024-07-11	introduction of cookie consent
  */
 
 namespace fPHP\Roots;
@@ -55,6 +63,11 @@ class forestPHP {
 		global $b_fill_mongodb_from_sqlite3;
 		
 		try {
+			/* look for gd extension for captcha mechanism */
+			if (!get_extension_funcs("gd")) {
+				throw new \Exception('GD extension is not installed');
+			}
+
 			/* initialize AutoLoad-routine for classes */
 			if (!(@include_once './roots/forestAutoLoad.php')) {
 				throw new \Exception('Cannot find forestAutoLoad.php');
@@ -69,6 +82,42 @@ class forestPHP {
 				/* fphp core executions */
 				$o_glob = \fPHP\Roots\forestGlobals::init();
 				
+				/* if action is 'createStaticPage' do not delete old session file, so we can use it again */
+				if ( (issetStr($o_glob->URL->Action)) && ($o_glob->URL->Action == 'createStaticPage') && ($_POST) ) {
+					session_regenerate_id(false);
+				} else { /* usually delete old session file */
+					session_regenerate_id(true);
+				}
+
+				/* possible static file */
+				$s_staticFile = './files/' . $o_glob->URL->Branch . '.html';
+
+				if (\fPHP\Helper\forestStringLib::EndsWith($_SERVER['REQUEST_URI'], '?login')) {
+					header('Location: index.php?' . htmlspecialchars(SID) . '/index&login');
+					exit;
+				}
+
+				/* check if index branch without an action is called and static file exists */
+				if ( (forestAutoLoad::IsReadable($s_staticFile)) && (!issetStr($o_glob->URL->Action)) && (!\fPHP\Helper\forestStringLib::EndsWith($_SERVER['REQUEST_URI'], '&init')) ) {
+					/* get content for static file */
+					$s_getContents = @file_get_contents($s_staticFile, false);
+
+					/* check if request was successful */
+					if ($s_getContents !== false) {
+						/* correct paths */
+						$s_getContents = str_replace('../', './', $s_getContents);
+
+						/* cookie consent */
+						if (!$o_glob->Security->SessionData->Exists('cookieConsent')) {
+							$s_getContents = str_replace('<!-- ActivateCookieConsent -->', '<script>$(function(){$(\'#CookieConsentModal\').modal(\'show\');});</script>', $s_getContents);
+						}
+
+						/* give static file content as output and exit here */
+						echo $s_getContents;
+						exit;
+					}
+				}
+
 				if ($_POST) {
 					$o_glob->IsPost = true;
 				}
@@ -78,7 +127,7 @@ class forestPHP {
 					$o_glob->FastProcessing = true;
 				}
 				
-				$o_glob->Base->Add(new \fPHP\Base\forestBase(\fPHP\Base\forestBase::MariaSQL, '127.0.0.1', 'forestphp', 'db_user', 'db_password'), 'forestPHPMariaSQLBase');
+				$o_glob->Base->Add(new \fPHP\Base\forestBase(\fPHP\Base\forestBase::MariaSQL, '127.0.0.1', 'forestphp_1_1_0', 'root', 'root'), 'forestPHPMariaSQLBase');
 				//$o_glob->Base->Add(new \fPHP\Base\forestBase(\fPHP\Base\forestBase::MSSQL, '127.0.0.1\MSSQLSERVER, 1433', 'forestphp', 'db_user', 'db_password', false), 'forestPHPMSSQLBase');
 				//$o_glob->Base->Add(new \fPHP\Base\forestBase(\fPHP\Base\forestBase::SQLite3, './forestPHP.db', '', 'db_user', 'db_password'), 'forestPHPSQLite3Base');
 				//$o_glob->Base->Add(new \fPHP\Base\forestBase(\fPHP\Base\forestBase::PGSQL, '127.0.0.1', 'forestphp', 'db_user', 'db_password'), 'forestPHPPGSQLBase');
@@ -139,12 +188,43 @@ class forestPHP {
 					}
 				}
 				
+				/* gather and cache information if we are not fast processing */
 				if (!$o_glob->FastProcessing) {
 					$o_glob->ListTranslations();
 					$o_glob->ListTables();
 					$o_glob->ListUserNames();
 				}
+
+				/* get standard views and set standard view value */
+				$o_glob->StandardViews = $o_glob->StandardView->CreateOptionsArray();
 				
+				/* get standard view from forestBranch constants */
+				$a_views = array(
+					\fPHP\Branches\forestBranch::DETAIL,
+					\fPHP\Branches\forestBranch::LIST,
+					\fPHP\Branches\forestBranch::SLIDEGALLERY,
+					\fPHP\Branches\forestBranch::SLIDECALENDER,
+					\fPHP\Branches\forestBranch::SECTIONCOUNTER,
+					\fPHP\Branches\forestBranch::FLEX,
+					\fPHP\Branches\forestBranch::STATICPAGE
+				);
+
+				/* check if constant standard views matches database table */
+				foreach (array_flip($o_glob->StandardViews) as $s_view) {
+					if (!in_array($s_view, $a_views)) {
+						throw new forestException('Invalid standard view [%0].', array($s_view), true);
+					}
+				}
+
+				/* set standard view and original view */
+				if (issetStr($o_glob->BranchTree['Id'][$o_glob->URL->BranchId]['StandardView'])) {
+					$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[$o_glob->BranchTree['Id'][$o_glob->URL->BranchId]['StandardView']];
+					$o_glob->OriginalView = $o_glob->BranchTree['Id'][$o_glob->URL->BranchId]['StandardView'];
+				} else {
+					$o_glob->StandardView->PrimaryValue = $o_glob->StandardViews[\fPHP\Branches\forestBranch::LIST];
+					$o_glob->OriginalView = \fPHP\Branches\forestBranch::LIST;
+				}
+
 				if (($b_write_post_files) && (!$o_glob->FastProcessing)) {
 					echo '<pre>POST<br>';
 					print_r($_POST);
@@ -163,11 +243,21 @@ class forestPHP {
 				/* init forestPHP framework */
 				$this->init();
 				
+				/* cookie consent */
+				if (!$o_glob->Security->SessionData->Exists('cookieConsent')) {
+					echo '<script>$(function(){$(\'#CookieConsentModal\').modal(\'show\');});</script>';
+				}
+				
+				/* $o_glob->Security->SessionData->Del('cookieConsent'); */
+
 				$o_glob->Security->SyncSessionData($b_write_security_debug);
 			} catch (forestException $o_exc) {
-				/* deactivate output buffer for content scripting */
+				/* flush/send output buffer and turn off output buffering */
 				ob_end_flush();
 				
+				/* re-activate output buffer for content scripting */
+				ob_start();
+
 				$o_glob = \fPHP\Roots\forestGlobals::init();
 				
 				global $b_transaction_active;
@@ -187,17 +277,27 @@ class forestPHP {
 				echo '</html>' . "\n";
 			}
 		} catch (\Exception $o_exc) {
-			/* deactivate output buffer for content scripting */
+			/* flush/send output buffer and turn off output buffering */
 			ob_end_flush();
 			
+			/* re-activate output buffer for content scripting */
+			ob_start();
+
 			$o_main_exception = $o_exc;
 			
-			if (!(@include './roots/forestMaintenance.php')) {
+			if (!(@include './trunk/trunkHeadLeaf.php')) {
 				echo '<body>' . "\n";
-					echo "\t" . '<h1>FATAL ERROR</h1>' . "\n";
+				echo "\t" . '<h1>FATAL ERROR</h1>' . "\n";
+			}
+
+			if (!(@include './roots/forestMaintenance.php')) {
+				echo "\t" . '<h1>FATAL ERROR</h1>' . "\n";
 				echo '</body>' . "\n";
 				echo '</html>' . "\n";
 			}
+		} finally {
+			/* flush/send output buffer and turn off output buffering */
+			ob_end_flush();
 		}
 	}
 	
@@ -213,9 +313,12 @@ class forestPHP {
 		/* run content scripting */
 		$this->FetchContent();
 		
-		/* deactivate output buffer for content scripting */
+		/* flush/send output buffer and turn off output buffering */
 		ob_end_flush();
 		
+		/* re-activate output buffer for content scripting */
+		ob_start();
+
 		/* render content */
 		$this->Render();
 	}
@@ -284,24 +387,36 @@ class forestPHP {
 			$o_glob = \fPHP\Roots\forestGlobals::init();
 			
 			if (!$o_glob->FastProcessing) {
+				global $b_skip_init_page;
+
 				if ($o_glob->Security->InitAccess) {
-					/* render init-leaf */
-					$this->RenderLeaf('initLeaf');
-				} else if (($o_glob->Security->GuestAccess) || ($o_glob->Security->UserAccess)) {
+					if ($b_skip_init_page) {
+						/* reload current request, if we want to skip init page */
+						header('Location: '. \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, $o_glob->URL->Action, $o_glob->URL->Parameters));
+					} else {
+						/* render init-leaf */
+						$this->RenderLeaf('initLeaf');
+					}
+				} else if ( ($o_glob->Security->GuestAccess) || ($o_glob->Security->UserAccess) ) {
 					/* render trunk-head-leaf */
 					$this->RenderLeaf('trunkHeadLeaf');
 					
 					/* render navigation */
 					if ($o_glob->URL->ShowNavigation) {
-						$o_glob->Navigation->RenderNavigation();
+						echo "\n" . '<header>' . "\n";
+						echo $o_glob->Navigation->RenderNavigation();
+						echo "\n" . '</header>' . "\n";
 					}
+					
+					/* render main element */
+					echo '<main class="flex-shrink-0">' . "\n";
 					
 					/* render main container */
 					echo '<div class="container-fluid">' . "\n";
 					
 						/* render branch title */
 						if (!is_null($o_glob->URL->BranchTitle)) {
-							echo '<h1>' . $o_glob->URL->BranchTitle . '</h1>' . "\n";
+							echo '<h1 class="mt-3">' . $o_glob->URL->BranchTitle . '</h1>' . "\n";
 						}
 						
 						$b_warning = false;
@@ -346,8 +461,19 @@ class forestPHP {
 									echo $o_glob->Templates->{$o_glob->URL->Branch . 'ListView'};
 								} else if ($o_glob->Templates->Exists($o_glob->URL->Branch . 'View')) {
 									echo $o_glob->Templates->{$o_glob->URL->Branch . 'View'};
+								} else if ($o_glob->Templates->Exists($o_glob->URL->Branch . 'SlideGalleryView')) {
+									echo $o_glob->Templates->{$o_glob->URL->Branch . 'SlideGalleryView'};
+								} else if ($o_glob->Templates->Exists($o_glob->URL->Branch . 'SlideCalenderView')) {
+									echo $o_glob->Templates->{$o_glob->URL->Branch . 'SlideCalenderView'};
+								} else if ($o_glob->Templates->Exists($o_glob->URL->Branch . 'SectionCounterView')) {
+									echo $o_glob->Templates->{$o_glob->URL->Branch . 'SectionCounterView'};
 								} else if ($o_glob->Templates->Exists($o_glob->URL->Branch . 'FlexView')) {
 									echo $o_glob->Templates->{$o_glob->URL->Branch . 'FlexView'};
+								} else if ($o_glob->Templates->Exists($o_glob->URL->Branch . 'StaticPageView')) {
+									/* delete complete output buffer to start new */
+									ob_clean();
+									
+									echo $o_glob->Templates->{$o_glob->URL->Branch . 'StaticPageView'};
 								}
 							}
 							
@@ -355,12 +481,21 @@ class forestPHP {
 							if ( ($o_glob->PostModalForm != null) && ($o_glob->PostModalForm->Automatic) ) {
 								echo $o_glob->PostModalForm;
 								$s_formId = '#' . $o_glob->PostModalForm->FormObject->Id . 'Modal';
-								echo '<script>$(function(){$(\'' . $s_formId . '\').modal();});</script>';
+								echo '<script>$(function(){$(\'' . $s_formId . '\').modal(\'show\');});</script>';
 							}
 						}
 					
-					/* close main container */
-					echo '</div>' . "\n";
+					/* do not close main container if we use static page view */
+					if (!$o_glob->Templates->Exists($o_glob->URL->Branch . 'StaticPageView')) {
+						/* close main container */
+						echo '</div>' . "\n";
+					}
+
+					/* do not close main if we use static page view */
+					if (!$o_glob->Templates->Exists($o_glob->URL->Branch . 'StaticPageView')) {
+						/* close main element */
+						echo "\n" . '</main>' . "\n";
+					}
 					
 					/* render trunk-foot-leaf */
 					$this->RenderLeaf('trunkFootLeaf');

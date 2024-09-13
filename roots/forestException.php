@@ -4,19 +4,20 @@
  * distinguish between three exception types: error, warnung, message - all three types have their own ToString-behaviour
  *
  * @category    forestPHP Framework
- * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2019 forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestany.net>
+ * @copyright   (c) 2024 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.0 stable
- * @link        http://www.forestphp.de/
+ * @version     1.1.0 stable
+ * @link        https://forestany.net
  * @object-id   0x1 0000B
  * @since       File available since Release 0.1.0 alpha
  * @deprecated  -
  *
- * @version log Version		Developer	Date		Comment
- * 		0.1.0 alpha	renatus		2019-08-04	first build
- * 		0.4.0 beta	renatus		2019-11-18	added permission denied message rendering
+ * @version log Version			Developer	Date		Comment
+ * 				0.1.0 alpha		renea		2019-08-04	first build
+ * 				0.4.0 beta		renea		2019-11-18	added permission denied message rendering
+ * 				1.1.0 stable	renea		2024-08-10	changes for bootstrap 5
  */
 
 namespace fPHP\Roots;
@@ -137,9 +138,8 @@ class forestException extends \Exception {
 		
 		if (($this->getCode() == 0x10000600) || ($this->getCode() == 0x10000100)) {
 			/* invalid session and permission denied messages */
-			$s_foo .= '<div class="alert alert-danger alert-dismissible">';
-				$s_foo .= '<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>' . "\n";
-				$s_foo .= '<strong>Error:</strong> ' . $this->message . "\n" . '<br>' . "\n";
+			$s_foo .= '<div class="alert alert-danger alert-dismissible fade show" role="alert">';
+				$s_foo .= '<div><span class="bi bi-exclamation-square-fill h5"></span>&nbsp;' . $this->message . "\n" . '</div>' . "\n";
 				$a_parameters = array();
 				
 				if (issetStr($o_glob->URL->Branch)) {
@@ -168,7 +168,9 @@ class forestException extends \Exception {
 				
 				if ($this->getCode() == 0x10000600) {
 					/* invalid session message */
-					$s_foo .= '<a href="' . \fPHP\Helper\forestLink::Link('index', 'login', $a_parameters) . '">Login</a>' . "\n";
+					$s_foo .= '<div>' . "\n";
+					
+					$s_foo .= '<div>' . "\n" . '<a href="' . \fPHP\Helper\forestLink::Link('index', 'login', $a_parameters) . '">Login</a>' . "\n" . '</div>' . "\n";
 					$o_glob->Security->Logout();
 				} else {
 					/* permission denied message */
@@ -178,19 +180,24 @@ class forestException extends \Exception {
 						$s_url = $_SERVER['HTTP_REFERER'];
 					}
 					
+					$s_foo .= '<div>' . "\n";
+
 					$s_foo .= '<a href="' . $s_url . '">Zur&uuml;ck</a>' . "\n";
 					$s_foo .= ' - ';
 					$s_foo .= '<a href="' . \fPHP\Helper\forestLink::Link('index') . '">Startseite</a>' . "\n";
 					$s_foo .= ' - ';
 					$s_foo .= '<a href="' . \fPHP\Helper\forestLink::Link('index', 'login', $a_parameters) . '">Login</a>' . "\n";
+
+					$s_foo .= '</div>' . "\n";
 				}
+
+				$s_foo .= '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' . "\n";
 			
 			$s_foo .= '</div>' . "\n";
 		} else if ($this->ExceptionType->value == self::WARNING) {
 			/* warning message */
-			$s_foo .= '<div class="alert alert-warning alert-dismissible">';
-				$s_foo .= '<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>' . "\n";
-				$s_foo .= '<strong>Warning:</strong> ' . $this->message . "\n" . '<br>' . "\n";
+			$s_foo .= '<div class="alert alert-warning alert-dismissible fade show" role="alert">';
+				$s_foo .= '<div><span class="bi bi-exclamation-triangle-fill h5"></span>&nbsp;' . $this->message . "\n" . '</div>' . "\n";
 				
 				$s_url = \fPHP\Helper\forestLink::Link($o_glob->URL->Branch);
 				
@@ -198,17 +205,18 @@ class forestException extends \Exception {
 					$s_url = $_SERVER['HTTP_REFERER'];
 				}
 				
-				$s_foo .= '<a href="' . $s_url . '">Zur&uuml;ck</a>' . "\n";
+				$s_foo .= '<div>' . "\n" . '<a href="' . $s_url . '">Zur&uuml;ck</a>' . "\n" . '</div>' . "\n";
+				$s_foo .= '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' . "\n";
 			$s_foo .= '</div>' . "\n";
 		} else if ($this->ExceptionType->value == self::MESSAGE) {
 			/* info message */
-			$s_foo .= '<div class="alert alert-info alert-dismissible">';
-				$s_foo .= '<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>' . "\n";
-				$s_foo .= '<strong>Info:</strong> ' . $this->message . "\n";
+			$s_foo .= '<div class="alert alert-primary alert-dismissible fade show" role="alert">';
+				$s_foo .= '<div><span class="bi bi-info-circle-fill h5"></span>&nbsp;' . $this->message . "\n" . '</div>' . "\n";
+				$s_foo .= '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' . "\n";
 			$s_foo .= '</div>' . "\n";
 		} else {
 			/* exception message */
-			$s_foo .= '<b><i>' . __CLASS__ . ':</i> Error</b>[' . $this->getCode() . '] - ' . $this->message;
+			$s_foo .= '<span class="bi bi-exclamation-octagon-fill h1 text-danger"></span>&nbsp;&nbsp;&nbsp;<b><i>' . __CLASS__ . ':</i> Error</b>[' . $this->getCode() . '] - ' . $this->message;
 			$a_traceArray = array_reverse($this->getTrace());
 			
 			for ($i = 0; $i < count($a_traceArray); $i++) {

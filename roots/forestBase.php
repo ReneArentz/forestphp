@@ -5,24 +5,24 @@
  * on initialization the developer can decide which gateway he wants to use
  *
  * @category    forestPHP Framework
- * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2019 forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestany.net>
+ * @copyright   (c) 2024 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
  * @version     1.0.0 stable
- * @link        http://www.forestphp.de/
+ * @link        https://forestany.net
  * @object-id   0x1 00009
  * @since       File available since Release 0.1.0 alpha
  * @deprecated  -
  *
- * @version log Version		Developer	Date		Comment
- * 		0.1.0 alpha	renatus		2019-08-04	first build
- * 		0.1.1 alpha	renatus		2019-08-07	added date conversion and trunk settings
- * 		1.0.0 stable	renatus		2020-02-04	added MSSQL support
- * 		1.0.0 stable	renatus		2020-02-05	added PGSQL support
- * 		1.0.0 stable	renatus		2020-02-06	added SQLite3 support
- * 		1.0.0 stable	renatus		2020-02-10	added OCISQL support
- * 		1.0.0 stable	renatus		2020-02-11	added MongoDB support
+ * @version log Version			Developer	Date		Comment
+ * 				0.1.0 alpha		renea		2019-08-04	first build
+ * 				0.1.1 alpha		renea		2019-08-07	added date conversion and trunk settings
+ * 				1.0.0 stable	renea		2020-02-04	added MSSQL support
+ * 				1.0.0 stable	renea		2020-02-05	added PGSQL support
+ * 				1.0.0 stable	renea		2020-02-06	added SQLite3 support
+ * 				1.0.0 stable	renea		2020-02-10	added OCISQL support
+ * 				1.0.0 stable	renea		2020-02-11	added MongoDB support
  */
 
 namespace fPHP\Base;
@@ -187,6 +187,8 @@ class forestBase {
 			}
 			
 			if ($this->BaseGateway->value != forestBase::MongoDB) {
+				/* activate auto commit */
+				$this->CurrentConnection->value->setAttribute(\PDO::ATTR_AUTOCOMMIT, true);
 				/* set exception setting for PDO class */
 				$this->CurrentConnection->value->setAttribute(\PDO::ATTR_EMULATE_PREPARES, false);
 				$this->CurrentConnection->value->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
@@ -632,6 +634,9 @@ class forestBase {
 				throw new forestException('No connection established.');
 			}
 			
+			/* deactivate auto commit */
+			$this->CurrentConnection->value->setAttribute(\PDO::ATTR_AUTOCOMMIT, false);
+
 			$this->CurrentConnection->value->beginTransaction();
 			//d2c('beginTransaction');
 			global $b_transaction_active;
@@ -661,6 +666,9 @@ class forestBase {
 			//d2c('rollBack');
 			global $b_transaction_active;
 			$b_transaction_active = false;
+
+			/* activate auto commit */
+			$this->CurrentConnection->value->setAttribute(\PDO::ATTR_AUTOCOMMIT, true);
 	}
 	}
 	
@@ -686,6 +694,9 @@ class forestBase {
 			//d2c('commit');
 			global $b_transaction_active;
 			$b_transaction_active = false;
+
+			/* activate auto commit */
+			$this->CurrentConnection->value->setAttribute(\PDO::ATTR_AUTOCOMMIT, true);
 		}
 	}
 	
@@ -867,11 +878,11 @@ class forestBase {
 			$p_s_value = strval($p_s_value);
 			
 			/* additionally utf8 en/decoding */
-			if (!is_null($o_glob->Trunk)) {
+			if ( (!is_null($p_s_value)) && (!is_null($o_glob->Trunk)) ) {
 				if ($o_glob->Trunk->OutContentUTF8Decode) {
-					$p_s_value = utf8_decode($p_s_value);
+					$p_s_value = mb_convert_encoding($p_s_value, 'ISO-8859-1', 'UTF-8');
 				} else if ($o_glob->Trunk->OutContentUTF8Encode) {
-					$p_s_value = utf8_encode($p_s_value);
+					$p_s_value = mb_convert_encoding($p_s_value, 'UTF-8', 'ISO-8859-1');
 				}
 			}
 			
@@ -885,11 +896,11 @@ class forestBase {
 			}
 		} else {
 			/* additionally utf8 en/decoding */
-			if (!is_null($o_glob->Trunk)) {
+			if ( (!is_null($p_s_value)) && (!is_null($o_glob->Trunk)) ) {
 				if ($o_glob->Trunk->OutContentUTF8Decode) {
-					$p_s_value = utf8_decode($p_s_value);
+					$p_s_value = mb_convert_encoding($p_s_value, 'ISO-8859-1', 'UTF-8');
 				} else if ($o_glob->Trunk->OutContentUTF8Encode) {
-					$p_s_value = utf8_encode($p_s_value);
+					$p_s_value = mb_convert_encoding($p_s_value, 'UTF-8', 'ISO-8859-1');
 				}
 			}
 			
@@ -898,7 +909,7 @@ class forestBase {
 				$p_s_value = str_replace('\'\'', '"', $p_s_value);
 				$p_s_value = str_replace('<', '&lt;', $p_s_value);
 				$p_s_value = str_replace('>', '&gt;', $p_s_value);
-			} else {
+			} else if (!is_null($p_s_value)) {
 				$p_s_value = htmlspecialchars($p_s_value, ( ENT_QUOTES | ENT_HTML5 ));
 			}
 		}

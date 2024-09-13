@@ -3,22 +3,25 @@
  * index-page of the forestPHP framework
  *
  * @category    forestPHP Framework
- * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2021 forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestany.net>
+ * @copyright   (c) 2024 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.1 stable
- * @link        http://www.forestphp.de/
+ * @version     1.1.0 stable
+ * @link        https://forestany.net
  * @object-id   0x1 00000
  * @since       File available since Release 0.1.0 alpha
  * @deprecated  -
  *
- * @version log Version		Developer	Date		Comment
- *              0.1.0 alpha	renatus		2019-08-04	first build
- *              0.9.0 beta	renatus		2020-01-27	added general functions
- *              1.0.0 stable	renatus		2020-02-10	added global flags for testing DDL and filling data from SQLite3 DB into a MongoDB
- *              1.0.1 stable	renatus		2021-04-09	added support for samesite cookie property and automatically retrieve domain information for cookie settings
- *              1.0.1 stable	renatus		2021-04-10	added new helper function arrayToInlineString
+ * @version log Version			Developer	Date		Comment
+ * 				0.1.0 alpha		renea		2019-08-04	first build
+ * 				0.9.0 beta		renea		2020-01-27	added general functions
+ * 				1.0.0 stable	renea		2020-02-10	added global flags for testing DDL and filling data from SQLite3 DB into a MongoDB
+ * 				1.0.1 stable	renea		2021-04-09	added support for samesite cookie property and automatically retrieve domain information for cookie settings
+ * 				1.0.1 stable	renea		2021-04-10	added new helper function arrayToInlineString
+ * 				1.1.0 stable	renea		2023-08-06	added new global variable to write runtime information (trunkFootLeaf.php)
+ * 				1.1.0 stable	renea		2023-08-08	relocate session regenerate id to forestPHP.php construct
+ * 				1.1.0 stable	renea		2023-08-10	added new global variable to skip init page (initLeaf.php)
  */
 
 /* display options for error reporting, useful for debugging */
@@ -30,7 +33,7 @@ ini_set('display_startup_errors', 1);
 ob_start();
 
 /* initalize cookie settings */
-$l_maxlifetime = 2 * 24 * 60 * 60; /* life duration of cookie: 2 days */
+$l_maxlifetime = 1 * 24 * 60 * 60; /* life duration of cookie: 1 day(s) */
 $s_host = ( (strpos($_SERVER['HTTP_HOST'], ':') === false) ? $_SERVER['HTTP_HOST'] : explode(':', $_SERVER['HTTP_HOST'])[0] ); /* get domain from server http host */
 $b_secure = true; /* if you only want to receive the cookie over HTTPS */
 $b_httponly = true; /* prevent JavaScript access to session cookie */
@@ -58,7 +61,7 @@ $b_httponly = true; /* prevent JavaScript access to session cookie */
  */
 $s_samesite = 'Strict';
 
-session_name('forestPHPSession'); /* unqiue name per web application */
+$s_sessionName = session_name('forestPHPSession'); /* unqiue session name per web application */
 
 if (PHP_VERSION_ID < 70300) {
 	session_set_cookie_params($l_maxlifetime, '/; samesite=' . $s_samesite, $s_host, $b_secure, $b_httponly);
@@ -74,10 +77,10 @@ if (PHP_VERSION_ID < 70300) {
 }
 
 session_start();
-session_regenerate_id(false);
 
 /* global vars for exception rendering and debug usage */
 global $o_main_exception;
+global $b_skip_init_page;
 global $b_write_main_exception;
 global $b_write_url_info;
 global $b_write_debug_globals;
@@ -86,11 +89,13 @@ global $b_write_post_files;
 global $b_debug_sql_query;
 global $b_debug_no_select_sql_query;
 global $b_write_sql_queries;
+global $b_write_runtime_infos;
 global $b_transaction_active;
 global $b_run_testddl;
 global $b_run_testddl_embedded;
 global $b_fill_mongodb_from_sqlite3;
 
+$b_skip_init_page = true;
 $b_write_main_exception = false;
 $b_write_url_info = false;
 $b_write_debug_globals = false;
@@ -99,6 +104,7 @@ $b_write_post_files = false;
 $b_debug_sql_query = false;
 $b_debug_no_select_sql_query = false;
 $b_write_sql_queries = false;
+$b_write_runtime_infos = false;
 $b_transaction_active = false;
 $b_run_testddl = false;
 $b_run_testddl_embedded = false;

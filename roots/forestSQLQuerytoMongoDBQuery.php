@@ -5,18 +5,18 @@
  * for more information please read the documentation
  *
  * @category    forestPHP Framework
- * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2019 forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestany.net>
+ * @copyright   (c) 2024 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
  * @version     1.0.0 stable
- * @link        http://www.forestphp.de/
+ * @link        https://forestany.net
  * @object-id   0x1 00021
  * @since       File available since Release 1.0.0 stable
  * @deprecated  -
  *
- * @version log Version		Developer	Date		Comment
- * 		1.0.0 stable	renatus		2020-02-04	added to framework
+ * @version log Version			Developer	Date		Comment
+ * 				1.0.0 stable	renea		2020-02-04	added to framework
  */
 
 namespace fPHP\Base;

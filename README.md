@@ -1,16 +1,16 @@
 <p align="center">
-  <a href="https://forestphp.de/" target="_blank" >
-    <img alt="forestPHP" src="https://forestphp.de/images/forestPHP.png" width="400" />
+  <a href="https://forestany.net/" target="_blank">
+    <img alt="forestPHP" src="https://forestany.net/pngs/fphp-logo.png" width="400">
   </a>
 </p>
 
-[forestPHP Framework](https://forestphp.de) is a project for creating a PHP web framework for programmers and advanced web hosts. It serves to support the management and control of data in relational databases such as e.g. MariaDB.
+[forestPHP Framework](https://forestany.net/fphp.php) is a project for creating a PHP web framework for programmers and advanced web hosts. It serves to support the management and control of data in relational databases such as e.g. MariaDB.
 
 **Project objectives**
 
-* a **easy manipulation** and editing of records using an extensive database access layer
+* an **easy manipulation** and editing of records using an extensive database access layer
 * handling **all administrative settings in the same web application** without using any other database management software (except for the initial installation and setup)
-* for a **consistent presentation** forestPHP also uses freely available projects such as [Bootstrap](https://getbootstrap.com/), [jQuery](https://jquery.com/), [jQuery Validate](https://jqueryvalidation.org/), [jQuery UI](https://jqueryui.com/) und [Font Awesome](https://fontawesome.com/)
+* for a **consistent presentation** forestPHP also uses freely available projects such as [Bootstrap](https://getbootstrap.com/), [jQuery](https://jquery.com/), [jQuery Validate](https://jqueryvalidation.org/) and [jQuery UI](https://jqueryui.com/)
 * **fixed data types** with specially developed PHP classes and access functions prevent incorrect entry of data in relational database systems
 * **scope for development** - with a broad range of functions as a basis, forestPHP provides enough interfaces in the source code to extend, replace and, if necessary, completely rebuild standard functions. Furthermore, enough provided configuration options try to cover as many use cases as possible.
 
@@ -31,14 +31,17 @@ forestPHP framework will be released under the **GPLv3 license** and the **MIT l
 
 ## Releases
 
+### 1.1.0 (stable)
+New features: Upgrade to Bootstrap 5, Action Chain Processing, Branch Templates, Static page functionality, Introduction of cookie consent, Updated footer, Maintenance page revision, Record order by identifier, Optional navbar logo, Reload button for captcha on sign up page *09/2024*
+
 ### 1.0.1 (stable)
-New features: Settings for samesite cookie, Images with thumbnail and detail view support, forestLookup table field with datalist/list form element, Add optional validation rule with json settings, Supporting rename table, forestDateTime will be compared for uniqueness check functionality, Options to block images incoming with ctrl+v and auto resize images with drag and drop in richtext element
+New features: Settings for samesite cookie, Images with thumbnail and detail view support, forestLookup table field with datalist/list form element, Add optional validation rule with json settings, Supporting rename table, forestDateTime will be compared for uniqueness check functionality, Options to block images incoming with ctrl+v and auto resize images with drag and drop in richtext element *11/2023*
 
 ### 1.0.0 (stable)
-New features: Database Support extended to: SQLite3 + MSSQL + OracleDB + PostgreSQL + MongoDB, Tested on linux, Issues resolved, Backward Compatibility to PHP 5.x, Preparation for Statistics
+New features: Database Support extended to: SQLite3 + MSSQL + OracleDB + PostgreSQL + MongoDB, Tested on linux, Issues resolved, Backward Compatibility to PHP 5.x, Preparation for Statistics *10/2023*
 
 ### 0.9.0 (beta)
-New features: Upgrade to Bootstrap 4, Navigation Sidebar + Full-screen, Implementation of PHP namespaces, Completion of English Translation, Restructure of comments in forestPHP Source Code
+New features: Upgrade to Bootstrap 4, Navigation Sidebar + Full-screen, Implementation of PHP namespaces, Completion of English Translation, Restructure of comments in forestPHP Source Code *09/2023*
 
 ### 0.8.0 (beta)
 New features: fPHP Flex, Implementation of Logs, Account settings. *02/2020*
@@ -81,14 +84,14 @@ After 12 years of planning, conception and development as a hobby project in lei
 
 ## Installation
 
-After downloading the [current version](https://forestphp.de/index.html#download) or obtaining a copy from [GitHub](https://github.com/ReneArentz/forestphp) you can copy the forestPHP-directory in a folder of the web server or upload this.
+After downloading the [current version](https://forestany.net/fphp.php#scrollspyToSection02) or obtaining a copy from [GitHub](https://github.com/ReneArentz/forestphp) you can copy the forestPHP-directory in a folder of the web server or upload this.
 
 On the database system MariaDB / MySQL you have to create a new database for the use of forestPHP (e.g. *forestphp*). In the forestPHP-directory you can find in folder **install** a SQL-file: **forestPHP_Vanilla_SQL_MariaDB.sql**. This file contains all SQL-Queries for initial use of forestPHP, which must be executed in the previously created database. Subsequently, forestPHP can be called up and used on the web server.
 
-In file [forestPHP.php](https://forestphp.de/docu/0_1_0/en/docu.html#forestPHP) in *constructor* of the class you have to configure the connection to the database, by entering database, user and password:
+In file [forestPHP.php](https://forestany.net/fphp/docu.php#forestPHP) in *constructor* of the class you have to configure the connection to the database, by entering database, user and password:
 
 ``` php
-$o_glob->Base->Add(new forestBase(forestBase::MariaSQL, 'host_ip', 'database', 'db_user', 'db_pw'), 'forestPHPMariaSQLBase');
+$o_glob->Base->Add(new \fPHP\Base\forestBase(\fPHP\Base\forestBase::MariaSQL, 'host_ip', 'forestphp_1_1_0', 'db_user', 'db_pw'), 'forestPHPMariaSQLBase');
 ```
 Make sure that you specify the key of the new connection as the active base gateway: `php $o_glob->ActiveBase = 'forestPHPMariaSQLBase';`
 In general, it is possible to create several connections to different databases with forestPHP. 

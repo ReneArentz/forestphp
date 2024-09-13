@@ -3,18 +3,19 @@
  * class for holding information about sorting columns of current page view
  *
  * @category    forestPHP Framework
- * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2019 forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestany.net>
+ * @copyright   (c) 2024 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.0 stable
- * @link        http://www.forestphp.de/
+ * @version     1.1.0 stable
+ * @link        https://forestany.net
  * @object-id   0x1 00010
  * @since       File available since Release 0.1.2 alpha
  * @deprecated  -
  *
- * @version log Version		Developer	Date		Comment
- * 		0.1.2 alpha	renatus		2019-08-21	added to framework
+ * @version log Version			Developer	Date		Comment
+ * 				0.1.2 alpha		renea		2019-08-21	added to framework
+ * 				1.1.0 stable	renea		2024-08-10	changes for bootstrap 5
  */
 
 namespace fPHP\Branches;
@@ -128,7 +129,7 @@ class forestSort {
 			$s_columnLink = '<a class="btn btn-light text-nowrap" href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, $o_glob->URL->Action, $this->parameterArray($this->Column->value)) . '">' . $this->ColumnName->value . '</a>';
 			
 			/* calculate direction icon */
-			$s_direction = ($this->Direction->value) ? '<span class="fas fa-sort-amount-down-alt"></span>' : '<span class="fas fa-sort-amount-down"></span>';
+			$s_direction = ($this->Direction->value) ? '<span class="bi bi-sort-down-alt"></span>' : '<span class="bi bi-sort-down"></span>';
 			
 			/* create direction icon */
 			$s_directionLink = ' <a class="btn btn-light text-nowrap" href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, $o_glob->URL->Action, $this->parameterArray()) . '">' . $s_direction . '</a>';
@@ -139,7 +140,7 @@ class forestSort {
 			$o_sort = new \fPHP\Branches\forestSort($this->Column->value, true);
 			$o_sort->ColumnName = $this->ColumnName->value;
 			
-			return '<div class="btn-group"><a class="btn btn-light text-nowrap" href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, $o_glob->URL->Action, $this->parameterArray($o_sort)) . '">' . $this->ColumnName->value . ' <span class="fas fa-sort"></span></a></div>';
+			return '<div class="btn-group"><a class="btn btn-light text-nowrap" href="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, $o_glob->URL->Action, $this->parameterArray($o_sort)) . '">' . $this->ColumnName->value . ' <span class="bi bi-arrow-down-up"></span></a></div>';
 		}
 	}
 	

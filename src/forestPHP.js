@@ -2,46 +2,71 @@
  * main javascript file for all client interaction with the fPHP-Framework
  *
  * @category    forestPHP Framework
- * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2019 forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestany.net>
+ * @copyright   (c) 2024 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.0 stable
- * @link        http://www.forestphp.de/
+ * @version     1.1.0 stable
+ * @link        https://forestany.net
  * @object-id   0x2 00001
  * @since       File available since Release 0.1.0 alpha
  * @deprecated  -
  *
- * @version log Version     Developer   Date        Comment
- *              0.1.0 alpha	renatus     2019-08-04	first build
- *              0.1.1 alpha	renatus     2019-08-14	added functionality for navigation and modal-call
- *              0.1.2 alpha	renatus		  2019-08-25	added functionality for list view
- *              0.1.5 alpha	renatus		  2019-10-07	added functionality for moveUp and moveDown
- *              0.5.0 beta 	renatus		  2019-11-25	added functionality for checkin and checkout
- *              0.6.0 beta 	renatus		  2019-12-10	added timeout submit button functionality
- *              0.8.0 beta 	renatus		  2020-01-10	added functionality for fphp_flex
- *              0.9.0 beta 	renatus		  2020-01-27	changes for bootstrap 4 and navigation sidebar + curtain
+ * @version log Version			Developer	Date		Comment
+ * 				0.1.0 alpha		renea		2019-08-04	first build
+ * 				0.1.1 alpha		renea		2019-08-14	added functionality for navigation and modal-call
+ * 				0.1.2 alpha		renea		2019-08-25	added functionality for list view
+ * 				0.1.5 alpha		renea		2019-10-07	added functionality for moveUp and moveDown
+ * 				0.5.0 beta 		renea		2019-11-25	added functionality for checkin and checkout
+ * 				0.6.0 beta 		renea		2019-12-10	added timeout submit button functionality
+ * 				0.8.0 beta 		renea		2020-01-10	added functionality for fphp_flex
+ * 				0.9.0 beta 		renea		2020-01-27	changes for bootstrap 4 and navigation sidebar + curtain
+ * 				1.1.0 stable	renea		2024-02-10	nav pills for static page
+ * 				1.1.0 stable	renea		2024-02-05	added slide calender view, activate current month if available or first slide
+ * 				1.1.0 stable	renea		2024-02-10	changes for bootstrap 5
+ * 				1.1.0 stable	renea		2024-02-11	string undo obfuscation method
+ * 				1.1.0 stable	renea		2024-07-12	cookie consent modal and data protection content
  */
 $(function(){
+	/* ************************************** */
+	/* *********** COOKIE CONSENT *********** */
+	/* ************************************** */
+	/* get data protection content for cookie consent static modal */
+	var o_findDataProtectionContent = $('#DataProtectionModal').find('div#contentDataProtectionModal');
+	
+	if (o_findDataProtectionContent.length) {
+		$('div#cookieConsentContentDataProtection').html(o_findDataProtectionContent.html());
+		/* remove all links, so that we stay in static modal */
+		$('div#cookieConsentContentDataProtection > a').each(function () {
+			$(this).attr('href', '#').removeAttr('data-bs-toggle').removeAttr('data-bs-target');
+		});
+	}
+
+	/* request to agree to cookie consent */
+	$("button#cookieConsentYes").on('click', function(e) {
+		/* send ajax request to consent to cookie data */
+		$.get("./cookieconsent.php");
+	});
+
 	/* ********************************** */
 	/* *********** NAVIGATION *********** */
 	/* ********************************** */
 	/* toggle caret icon in fphp navbar */
 	$('.dropdown a.dropdown-menu-item').on('click', function(e) {
 		/* toggle caret icon */
-		if ($(this).find('span').hasClass('fa-caret-down')) {
-			$(this).find('span').removeClass('fa-caret-down');
-			$(this).find('span').addClass('fa-caret-up');
-		} else if ($(this).find('span').hasClass('fa-caret-up')) {
-			$(this).find('span').removeClass('fa-caret-up');
-			$(this).find('span').addClass('fa-caret-down');
+		if ($(this).find('span').hasClass('bi-caret-down')) {
+			$(this).find('span').removeClass('bi-caret-down');
+			$(this).find('span').addClass('bi-caret-up');
+		} else if ($(this).find('span').hasClass('bi-caret-up')) {
+			$(this).find('span').removeClass('bi-caret-up');
+			$(this).find('span').addClass('bi-caret-down');
 		}
 		
 		/* reset caret icon on dropdown on same level in fphp navbar */
 		$(this).parent().siblings().each(function() {
-			if ($(this).find('a.dropdown-menu-item').find('span').hasClass('fa-caret-up')) {
-				$(this).find('a.dropdown-menu-item').find('span').removeClass('fa-caret-up');
-				$(this).find('a.dropdown-menu-item').find('span').addClass('fa-caret-down');
+			if ($(this).find('a.dropdown-menu-item').find('span').hasClass('bi-caret-up')) {
+				$(this).find('a.dropdown-menu-item').find('span').removeClass('bi-caret-up');
+				$(this).find('a.dropdown-menu-item').find('span').addClass('bi-caret-down');
 			}
 		});
 	});
@@ -62,21 +87,28 @@ $(function(){
 		});
 	
 		/* toggle caret icon */
-		if ($(this).find('span').hasClass('fa-caret-down')) {
-			$(this).find('span').removeClass('fa-caret-down');
-			$(this).find('span').addClass('fa-caret-up');
-		} else if ($(this).find('span').hasClass('fa-caret-up')) {
-			$(this).find('span').removeClass('fa-caret-up');
-			$(this).find('span').addClass('fa-caret-down');
+		if ($(this).find('span').hasClass('bi-caret-down')) {
+			$(this).find('span').removeClass('bi-caret-down');
+			$(this).find('span').addClass('bi-caret-up');
+		} else if ($(this).find('span').hasClass('bi-caret-up')) {
+			$(this).find('span').removeClass('bi-caret-up');
+			$(this).find('span').addClass('bi-caret-down');
 		}
 		
 		/* reset caret icon on dropdown on same level in fphp navbar */
 		$(this).parent().parent().siblings().each(function() {
-			if ($(this).find('a.dropdown-submenu-item').find('span').hasClass('fa-caret-up')) {
-				$(this).find('a.dropdown-submenu-item').find('span').removeClass('fa-caret-up');
-				$(this).find('a.dropdown-submenu-item').find('span').addClass('fa-caret-down');
+			if ($(this).find('a.dropdown-submenu-item').find('span').hasClass('bi-caret-up')) {
+				$(this).find('a.dropdown-submenu-item').find('span').removeClass('bi-caret-up');
+				$(this).find('a.dropdown-submenu-item').find('span').addClass('bi-caret-down');
 			}
 		});
+		
+		/* show submenu box far right in the browser menu, left of the box of our dropdown */
+		if (($(window).width() - $(this).offset().left) < 350) {
+			$subMenu.css('right', '100%').css('left', 'auto');
+		} else {
+			$subMenu.css('right', '').css('left', '100%');
+		}
 
 		return false;
 	});
@@ -88,7 +120,7 @@ $(function(){
 	$('.modal-call').each(function() {
 		if ($(this).data('modal-call') !== undefined) {
 			$(this).on('click', function() {
-				$($(this).data('modal-call')).modal();
+				$($(this).data('modal-call')).modal('show');
 			});
 		}
 	});
@@ -96,7 +128,7 @@ $(function(){
 	/* standard timeout function for all standard submit buttons in forestPHP */
 	setTimeout(function() {
         $("button[name^='sys_fphp_SubmitStandard']").attr('disabled', false);
-    }, 3000);
+    }, 1000);
 	
 	/* ********************************** */
 	/* ******* forestPHP-ListView ******* */
@@ -331,9 +363,11 @@ $(function(){
 			if ($(p_o_ui.selected).hasClass('save-selected')) {
 				$(p_o_ui.selected).removeClass('save-selected');
 				$(p_o_ui.selected).removeClass('ui-selected');
+				$(p_o_ui.selected).removeClass('table-secondary');
 			} else {
 				$(p_o_ui.selected).addClass('save-selected');
 				$(p_o_ui.selected).addClass('ui-selected');
+				$(p_o_ui.selected).addClass('table-secondary');
 				
 				var s_data_container = $(p_o_ui.selected).data('fphp_uuid');
 				var a_data_container = s_data_container.split(';');
@@ -357,9 +391,11 @@ $(function(){
 			if ($(p_o_ui.unselected).hasClass('save-selected')) {
 				$(p_o_ui.unselected).addClass('save-selected');
 				$(p_o_ui.unselected).addClass('ui-selected');
+				$(p_o_ui.unselected).addClass('table-secondary');
 			} else {
 				$(p_o_ui.unselected).removeClass('ui-selected');
 				$(p_o_ui.unselected).removeClass('save-selected');
+				$(p_o_ui.unselected).removeClass('table-secondary');
 			}
 			
 			var s_data_container = $(p_o_ui.unselected).data('fphp_uuid');
@@ -369,7 +405,7 @@ $(function(){
 			
 			var s_uuid_container = $('tbody#' + s_uniqueSelect + 'ListView').data('fphp_uuids');
 			
-			//console.log('add: ' + s_uuid);
+			//console.log('remove: ' + s_uuid);
 				
 			if (s_uuid_container !== undefined) {
 				$('tbody#' + s_uniqueSelect + 'ListView').data('fphp_uuids', $('tbody#' + s_uniqueSelect + 'ListView').data('fphp_uuids') + s_uuid + ';');
@@ -383,9 +419,11 @@ $(function(){
 			if ($(p_o_ui.unselecting).hasClass('save-selected')) {
 				$(p_o_ui.unselecting).addClass('ui-selected');
 				$(p_o_ui.unselecting).addClass('save-selected');
+				$(p_o_ui.unselecting).addClass('table-secondary');
 			} else {
 				$(p_o_ui.unselecting).removeClass('ui-selected');
 				$(p_o_ui.unselecting).removeClass('save-selected');
+				$(p_o_ui.unselecting).removeClass('table-secondary');
 			}
 		},
 		stop: function (p_o_event, p_o_ui) { /* update actions of list view based on record selection */
@@ -561,6 +599,17 @@ $(function(){
 			}
 		});
 	}
+
+	/* *************************************** */
+	/* ******* forestPHP-SlideCalender ******* */
+	/* *************************************** */
+	var year_month = new Date().getFullYear() + '_' + ('0' + (new Date().getMonth()+1)).slice(-2);
+	
+	if($('div#carousel_'+ year_month).length){
+		$('div#carousel_'+ year_month).addClass('active');
+	}else{
+		$(".carousel-item:first").addClass('active');
+	}
 });
 
 /* ********************************** */
@@ -615,4 +664,30 @@ function fphp_toggleNavfullscreen(i_mode) {
 			fphp_navfullscreenState = 0;
 		}
 	}
+}
+
+/* ********************** */
+/* * STRING OBFUSCATION * */
+/* ********************** */
+function fphp_undoObfuscatedString(s_string, s_domId) {
+	var s_foo = '';
+	var s_htmlEntityNumber = '';
+
+	for (var i = 0; i < s_string.length; i++) {
+		if ( (s_string[i] === '&') || (s_string[i] === '#')  ) {
+			/* ignore '&' and '#', although we have the start of a new html entity number here */
+			s_htmlEntityNumber = '';
+		} else if (s_string[i] === ';') {
+			/* convert html entity number to character and add it to return value */
+			s_foo += String.fromCharCode(parseInt(s_htmlEntityNumber));
+		} else {
+			/* gather html entity number */
+			s_htmlEntityNumber += s_string[i];
+		}
+	}
+
+	/* overwrite href attribute of a element with id parameter */
+	$('button#' + s_domId).click(function() {
+		window.location = s_foo;
+	});
 }

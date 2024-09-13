@@ -5,29 +5,30 @@
  * for more information please read the documentation
  *
  * @category    forestPHP Framework
- * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2021 forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestany.net>
+ * @copyright   (c) 2024 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.1 stable
- * @link        http://www.forestphp.de/
+ * @version     1.1.0 stable
+ * @link        https://forestany.net
  * @object-id   0x1 0000A
  * @since       File available since Release 0.1.0 alpha
  * @deprecated  -
  *
- * @version log Version		Developer	Date		Comment
- * 		0.1.0 alpha	renatus		2019-08-04	first build
- * 		0.1.1 alpha	renatus		2019-08-10	added trunk and forestDateTime functionality
- * 		0.1.5 alpha	renatus		2019-10-10	added forestLookup functionality
- * 		0.2.0 beta	renatus		2019-10-15	added data definition language functionality
- * 		1.0.0 stable	renatus		2020-02-04	added MSSQL support
- * 		1.0.0 stable	renatus		2020-02-05	added PGSQL support
- * 		1.0.0 stable	renatus		2020-02-06	added SQLite3 support
- * 		1.0.0 stable	renatus		2020-02-10	added OCISQL support
- * 		1.0.0 stable	renatus		2020-02-11	added MongoDB support
- * 		1.0.0 stable	renatus		2020-02-11	removed string type definition in function parameters because of E_RECOVERABLE_ERROR
- * 		1.0.0 stable	renatus		2020-02-14	changes constants because of conflict with php system constants
- * 		1.0.1 stable	renatus		2021-04-09	removed get_magic_quotes_gpc(), has become obsolete
+ * @version log Version			Developer	Date		Comment
+ * 				0.1.0 alpha		renea		2019-08-04	first build
+ * 				0.1.1 alpha		renea		2019-08-10	added trunk and forestDateTime functionality
+ * 				0.1.5 alpha		renea		2019-10-10	added forestLookup functionality
+ * 				0.2.0 beta		renea		2019-10-15	added data definition language functionality
+ * 				1.0.0 stable	renea		2020-02-04	added MSSQL support
+ * 				1.0.0 stable	renea		2020-02-05	added PGSQL support
+ * 				1.0.0 stable	renea		2020-02-06	added SQLite3 support
+ * 				1.0.0 stable	renea		2020-02-10	added OCISQL support
+ * 				1.0.0 stable	renea		2020-02-11	added MongoDB support
+ * 				1.0.0 stable	renea		2020-02-11	removed string type definition in function parameters because of E_RECOVERABLE_ERROR
+ * 				1.0.0 stable	renea		2020-02-14	changes constants because of conflict with php system constants
+ * 				1.0.1 stable	renea		2021-04-09	removed get_magic_quotes_gpc(), has become obsolete
+ * 				1.1.0 stable	renea		2024-05-04	added mediumtext and longtext as general sql columns
  */
 
 namespace fPHP\Base;
@@ -212,6 +213,8 @@ class forestSQLQuery {
 			case 'double':
 			case 'decimal':
 			case 'bool':
+			case 'mediumtext':
+			case 'longtext':
 				break;
 			default:
 				throw new forestException('Invalid SqlType[%0]', array($p_s_sqlType));
@@ -264,6 +267,14 @@ class forestSQLQuery {
 		$a_allocation[forestBase::MariaSQL]['bool']['columnType'] = 'BIT';
 		$a_allocation[forestBase::MariaSQL]['bool']['columnLength'] = 1;
 		$a_allocation[forestBase::MariaSQL]['bool']['decimalLength'] = null;
+
+		$a_allocation[forestBase::MariaSQL]['mediumtext']['columnType'] = 'MEDIUMTEXT';
+		$a_allocation[forestBase::MariaSQL]['mediumtext']['columnLength'] = null;
+		$a_allocation[forestBase::MariaSQL]['mediumtext']['decimalLength'] = null;
+
+		$a_allocation[forestBase::MariaSQL]['longtext']['columnType'] = 'LONGTEXT';
+		$a_allocation[forestBase::MariaSQL]['longtext']['columnLength'] = null;
+		$a_allocation[forestBase::MariaSQL]['longtext']['decimalLength'] = null;
 		
 		/* forestBase::SQLite3 */
 		$a_allocation[forestBase::SQLite3]['text [36]']['columnType'] = 'varchar';
@@ -309,6 +320,14 @@ class forestSQLQuery {
 		$a_allocation[forestBase::SQLite3]['bool']['columnType'] = 'bit';
 		$a_allocation[forestBase::SQLite3]['bool']['columnLength'] = 1;
 		$a_allocation[forestBase::SQLite3]['bool']['decimalLength'] = null;
+
+		$a_allocation[forestBase::SQLite3]['mediumtext']['columnType'] = 'text';
+		$a_allocation[forestBase::SQLite3]['mediumtext']['columnLength'] = null;
+		$a_allocation[forestBase::SQLite3]['mediumtext']['decimalLength'] = null;
+		
+		$a_allocation[forestBase::SQLite3]['longtext']['columnType'] = 'text';
+		$a_allocation[forestBase::SQLite3]['longtext']['columnLength'] = null;
+		$a_allocation[forestBase::SQLite3]['longtext']['decimalLength'] = null;
 		
 		/* forestBase::MSSQL */
 		$a_allocation[forestBase::MSSQL]['text [36]']['columnType'] = 'nvarchar';
@@ -354,6 +373,14 @@ class forestSQLQuery {
 		$a_allocation[forestBase::MSSQL]['bool']['columnType'] = 'bit';
 		$a_allocation[forestBase::MSSQL]['bool']['columnLength'] = null;
 		$a_allocation[forestBase::MSSQL]['bool']['decimalLength'] = null;
+
+		$a_allocation[forestBase::MSSQL]['mediumtext']['columnType'] = 'text';
+		$a_allocation[forestBase::MSSQL]['mediumtext']['columnLength'] = null;
+		$a_allocation[forestBase::MSSQL]['mediumtext']['decimalLength'] = null;
+		
+		$a_allocation[forestBase::MSSQL]['longtext']['columnType'] = 'text';
+		$a_allocation[forestBase::MSSQL]['longtext']['columnLength'] = null;
+		$a_allocation[forestBase::MSSQL]['longtext']['decimalLength'] = null;
 		
 		/* forestBase::PGSQL */
 		$a_allocation[forestBase::PGSQL]['text [36]']['columnType'] = 'varchar';
@@ -400,6 +427,14 @@ class forestSQLQuery {
 		$a_allocation[forestBase::PGSQL]['bool']['columnLength'] = null;
 		$a_allocation[forestBase::PGSQL]['bool']['decimalLength'] = null;
 		
+		$a_allocation[forestBase::PGSQL]['mediumtext']['columnType'] = 'text';
+		$a_allocation[forestBase::PGSQL]['mediumtext']['columnLength'] = null;
+		$a_allocation[forestBase::PGSQL]['mediumtext']['decimalLength'] = null;
+		
+		$a_allocation[forestBase::PGSQL]['longtext']['columnType'] = 'text';
+		$a_allocation[forestBase::PGSQL]['longtext']['columnLength'] = null;
+		$a_allocation[forestBase::PGSQL]['longtext']['decimalLength'] = null;
+
 		/* forestBase::OCISQL */
 		$a_allocation[forestBase::OCISQL]['text [36]']['columnType'] = 'VARCHAR2';
 		$a_allocation[forestBase::OCISQL]['text [36]']['columnLength'] = 36;
@@ -445,6 +480,14 @@ class forestSQLQuery {
 		$a_allocation[forestBase::OCISQL]['bool']['columnLength'] = 1;
 		$a_allocation[forestBase::OCISQL]['bool']['decimalLength'] = null;
 		
+		$a_allocation[forestBase::OCISQL]['mediumtext']['columnType'] = 'CLOB';
+		$a_allocation[forestBase::OCISQL]['mediumtext']['columnLength'] = null;
+		$a_allocation[forestBase::OCISQL]['mediumtext']['decimalLength'] = null;
+		
+		$a_allocation[forestBase::OCISQL]['longtext']['columnType'] = 'CLOB';
+		$a_allocation[forestBase::OCISQL]['longtext']['columnLength'] = null;
+		$a_allocation[forestBase::OCISQL]['longtext']['decimalLength'] = null;
+
 		/* forestBase::MongoDB */
 		$a_allocation[forestBase::MongoDB]['text [36]']['columnType'] = 'VARCHAR';
 		$a_allocation[forestBase::MongoDB]['text [36]']['columnLength'] = null;
@@ -489,6 +532,14 @@ class forestSQLQuery {
 		$a_allocation[forestBase::MongoDB]['bool']['columnType'] = 'BOOL';
 		$a_allocation[forestBase::MongoDB]['bool']['columnLength'] = null;
 		$a_allocation[forestBase::MongoDB]['bool']['decimalLength'] = null;
+
+		$a_allocation[forestBase::MongoDB]['mediumtext']['columnType'] = 'TEXT';
+		$a_allocation[forestBase::MongoDB]['mediumtext']['columnLength'] = null;
+		$a_allocation[forestBase::MongoDB]['mediumtext']['decimalLength'] = null;
+
+		$a_allocation[forestBase::MongoDB]['longtext']['columnType'] = 'TEXT';
+		$a_allocation[forestBase::MongoDB]['longtext']['columnLength'] = null;
+		$a_allocation[forestBase::MongoDB]['longtext']['decimalLength'] = null;
 		
 		/* get column properties of allocation matrix */
 		$p_s_columnType = $a_allocation[$p_s_baseGateway][$p_s_sqlType]['columnType'];
@@ -649,7 +700,7 @@ abstract class forestSQLQueryAbstract {
 		
 		switch ($this->BaseGateway->value) {
 			case forestBase::MariaSQL:
-				$this->SqlColumnTypes = new forestArray(array('VARCHAR', 'TEXT', 'SMALLINT', 'INT', 'BIGINT', 'TIMESTAMP', 'TIME', 'DOUBLE', 'DECIMAL', 'BIT'), false);
+				$this->SqlColumnTypes = new forestArray(array('VARCHAR', 'TEXT', 'SMALLINT', 'INT', 'BIGINT', 'TIMESTAMP', 'TIME', 'DOUBLE', 'DECIMAL', 'BIT', 'MEDIUMTEXT', 'LONGTEXT'), false);
 				$this->SqlConstraints = new forestArray(array('NULL', 'NOT NULL', 'UNIQUE', 'PRIMARY KEY', 'DEFAULT', 'INDEX', 'AUTO_INCREMENT', 'SIGNED', 'UNSIGNED'), false);
 			break;
 			case forestBase::MSSQL:
@@ -800,10 +851,10 @@ abstract class forestSQLQueryAbstract {
 			
 			/* additionally utf8 en/decoding + surround value with single quotes */
 			if (!is_null($o_glob->Trunk)) {
-				if ($o_glob->Trunk->IncContentUTF8Decode) {
-					$p_s_value = "'" . utf8_decode($p_s_value) . "'";
-				} else if ($o_glob->Trunk->IncContentUTF8Encode) {
-					$p_s_value = "'" . utf8_encode($p_s_value) . "'";
+				if ( (!is_null($p_s_value)) && ($o_glob->Trunk->IncContentUTF8Decode) ) {
+					$p_s_value = "'" . mb_convert_encoding($p_s_value, 'ISO-8859-1', 'UTF-8') . "'";
+				} else if ( (!is_null($p_s_value)) && ($o_glob->Trunk->IncContentUTF8Encode) ) {
+					$p_s_value = "'" . mb_convert_encoding($p_s_value, 'UTF-8', 'ISO-8859-1') . "'";
 				} else {
 					$p_s_value = "'" . $p_s_value . "'";
 				}

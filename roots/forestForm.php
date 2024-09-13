@@ -5,32 +5,34 @@
  * most settings are based on json encoded strings stored in configuration files or in database records
  *
  * @category    forestPHP Framework
- * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2021 forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestany.net>
+ * @copyright   (c) 2024 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.1 stable
- * @link        http://www.forestphp.de/
+ * @version     1.1.0 stable
+ * @link        https://forestany.net
  * @object-id   0x1 00015
  * @since       File available since Release 0.1.1 alpha
  * @deprecated  -
  *
- * @version log Version		Developer	Date		Comment
- * 		0.1.1 alpha	renatus		2019-08-09	added to framework
- * 		0.1.3 alpha	renatus		2019-09-06	added formkey and validationrules
- * 		0.1.4 alpha	renatus		2019-09-23	added dropzone and richtext
- * 		0.1.5 alpha	renatus		2019-10-04	added forestLookup
- * 		0.1.5 alpha	renatus		2019-10-05	added forestCombination and Captcha
- * 		0.5.0 beta	renatus		2019-12-02	added honeypot fields functionality
- * 		0.5.0 beta	renatus		2019-12-04	added auto checkin question
- * 		0.6.0 beta	renatus		2019-12-18	added info columns in readonly mode
- * 		0.7.0 beta	renatus		2020-01-02	added identifier in readonly mode
- * 		0.7.0 beta	renatus		2020-01-03	added money-format display
- * 		0.9.0 beta	renatus		2020-01-27	added checkout message in readonly mode
- * 		0.9.0 beta	renatus		2020-01-29	changes for bootstrap 4
- * 		1.0.0 stable	renatus		2020-02-13	added MongoDB support by breaking up SQL-Join Queries
- * 		1.0.1 stable	renatus		2021-04-10	added support for handling forestLookup table field with datalist/list form element
- * 		1.0.1 stable	renatus		2021-04-11	added support for thumbnail and detailview image preview
+ * @version log Version			Developer	Date		Comment
+ * 				0.1.1 alpha		renea		2019-08-09	added to framework
+ * 				0.1.3 alpha		renea		2019-09-06	added formkey and validationrules
+ * 				0.1.4 alpha		renea		2019-09-23	added dropzone and richtext
+ * 				0.1.5 alpha		renea		2019-10-04	added forestLookup
+ * 				0.1.5 alpha		renea		2019-10-05	added forestCombination and Captcha
+ * 				0.5.0 beta		renea		2019-12-02	added honeypot fields functionality
+ * 				0.5.0 beta		renea		2019-12-04	added auto checkin question
+ * 				0.6.0 beta		renea		2019-12-18	added info columns in readonly mode
+ * 				0.7.0 beta		renea		2020-01-02	added identifier in readonly mode
+ * 				0.7.0 beta		renea		2020-01-03	added money-format display
+ * 				0.9.0 beta		renea		2020-01-27	added checkout message in readonly mode
+ * 				0.9.0 beta		renea		2020-01-29	changes for bootstrap 4
+ * 				1.0.0 stable	renea		2020-02-13	added MongoDB support by breaking up SQL-Join Queries
+ * 				1.0.1 stable	renea		2021-04-10	added support for handling forestLookup table field with datalist/list form element
+ * 				1.0.1 stable	renea		2021-04-11	added support for thumbnail and detailview image preview
+ * 				1.1.0 stable	renea		2023-11-02	modal header close content is optional
+ * 				1.1.0 stable	renea		2024-08-10	changes for bootstrap 5
  */
 
 namespace fPHP\Forms;
@@ -154,25 +156,25 @@ class forestForm {
 					"ModalClass" : "modal fade",
 					"ModalId" : "myModal",
 					"ModalTitle" : "Modal Form HTML Validation",
-					"ModalTitleClass" : "modal-title w-100",
+					"ModalTitleClass" : "modal-title fs-4",
 					"ModalRole" : "NULL",
 					"ModalDialogClass" : "modal-dialog modal-xl",
 					"ModalDialogContentClass" : "modal-content",
 					"ModalHeaderClass" : "modal-header bg-dark text-light text-center",
-					"ModalHeaderCloseClass" : "close text-light",
+					"ModalHeaderCloseClass" : "btn-close btn-close-light",
 					"ModalHeaderDismissClass" : "modal",
-					"ModalHeaderCloseContent" : "&times;",
+					"ModalHeaderCloseContent" : "NULL",
 					"ModalBodyClass" : "modal-body bg-light",
 					"ModalFooterClass" : "modal-footer bg-dark text-light"
 				},
 				
 				"Class" : "form-horizontal",
-				"FormGroupClass" : "form-group row",
+				"FormGroupClass" : "form-group row mb-3 position-relative",
 				"LabelClass" : "col-sm-3 col-form-label",
 				"FormElementClass" : "col-sm-9",
 				"ClassAll" : "form-control",
-				"RadioClass" : "custom-control custom-radio",
-				"CheckboxClass" : "custom-control custom-checkbox"
+				"RadioClass" : "form-check",
+				"CheckboxClass" : "form-check"
 			}
 			';*/
 			
@@ -301,7 +303,7 @@ class forestForm {
 								/* show thumbnail picture file */
 								$o_formElement->Description = '<a href="' . $s_path . $o_filesTwig->Name . '" target="_blank" title="' . $o_filesTwig->DisplayName . '"><img src="' . $s_path . 'dv_' . $o_filesTwig->Name . '" alt="image could not be rendered" title="' . $o_filesTwig->DisplayName . '"></a>';
 							} else {
-								$o_formElement->Description = '<img src="./images/sys_fphp/image_not_found.png" alt="image could not be rendered" title="' . $o_filesTwig->DisplayName . '">';
+								$o_formElement->Description = '<img src="./files/image_not_found.png" alt="image could not be rendered" title="' . $o_filesTwig->DisplayName . '">';
 							}
 						}
 					}
@@ -760,7 +762,10 @@ class forestForm {
 			$o_checkoutTwig = new \fPHP\Twigs\checkoutTwig;
 			
 			if ( ($p_o_twig->fphp_HasUUID) && (!$p_o_twig->IsEmpty()) && ($o_checkoutTwig->GetRecordPrimary(array($p_o_twig->UUID), array('ForeignUUID'))) && ($this->FormObject->value->ReadonlyAll) ) {
-				$this->CheckoutMessage->value = '<div class="alert alert-warning">' . \fPHP\Helper\forestStringLib::sprintf2($o_glob->GetTranslation('messageCheckoutText', 1), array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID), $o_checkoutTwig->Timestamp)) . '</div>';
+				$this->CheckoutMessage->value = '<div class="alert alert-warning alert-dismissible fade show" role="alert">' .
+					'<div><span class="bi bi-exclamation-triangle-fill h5"></span>&nbsp;' . \fPHP\Helper\forestStringLib::sprintf2($o_glob->GetTranslation('messageCheckoutText', 1), array($o_glob->GetUserNameByUUID($o_checkoutTwig->UserUUID), $o_checkoutTwig->Timestamp)) . "\n" . '</div>' . "\n" .
+					'<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' . "\n" .
+				'</div>' . "\n";
 			}
 			
 			/* if we are using a captcha element and we have not read only mode */
@@ -1148,7 +1153,14 @@ class forestForm {
 		if ($this->FormModalConfiguration->value->Modal) {
 			$s_foo .= '<div class="' . $this->FormModalConfiguration->value->ModalHeaderClass . '">' . "\n";
 			$s_foo .= '<h4 class=' . $this->FormModalConfiguration->value->ModalTitleClass . '>' . $this->FormModalConfiguration->value->ModalTitle . '</h4>' . "\n";
-			$s_foo .= '	<button type="button" class="' . $this->FormModalConfiguration->value->ModalHeaderCloseClass . '" data-dismiss="' . $this->FormModalConfiguration->value->ModalHeaderDismissClass . '">' . htmlspecialchars_decode($this->FormModalConfiguration->value->ModalHeaderCloseContent, ENT_HTML5) . '</button>' . "\n";
+			
+			$s_headerCloseContent = '';
+
+			if (issetStr($this->FormModalConfiguration->value->ModalHeaderCloseContent)) {
+				$s_headerCloseContent = htmlspecialchars_decode($this->FormModalConfiguration->value->ModalHeaderCloseContent, ENT_HTML5);
+			}
+
+			$s_foo .= '	<button type="button" class="' . $this->FormModalConfiguration->value->ModalHeaderCloseClass . '" data-bs-dismiss="' . $this->FormModalConfiguration->value->ModalHeaderDismissClass . '" aria-label="Close Modal Form">' . $s_headerCloseContent . '</button>' . "\n";
 			
 			$s_foo .= '</div>' . "\n";
 			$s_foo .= '<div class="' . $this->FormModalConfiguration->value->ModalBodyClass . '">' . "\n";
@@ -1162,7 +1174,7 @@ class forestForm {
 		/* render something before form */
 		if (issetStr($this->BeforeForm->value)) {
 			if ($this->BeforeFormRightAlign->value) {
-				$s_foo .= '<div class="text-right" style="margin-bottom: 5px;">' . "\n";
+				$s_foo .= '<div class="text-end" style="margin-bottom: 5px;">' . "\n";
 			} else {
 				$s_foo .= '<div style="margin-bottom: 5px;">' . "\n";
 			}
@@ -1193,7 +1205,7 @@ class forestForm {
 		/* render something after form, but before sub form */
 		if (issetStr($this->AfterForm->value)) {
 			if ($this->AfterFormRightAlign->value) {
-				$s_foo .= '<div class="text-right" style="margin-bottom: 5px;">' . "\n";
+				$s_foo .= '<div class="text-end" style="margin-bottom: 5px;">' . "\n";
 			} else {
 				$s_foo .= '<div style="margin-bottom: 5px;">' . "\n";
 			}
@@ -1209,7 +1221,7 @@ class forestForm {
 				$s_foo .= '<div>' . $this->FormModalSubForm->value . '</div>' . "\n";
 			}
 			
-			$s_foo .= '</div>' . "\n"; // end of modal body
+			$s_foo .= '</div>' . "\n"; /* end of modal body */
 			
 			if ($this->FormFooterElements->value->Count() > 0) {
 				$s_foo .= '<div class="' . $this->FormModalConfiguration->value->ModalFooterClass . '">' . "\n";
@@ -1646,10 +1658,10 @@ class forestForm {
 				$o_tabElement->CheckIsset();
 				
 				if ($b_first) {
-					$p_s_foo .= '<li class="' . $this->FormTabConfiguration->value->TabLiClass . '"><a data-toggle="' . $this->FormTabConfiguration->value->TabToggle . '" href="#' . $s_tabIdPrefix . $o_tabElement->TabId . '" class="' . $this->FormTabConfiguration->value->TabAClass . ' ' . $this->FormTabConfiguration->value->TabActiveClass . '">' . $o_tabElement->TabTitle . '</a></li>' . "\n";
+					$p_s_foo .= '<li class="' . $this->FormTabConfiguration->value->TabLiClass . '"><a data-bs-toggle="' . $this->FormTabConfiguration->value->TabToggle . '" href="#' . $s_tabIdPrefix . $o_tabElement->TabId . '" class="' . $this->FormTabConfiguration->value->TabAClass . ' ' . $this->FormTabConfiguration->value->TabActiveClass . '" aria-current="page">' . $o_tabElement->TabTitle . '</a></li>' . "\n";
 					$b_first = false;
 				} else {
-					$p_s_foo .= '<li class="' . $this->FormTabConfiguration->value->TabLiClass . '"><a data-toggle="' . $this->FormTabConfiguration->value->TabToggle . '" href="#' . $s_tabIdPrefix . $o_tabElement->TabId . '" class="' . $this->FormTabConfiguration->value->TabAClass . '">' . $o_tabElement->TabTitle . '</a></li>' . "\n";
+					$p_s_foo .= '<li class="' . $this->FormTabConfiguration->value->TabLiClass . '"><a data-bs-toggle="' . $this->FormTabConfiguration->value->TabToggle . '" href="#' . $s_tabIdPrefix . $o_tabElement->TabId . '" class="' . $this->FormTabConfiguration->value->TabAClass . '">' . $o_tabElement->TabTitle . '</a></li>' . "\n";
 				}
 			}
 		}
@@ -2474,7 +2486,6 @@ class forestModalConfiguration {
 			issetStr($this->ModalHeaderClass->value) && 
 			issetStr($this->ModalHeaderCloseClass->value) && 
 			issetStr($this->ModalHeaderDismissClass->value) && 
-			issetStr($this->ModalHeaderCloseContent->value) && 
 			issetStr($this->ModalBodyClass->value) && 
 			issetStr($this->ModalFooterClass->value)
 		)) {

@@ -4,19 +4,20 @@
  * for more information about the arranged url-format, see the documentation
  *
  * @category    forestPHP Framework
- * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2019 forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestany.net>
+ * @copyright   (c) 2024 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.0 stable
- * @link        http://www.forestphp.de/
+ * @version     1.1.0 stable
+ * @link        https://forestany.net
  * @object-id   0x1 00005
  * @since       File available since Release 0.1.0 alpha
  * @deprecated  -
  *
- * @version log Version		Developer	Date		Comment
- * 		0.1.0 alpha	renatus		2019-08-04	first build
- * 		0.1.2 alpha	renatus		2019-08-26	added parameter identification for sort and limit
+ * @version log Version			Developer	Date		Comment
+ * 				0.1.0 alpha		renea		2019-08-04	first build
+ * 				0.1.2 alpha		renea		2019-08-26	added parameter identification for sort and limit
+ * 				1.1.0 stable	renea		2023-11-05	added OverwriteURL method, which re-handles a url for the framework
  */
 
 namespace fPHP\Roots;
@@ -88,7 +89,7 @@ class forestURL {
 	 * @return null
 	 *
 	 * @throws forestException if error occurs
-	 * @access public
+	 * @access private
 	 * @static no
 	 */
 	private function HandleUrl($p_b_show = false) {
@@ -285,6 +286,27 @@ class forestURL {
 			print_r($this->Parameters->value);
 			echo '</pre>';
 		}
+	}
+
+	/**
+	 * overwrite url information, which need to happen if ActionChain is in use
+	 *
+	 * @param bool $p_b_show  flag to show debug information
+	 *
+	 * @return null
+	 *
+	 * @throws forestException if error occurs
+	 * @access public
+	 * @static no
+	 */
+	public function OverwriteURL($p_s_url, $p_b_show = false) {
+		if (!issetStr($p_s_url)) {
+			throw new forestException('Cannot overwrite URL if parameter is not set');
+		}
+
+		$_SERVER['REQUEST_URI'] = $p_s_url;
+		$this->HandleUrl($p_b_show);
+		$this->RetrieveInformationByURL($p_b_show);
 	}
 }
 ?>

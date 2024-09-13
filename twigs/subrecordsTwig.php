@@ -34,6 +34,10 @@ class subrecordsTwig extends forestTwig {
 	private $ShortText09;
 	private $Text00;
 	private $Text01;
+	private $MediumText00;
+	private $MediumText01;
+	private $LongText00;
+	private $LongText01;
 	private $SmallInt00;
 	private $SmallInt01;
 	private $SmallInt02;
@@ -89,6 +93,10 @@ class subrecordsTwig extends forestTwig {
 		$this->ShortText09 = new forestString;
 		$this->Text00 = new forestString;
 		$this->Text01 = new forestString;
+		$this->MediumText00 = new forestString;
+		$this->MediumText01 = new forestString;
+		$this->LongText00 = new forestString;
+		$this->LongText01 = new forestString;
 		$this->SmallInt00 = new forestInt;
 		$this->SmallInt01 = new forestInt;
 		$this->SmallInt02 = new forestInt;

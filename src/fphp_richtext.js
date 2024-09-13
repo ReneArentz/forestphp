@@ -2,20 +2,21 @@
  * javascript library for fphp_richtext module
  *
  * @category    forestPHP Framework
- * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2019 forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestany.net>
+ * @copyright   (c) 2024 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.0 stable
- * @link        http://www.forestphp.de/
+ * @version     1.1.0 stable
+ * @link        https://forestany.net
  * @object-id   0x2 00004
  * @since       File available since Release 0.1.4 alpha
  * @deprecated  -
  *
- * @version log Version     Developer   Date        Comment
- *              0.1.4 alpha	renatus		  2019-09-28	added to framework
- *              0.9.0 beta	renatus		  2020-01-27	changes for bootstrap 4
- *              1.0.1 stable	renatus		  2021-04-18	changes for blocking images with pasting ctrl+v and auto resize images with drag and drop
+ * @version log Version			Developer	Date		Comment
+ * 				0.1.4 alpha		renea		2019-09-28	added to framework
+ * 				0.9.0 beta		renea		2020-01-27	changes for bootstrap 4
+ * 				1.0.1 stable	renea		2021-04-18	changes for blocking images with pasting ctrl+v and auto resize images with drag and drop
+ * 				1.1.0 stable	renea		2024-08-10	changes for bootstrap 5
  */
 $(function() {
 	$.fn.fphp_richtext = function(p_o_options) {
@@ -314,32 +315,32 @@ $(function() {
 				`;
 				
 				if (!o_settings.b_disabled) {
-					s_richtextHTML += `<div class="btn-toolbar" data-toolbarId="` + o_settings.s_toolbarId + `">
-						<div class="btn-group">
+					s_richtextHTML += `<div class="btn-toolbar" role="toolbar" aria-label="Richtext toolbar" data-toolbarId="` + o_settings.s_toolbarId + `">
+						<div class="btn-group" role="group" aria-label="Format group">
 							<a class="btn" role="button" data-` + o_settings.s_dataCommand + `="bold" title="` + o_settings.s_bTitle + `">` + o_settings.s_bButton + `</a>
 							<a class="btn" data-` + o_settings.s_dataCommand + `="italic" title="` + o_settings.s_iTitle + `">` + o_settings.s_iButton + `</a>
 							<a class="btn" data-` + o_settings.s_dataCommand + `="underline" title="` + o_settings.s_uTitle + `">` + o_settings.s_uButton + `</a>
 							<a class="btn" data-` + o_settings.s_dataCommand + `="strikethrough" title="` + o_settings.s_sTitle + `">` + o_settings.s_sButton + `</a>
 						</div>
 						
-						<div class="btn-group">
+						<div class="btn-group" role="group" aria-label="Font size group">
 							<a class="btn" data-` + o_settings.s_dataCommand + `="increasefontsize" title="` + o_settings.s_incFontTitle + `">` + o_settings.s_incFontButton + `</a>
 							<a class="btn" data-` + o_settings.s_dataCommand + `="decreasefontsize" title="` + o_settings.s_decFontTitle + `">` + o_settings.s_decFontButton + `</a>
 						</div>
 						
-						<div class="btn-group">
+						<div class="btn-group" role="group" aria-label="Font color group">
 							<a class="btn" data-` + o_settings.s_dataCommand + `="forecolor" title="` + o_settings.s_foreColorTitle + `">` + o_settings.s_foreColorButton + `<input type="color" name="` + o_settings.s_toolbarId + `fontColor" id="` + o_settings.s_toolbarId + `fontColor" style="display: none;"></a>
 							<a class="btn" data-` + o_settings.s_dataCommand + `="backcolor" title="` + o_settings.s_backColorTitle + `">` + o_settings.s_backColorButton + `<input type="color" name="` + o_settings.s_toolbarId + `backgroundColor" id="` + o_settings.s_toolbarId + `backgroundColor" style="display: none;"></a>
 						</div>
 						
-						<div class="btn-group">
+						<div class="btn-group" role="group" aria-label="List group">
 							<a class="btn" data-` + o_settings.s_dataCommand + `="insertunorderedlist" title="` + o_settings.s_ulTitle + `">` + o_settings.s_ulButton + `</a>
 							<a class="btn" data-` + o_settings.s_dataCommand + `="insertorderedlist" title="` + o_settings.s_olTitle + `">` + o_settings.s_olButton + `</a>
 							<a class="btn" data-` + o_settings.s_dataCommand + `="outdent" title="` + o_settings.s_outTitle + `">` + o_settings.s_outButton + `</a>
 							<a class="btn" data-` + o_settings.s_dataCommand + `="indent" title="` + o_settings.s_inTitle + `">` + o_settings.s_inButton + `</a>
 						</div>
 						
-						<div class="btn-group">
+						<div class="btn-group" role="group" aria-label="Justify group">
 							<a class="btn" data-` + o_settings.s_dataCommand + `="justifyleft" title="` + o_settings.s_leftTitle + `">` + o_settings.s_leftButton + `</a>
 							<a class="btn" data-` + o_settings.s_dataCommand + `="justifycenter" title="` + o_settings.s_centerTitle + `">` + o_settings.s_centerButton + `</a>
 							<a class="btn" data-` + o_settings.s_dataCommand + `="justifyright" title="` + o_settings.s_rightTitle + `">` + o_settings.s_rightButton + `</a>
@@ -349,7 +350,7 @@ $(function() {
 						
 						if (o_settings.b_createLink) {
 							s_richtextHTML += `
-							<div class="btn-group">
+							<div class="btn-group" aria-label="Link group">
 								<a class="btn" data-` + o_settings.s_dataCommand + `="createlink" title="` + o_settings.s_linkTitle + `">` + o_settings.s_linkButton + `</a>
 								<a class="btn" data-` + o_settings.s_dataCommand + `="unlink" title="` + o_settings.s_unlinkTitle + `">` + o_settings.s_unlinkButton + `</a>
 							</div>`;
@@ -357,14 +358,14 @@ $(function() {
 						
 						if (o_settings.b_undoAndredo) {
 							s_richtextHTML += `
-							<div class="btn-group">
+							<div class="btn-group" aria-label="Step group">
 								<a class="btn" data-` + o_settings.s_dataCommand + `="undo" title="` + o_settings.s_undoTitle + `">` + o_settings.s_undoButton + `</a>
 								<a class="btn" data-` + o_settings.s_dataCommand + `="redo" title="` + o_settings.s_redoTitle + `">` + o_settings.s_redoButton + `</a>
 							</div>`;
 						}
 						
 						s_richtextHTML += `
-							<div class="btn-group">
+							<div class="btn-group" aria-label="Remove format group">
 							<a class="btn" data-` + o_settings.s_dataCommand + `="removeformat" title="` + o_settings.s_removeTitle + `">` + o_settings.s_removeButton + `</a>
 						</div>
 					</div>

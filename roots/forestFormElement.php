@@ -5,27 +5,29 @@
  * its a full collection of these properties
  *
  * @category    forestPHP Framework
- * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2021 forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestany.net>
+ * @copyright   (c) 2024 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.1 stable
- * @link        http://www.forestphp.de/
+ * @version     1.1.0 stable
+ * @link        https://forestany.net
  * @object-id   0x1 00016
  * @since       File available since Release 0.1.1 alpha
  * @deprecated  -
  *
- * @version log Version		Developer	Date		Comment
- * 		0.1.1 alpha	renatus		2019-08-12	added to framework
- * 		0.1.3 alpha	renatus		2019-09-06	added validationrules
- * 		0.1.4 alpha	renatus		2019-09-23	added file, dropzone and richtext
- * 		0.1.5 alpha	renatus		2019-10-04	added forestLookup and Captcha
- * 		0.5.0 beta	renatus		2019-12-04	added auto checkin element
- * 		0.7.0 beta	renatus		2020-01-03	added mondey-format property to general input attributes
- * 		0.9.0 beta	renatus		2020-01-29	changes for bootstrap 4 on checkbox, radio. dropzone and richtext
- * 		1.0.0 stable	renatus		2020-02-14	added FilenameFromField functionality for FILE elements
- * 		1.0.0 stable	renatus		2020-02-14	changes constants because of conflict with php system constants
- * 		1.0.1 stable	renatus		2020-04-14	take id for list value of datalist if it is not set or 'NULL'
+ * @version log Version			Developer	Date		Comment
+ * 				0.1.1 alpha		renea		2019-08-12	added to framework
+ * 				0.1.3 alpha		renea		2019-09-06	added validationrules
+ * 				0.1.4 alpha		renea		2019-09-23	added file, dropzone and richtext
+ * 				0.1.5 alpha		renea		2019-10-04	added forestLookup and Captcha
+ * 				0.5.0 beta		renea		2019-12-04	added auto checkin element
+ * 				0.7.0 beta		renea		2020-01-03	added mondey-format property to general input attributes
+ * 				0.9.0 beta		renea		2020-01-29	changes for bootstrap 4 on checkbox, radio. dropzone and richtext
+ * 				1.0.0 stable	renea		2020-02-14	added FilenameFromField functionality for FILE elements
+ * 				1.0.0 stable	renea		2020-02-14	changes constants because of conflict with php system constants
+ * 				1.0.1 stable	renea		2020-04-14	take id for list value of datalist if it is not set or 'NULL'
+ * 				1.1.0 stable	renea		2023-11-02	reload button for captcha
+ * 				1.1.0 stable	renea		2024-08-10	changes for bootstrap 5
  */
 
 namespace fPHP\Forms;
@@ -3658,6 +3660,11 @@ class forestFormElementSelect extends forestFormGeneralAttributes {
 			$s_foo .= ' size="' . $this->Size->value . '"';
 		}
 		
+		if (issetStr($this->Label->value)) {
+			$s_ariaLabel = (\fPHP\Helper\forestStringLib::EndsWith($this->Label->value, ':')) ? substr($this->Label->value, 0, -1) : $this->Label->value;
+			$s_foo .= 'aria-label="' . $s_ariaLabel . '"';
+		}
+
 		if (issetStr($this->Data->value)) {
 			$s_foo .= ' data-' . $this->Data->value;
 		}
@@ -3847,7 +3854,7 @@ class forestFormElementDropzone extends forestFormGeneralAttributes {
 		
 		$s_foo = parent::__toString();
 		
-		// check if values are set
+		/* check if values are set */
 		
 		$s_foo .= '<div id="fphp_dropzone">
 			{
@@ -3969,7 +3976,7 @@ class forestFormElementRichtext extends forestFormGeneralAttributes {
 		
 		$s_foo = parent::__toString();
 		
-		// check if values are set
+		/* check if values are set */
 		
 		$s_foo .= '<div id="fphp_richtext">
 			{
@@ -3991,51 +3998,61 @@ class forestFormElementRichtext extends forestFormGeneralAttributes {
 				"b_undoAndredo" : ' . ( ($this->UndoAndRedo->Value) ? 'true' : 'false' ) . ',
 				
 				"s_bTitle" : "' . $o_glob->GetTranslation('richtextBold', 1) . '",
-				"s_bButton" : "&lt;span style=\"font-weight: bold;\"&gt;B&lt;/span&gt;",
+				"s_bButton" : "&lt;span class=\"bi bi-type-bold\"&gt;&lt;/span&gt;",
 				"s_iTitle" : "' . $o_glob->GetTranslation('richtextItalic', 1) . '",
-				"s_iButton" : "&lt;span style=\"font-style: italic; font-weight: bold;\"&gt;I&lt;/span&gt;",
+				"s_iButton" : "&lt;span class=\"bi bi-type-italic\"&gt;&lt;/span&gt;",
 				"s_uTitle" : "' . $o_glob->GetTranslation('richtextUnderline', 1) . '",
-				"s_uButton" : "&lt;span style=\"text-decoration: underline; font-weight: bold;\"&gt;U&lt;/span&gt;",
+				"s_uButton" : "&lt;span class=\"bi bi-type-underline\"&gt;&lt;/span&gt;",
 				"s_sTitle" : "' . $o_glob->GetTranslation('richtextLinethrough', 1) . '",
-				"s_sButton" : "&lt;span style=\"text-decoration: line-through; font-weight: bold;\"&gt;S&lt;/span&gt;",
+				"s_sButton" : "&lt;span class=\"bi bi-type-strikethrough\"&gt;&lt;/span&gt;",
 				"s_incFontTitle" : "' . $o_glob->GetTranslation('richtextIncreaseFontsize', 1) . '",
-				"s_incFontButton" : "&lt;span class=\"fas fa-text-height\"&gt;&lt;/span&gt;&lt;span class=\"fas fa-caret-up\"&gt;&lt;/span&gt;",
+				"s_incFontButton" : "&lt;span class=\"bi bi-fonts h5\"&gt;&lt;/span&gt;&lt;span class=\"bi bi-caret-up-fill\"&gt;&lt;/span&gt;",
 				"s_decFontTitle" : "' . $o_glob->GetTranslation('richtextDecreaseFontsize', 1) . '",
-				"s_decFontButton" : "&lt;span class=\"fas fa-text-height\"&gt;&lt;/span&gt;&lt;span class=\"fas fa-caret-down\"&gt;&lt;/span&gt;",
+				"s_decFontButton" : "&lt;span class=\"bi bi-fonts h5\"&gt;&lt;/span&gt;&lt;span class=\"bi bi-caret-down-fill\"&gt;&lt;/span&gt;",
 				"s_foreColorTitle" : "' . $o_glob->GetTranslation('richtextFontColor', 1) . '",
-				"s_foreColorButton" : "&lt;span class=\"fas fa-tint\"&gt;&lt;/span&gt;",
+				"s_foreColorButton" : "&lt;span class=\"bi bi-droplet-fill\"&gt;&lt;/span&gt;",
 				"s_backColorTitle" : "' . $o_glob->GetTranslation('richtextHiliteColor', 1) . '",
-				"s_backColorButton" : "&lt;span class=\"fas fa-fill\"&gt;&lt;/span&gt;",
+				"s_backColorButton" : "&lt;span class=\"bi bi-paint-bucket\"&gt;&lt;/span&gt;",
 				"s_ulTitle" : "' . $o_glob->GetTranslation('richtextUnorderedList', 1) . '",
-				"s_ulButton" : "&lt;span class=\"fas fa-list-ul\"&gt;&lt;/span&gt;",
+				"s_ulButton" : "&lt;span class=\"bi bi-list-ul h5\"&gt;&lt;/span&gt;",
 				"s_olTitle" : "' . $o_glob->GetTranslation('richtextOrderedList', 1) . '",
-				"s_olButton" : "&lt;span class=\"fas fa-list-ol\"&gt;&lt;/span&gt;",
+				"s_olButton" : "&lt;span class=\"bi bi-list-ol h5\"&gt;&lt;/span&gt;",
 				"s_inTitle" : "' . $o_glob->GetTranslation('richtextIndent', 1) . '",
-				"s_inButton" : "&lt;span class=\"fas fa-indent\"&gt;&lt;/span&gt;",
+				"s_inButton" : "&lt;span class=\"bi bi-indent\"&gt;&lt;/span&gt;",
 				"s_outTitle" : "' . $o_glob->GetTranslation('richtextOutdent', 1) . '",
-				"s_outButton" : "&lt;span class=\"fas fa-indent fa-rotate-180\"&gt;&lt;/span&gt;",
+				"s_outButton" : "&lt;span class=\"bi bi-unindent\"&gt;&lt;/span&gt;",
 				"s_leftTitle" : "' . $o_glob->GetTranslation('richtextJustifyLeft', 1) . '",
-				"s_leftButton" : "&lt;span class=\"fas fa-align-left\"&gt;",
+				"s_leftButton" : "&lt;span class=\"bi bi-text-left\"&gt;",
 				"s_centerTitle" : "' . $o_glob->GetTranslation('richtextJustifyCenter', 1) . '",
-				"s_centerButton" : "&lt;span class=\"fas fa-align-center\"&gt;",
+				"s_centerButton" : "&lt;span class=\"bi bi-text-center\"&gt;",
 				"s_rightTitle" : "' . $o_glob->GetTranslation('richtextJustifyRight', 1) . '",
-				"s_rightButton" : "&lt;span class=\"fas fa-align-right\"&gt;",
+				"s_rightButton" : "&lt;span class=\"bi bi-text-right\"&gt;",
 				"s_fullTitle" : "' . $o_glob->GetTranslation('richtextJustifyFull', 1) . '",
-				"s_fullButton" : "&lt;span class=\"fas fa-align-justify\"&gt;",
+				"s_fullButton" : "&lt;span class=\"bi bi-justify\"&gt;",
 				"s_linkTitle" : "' . $o_glob->GetTranslation('richtextHyperlink', 1) . '",
-				"s_linkButton" : "&lt;span class=\"fas fa-link\"&gt;",
+				"s_linkButton" : "&lt;span class=\"bi bi-cloud-fill\"&gt;",
 				"s_unlinkTitle" : "' . $o_glob->GetTranslation('richtextRemoveHyperlink', 1) . '",
-				"s_unlinkButton" : "&lt;span class=\"fas fa-unlink\"&gt;&lt;/span&gt;",
+				"s_unlinkButton" : "&lt;span class=\"bi bi-cloud-slash-fill\"&gt;&lt;/span&gt;",
 				"s_undoTitle" : "' . $o_glob->GetTranslation('richtextUndo', 1) . '",
-				"s_undoButton" : "&lt;span class=\"fas fa-undo\"&gt;",
+				"s_undoButton" : "&lt;span class=\"bi bi-arrow-counterclockwise\"&gt;",
 				"s_redoTitle" : "' . $o_glob->GetTranslation('richtextRedo', 1) . '",
-				"s_redoButton" : "&lt;span class=\"fas fa-redo\"&gt;&lt;/span&gt;",
+				"s_redoButton" : "&lt;span class=\"bi bi-arrow-clockwise\"&gt;&lt;/span&gt;",
 				"s_removeTitle" : "' . $o_glob->GetTranslation('richtextDeleteFormat', 1) . '",
-				"s_removeButton" : "&lt;span class=\"fas fa-eraser\"&gt;&lt;/span&gt;",
+				"s_removeButton" : "&lt;span class=\"bi bi-eraser-fill\"&gt;&lt;/span&gt;",
 				"s_value" : "' . ( (issetStr($this->Value->value)) ? $this->Value->value : '' ) . '",
 				"b_disabled" : ' . ( ($this->Disabled->value) ? 'true' : 'false' ) . '
 			}
 		</div>';
+
+		if (issetStr($this->Description->value)) {
+			$s_foo .= '<div';
+			
+			if (issetStr($this->DescriptionClass->value)) {
+				$s_foo .= ' class="' . $this->DescriptionClass->value . '"';
+			}
+			
+			$s_foo .= '><small>' . $this->Description->value . '</small></div>' . "\n";
+		}
 		
 		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}
@@ -4420,6 +4437,8 @@ class forestFormElementCaptcha extends forestFormInputAttributes {
 		$s_foo .= '<br>' . "\n";
 		
 		$s_foo .= '<img src="' . \fPHP\Helper\forestLink::Link($o_glob->URL->Branch, 'fphp_captcha') . '" alt="fphp_captcha could not be rendered" style="margin: 0px 5px 5px 0px;">' . "\n";
+
+		$s_foo .= '<button type="button" id="sys_fphp_ReloadStandard" name="sys_fphp_ReloadStandard" class="btn btn-lg btn-secondary" style="margin-left: 10px;" tabindex="' . $o_glob->GetTabIndex() . '" onClick="window.location.reload()"><span class="bi bi-arrow-clockwise"></span></button>';
 		
 		return \fPHP\Helper\forestStringLib::closeHTMLTags($s_foo);
 	}

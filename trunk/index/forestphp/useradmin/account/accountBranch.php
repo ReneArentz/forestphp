@@ -20,37 +20,8 @@ class accountBranch extends forestBranch {
 	
 	/* Methods */
 	
-	protected function initBranch() {
-		$this->Filter->value = false;
-		$this->StandardView = forestBranch::DETAIL;
-		$this->KeepFilter->value = false;
-		
-		$this->Twig = new \fPHP\Twigs\accountTwig();
-	}
-	
-	protected function init() {
-		$o_glob = \fPHP\Roots\forestGlobals::init();
-		
-		if ($this->StandardView == forestBranch::DETAIL) {
-			$a_sqlAdditionalFilter = array(array('column' => 'UUID', 'value' => $o_glob->Security->UserUUID, 'operator' => '=', 'filterOperator' => 'AND'));
-			$o_glob->Temp->Add($a_sqlAdditionalFilter, 'SQLAdditionalFilter');
-			$this->GenerateView();
-			$o_glob->Temp->Del('SQLAdditionalFilter');
-		} else if ($this->StandardView == forestBranch::LISTVIEW) {
-			$this->GenerateListView();
-		} else if ($this->StandardView == forestBranch::FLEX) {
-			if ( ($o_glob->Security->SessionData->Exists('lastView')) && ($o_glob->URL->LastBranchId == $o_glob->URL->BranchId) ) {
-				if ($o_glob->Security->SessionData->{'lastView'} == forestBranch::LISTVIEW) {
-					$this->GenerateView();
-				} else if ($o_glob->Security->SessionData->{'lastView'} == forestBranch::DETAIL) {
-					$this->GenerateListView();
-				} else {
-					$this->GenerateFlexView();
-				}
-			} else {
-				$this->GenerateFlexView();
-			}
-		}
+	protected function initAction() {
+		$this->Init();
 	}
 	
 		protected function beforeViewAction() {

@@ -3,23 +3,26 @@
  * collection of static string helper functions
  *
  * @category    forestPHP Framework
- * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2019 forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestany.net>
+ * @copyright   (c) 2024 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.0 stable
- * @link        http://www.forestphp.de/
+ * @version     1.1.0 stable
+ * @link        https://forestany.net
  * @object-id   0x1 0001A
  * @since       File available since Release 0.1.0 alpha
  * @deprecated  -
  *
- * @version log Version		Developer	Date		Comment
- * 		0.1.0 alpha	renatus		2019-08-04	first build
- * 		0.1.0 alpha	renatus		2019-08-04	added conversion for forestDateTime	
- * 		0.7.0 beta	renatus		2020-01-03	added IncreaseIdentifier and mondey_format functions
- * 		0.9.0 beta	renatus		2020-01-30	changes for TextToDate function for ocisql
- * 		1.0.0 stable	renatus		2020-02-10	added os identification in money_format
- * 		1.0.0 stable	renatus		2020-02-14	added ParseNameToFilename function
+ * @version log Version			Developer	Date		Comment
+ * 				0.1.0 alpha		renea		2019-08-04	first build
+ * 				0.1.0 alpha		renea		2019-08-04	added conversion for forestDateTime	
+ * 				0.7.0 beta		renea		2020-01-03	added IncreaseIdentifier and mondey_format functions
+ * 				0.9.0 beta		renea		2020-01-30	changes for TextToDate function for ocisql
+ * 				1.0.0 stable	renea		2020-02-10	added os identification in money_format
+ * 				1.0.0 stable	renea		2020-02-14	added ParseNameToFilename function
+ * 				1.1.0 stable	renea		2023-11-01	fixed sprintf2 so that we can use more than 10 values in 2nd array parameter, also added a reverse option e.g. %15..%1 to avoid conflicts
+ * 				1.1.0 stable	renea		2023-11-04	added GetNumericPartOfIdentifier method
+ * 				1.1.0 stable	renea		2023-11-09	added ObfuscateString method
  */
 
 namespace fPHP\Helper;
@@ -46,23 +49,30 @@ class forestStringLib {
 	/**
 	 * replace multiple values in a string where we have numeric placeholders with a preceding character
 	 *
-	 * @param string $p_s_str  string value with numeric placeholders
-	 * @param array $p_a_vars  array of values
-	 * @param char $p_s_char  numeric placeholder char for recognition
+	 * @param string $p_s_str  		string value with numeric placeholders
+	 * @param array $p_a_vars  		array of values
+	 * @param bool $p_b_reverse  	true - reverce replacement, false - usual replacement
+	 * @param char $p_s_char  		numeric placeholder char for recognition
 	 *
 	 * @return string
 	 *
 	 * @access public
 	 * @static yes
 	 */
-	public static function sprintf2($p_s_str = '', $p_a_vars = array(), $p_s_char = '%') {
+	public static function sprintf2($p_s_str = '', $p_a_vars = array(), $p_b_reverse = false, $p_s_char = '%') {
 		if (empty($p_s_str)) {
 			return '';
 		}
 		
 		if (count($p_a_vars) > 0) {
-			foreach ($p_a_vars as $s_key => $s_value) {
-				$p_s_str = str_replace($p_s_char . $s_key, $s_value, $p_s_str);
+			if ($p_b_reverse) {
+				for ($i = (count($p_a_vars) - 1); $i >= 0; $i--) {
+					$p_s_str = str_replace($p_s_char . $i, $p_a_vars[$i], $p_s_str);
+				}
+			} else {
+				for ($i = 0; $i < count($p_a_vars); $i++) {
+					$p_s_str = str_replace($p_s_char . $i, $p_a_vars[$i], $p_s_str);
+				}
 			}
 		}
 		
@@ -299,7 +309,7 @@ class forestStringLib {
 			
 			/* now we have only the real filter values */
 			if ((!in_array($filterValues, array('<=','>=','<>','<','>','='))) && (!in_array($filterValues, array('&','|')))) {
-				//if value has no operator flag but has wildcards we use 'LIKE'	as compare operator
+				/* if value has no operator flag but has wildcards we use 'LIKE'	as compare operator */
 				if ((!$b_operator) && ((strpos($filterValues, '%') !== false) || (strpos($filterValues, '_') !== false))) {
 					$foo[$i][] = 'LIKE';
 					$b_operator = true;
@@ -359,9 +369,9 @@ class forestStringLib {
 			$i++;
 		}
 		
-		//echo '<pre>';
-		//print_r($filter);
-		//echo '</pre>';
+		/*echo '<pre>';
+		print_r($filter);
+		echo '</pre>';*/
 		
 		return $filter;
 	}
@@ -385,12 +395,13 @@ class forestStringLib {
 		$i_hour = 0;
 		$i_minute = 0;
 		$i_second = 0;
-		$i_pos = strpos($p_s_value, ' ');
-		$i_posT = strpos($p_s_value, 'T');
 		
 		if (empty($p_s_value)) {
 			return 'NULL';
 		}
+		
+		$i_pos = strpos($p_s_value, ' ');
+		$i_posT = strpos($p_s_value, 'T');
 		
 		/* date and time */
 		if ($i_pos !== false) {
@@ -658,6 +669,21 @@ class forestStringLib {
 		/* search forward starting from end minus needle length characters */
 		return $p_s_search === "" || (($temp = strlen($p_s_str) - strlen($p_s_search)) >= 0 && strpos($p_s_str, $p_s_search, $temp) !== false);
 	}
+
+	/**
+	 * check if a string contains a specific order of characters
+	 *
+	 * @param string $p_s_str  string value
+	 * @param string $p_s_search  search for occurence
+	 *
+	 * @return bool  true - string contains search value, false - string does not contain search value
+	 *
+	 * @access public
+	 * @static yes
+	 */
+	public static function Contains($p_s_str, $p_s_search) {
+		return $p_s_search !== '' && strpos($p_s_str, $p_s_search) !== false;
+	}
 	
 	/**
 	 * close all open html tags of the parameter string
@@ -761,6 +787,46 @@ class forestStringLib {
 		
 		return $p_s_identifier;
 	}
+
+	/**
+	 * help function to get numeric part of identifier
+	 *
+	 * @param string $p_s_identifier  value of identifier
+	 *
+	 * @return int	numeric part of identifier
+	 *
+	 * @access public
+	 * @static yes
+	 */
+	public static function GetNumericPartOfIdentifier($p_s_identifier) {
+		preg_match_all('/([a-zA-Z]+)(\d+)/', $p_s_identifier, $a_matches, PREG_OFFSET_CAPTURE);
+		
+		/* id must be greater than 0, must contain at least one numeric sign, must not consists of characters only */
+		if ( (!is_string($p_s_identifier)) || (empty($p_s_identifier)) || (strlen($p_s_identifier) <= 0) || (ctype_alpha($p_s_identifier)) || (ctype_alpha($p_s_identifier[strlen($p_s_identifier) - 1])) ) {
+			$p_s_identifier = -1;
+		} else {
+			$s_numericPart = '';
+			
+			if ( empty($a_matches[0]) && empty($a_matches[1]) && empty($a_matches[2]) ) {
+				/* no characters found in id */
+				$s_numericPart = $p_s_identifier;
+			} else {
+				/* split characters from numeric part */
+				$s_numericPart = substr($p_s_identifier, $a_matches[2][count($a_matches[2]) - 1][1]);
+			}
+			
+			$i_numericPartLength = strlen($s_numericPart);
+			$s_numericPart = str_pad(intval($s_numericPart), strlen($s_numericPart), '0', STR_PAD_LEFT);
+			
+			if ($i_numericPartLength != strlen($s_numericPart)) {
+				$p_s_identifier = -1;
+			} else {
+				$p_s_identifier = $s_numericPart;
+			}
+		}
+		
+		return intval($p_s_identifier);
+	}
 	
 	/**
 	 * replace unicode escape sequence within a string
@@ -829,6 +895,27 @@ class forestStringLib {
 	 */
 	public static function money_format($format, $number) {
 		return number_format($number, 2, ',', '.') . ' &#8364;';
+	}
+
+	/**
+	 * obfuscate a string by giving each character it's html entity
+	 *
+	 * @param string $p_s_string  string value
+	 * @param string $p_s_key	  unique characters of p_s_string
+	 *
+	 * @return string
+	 *
+	 * @access public
+	 * @static yes
+	 */
+	public static function ObfuscateString($p_s_string) {
+		$s_foo = '';
+
+		for ($i = 0; $i < strlen($p_s_string); $i++) {
+			$s_foo .= '&#' . ord($p_s_string[$i]) . ';';
+		}
+
+		return $s_foo;
 	}
 }
 ?>

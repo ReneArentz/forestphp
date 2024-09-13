@@ -4,27 +4,30 @@
  * between different classes and build-steps in the script collection
  *
  * @category    forestPHP Framework
- * @author      Rene Arentz <rene.arentz@forestphp.de>
- * @copyright   (c) 2019 forestPHP Framework
+ * @author      Rene Arentz <rene.arentz@forestany.net>
+ * @copyright   (c) 2024 forestPHP Framework
  * @license     https://www.gnu.org/licenses/gpl-3.0.de.html GNU General Public License 3
  * @license     https://opensource.org/licenses/MIT MIT License
- * @version     1.0.0 stable
- * @link        http://www.forestphp.de/
+ * @version     1.1.0 stable
+ * @link        https://forestany.net
  * @object-id   0x1 00004
  * @since       File available since Release 0.1.0 alpha
  * @deprecated  -
  *
- * @version log Version		Developer	Date		Comment
- * 		0.1.0 alpha	renatus		2019-08-04	first build
- * 		0.1.1 alpha	renatus		2019-08-07	added trunk, templates, form and tables functionality
- * 		0.1.2 alpha	renatus		2019-08-07	added sort, filter and limit functionality
- * 		0.1.5 alpha	renatus		2019-10-10	added lookup and sub-constraint dictionary
- * 		0.2.0 beta	renatus		2019-10-25	added RootMenu
- * 		0.4.0 beta	renatus		2019-11-14	added user dictionary and functions
- * 		0.5.0 beta	renatus		2019-12-05	changed ListTables, added CheckoutInterval and Versioning to dictionary
- * 		0.6.0 beta	renatus		2019-12-14	changed ListTables, added Versioning and InfoColumns to dictionary
- * 		0.7.0 beta	renatus		2020-01-02	changed ListTables, added Maintenance Mode to dictionary, added Maintenance Mode to BranchTree
- * 		0.9.0 beta	renatus		2020-01-28	rearranged order of global functions
+ * @version log Version			Developer	Date		Comment
+ * 				0.1.0 alpha		renea		2019-08-04	first build
+ * 				0.1.1 alpha		renea		2019-08-07	added trunk, templates, form and tables functionality
+ * 				0.1.2 alpha		renea		2019-08-07	added sort, filter and limit functionality
+ * 				0.1.5 alpha		renea		2019-10-10	added lookup and sub-constraint dictionary
+ * 				0.2.0 beta		renea		2019-10-25	added RootMenu
+ * 				0.4.0 beta		renea		2019-11-14	added user dictionary and functions
+ * 				0.5.0 beta		renea		2019-12-05	changed ListTables, added CheckoutInterval and Versioning to dictionary
+ * 				0.6.0 beta		renea		2019-12-14	changed ListTables, added Versioning and InfoColumns to dictionary
+ * 				0.7.0 beta		renea		2020-01-02	changed ListTables, added Maintenance Mode to dictionary, added Maintenance Mode to BranchTree
+ * 				0.9.0 beta		renea		2020-01-28	rearranged order of global functions
+ * 				1.1.0 stable	renea		2023-11-02	added action chain processing, which makes it possible to use branch templates easily
+ * 				1.1.0 stable	renea		2023-11-03	relocate standard view into database
+ * 				1.1.0 stable	renea		2024-08-10	changes for bootstrap 5
  */
 
 namespace fPHP\Roots;
@@ -80,8 +83,14 @@ class forestGlobals {
 	private $UsersDictionary;
 	private $SubConstraintsDictionary;
 	private $LookupResultsDictionary;
+	private $StandardView;
+	private $StandardViews;
 	private $OriginalView;
 	private $TabIndex;
+	private $ProcessingActionChain;
+	private $ActionChainStepNumber;
+	private $ActionChainStep;
+	private $ActionChain;
 	
 	/* Properties */
 	
@@ -99,7 +108,7 @@ class forestGlobals {
 		global $b_write_url_info;
 		global $b_write_security_debug;
 		
-		$this->URL = new forestObject(new \fPHP\Roots\forestURL($b_write_url_info), false); // bool parameter controls rendering some url information receiving from arranged url-format on screen
+		$this->URL = new forestObject(new \fPHP\Roots\forestURL($b_write_url_info), false); /* bool parameter controls rendering some url information receiving from arranged url-format on screen */
 		$this->Security = new forestObject(new \fPHP\Security\forestSecurity($b_write_security_debug), false);
 		$this->Base = new forestObject(new forestObjectList('forestBase'), false);
 		$this->ActiveBase = new forestString;
@@ -130,8 +139,14 @@ class forestGlobals {
 		$this->UsersDictionary = new forestArray;
 		$this->SubConstraintsDictionary = new forestArray;
 		$this->LookupResultsDictionary = new forestObject(new forestObjectList('stdClass'), false);
+		$this->StandardView = new \fPHP\Roots\forestLookup(new \fPHP\Helper\forestLookupData('sys_fphp_standardviews', array('UUID'), array('Name')));
+		$this->StandardViews = new forestArray;
 		$this->OriginalView = new forestString;
 		$this->TabIndex = new forestInt(100);
+		$this->ProcessingActionChain = new forestBool(false);
+		$this->ActionChainStepNumber = new forestInt;
+		$this->ActionChainStep = new forestArray;
+		$this->ActionChain = new forestArray;
 	}
 	
 	/**
@@ -307,6 +322,9 @@ class forestGlobals {
 				$a_branchTree['Id'][$o_branch->Id]['NavigationOrder'] = $o_branch->NavigationOrder;
 				$a_branchTree['Id'][$o_branch->Id]['Filename'] = $o_branch->Filename;
 				$a_branchTree['Id'][$o_branch->Id]['Table'] = $o_branch->Table;
+				$a_branchTree['Id'][$o_branch->Id]['StandardView'] = strval($o_branch->StandardView);
+				$a_branchTree['Id'][$o_branch->Id]['Filter'] = $o_branch->Filter;
+				$a_branchTree['Id'][$o_branch->Id]['KeepFilter'] = $o_branch->KeepFilter;
 				$a_branchTree['Id'][$o_branch->Id]['PermissionInheritance'] = $o_branch->PermissionInheritance;
 				$a_branchTree['Id'][$o_branch->Id]['MaintenanceMode'] = $o_branch->MaintenanceMode;
 				$a_branchTree['Id'][$o_branch->Id]['MaintenanceModeMessage'] = $o_branch->MaintenanceModeMessage;
@@ -360,14 +378,14 @@ class forestGlobals {
 		/* check if branch and action parameter really exists in branch tree */
 		if (is_int($p_s_branch)) {
 			if (!array_key_exists($p_s_branch, $this->BranchTree->value['Id'])) {
-				throw new forestException('Branch[%0] could not be found', array($p_s_branch));
+				throw new forestException('Branch[%0] could not be found with id', array($p_s_branch));
 			}
 			
 			$this->URL->value->VirtualBranch = $this->BranchTree->value['Id'][$p_s_branch]['Name'];
 			$this->URL->value->VirtualBranchId = $p_s_branch;
 		} else {
 			if (!array_key_exists($p_s_branch, $this->BranchTree->value['Name'])) {
-				throw new forestException('Branch[%0] could not be found', array($p_s_branch));
+				throw new forestException('Branch[%0] could not be found with name', array($p_s_branch));
 			}
 			
 			$this->URL->value->VirtualBranch = $p_s_branch;
@@ -396,7 +414,8 @@ class forestGlobals {
 		
 		if (!is_null($p_a_parameters)) {
 			foreach($p_a_parameters as $s_key => $s_value) {
-				$this->URL->value->VirtualParameters[$s_key] = rawurldecode($s_value); //decode url-encoded strings like %20 etc.
+				/* decode url-encoded strings like %20 etc. */
+				$this->URL->value->VirtualParameters[$s_key] = rawurldecode($s_value);
 			}
 		}
 		
